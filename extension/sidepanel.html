@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetMaxxing Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,700;8..144,900&display=swap" rel="stylesheet">
+  <!-- Remix Icon CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles/sidepanel.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon"><i class="ri-sparkling-2-fill"></i></span>
+        <span>MeetMaxxing</span>
+      </div>
+      <div id="status-badge" class="badge badge-idle">
+        <span class="badge-dot"></span>
+        <span class="badge-label">Idle</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="timer" class="timer">--:--</div>
+      <button
+        id="end-meeting-top-btn"
+        class="btn btn-sm btn-danger hidden"
+        title="End Meeting & Process Summary"
+      >
+        <i class="ri-stop-fill"></i>
+        Stop
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Not in meeting state -->
+    <div id="idle-state" class="state-container">
+      <div class="idle-state">
+        <div class="idle-icon">
+          <i class="ri-vidicon-line"></i>
+        </div>
+        <p class="idle-title">Not in a Meeting</p>
+        <p class="idle-text">Join a Google Meet call to activate MeetMaxxing AI Copilot</p>
+        <div class="idle-steps">
+          <div class="idle-step">
+            <span class="step-num">1</span>
+            <span>Open Google Meet</span>
+          </div>
+          <div class="idle-step">
+            <span class="step-num">2</span>
+            <span>Enable Captions (CC)</span>
+          </div>
+          <div class="idle-step">
+            <span class="step-num">3</span>
+            <span>Copilot activates auto</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meeting Ended state -->
+    <div id="ended-state" class="state-container hidden">
+      <div class="ended-card">
+        <!-- Success animation -->
+        <div class="ended-success-ring">
+          <div class="ended-icon-wrap">
+            <i class="ri-checkbox-circle-fill"></i>
+          </div>
+        </div>
+
+        <h2 class="ended-title">Meeting Complete</h2>
+        <p class="ended-sub">AI has processed your transcript and generated a full intelligence report.</p>
+
+        <!-- LLM status chip -->
+        <div id="llm-status-chip" class="llm-chip hidden">
+          <span class="llm-dot"></span>
+          <span id="llm-status-text">Processing…</span>
+        </div>
+
+        <!-- Stats row -->
+        <div class="ended-stats">
+          <div class="ended-stat">
+            <i class="ri-chat-1-line"></i>
+            <span id="ended-transcript-count">0</span>
+            <span class="stat-label">Lines</span>
+          </div>
+          <div class="ended-stat-divider"></div>
+          <div class="ended-stat">
+            <i class="ri-flashlight-line"></i>
+            <span>AI</span>
+            <span class="stat-label">Powered</span>
+          </div>
+          <div class="ended-stat-divider"></div>
+          <div class="ended-stat">
+            <i class="ri-shield-check-line"></i>
+            <span>Safe</span>
+            <span class="stat-label">Guardrail</span>
+          </div>
+        </div>
+
+        <!-- Single CTA: Open Dashboard -->
+        <div class="ended-cta">
+          <button id="open-dashboard-btn" class="btn btn-cta btn-full">
+            <i class="ri-layout-masonry-fill"></i>
+            Open Dashboard
+            <i class="ri-arrow-right-line btn-arrow"></i>
+          </button>
+          <p id="meeting-title-hint" class="cta-hint"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active meeting state -->
+    <div id="active-state" class="state-container hidden">
+
+      <!-- Quick action row -->
+      <div class="quick-actions">
+        <button id="test-copilot-btn" class="btn btn-primary quick-btn">
+          <i class="ri-flashlight-line"></i>
+          Suggestions
+        </button>
+        <button id="ask-next-btn" class="btn btn-secondary quick-btn">
+          <i class="ri-question-line"></i>
+          Next Q
+        </button>
+        <button id="recap-btn" class="btn btn-secondary quick-btn">
+          <i class="ri-file-list-3-line"></i>
+          Recap
+        </button>
+      </div>
+
+      <!-- Recap box -->
+      <div id="recap-content" class="recap-box hidden"></div>
+
+      <!-- Live Transcription Feed -->
+      <div class="section" id="live-transcript-section">
+        <h3 class="section-title">
+          <i class="ri-chat-voice-line"></i>
+          Live Transcript
+          <span id="transcript-count" class="count-pill">0</span>
+        </h3>
+        <div id="transcript-feed" class="transcript-feed-box">
+          <p id="transcript-empty" class="empty-text">Enable Captions (CC) — live speech will appear here</p>
+        </div>
+      </div>
+
+      <!-- AI Suggestions -->
+      <div id="suggestions-section" class="section">
+        <h3 class="section-title">
+          <i class="ri-sparkling-line"></i>
+          AI Suggestions
+        </h3>
+        <div id="suggestions-list">
+          <p class="empty-text">Click Suggestions when ready for AI insights</p>
+        </div>
+      </div>
+
+      <!-- Next question -->
+      <div id="next-question-section" class="section hidden">
+        <h3 class="section-title next-q-title">
+          <i class="ri-question-answer-line"></i>
+          Ask Next
+        </h3>
+        <div id="next-question-text" class="next-question-card">Click Next Q above to generate what to ask right now.</div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer actions (active state only) -->
+  <footer class="footer" id="active-footer" style="display:none;">
+    <button id="active-dashboard-btn" class="btn btn-ghost btn-sm btn-full">
+      <i class="ri-layout-masonry-line"></i>
+      Open Dashboard
+    </button>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

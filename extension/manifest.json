@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "MeetMaxxing — AI Meeting Copilot",
+  "version": "1.0.0",
+  "description": "Real-time AI suggestions, risk flags, and auto-summaries for Google Meet",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "sidePanel",
+    "identity",
+    "offscreen",
+    "tabCapture"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "http://localhost:8000/*",
+    "http://localhost:3000/*",
+    "https://mail.google.com/*",
+    "https://calendar.google.com/*",
+    "https://accounts.google.com/*",
+    "https://*.meetmaxxing.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["config.js", "content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "MeetMaxxing Side Panel"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "styles/*", "dist/*", "offscreen.html", "offscreen.js"],
+      "matches": ["https://meet.google.com/*", "<all_urls>"]
+    }
+  ]
+}

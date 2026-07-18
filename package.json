@@ -1,0 +1,15 @@
+{
+  "name": "meetmaxxing-root",
+  "version": "1.0.0",
+  "description": "Start script for MeetMaxxing backend and frontend",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && cd meetmind-web && npm install",
+    "start": "concurrently --kill-others --prefix-colors \"blue,green\" --names \"Backend,Frontend\" \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && venv\\Scripts\\python.exe -m uvicorn main:app --port 8000",
+    "start:frontend": "cd meetmind-web && npm run dev"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetMaxxing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#0f0f13;color:#e8e8f0;width:320px;min-height:400px;display:flex;flex-direction:column}
+    .header{padding:16px;border-bottom:1px solid rgba(255,255,255,0.08);background:#1a1a24}
+    .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;background:linear-gradient(135deg,#7c6dfa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .logo-svg{width:24px;height:24px;flex-shrink:0}
+    .tagline{font-size:11px;color:#7a7a9a;margin-top:2px}
+    main{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px}
+    .status-card{background:#1a1a24;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between}
+    .status-label{font-size:12px;color:#7a7a9a}
+    .status-val{font-size:12px;font-weight:600}
+    .status-live{color:#4ade80}
+    .status-idle{color:#7a7a9a}
+    .btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:8px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;border:none;width:100%;transition:all 0.15s}
+    .btn-primary{background:linear-gradient(135deg,#7c6dfa,#a78bfa);color:#fff}
+    .btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+    .btn-secondary{background:#232335;color:#e8e8f0;border:1px solid rgba(255,255,255,0.08)}
+    .btn-secondary:hover{border-color:#7c6dfa;color:#7c6dfa}
+    .divider{height:1px;background:rgba(255,255,255,0.06)}
+    footer{padding:12px 16px;text-align:center;font-size:11px;color:#7a7a9a;border-top:1px solid rgba(255,255,255,0.06)}
+    footer a{color:#7c6dfa;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="#7c6dfa" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      MeetMaxxing
+    </div>
+    <div class="tagline">AI Meeting Copilot</div>
+  </div>
+
+  <main>
+    <div class="status-card">
+      <span class="status-label">Meeting Status</span>
+      <span id="status-val" class="status-val status-idle">Not in meeting</span>
+    </div>
+
+    <button class="btn btn-primary" id="open-sidepanel-btn">
+      Open Copilot Panel
+    </button>
+    <button class="btn btn-secondary" id="open-dashboard-btn">
+      Open Dashboard
+    </button>
+  </main>
+  
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

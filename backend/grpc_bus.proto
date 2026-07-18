@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package meetmaxxing;
+
+service AgentTaskBus {
+  rpc DispatchTask (TaskRequest) returns (TaskResponse);
+}
+
+message TaskRequest {
+  string agent_name = 1;
+  string meeting_id = 2;
+  string payload_json = 3;
+}
+
+message TaskResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error_message = 3;
+}

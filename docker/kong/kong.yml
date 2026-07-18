@@ -1,0 +1,38 @@
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: backend-service
+    url: http://backend:8000
+    routes:
+      - name: backend-route
+        paths:
+          - /api
+          - /ingest
+          - /meeting
+          - /memory
+          - /calendar
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Accept-Version
+            - Content-Length
+            - Content-MD5
+            - Content-Type
+            - Date
+            - Authorization
+          exposed_headers:
+            - Authorization
+          credentials: true
+          max_age: 3600
