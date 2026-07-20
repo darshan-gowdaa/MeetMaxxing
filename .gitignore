@@ -1,14 +1,46 @@
+# ── Dependencies ─────────────────────────────────────────────────────────────
 node_modules/
+
+# ── Environment ───────────────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
+!.env.local.example
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
 dist/
 build/
-.next/
 out/
+.next/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.Python
+venv/
+.venv/
+*.pyc
+
+# ── Testing / Coverage ────────────────────────────────────────────────────────
 coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store
-*.log
-*.md
+desktop.ini
+Thumbs.db
 .idea/
 .vscode/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── TypeScript ────────────────────────────────────────────────────────────────
+tsconfig.tsbuildinfo
