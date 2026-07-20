@@ -64,7 +64,8 @@ class AgentTaskBusServicer(grpc_bus_pb2_grpc.AgentTaskBusServicer):
                 elif request.agent_name == "realtime":
                     return await run_realtime_agent(
                         meeting_id=request.meeting_id,
-                        context=payload.get("context", {})
+                        context=payload.get("context", {}),
+                        force=payload.get("force", False)
                     )
                 elif request.agent_name == "email":
                     return await run_email_agent(

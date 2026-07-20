@@ -38,7 +38,7 @@
     }
   ],
   "side_panel": {
-    "default_path": "sidepanel.html"
+    "default_path": "dist/index.html"
   },
   "action": {
     "default_title": "MeetMaxxing Side Panel"

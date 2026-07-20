@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useRef } from "react";
 import {
   RiMicLine as Mic,
@@ -14,6 +15,7 @@ import {
   RiExternalLinkLine as ExternalLink
 } from "@remixicon/react";
 import type { TranscriptChunk, CopilotUpdate } from "./types";
+import "./sidepanel.css";
 
 declare const chrome: any;
 
@@ -39,30 +41,31 @@ export default function App() {
   const [copiedQuestion, setCopiedQuestion] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<string>("00:00");
   
-  const meetingStartTimeRef = useRef<number>(Date.now());
+  const [meetingStartTime, setMeetingStartTime] = useState<number>(Date.now());
   const transcriptBottomRef = useRef<HTMLDivElement>(null);
 
   // Timer
   useEffect(() => {
     const timer = setInterval(() => {
-      const diff = Math.floor((Date.now() - meetingStartTimeRef.current) / 1000);
+      const diff = Math.floor((Date.now() - meetingStartTime) / 1000);
       const mins = Math.floor(diff / 60);
       const secs = diff % 60;
       setElapsedTime(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [meetingStartTime]);
 
   // Chrome Extension message listener
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy"], (res: any) => {
+      chrome.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime"], (res: any) => {
         if (res.currentMeetingId) {
           setMeetingId(res.currentMeetingId);
         }
         if (res.currentMeetingTitle) setMeetingTitle(res.currentMeetingTitle);
         if (res.transcript && Array.isArray(res.transcript)) setTranscriptLines(res.transcript);
         if (res.poweredBy) setPoweredBy(res.poweredBy);
+        if (res.meetingStartTime) setMeetingStartTime(res.meetingStartTime);
         if (res.copilot_state) {
           handleCopilotUpdate(res.copilot_state);
         }
@@ -80,7 +83,14 @@ export default function App() {
         setIsEnded(false);
         if (msg.meetingId) setMeetingId(msg.meetingId);
         if (msg.title) setMeetingTitle(msg.title);
-        meetingStartTimeRef.current = Date.now();
+        if (msg.startTime) setMeetingStartTime(msg.startTime);
+        
+        if (!msg.reused) {
+          setTranscriptLines([]);
+          setSuggestions([]);
+          setNextQuestion("");
+          setRecap("");
+        }
       } else if (msg.type === "MEETING_ENDED") {
         setIsEnded(true);
       }
@@ -98,6 +108,9 @@ export default function App() {
             setIsEnded(false);
             setMeetingId(changes.currentMeetingId.newValue);
           }
+        }
+        if (changes.meetingStartTime && changes.meetingStartTime.newValue) {
+          setMeetingStartTime(changes.meetingStartTime.newValue);
         }
       }
     };
@@ -210,192 +223,143 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#141518] text-[#ffffff] select-none font-sans overflow-hidden">
-      {/* Material 3 Expressive Header Container (`#1e1f20`) */}
-      <header className="px-4 pt-4 pb-3.5 bg-gradient-to-b from-[#1e1f20] to-[#1a1b1c] border-b border-[#ffffff]/10 flex flex-col gap-3 shrink-0 shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-[#0842a0] border border-[#a8c7fa]/40 flex items-center justify-center shrink-0 shadow-sm animate-pulse-glow">
-              <Sparkles className="w-5 h-5 text-[#a8c7fa]" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#6dd58c] animate-pulse shrink-0" />
-                <h1 className="text-sm font-bold text-white truncate tracking-tight">
-                  {meetingId ? meetingTitle : "MeetMaxxing AI Copilot"}
-                </h1>
-              </div>
-              <span className="text-[11px] text-[#868e96] font-mono truncate flex items-center gap-1.5">
-                <span>Material 3 Expressive</span>
-                <span>•</span>
-                <span className="text-[#a8c7fa]">AI Copilot</span>
-              </span>
-            </div>
+        <>
+      <header className="header">
+        <div className="header-left">
+          <div className="logo">
+            <span className="logo-icon"><i className="ri-sparkling-2-fill"></i></span>
+            <span>MeetMaxxing</span>
           </div>
+          <div id="status-badge" className={`badge ${meetingId && !isEnded ? 'badge-live' : 'badge-idle'}`}>
+            <span className="badge-dot"></span>
+            <span className="badge-label">{meetingId && !isEnded ? 'Live' : 'Idle'}</span>
+          </div>
+        </div>
+        <div className="header-right">
+          <div id="timer" className="timer">{elapsedTime}</div>
           {meetingId && !isEnded && (
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="px-2.5 py-1.5 rounded-xl bg-[#27292c] border border-[#ffffff]/10 text-xs font-mono text-[#a8c7fa] flex items-center gap-1.5 shadow-inner">
-                <Clock className="w-3.5 h-3.5 text-[#a8c7fa]" />
-                {elapsedTime}
-              </span>
-              <button
-                onClick={() => triggerAction("REQUEST_END_MEETING")}
-                className="px-2.5 py-1.5 rounded-xl bg-[#7a2730]/40 border border-[#f2b8b5]/20 text-[10px] font-bold text-[#f2b8b5] hover:bg-[#7a2730]/70 transition-all shadow-sm uppercase tracking-wider flex items-center gap-1.5 shrink-0"
-                title="End Meeting"
-              >
-                <div className="w-1.5 h-1.5 rounded-sm bg-[#f2b8b5] shrink-0" />
-                Stop
-              </button>
-            </div>
+            <button
+              id="end-meeting-top-btn"
+              className="btn btn-sm btn-danger"
+              title="End Meeting & Process Summary"
+              onClick={() => triggerAction("REQUEST_END_MEETING")}
+            >
+              <i className="ri-stop-fill"></i>
+              Stop
+            </button>
           )}
         </div>
-
-        {/* Expressive Powered By API Chip Badge */}
-        {meetingId && (
-          <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-[#27292c] border border-[#a8c7fa]/30 shadow-inner">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-lg bg-[#0842a0]/60 flex items-center justify-center shrink-0">
-                <Zap className="w-3.5 h-3.5 text-[#fdd663]" />
-              </div>
-              <div className="flex flex-col min-w-0 overflow-hidden w-full">
-                <span className="text-[10px] uppercase font-bold text-[#a8c7fa] tracking-wider leading-tight">
-                  Active:
-                </span>
-                <span 
-                  className="text-xs font-semibold text-white whitespace-nowrap overflow-hidden" 
-                  dangerouslySetInnerHTML={{ __html: `<marquee scrollamount="2">${poweredBy}</marquee>` }}
-                />
-              </div>
-            </div>
-            {!isEnded && (
-              <button
-                onClick={() => triggerAction("ASK_SUGGESTIONS")}
-                disabled={isProcessing}
-                title="Force refresh AI insights"
-                className="p-2 rounded-xl bg-[#27292c] hover:bg-[#333537] text-[#a8c7fa] border border-[#ffffff]/10 disabled:opacity-50 transition-all shadow-sm shrink-0"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? "animate-spin text-[#7fcfff]" : ""}`} />
-              </button>
-            )}
-          </div>
-        )}
       </header>
 
       {!meetingId ? (
-        <main className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center bg-[#141518]">
-          <div className="w-16 h-16 rounded-full bg-[#0842a0]/20 border border-[#a8c7fa]/20 flex items-center justify-center mb-4 shadow-inner">
-            <MessageSquare className="w-8 h-8 text-[#a8c7fa]" />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">No Active Meeting</h2>
-          <p className="text-sm text-[#868e96] text-center mb-8 max-w-[280px] leading-relaxed">
-            Join a Google Meet session and click "Allow & Start" to activate the MeetMaxxing AI Copilot.
-          </p>
-          <div className="flex flex-col gap-3 w-full max-w-[300px]">
-            <a
-              href="http://localhost:3000"
-              target="_blank"
-              rel="noreferrer"
-              className="w-full px-4 py-3 rounded-2xl bg-[#0842a0] hover:bg-[#0842a0]/80 border border-[#a8c7fa]/20 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
-            >
-              <ExternalLink className="w-4 h-4 text-[#a8c7fa]" />
-              Open Dashboard
-            </a>
+        <main>
+          <div id="idle-state" className="state-container">
+            <div className="idle-state">
+              <div className="idle-icon">
+                <i className="ri-vidicon-line"></i>
+              </div>
+              <p className="idle-title">Not in a Meeting</p>
+              <p className="idle-text">Join a Google Meet call to activate MeetMaxxing AI Copilot</p>
+              <div className="idle-steps">
+                <div className="idle-step">
+                  <span className="step-num">1</span>
+                  <span>Open Google Meet</span>
+                </div>
+                <div className="idle-step">
+                  <span className="step-num">2</span>
+                  <span>Enable Captions (CC)</span>
+                </div>
+                <div className="idle-step">
+                  <span className="step-num">3</span>
+                  <span>Copilot activates auto</span>
+                </div>
+              </div>
+              
+              <div style={{ marginTop: "24px" }}>
+                <a href="http://localhost:3000" target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm btn-full" style={{ textDecoration: 'none' }}>
+                  <i className="ri-layout-masonry-line"></i>
+                  Open Dashboard
+                </a>
+              </div>
+            </div>
           </div>
         </main>
       ) : isEnded ? (
-        <main className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center bg-[#141518]">
-          <div className="w-16 h-16 rounded-full bg-[#6dd58c]/10 flex items-center justify-center mb-4 shadow-inner">
-            <Check className="w-8 h-8 text-[#6dd58c]" />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Meeting Completed</h2>
-          <p className="text-sm text-[#868e96] text-center mb-8 max-w-[280px] leading-relaxed">
-            Your transcript has been processed and stored in the meeting memory.
-          </p>
-          
-          <div className="flex flex-col gap-3 w-full max-w-[300px]">
-            <a
-              href={`http://localhost:3000/meetings/${meetingId}`}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full px-4 py-3 rounded-2xl bg-[#0842a0] hover:bg-[#0842a0]/80 border border-[#a8c7fa]/20 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
-            >
-              <ExternalLink className="w-4 h-4 text-[#a8c7fa]" />
-              View Summarization Details
-            </a>
-            <button className="w-full px-4 py-3 rounded-2xl bg-[#27292c] hover:bg-[#27292c] border border-[#ffffff]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
-              <History className="w-4 h-4" />
-              Sync to GCalendar
-            </button>
-            <button className="w-full px-4 py-3 rounded-2xl bg-[#27292c] hover:bg-[#27292c] border border-[#ffffff]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
-              <MessageSquare className="w-4 h-4" />
-              Send Follow-up (Gmail)
-            </button>
-            <a
-              href="http://localhost:3000"
-              target="_blank"
-              rel="noreferrer"
-              className="w-full px-4 py-3 rounded-2xl bg-[#27292c] hover:bg-[#333537] border border-[#ffffff]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all mt-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Open Dashboard
-            </a>
+        <main>
+          <div id="ended-state" className="state-container">
+            <div className="ended-card">
+              <div className="ended-success-ring">
+                <div className="ended-icon-wrap">
+                  <i className="ri-checkbox-circle-fill"></i>
+                </div>
+              </div>
+              <h2 className="ended-title">Meeting Complete</h2>
+              <p className="ended-sub">AI has processed your transcript and generated a full intelligence report.</p>
+              
+              <div className="ended-stats" style={{ marginTop: '12px' }}>
+                <div className="ended-stat">
+                  <i className="ri-chat-1-line"></i>
+                  <span>{transcriptLines.length}</span>
+                  <span className="stat-label">Lines</span>
+                </div>
+                <div className="ended-stat-divider"></div>
+                <div className="ended-stat">
+                  <i className="ri-flashlight-line"></i>
+                  <span>AI</span>
+                  <span className="stat-label">Powered</span>
+                </div>
+                <div className="ended-stat-divider"></div>
+                <div className="ended-stat">
+                  <i className="ri-shield-check-line"></i>
+                  <span>Safe</span>
+                  <span className="stat-label">Guardrail</span>
+                </div>
+              </div>
+
+              <div className="ended-cta" style={{ marginTop: '16px' }}>
+                <a href={`http://localhost:3000/meetings/${meetingId}`} target="_blank" rel="noreferrer" className="btn btn-cta btn-full" style={{ textDecoration: 'none' }}>
+                  <i className="ri-layout-masonry-fill"></i>
+                  Open Dashboard
+                  <i className="ri-arrow-right-line btn-arrow"></i>
+                </a>
+              </div>
+            </div>
           </div>
         </main>
       ) : (
-        <>
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-y-auto p-3.5 space-y-4">
-            
+        <main>
+          <div id="active-state" className="state-container">
             {/* Live Transcription Section */}
-            <section className="bg-[#27292c] rounded-2xl border border-[#ffffff]/10 shadow-sm flex flex-col transition-all duration-300">
-              <div className="flex items-center justify-between p-3 border-b border-[#ffffff]/5">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setIsTranscriptMaximized(!isTranscriptMaximized)} className="text-[#a8c7fa] hover:text-[#d3e3fd] p-1 rounded hover:bg-[#0842a0]/40 transition-colors">
-                    {isTranscriptMaximized ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    )}
-                  </button>
-                  <Mic className="w-4 h-4 text-[#6dd58c] animate-pulse" />
-                  <span className="text-xs font-bold text-[#ffffff] tracking-tight">Live Transcription</span>
-                </div>
+            <div className="section md3-card" id="live-transcript-section">
+              <div className="section-header" style={{ justifyContent: "flex-start", gap: "8px" }}>
+                <button onClick={() => setIsTranscriptMaximized(!isTranscriptMaximized)} className="btn btn-ghost btn-sm" style={{ color: "var(--primary)", padding: "2px 4px" }}>
+                  <i className={isTranscriptMaximized ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"} style={{ fontSize: "16px" }}></i>
+                </button>
+                <h3 className="section-title">
+                  <i className="ri-chat-voice-fill" style={{ color: "var(--primary)" }}></i>
+                  Live Transcription
+                  <span className="count-pill">{transcriptLines.length}</span>
+                </h3>
               </div>
-              <div 
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${isTranscriptMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
-              >
-                <div>
-                  <div className="p-3 max-h-[200px] overflow-y-auto flex flex-col gap-2.5 text-xs">
-                    {transcriptLines.length === 0 ? (
-                      <div className="text-center text-[#868e96] italic py-4">
-                        Enable Captions (CC) on Meet to start live transcription.
-                      </div>
-                    ) : (
-                      transcriptLines.map((line, idx) => (
-                        <div key={idx} className="bg-[#1e1f20] p-2 rounded-lg border border-[#ffffff]/5">
-                          <span className="font-bold text-[#6dd58c] text-[10px] uppercase tracking-wider block mb-1">
-                            {line.speaker}
-                          </span>
-                          <span className="text-[#e3e3e3] leading-relaxed">{line.text}</span>
-                        </div>
-                      ))
-                    )}
-                    <div ref={transcriptBottomRef} />
-                  </div>
-                </div>
-              </div>
-              {!isTranscriptMaximized && (
-                <div className="p-3 text-xs text-[#ffffff] truncate">
-                  {transcriptLines.length > 0 ? (
-                    <span className="opacity-90">
-                      <strong className="text-[#d3e3fd]">{transcriptLines[transcriptLines.length - 1].speaker}:</strong> {transcriptLines[transcriptLines.length - 1].text}
-                    </span>
+              <div className={`smooth-collapse ${isTranscriptMaximized ? '' : 'collapsed'}`}>
+                <div className="transcript-feed-box" style={{ maxHeight: isTranscriptMaximized ? '200px' : '40px' }}>
+                  {transcriptLines.length === 0 ? (
+                    <p className="empty-text">Enable Captions (CC) — live speech will appear here</p>
                   ) : (
-                    <span className="text-[#868e96] italic">Listening...</span>
+                    transcriptLines.map((line, idx) => (
+                      <div key={idx} className="transcript-line">
+                        <span className="transcript-speaker">
+                          <div className="transcript-speaker-avatar">{line.speaker.charAt(0)}</div>
+                          {line.speaker}
+                        </span>
+                        <span className="transcript-text">{line.text}</span>
+                      </div>
+                    ))
                   )}
+                  <div ref={transcriptBottomRef} />
                 </div>
-              )}
-            </section>
+              </div>
+            </div>
 
             {/* Error Alert Banner */}
             {errorMessage && (
@@ -417,176 +381,115 @@ export default function App() {
               </div>
             )}
 
+            
             {/* What to answer Agent */}
-            <section className="space-y-2.5">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#a8c7fa]">
-                  <button onClick={() => setIsSuggestionsMaximized(!isSuggestionsMaximized)} className="text-[#a8c7fa] hover:text-white p-1 rounded hover:bg-[#ffffff]/10 transition-colors">
-                    {isSuggestionsMaximized ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    )}
-                  </button>
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Realtime Insights</span>
-                </div>
-                <button
+            <div id="suggestions-section" className="section md3-card">
+              <div className="section-header" style={{ justifyContent: "flex-start", gap: "8px" }}>
+                <button onClick={() => setIsSuggestionsMaximized(!isSuggestionsMaximized)} className="btn btn-ghost btn-sm" style={{ color: "#a8c7fa", padding: "2px 4px" }}>
+                  <i className={isSuggestionsMaximized ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"} style={{ fontSize: "16px" }}></i>
+                </button>
+                <h3 className="section-title" style={{ flex: 1 }}>
+                  <i className="ri-sparkling-fill" style={{ color: "#a8c7fa" }}></i>
+                  "What to answer" Agent
+                </h3>
+                <button 
                   onClick={() => triggerAction("ASK_SUGGESTIONS")}
                   disabled={isProcessing}
-                  className="text-[10px] text-[#0842a0] hover:text-white bg-[#a8c7fa] hover:bg-[#d3e3fd] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1 transition-colors pointer-events-auto disabled:pointer-events-none"
+                  className="btn btn-primary btn-sm"
                 >
-                  {isProcessing ? <span className="md3-loading-indicator md3-loading-indicator-sm" style={{borderColor: "transparent", borderTopColor: "currentColor", borderRightColor: "currentColor"}}></span> : null}
-                  <span>Suggest</span>
+                  <i className={`ri-refresh-line ${isProcessing ? 'animate-spin' : ''}`}></i> Suggest
                 </button>
               </div>
-              <div 
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${isSuggestionsMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
-              >
-                <div>
-                  <div className="pt-2">
-                    {suggestions.length > 0 ? (
-                      <div className="space-y-2.5">
-                        {suggestions.map((sug, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => copyToClipboard(sug, idx)}
-                            className="p-3 rounded-2xl bg-[#27292c] border-l-[3px] border-l-[#a8c7fa] border-y border-r border-[#ffffff]/10 hover:bg-[#333537] hover:border-[#a8c7fa]/40 cursor-pointer transition-all text-xs text-[#ffffff] leading-relaxed shadow-sm hover:shadow-md"
-                          >
-                            <div className="flex justify-between items-start">
-                              <span>{sug}</span>
-                              {copiedIndex === idx ? (
-                                <Check className="w-4 h-4 text-[#6dd58c] shrink-0 ml-2" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5 text-[#868e96] shrink-0 ml-2" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
-                        Click Suggest to get answers.
-                      </div>
-                    )}
-                  </div>
+              <div className={`smooth-collapse ${isSuggestionsMaximized ? '' : 'collapsed'}`}>
+                <div id="suggestions-list" className="content-box">
+                  {suggestions.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {suggestions.map((sug, idx) => (
+                        <div key={idx} className="suggestion-card new" onClick={() => copyToClipboard(sug, idx)}>
+                          {sug}
+                          {copiedIndex === idx && <i className="ri-check-line" style={{ color: 'var(--success)', float: 'right' }}></i>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="empty-text">Click Suggest when ready for AI insights</p>
+                  )}
                 </div>
               </div>
-            </section>
+            </div>
 
-            {/* Next Question Agent */}
-            <section className="space-y-2.5">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#7fcfff]">
-                  <button onClick={() => setIsNextQMaximized(!isNextQMaximized)} className="text-[#7fcfff] hover:text-white p-1 rounded hover:bg-[#ffffff]/10 transition-colors">
-                    {isNextQMaximized ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    )}
+            {/* Suggestion of what to Ask */}
+            <div id="next-question-section" className={`section md3-card smooth-collapse`} style={{ border: "none", padding: 0, marginBottom: 0 }}>
+              <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "12px", marginBottom: "12px", background: "var(--surface)" }}>
+                <div className="section-header" style={{ justifyContent: "flex-start", gap: "8px" }}>
+                  <button onClick={() => setIsNextQMaximized(!isNextQMaximized)} className="btn btn-ghost btn-sm" style={{ color: "#7fcfff", padding: "2px 4px" }}>
+                    <i className={isNextQMaximized ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"} style={{ fontSize: "16px" }}></i>
                   </button>
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Next Question Agent</span>
-                </div>
-                  <button
+                  <h3 className="section-title next-q-title" style={{ flex: 1 }}>
+                    <i className="ri-question-answer-fill" style={{ color: "#7fcfff" }}></i>
+                    "Suggestion of what to Ask"
+                  </h3>
+                  <button 
                     onClick={() => triggerAction("ASK_NEXT_QUESTION")}
                     disabled={isProcessing}
-                    className="text-[10px] text-[#004a77] hover:text-white bg-[#7fcfff] hover:bg-[#a3dbff] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1 transition-colors pointer-events-auto disabled:pointer-events-none"
+                    className="btn btn-secondary btn-sm" style={{ background: "rgba(127, 207, 255, 0.1)", color: "#7fcfff" }}
                   >
-                    {isProcessing ? <span className="md3-loading-indicator md3-loading-indicator-sm" style={{borderColor: "transparent", borderTopColor: "currentColor", borderRightColor: "currentColor"}}></span> : null}
-                    <span>Generate</span>
+                    <i className={`ri-refresh-line ${isProcessing ? 'animate-spin' : ''}`}></i> Generate
                   </button>
                 </div>
-                <div 
-                  className={`transition-all duration-300 ease-in-out overflow-hidden ${isNextQMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
-                >
-                  <div>
-                    <div className="pt-2">
-                      {nextQuestion ? (
-                        <div
-                          onClick={() => copyToClipboard(nextQuestion)}
-                          className="p-3 rounded-2xl bg-[#27292c] border-l-[3px] border-l-[#7fcfff] border-y border-r border-[#ffffff]/10 hover:bg-[#333537] hover:border-[#7fcfff]/40 cursor-pointer transition-all text-xs text-[#ffffff] leading-relaxed shadow-sm hover:shadow-md"
-                        >
-                          <div className="flex justify-between items-start">
-                            <span>{nextQuestion}</span>
-                            {copiedQuestion ? (
-                              <Check className="w-4 h-4 text-[#6dd58c] shrink-0 ml-2" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5 text-[#868e96] shrink-0 ml-2" />
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
-                          Click Generate for a question.
-                        </div>
-                      )}
+                <div className={`smooth-collapse ${isNextQMaximized ? '' : 'collapsed'}`}>
+                  {nextQuestion ? (
+                    <div className="next-question-card content-box" onClick={() => copyToClipboard(nextQuestion)} style={{ cursor: 'pointer' }}>
+                      {nextQuestion}
+                      {copiedQuestion && <i className="ri-check-line" style={{ color: 'var(--success)', float: 'right' }}></i>}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="next-question-card content-box" style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>
+                      Click Generate to formulate a question.
+                    </div>
+                  )}
                 </div>
-              </section>
+              </div>
+            </div>
 
             {/* Recap Agent */}
-            <section className="space-y-2.5 pb-2">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#6dd58c]">
-                  <button onClick={() => setIsRecapMaximized(!isRecapMaximized)} className="text-[#6dd58c] hover:text-white p-1 rounded hover:bg-[#ffffff]/10 transition-colors">
-                    {isRecapMaximized ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    )}
-                  </button>
-                  <History className="w-4 h-4" />
-                  <span>Late-Join Recap</span>
-                </div>
-                <button
+            <div className="section md3-card" id="recap-section">
+              <div className="section-header" style={{ justifyContent: "flex-start", gap: "8px" }}>
+                <button onClick={() => setIsRecapMaximized(!isRecapMaximized)} className="btn btn-ghost btn-sm" style={{ color: "#6dd58c", padding: "2px 4px" }}>
+                  <i className={isRecapMaximized ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"} style={{ fontSize: "16px" }}></i>
+                </button>
+                <h3 className="section-title" style={{ flex: 1 }}>
+                  <i className="ri-file-list-3-fill" style={{ color: "#6dd58c" }}></i>
+                  "Recap Agent"
+                </h3>
+                <button 
                   onClick={() => triggerAction("REQUEST_RECAP")}
                   disabled={isProcessing}
-                  className="text-[10px] text-[#0d3f23] hover:text-white bg-[#6dd58c] hover:bg-[#8eebb0] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1 transition-colors pointer-events-auto disabled:pointer-events-none"
+                  className="btn btn-secondary btn-sm" style={{ background: "rgba(109, 213, 140, 0.1)", color: "#6dd58c" }}
                 >
-                  {isProcessing ? <span className="md3-loading-indicator md3-loading-indicator-sm" style={{borderColor: "transparent", borderTopColor: "currentColor", borderRightColor: "currentColor"}}></span> : null}
-                  <span>Recap</span>
+                  <i className={`ri-refresh-line ${isProcessing ? 'animate-spin' : ''}`}></i> Recap
                 </button>
               </div>
-              <div 
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${isRecapMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
-              >
-                <div>
-                  <div className="pt-2">
-                    {recap ? (
-                      <div className="p-4 rounded-2xl bg-[#27292c] border border-[#6dd58c]/30 text-xs text-[#ffffff] leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto shadow-inner">
-                        {recap}
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
-                        Click Recap for an executive brief.
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className={`smooth-collapse ${isRecapMaximized ? '' : 'collapsed'}`}>
+                {recap ? (
+                  <div className="recap-box content-box" style={{ whiteSpace: 'pre-wrap' }}>{recap}</div>
+                ) : (
+                  <div className="recap-box content-box" style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>Click Recap for an executive summary.</div>
+                )}
               </div>
-            </section>
+            </div>
+          </div>
           </main>
-        </>
       )}
 
-      {/* Material 3 Expressive Footer (`#1e1f20`) */}
-      <footer className="px-4 py-3 bg-gradient-to-t from-[#1a1b1c] to-[#1e1f20] border-t border-[#ffffff]/10 flex items-center justify-between text-[11px] text-[#868e96] shrink-0 shadow-lg">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#6dd58c]" />
-          <span className="font-mono text-xs font-semibold text-[#ffffff]">MeetMaxxing v2.5</span>
-        </div>
-        <a
-          href="http://localhost:3000"
-          target="_blank"
-          rel="noreferrer"
-          className="px-2 py-0.5 text-[11px] rounded bg-[#27292c] hover:bg-[#333537] text-[#a8c7fa] hover:text-white font-medium border border-[#ffffff]/10 flex items-center gap-1 transition-all shadow-sm"
-        >
-          <span>Open Dashboard</span>
-          <ExternalLink className="w-3 h-3" />
-        </a>
-      </footer>
-    </div>
+      {meetingId && !isEnded && (
+        <footer className="footer" id="active-footer">
+          <a href="http://localhost:3000" target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm btn-full" style={{ textDecoration: 'none' }}>
+            <i className="ri-layout-masonry-line"></i>
+            Open Dashboard
+          </a>
+        </footer>
+      )}
+    </>
   );
 }

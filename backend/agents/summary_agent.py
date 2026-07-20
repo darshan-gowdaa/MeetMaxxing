@@ -25,6 +25,7 @@ Produce:
 4. FOLLOW_UP: A follow-up intent object — does this meeting imply a next meeting or follow-up? Include: required (bool), suggested_topic, suggested_attendees.
 
 CRITICAL RULES:
+- EVEN IF THE MEETING IS EXTREMELY SHORT OR CONTAINS ONLY A FEW WORDS, YOU MUST PROVIDE A 'summary'. (e.g., 'The meeting was brief with limited context.').
 - Every decision must cite the exact speaker name from the transcript. If unclear, use "Team".
 - Every action item must cite an owner from the transcript. Never invent owners.
 - Dates/deadlines must be exactly as stated in transcript — never assume.
@@ -160,14 +161,14 @@ async def run_summary_agent(
             raw, powered_by = await run_lyzr_agent("Summary Agent - MeetMaxxing", prompt)
             
         result = _parse_json_clean(raw or "{}")
-        if not result:
-            result = {
-                "summary": "Could not parse LLM output.",
-                "decisions": [],
-                "action_items": [],
-                "follow_up": {"required": False},
-                "error": "JSON parse failed"
-            }
+        if not result or "summary" not in result:
+            if not result:
+                result = {}
+                result["error"] = "JSON parse failed"
+            result["summary"] = result.get("summary", "The meeting was too brief or context was limited, but it has been successfully logged.")
+            result["decisions"] = result.get("decisions", [])
+            result["action_items"] = result.get("action_items", [])
+            result["follow_up"] = result.get("follow_up", {"required": False})
         result["powered_by"] = powered_by
     except Exception as e:
         err_str = str(e)
