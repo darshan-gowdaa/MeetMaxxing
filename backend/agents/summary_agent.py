@@ -13,10 +13,9 @@ import logging
 from typing import List, Dict, Any
 from ..core.config import settings
 from ..core.redis_client import get_full_transcript
-from ..core.llm_fallback import generate_content_with_fallback
+from ..core.lyzr_integration import run_lyzr_agent
 
 logger = logging.getLogger(__name__)
-
 _SYSTEM_PROMPT = """You are MeetMaxxing's Summary Agent. You extract structured meeting intelligence from transcripts.
 
 Produce:
@@ -115,14 +114,8 @@ def _chunk_transcript(lines: List[str], max_length: int = 15000) -> List[str]:
     return chunks
 
 async def _summarize_chunk(chunk_text: str, title: str, attendee_str: str) -> str:
-    prompt = f"Meeting: {title or 'Untitled'}\nAttendees: {attendee_str}\n\nTranscript Segment:\n{chunk_text}\n\nExtract the structured meeting intelligence as per instructions."
-    raw, _ = await generate_content_with_fallback(
-        prompt=prompt,
-        system_instruction=_SYSTEM_PROMPT,
-        temperature=0.2,
-        max_tokens=1024,
-        response_format_json=True,
-    )
+    prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\n\nTranscript Segment:\n{chunk_text}\n\nExtract the structured meeting intelligence as per instructions."
+    raw, _ = await run_lyzr_agent("Summary Agent - MeetMaxxing", prompt)
     return raw
 
 async def run_summary_agent(
@@ -155,26 +148,14 @@ async def run_summary_agent(
                 sub_summaries.append(sub_sum)
             
             # Synthesize
-            synthesis_prompt = "Merge the following sub-summaries into one cohesive JSON:\n\n"
+            synthesis_prompt = f"{_SYNTHESIS_PROMPT}\n\nMerge the following sub-summaries into one cohesive JSON:\n\n"
             for i, s in enumerate(sub_summaries):
                 synthesis_prompt += f"--- SUB-SUMMARY {i+1} ---\n{s}\n\n"
                 
-            raw, powered_by = await generate_content_with_fallback(
-                prompt=synthesis_prompt,
-                system_instruction=_SYNTHESIS_PROMPT,
-                temperature=0.2,
-                max_tokens=2048,
-                response_format_json=True,
-            )
+            raw, powered_by = await run_lyzr_agent("Summary Agent - MeetMaxxing", synthesis_prompt)
         else:
-            prompt = f"Meeting: {title or 'Untitled'}\nAttendees: {attendee_str}\nDuration: {len(utterances)} utterances recorded\n\nFull transcript:\n{transcript_text}\n\nExtract the structured meeting intelligence as per instructions."
-            raw, powered_by = await generate_content_with_fallback(
-                prompt=prompt,
-                system_instruction=_SYSTEM_PROMPT,
-                temperature=0.2,
-                max_tokens=2048,
-                response_format_json=True,
-            )
+            prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\nDuration: {len(utterances)} utterances recorded\n\nFull transcript:\n{transcript_text}\n\nExtract the structured meeting intelligence as per instructions."
+            raw, powered_by = await run_lyzr_agent("Summary Agent - MeetMaxxing", prompt)
             
         result = _parse_json_clean(raw or "{}")
         if not result:

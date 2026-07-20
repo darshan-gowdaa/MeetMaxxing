@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use, useCallback } from "react";
 import Link from "next/link";
-import Topbar from "@/components/Topbar";
 import { fetchMeeting, updateActionItem } from "@/lib/api";
 import { Md3LoadingIndicator } from "@/components/Md3Loading";
 import { format } from "date-fns";
@@ -37,59 +36,7 @@ const PRIORITY: Record<string, { chip: string; dot: string }> = {
   low:    { chip: "bg-success-container text-success border-success/30", dot: "bg-success" },
 };
 
-type BtnState = "idle" | "loading" | "success" | "error";
-
-const GmailIcon = ({ className }: { className?: string }) => (
-  <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" className={className} alt="Gmail" />
-);
-
-const GoogleCalendarIcon = ({ className }: { className?: string }) => (
-  <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" className={className} alt="Google Calendar" />
-);
-
-// ── Reusable action button ─────────────────────────────────────────────────
-function ActionButton({
-  label, icon: Icon, state, successLabel,
-  errorLabel = "Failed — retry", onClick,
-}: {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  state: BtnState;
-  successLabel: string;
-  errorLabel?: string;
-  onClick: () => void;
-}) {
-  if (state === "loading")
-    return (
-      <button disabled className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 border border-border text-[12px] text-text-muted cursor-wait">
-        <Md3LoadingIndicator size="sm" />
-        {label}…
-      </button>
-    );
-  if (state === "success")
-    return (
-      <button disabled className="flex items-center gap-2 px-4 h-9 rounded-full bg-success/10 border border-success/30 text-[12px] text-success cursor-default">
-        <Check className="w-3.5 h-3.5" />
-        {successLabel}
-      </button>
-    );
-  if (state === "error")
-    return (
-      <button onClick={onClick} className="flex items-center gap-2 px-4 h-9 rounded-full bg-risk-container/40 border border-risk/30 text-[12px] text-risk spring hover:-translate-y-0.5 active:translate-y-0">
-        <AlertTriangle className="w-3.5 h-3.5" />
-        {errorLabel}
-      </button>
-    );
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"
-    >
-      <Icon className="w-3.5 h-3.5" />
-      {label}
-    </button>
-  );
-}
+import { ActionButton, GmailIcon, GoogleCalendarIcon, type BtnState } from "@/components/ActionButtons";
 
 export default function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -187,7 +134,6 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   if (loading) {
     return (
       <div className="min-h-screen bg-bg flex flex-col">
-        <Topbar />
         <div className="flex-1 flex flex-col items-center justify-center gap-5">
           <Md3LoadingIndicator size="lg" />
           <p className="text-[13px] text-text-muted font-medium">Loading meeting data…</p>
@@ -196,34 +142,36 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  // ── Error state ─────────────────────────────────────────────────────────
+  // ── Processing / Not Found state ────────────────────────────────────────
   if (!meeting) {
     return (
       <div className="min-h-screen bg-bg flex flex-col">
-        <Topbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-5">
-          <div className="w-20 h-20 rounded-[28px] bg-risk-container border border-risk/20 flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-risk" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
+            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
+            <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-text tracking-tight mb-2">Meeting Not Found</h2>
-            <p className="text-[13px] text-text-muted max-w-md leading-relaxed">
-              Could not load meeting{" "}
-              <code className="bg-surface2 px-2 py-0.5 rounded-lg text-primary font-mono text-[11px]">{id}</code>.
-              {errorMsg ? ` (${errorMsg})` : " It may still be processing."}
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-[14px] text-text-muted font-medium animate-pulse tracking-wide">
+              AI is processing this meeting transcript
             </p>
+            {errorMsg && (
+              <p className="text-[11px] text-text-muted/40 max-w-xs text-center">{errorMsg}</p>
+            )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mt-4">
             <Link
               href="/"
-              className="flex items-center gap-2 h-11 px-6 rounded-full bg-primary-container text-on-primary-container text-[13px] font-semibold spring hover:brightness-110 active:scale-[0.97]"
+              className="flex items-center gap-2 h-10 px-5 rounded-full bg-surface2 hover:bg-surface3 text-text text-[13px] font-semibold spring"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
             </Link>
             <button
               onClick={loadMeeting}
-              className="w-11 h-11 rounded-full bg-surface2 hover:bg-surface3 border border-border text-primary flex items-center justify-center spring"
+              className="w-10 h-10 rounded-full bg-surface2 hover:bg-surface3 text-text flex items-center justify-center spring"
+              title="Refresh"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -236,16 +184,14 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   // ── Main detail ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-bg text-text font-sans pb-16">
-      <Topbar />
-
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 flex flex-col gap-5">
 
         {/* Back nav */}
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-[12.5px] text-text-muted hover:text-text w-fit spring-colors"
+          className="group flex items-center gap-2 px-4 py-2 text-[14px] font-medium text-text hover:text-primary bg-surface-container hover:bg-surface2 border border-border rounded-full w-fit mb-2 spring shadow-sm"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 text-text-muted group-hover:text-primary group-hover:-translate-x-1 spring" />
           All Meetings
         </Link>
 
@@ -253,7 +199,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         <div className="relative bg-surface-container rounded-[28px] border border-border overflow-hidden p-6 md:p-8">
           {/* Ambient */}
           <div className="absolute top-0 right-0 w-72 h-72 rounded-full blur-[100px] pointer-events-none"
-               style={{ background: "radial-gradient(circle, rgba(168,199,250,0.06) 0%, transparent 70%)" }} />
+               style={{ background: "radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)" }} />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-start gap-5 justify-between">
             <div className="flex flex-col gap-3 max-w-2xl">
@@ -270,7 +216,11 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                 )}
               </div>
               <h1 className="text-xl md:text-2xl font-bold text-text tracking-tight leading-tight">
-                {meeting.title}
+                {meeting.title && meeting.title !== "Google Meet" && meeting.title !== "Untitled Meeting"
+                  ? meeting.title
+                  : meeting.google_meet_link
+                  ? `Meet - ${meeting.google_meet_link}`
+                  : "Meet - Live Session"}
               </h1>
 
               {/* Status chips */}
@@ -341,9 +291,28 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               Executive Summary
             </h2>
           </div>
-          <p className="text-[13.5px] text-text leading-[1.75] whitespace-pre-wrap">
-            {meeting.summary || "No executive summary generated yet."}
-          </p>
+          {meeting.summary ? (
+            <p className="text-[13.5px] text-text leading-[1.75] whitespace-pre-wrap">
+              {meeting.summary}
+            </p>
+          ) : meeting.status === "active" ? (
+            <div className="flex flex-col items-center justify-center py-6 gap-4">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
+                <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
+                <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
+              </div>
+              <p className="text-[13px] text-text-muted font-medium animate-pulse tracking-wide">
+                AI is processing executive summary...
+              </p>
+            </div>
+          ) : (
+            <p className="text-[13.5px] text-text-muted/70 italic leading-relaxed py-2">
+              {meeting.status === "no_transcript"
+                ? "No transcript was captured during this meeting."
+                : "Executive summary unavailable for this meeting."}
+            </p>
+          )}
         </div>
 
         {/* ── Key Decisions ─────────────────────────────────────────────── */}

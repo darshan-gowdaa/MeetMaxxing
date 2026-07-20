@@ -59,15 +59,31 @@ async def get_meeting(
     user: dict = Depends(get_current_user),
 ):
     """Fetch meeting record with summary, decisions, and action items."""
+    import uuid
+    is_uuid = False
+    try:
+        uuid.UUID(meeting_id)
+        is_uuid = True
+    except ValueError:
+        pass
+
     supabase = get_supabase_admin()
-    result = (
-        supabase.table("meetings")
-        .select("*")
-        .eq("id", meeting_id)
-        .eq("org_id", user["org_id"])
-        .single()
-        .execute()
-    )
+    query = supabase.table("meetings").select("*")
+    if is_uuid:
+        query = query.eq("id", meeting_id)
+    else:
+        query = query.eq("google_meet_link", meeting_id)
+
+    try:
+        result = (
+            query
+            .eq("org_id", user["org_id"])
+            .single()
+            .execute()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
     if not result.data:
         raise HTTPException(status_code=404, detail="Meeting not found")
     return result.data
@@ -84,18 +100,76 @@ async def _run_end_pipeline(
     """Background task — full post-meeting processing pipeline."""
     supabase = get_supabase_admin()
 
-    # 1. Fetch + persist transcript
+    # Resolve meeting record by ID or google_meet_link
+    is_uuid = False
+    try:
+        uuid.UUID(meeting_id)
+        is_uuid = True
+    except ValueError:
+        pass
+
+    meeting_row = None
+    if is_uuid:
+        try:
+            res = supabase.table("meetings").select("*").eq("id", meeting_id).execute()
+            if res.data:
+                meeting_row = res.data[0]
+        except Exception:
+            pass
+    else:
+        try:
+            res = supabase.table("meetings").select("*").like("title", f"%{meeting_id}%").execute()
+            if res.data:
+                meeting_row = res.data[0]
+            else:
+                # Fallback to checking google_meet_link just in case schema is intact
+                res = supabase.table("meetings").select("*").eq("google_meet_link", meeting_id).execute()
+                if res.data:
+                    meeting_row = res.data[0]
+        except Exception:
+            pass
+
+    target_id = meeting_row["id"] if meeting_row else (meeting_id if is_uuid else None)
+    google_code = meeting_row.get("google_meet_link") if meeting_row else (meeting_id if not is_uuid else None)
+
+    # 1. Fetch transcript checking meeting_id, google_code, and target_id
     utterances = await get_full_transcript(meeting_id)
-    await persist_transcript_to_db(meeting_id, utterances)
+    if not utterances and google_code:
+        utterances = await get_full_transcript(google_code)
+    if not utterances and target_id:
+        utterances = await get_full_transcript(target_id)
+    if not utterances and meeting_row and meeting_row.get("transcript_data"):
+        utterances = meeting_row["transcript_data"]
+
+    # Persist transcript to DB if target_id exists
+    if target_id and utterances:
+        await persist_transcript_to_db(target_id, utterances)
 
     if not utterances:
-        supabase.table("meetings").update({"status": "no_transcript"}).eq("id", meeting_id).execute()
+        if target_id:
+            supabase.table("meetings").update({"status": "no_transcript"}).eq("id", target_id).execute()
         return
+
+    import re
+    if google_code:
+        match = re.search(r"([a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3})", google_code.lower())
+        if match:
+            google_code = match.group(1)
+
+    # Determine title
+    final_title = title or (meeting_row.get("title") if meeting_row else "")
+    if google_code and (not final_title or final_title in ["Google Meet", "Untitled Meeting", "Google Meet Session"]):
+        final_title = f"Meet - {google_code}"
+    elif google_code and not final_title.startswith("Meet - "):
+        final_title = f"Meet - {google_code}"
+
+    if not final_title:
+        final_title = "Meet - Live Session"
 
     # 2. Run summary agent
     summary = await dispatch(AgentTrigger.MEETING_END, {
-        "meeting_id": meeting_id,
-        "title": title,
+        "meeting_id": target_id or meeting_id,
+        "title": final_title,
         "attendees": attendees
     })
 
@@ -104,36 +178,38 @@ async def _run_end_pipeline(
     guardrail_result = await validate_summary_output(summary, raw_transcript)
     final_summary = guardrail_result.cleaned_output
 
-    # 4. Persist summary to Supabase
+    # 4. Persist summary to Supabase using target_id (UUID)
     from datetime import datetime, timezone
     today = datetime.now(timezone.utc).date().isoformat()
 
-    supabase.table("meetings").update(
-        {
-            "title": title or "Untitled Meeting",
-            "summary": final_summary.get("summary") or final_summary.get("executive_summary") or final_summary.get("recap") or "",
-            "decisions": final_summary.get("decisions", []),
-            "action_items": final_summary.get("action_items", []),
-            "follow_up": final_summary.get("follow_up", {}),
-            "guardrail_score": guardrail_result.score,
-            "status": "completed",
-        }
-    ).eq("id", meeting_id).execute()
+    if target_id:
+        supabase.table("meetings").update(
+            {
+                "title": final_title,
+                "summary": final_summary.get("summary") or final_summary.get("executive_summary") or final_summary.get("recap") or "",
+                "decisions": final_summary.get("decisions", []),
+                "action_items": final_summary.get("action_items", []),
+                "follow_up": final_summary.get("follow_up", {}),
+                "guardrail_score": guardrail_result.score,
+                "status": "completed",
+            }
+        ).eq("id", target_id).execute()
 
     # 5. Persist action items to dedicated table
-    for ai in final_summary.get("action_items", []):
-        supabase.table("action_items").insert(
-            {
-                "id": str(uuid.uuid4()),
-                "meeting_id": meeting_id,
-                "org_id": org_id,
-                "description": ai.get("text", ""),
-                "owner_name": ai.get("owner", "Unassigned"),
-                "priority": ai.get("priority", "medium"),
-                "due_date": ai.get("due_date"),
-                "status": "open",
-            }
-        ).execute()
+    if target_id:
+        for ai in final_summary.get("action_items", []):
+            supabase.table("action_items").insert(
+                {
+                    "id": str(uuid.uuid4()),
+                    "meeting_id": target_id,
+                    "org_id": org_id,
+                    "description": ai.get("text", ""),
+                    "owner_name": ai.get("owner", "Unassigned"),
+                    "priority": ai.get("priority", "medium"),
+                    "due_date": ai.get("due_date"),
+                    "status": "open",
+                }
+            ).execute()
 
     # 6. Embed + upsert memories to Qdrant
     chunks = chunk_transcript(utterances)
@@ -222,9 +298,13 @@ async def _run_end_pipeline(
     })
 
     # Persist email and slack results to Supabase
-    supabase.table("meetings").update(
-        {
-            "email_result": email_result,
-            "slack_result": slack_result
-        }
-    ).eq("id", meeting_id).execute()
+    try:
+        supabase.table("meetings").update(
+            {
+                "email_result": email_result,
+                "slack_result": slack_result
+            }
+        ).eq("id", meeting_id).execute()
+    except Exception as e:
+        import logging
+        logging.warning(f"Could not persist email/slack results: {e}")

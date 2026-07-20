@@ -44,12 +44,18 @@ async def ensure_collection() -> None:
     names = [c.name for c in existing.collections]
 
     if collection_name not in names:
+        # Recreate collection to enable named vectors & sparse vectors for hybrid search
         await client.create_collection(
             collection_name=collection_name,
-            vectors_config=qmodels.VectorParams(
-                size=settings.EMBEDDING_DIM,
-                distance=qmodels.Distance.COSINE,
-            ),
+            vectors_config={
+                "dense": qmodels.VectorParams(
+                    size=settings.EMBEDDING_DIM,
+                    distance=qmodels.Distance.COSINE,
+                )
+            },
+            sparse_vectors_config={
+                "sparse": qmodels.SparseVectorParams()
+            },
             optimizers_config=qmodels.OptimizersConfigDiff(
                 indexing_threshold=20_000,
             ),
@@ -77,14 +83,31 @@ async def upsert_memories(points: list[MemoryPoint]) -> None:
     """Batch upsert memory points into Qdrant."""
     await ensure_collection()
     client = await get_qdrant()
-    qdrant_points = [
-        qmodels.PointStruct(
-            id=p.id,
-            vector=p.vector,
-            payload=p.to_payload(),
+    
+    import collections
+    import hashlib
+    
+    qdrant_points = []
+    for p in points:
+        # Generate simple hash-based sparse vector from the text content
+        words = p.text.lower().split()
+        freq = collections.Counter(words)
+        sparse_indices = [int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000 for w in freq.keys()]
+        sparse_values = [float(v) for v in freq.values()]
+        
+        vector_dict = {
+            "dense": p.vector,
+            "sparse": qmodels.SparseVector(indices=sparse_indices, values=sparse_values)
+        }
+        
+        qdrant_points.append(
+            qmodels.PointStruct(
+                id=p.id,
+                vector=vector_dict,
+                payload=p.to_payload(),
+            )
         )
-        for p in points
-    ]
+
     await client.upsert(
         collection_name=settings.QDRANT_COLLECTION,
         points=qdrant_points,
@@ -154,9 +177,32 @@ async def search_memories(
             )
         )
 
+    # Create a simple sparse vector query using term frequencies
+    import collections
+    import hashlib
+    # We use a crude hash-based BM25 approximation for hackathon hybrid search
+    words = memory_filter.topic.lower().split() if memory_filter.topic else ["query"]
+    freq = collections.Counter(words)
+    sparse_indices = [int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000 for w in freq.keys()]
+    sparse_values = [float(v) for v in freq.values()]
+
+    prefetch = [
+        qmodels.Prefetch(
+            query=query_vector,
+            using="dense",
+            limit=limit
+        ),
+        qmodels.Prefetch(
+            query=qmodels.SparseVector(indices=sparse_indices, values=sparse_values),
+            using="sparse",
+            limit=limit
+        )
+    ]
+
     results = await client.query_points(
         collection_name=settings.QDRANT_COLLECTION,
-        query=query_vector,
+        prefetch=prefetch,
+        query=qmodels.FusionQuery(fusion=qmodels.Fusion.RRF),
         query_filter=qmodels.Filter(must=must_conditions),
         limit=limit,
         with_payload=True,

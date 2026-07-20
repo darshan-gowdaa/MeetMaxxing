@@ -17,71 +17,39 @@ async def push_to_slack(
     token = getattr(settings, "SLACK_BOT_TOKEN", "")
     channel = getattr(settings, "SLACK_CHANNEL_ID", "")
 
-    if not token or not channel:
-        logger.info("[Slack Agent] SLACK_BOT_TOKEN or SLACK_CHANNEL_ID not configured. Skipping Slack push.")
-        return False
-
-    blocks = [
-        {
-            "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": f"Meeting Recap: {meeting_title}",
-                "emoji": True
-            }
-        },
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*Summary*\n{summary}"
-            }
-        },
-        {
-            "type": "divider"
-        }
-    ]
-
-    if action_items:
-        action_text = "*Action Items*\n" + "\n".join([f"• {item}" for item in action_items])
-        blocks.append({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": action_text
-            }
-        })
-
-    payload = {
-        "channel": channel,
-        "blocks": blocks,
-        "text": f"Meeting Recap for {meeting_title}" # Fallback text
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            res = await client.post(
-                "https://slack.com/api/chat.postMessage",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json"
-                },
-                json=payload
-            )
+    def send_slack_message(markdown_content: str) -> str:
+        """Sends the formatted markdown content to the team Slack channel."""
+        if not token or not channel:
+            return "SLACK_BOT_TOKEN or SLACK_CHANNEL_ID not configured."
             
-            if res.status_code == 200:
-                data = res.json()
-                if data.get("ok"):
-                    logger.info(f"[Slack Agent] Successfully pushed to Slack channel {channel}")
-                    return True
-                else:
-                    logger.error(f"[Slack Agent] Slack API returned error: {data.get('error')}")
-                    return False
-            else:
-                logger.error(f"[Slack Agent] HTTP error {res.status_code}: {res.text}")
-                return False
+        payload = {
+            "channel": channel,
+            "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": markdown_content}}],
+            "text": "Meeting Recap"
+        }
+        try:
+            import httpx
+            # Use sync httpx for the Lyzr tool to avoid loop issues
+            res = httpx.post(
+                "https://slack.com/api/chat.postMessage",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                json=payload,
+                timeout=10.0
+            )
+            return f"Success: {res.status_code}" if res.status_code == 200 else f"Error: {res.text}"
+        except Exception as e:
+            return f"Exception: {str(e)}"
+
+    from ..core.lyzr_integration import run_lyzr_agent
+    
+    prompt = f"Meeting Title: {meeting_title}\nSummary: {summary}\nAction Items: {action_items}\n\nFormat a highly readable Slack markdown update and use your tool to send it."
+    
+    try:
+        await run_lyzr_agent("Slack Agent - MeetMaxxing", prompt, local_tools=[send_slack_message])
+        logger.info(f"[Slack Agent] Lyzr agent executed Slack tool for channel {channel}")
+        return True
     except Exception as e:
-        logger.error(f"[Slack Agent] Exception during Slack push: {e}")
+        logger.error(f"[Slack Agent] Lyzr native tool execution failed: {e}")
         return False
 
 async def run_slack_agent(meeting_id: str, summary_output: dict) -> dict:

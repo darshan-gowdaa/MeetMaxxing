@@ -3,7 +3,7 @@ import time
 from typing import Dict, Any
 
 from ..core.redis_client import get_transcript_window
-from ..core.llm_fallback import generate_content_with_fallback
+from ..core.lyzr_integration import run_lyzr_agent
 
 _SYSTEM_PROMPT = """You are MeetMaxxing's Late Join Recap Agent. 
 Your goal is to provide a concise, structured recap for someone who just joined the meeting late.
@@ -55,29 +55,12 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict
             "who_said_what": []
         }
     
-    if len(chunks) < 2:
-        # Single chunk — just echo it back, no LLM needed
-        snippet = chunks[0].get("text", "")
-        speaker = chunks[0].get("speaker", "Someone")
-        return {
-            "recap": f"Meeting just started. {speaker} said: \"{snippet}\"",
-            "key_decisions_so_far": [],
-            "current_topic": "Opening remarks",
-            "who_said_what": [f"{speaker}: {snippet}"]
-        }
-        
+    # Formats transcript and runs LLM recap for any non-empty transcript chunks
     transcript_text = _format_transcript(chunks)
-    prompt = f"Generate a late join recap for the following transcript:\n\n{transcript_text}"
+    prompt = f"{_SYSTEM_PROMPT}\n\nGenerate a late join recap for the following transcript:\n\n{transcript_text}"
     
     try:
-        raw, powered_by = await generate_content_with_fallback(
-            prompt=prompt,
-            system_instruction=_SYSTEM_PROMPT,
-            temperature=0.3,
-            max_tokens=600,
-            response_format_json=True,
-            cache_ttl=120
-        )
+        raw, powered_by = await run_lyzr_agent("Late-Join Agent - MeetMaxxing", prompt)
         
         cleaned = raw.strip()
         if cleaned.startswith("```json"):
@@ -86,8 +69,22 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict
             cleaned = cleaned[3:]
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
-        
-        result = json.loads(cleaned.strip())
+        cleaned = cleaned.strip()
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            cleaned = cleaned[start : end + 1]
+            
+        try:
+            result = json.loads(cleaned)
+        except Exception:
+            result = {
+                "recap": "Error generating recap due to LLM output parsing failure.",
+                "key_decisions_so_far": [],
+                "current_topic": "Unknown",
+                "who_said_what": []
+            }
+            
         result["powered_by"] = powered_by
         
         _last_recaps[meeting_id] = result

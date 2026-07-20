@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Topbar from "@/components/Topbar";
 import { queryMemory } from "@/lib/api";
-import type { MemoryResult } from "@/types";
+import type { Meeting, MemoryResult } from "@/types";
 import { Md3LoadingIndicator } from "@/components/Md3Loading";
 import {
   RiBrainLine,
@@ -41,7 +40,7 @@ export default function MemoryPage() {
     import("@/lib/api").then(({ fetchMeetings }) => {
       fetchMeetings("dev_token")
         .then((data) => {
-          const list: any[] = Array.isArray(data) ? data : data.meetings || [];
+          const list: Meeting[] = Array.isArray(data) ? data : data.meetings || [];
           if (list.length > 0) {
             // Generate dynamic questions based on recent meetings
             const recentTitles = list.slice(0, 4).map(m => m.title || "Untitled Meeting");
@@ -86,8 +85,6 @@ export default function MemoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-bg">
-      <Topbar />
-
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -95,9 +92,9 @@ export default function MemoryPage() {
           {/* Ambient blobs */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-48 rounded-full blur-[80px]"
-                 style={{ background: "radial-gradient(circle, rgba(219,185,253,0.12) 0%, transparent 70%)" }} />
+                 style={{ background: "radial-gradient(circle, var(--grad-tertiary) 0%, transparent 70%)" }} />
             <div className="absolute bottom-0 right-0 w-48 h-40 rounded-full blur-[60px]"
-                 style={{ background: "radial-gradient(circle, rgba(168,199,250,0.08) 0%, transparent 70%)" }} />
+                 style={{ background: "radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)" }} />
           </div>
 
           <div className="relative z-10 flex flex-col items-center gap-3">
@@ -137,7 +134,7 @@ export default function MemoryPage() {
             disabled={loading || !query.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:scale-[0.96] disabled:opacity-40"
           >
-            {loading ? <Md3LoadingIndicator size="sm" /> : <RiSparklingLine className="w-4 h-4" />}
+            <RiSparklingLine className="w-4 h-4" />
             Ask
           </button>
         </div>

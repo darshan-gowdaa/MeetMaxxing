@@ -49,7 +49,7 @@ from .api.routes_dashboard import router as dashboard_router
 
 
 import threading
-from .grpc_server import serve as grpc_serve
+from .grpc_bus.grpc_server import serve as grpc_serve
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

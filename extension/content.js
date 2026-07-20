@@ -210,6 +210,7 @@ function flushUtterance(speaker) {
 
   const sent = safeSendMessage({
     type: "INGEST_CHUNK",
+    meetingId: meetingId,
     chunk: { speaker, text, timestamp_ms: now - meetingStartTime, platform: "google_meet" },
   });
   if (sent) console.log(`[MeetMaxxing] ✓ Utterance → ${speaker}: "${text.slice(0, 80)}"`);
@@ -428,6 +429,7 @@ function showConsentUI(onAccept) {
 
   document.getElementById("mm-accept-btn").addEventListener("click", () => {
     overlay.remove();
+    safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
     onAccept();
   });
 
@@ -435,6 +437,70 @@ function showConsentUI(onAccept) {
     overlay.remove();
     console.log("[MeetMaxxing] Consent declined. Extension inactive.");
   });
+}
+
+let hideCaptionsStyle = null;
+function toggleHideCaptions() {
+  if (!hideCaptionsStyle) {
+    hideCaptionsStyle = document.createElement("style");
+    hideCaptionsStyle.innerHTML = `
+      div[class*="a4cQT"], div[class*="iTtpOb"], div[jsname="dsSS6e"], div[class*="bhZ0Nb"] {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
+    `;
+    document.head.appendChild(hideCaptionsStyle);
+  } else {
+    hideCaptionsStyle.remove();
+    hideCaptionsStyle = null;
+  }
+}
+
+function injectVisibilityButton() {
+  if (document.getElementById("mm-caption-visibility-btn")) return;
+  const btn = document.createElement("div");
+  btn.id = "mm-caption-visibility-btn";
+  btn.style.cssText = `
+    position: fixed; bottom: 85px; left: 24px; z-index: 999999;
+    background: #1e1f20; color: #a8c7fa; padding: 8px 16px;
+    border-radius: 99px; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid rgba(168, 199, 250, 0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px; user-select: none;
+  `;
+  
+  if (!hideCaptionsStyle) toggleHideCaptions();
+  btn.innerHTML = `<span>👁️</span> <span>Captions Hidden</span>`;
+
+  btn.onclick = () => {
+    toggleHideCaptions();
+    if (hideCaptionsStyle) {
+      btn.innerHTML = `<span>👁️</span> <span>Captions Hidden</span>`;
+      btn.style.background = "#1e1f20";
+    } else {
+      btn.innerHTML = `<span>👁️‍🗨️</span> <span>Captions Visible</span>`;
+      btn.style.background = "#0842a0";
+    }
+  };
+  document.body.appendChild(btn);
+}
+
+function autoEnableCC() {
+  // Give Meet a second to render the bottom bar
+  setTimeout(() => {
+    const ccBtns = document.querySelectorAll('button[aria-label*="caption" i], button[data-tooltip*="caption" i]');
+    for (const btn of ccBtns) {
+      const isPressed = btn.getAttribute("aria-pressed") === "true" || btn.classList.contains("VfPpkd-Bz112c-LgbsSe-OWXEXe-INsBxf");
+      const label = btn.getAttribute("aria-label") || btn.getAttribute("data-tooltip") || "";
+      if (!isPressed && label.toLowerCase().includes("turn on")) {
+        btn.click();
+        console.log("[MeetMaxxing] Auto-enabled CC.");
+        break;
+      }
+    }
+  }, 2000);
 }
 
 function startMeeting() {
@@ -447,15 +513,23 @@ function startMeeting() {
   }
 
   meetingStartTime = Date.now();
-  const title = document.title.replace("Google Meet", "").trim() || "Google Meet";
-
+  autoEnableCC();
+  injectVisibilityButton();
   const match = location.pathname.match(/^\/([a-z0-9\-]+)/i);
-  const meetCode = match ? match[1] : "live_" + Math.random().toString(36).slice(2, 9);
+  const meetCode = match ? match[1] : "";
+  let title = document.title.replace("Google Meet", "").replace(/^Meet\s*-\s*/i, "").trim();
+  if (meetCode && meetCode.length >= 3) {
+    title = `Meet - ${meetCode}`;
+  } else if (!title) {
+    title = "Meet - Live Session";
+  } else {
+    title = `Meet - ${title}`;
+  }
 
-  if (!meetingId) meetingId = "live_" + Math.random().toString(36).slice(2, 9); // Fallback
+  if (!meetingId) meetingId = meetCode || ("live_" + Math.random().toString(36).slice(2, 9));
 
   if (chrome.runtime && chrome.runtime.id) {
-    chrome.storage.local.set({ currentMeetingId: meetingId, meetingTitle: title });
+    chrome.storage.local.set({ currentMeetingId: meetingId, meetingTitle: title, meetCode });
   }
   startCaptionObserver();
 
@@ -463,7 +537,7 @@ function startMeeting() {
     if (resp?.meetingId) {
       meetingId = resp.meetingId;
       if (chrome.runtime && chrome.runtime.id) {
-        chrome.storage.local.set({ currentMeetingId: meetingId });
+        chrome.storage.local.set({ currentMeetingId: meetingId, meetingTitle: title, meetCode });
       }
     }
   });

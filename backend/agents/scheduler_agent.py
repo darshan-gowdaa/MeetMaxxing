@@ -14,7 +14,7 @@ import logging
 
 from ..core.config import settings
 from ..services.calendar_service import create_calendar_event
-from ..core.llm_fallback import generate_content_with_fallback
+from ..core.lyzr_integration import run_lyzr_agent
 
 logger = logging.getLogger(__name__)
 
@@ -92,14 +92,7 @@ Determine optimal follow-up meeting details."""
         return {"scheduled": False, "reason": "GEMINI_API_KEY not configured in .env."}
     else:
         try:
-            raw, powered_by = await generate_content_with_fallback(
-                prompt=prompt,
-                system_instruction=_SYSTEM_PROMPT,
-                temperature=0.2,
-                max_tokens=512,
-                response_format_json=True,
-                cache_ttl=0
-            )
+            raw, powered_by = await run_lyzr_agent("Scheduler Agent - MeetMaxxing", prompt)
             event_plan = _parse_json_clean(raw or "{}")
         except Exception as e:
             err_str = str(e)

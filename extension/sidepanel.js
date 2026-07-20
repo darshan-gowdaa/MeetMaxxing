@@ -39,6 +39,7 @@ const meetingTitleHint  = $("meeting-title-hint");
 // End state buttons
 const openDashboardBtn  = $("open-dashboard-btn");
 const activeDashboardBtn= $("active-dashboard-btn");
+const idleDashboardBtn  = $("idle-dashboard-btn");
 
 // ─── State ───────────────────────────────────────────────────────────────────
 let meetingActive       = false;
@@ -308,6 +309,13 @@ if (activeDashboardBtn) {
     const url = currentMeetingId
       ? `${CONFIG.BASE_URL_WEB}/meetings/${currentMeetingId}`
       : CONFIG.BASE_URL_WEB;
+    chrome.tabs.create({ url });
+  });
+}
+
+if (idleDashboardBtn) {
+  idleDashboardBtn.addEventListener("click", () => {
+    const url = CONFIG.BASE_URL_WEB; // Idle means no active meeting, go to main dashboard
     chrome.tabs.create({ url });
   });
 }

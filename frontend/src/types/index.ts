@@ -2,6 +2,7 @@
 
 export interface Meeting {
   id: string;
+  google_meet_link?: string;
   title: string;
   start_at: string;
   end_at: string;

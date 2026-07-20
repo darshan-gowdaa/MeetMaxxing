@@ -30,6 +30,8 @@ class TranscriptChunk(BaseModel):
 class StartMeetingRequest(BaseModel):
     title: str = "Untitled Meeting"
     attendees: list[str] = []
+    meet_code: str | None = None
+    google_meet_link: str | None = None
 
 
 @router.get("/realtime/{meeting_id}")
@@ -62,11 +64,13 @@ async def start_meeting(
     user: dict = Depends(get_current_user),
 ):
     """Create a new meeting record and return meeting_id for the extension."""
+    meet_code = req.meet_code or req.google_meet_link or ""
     record = await create_meeting_record(
         org_id=user["org_id"],
         user_id=user["user_id"],
         title=req.title,
         attendees=req.attendees,
+        google_meet_link=meet_code,
     )
     return {"meeting_id": record.get("id"), "status": "active"}
 

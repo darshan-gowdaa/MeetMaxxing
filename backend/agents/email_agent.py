@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 
-from ..core.llm_fallback import generate_content_with_fallback
+from ..core.lyzr_integration import run_lyzr_agent
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +42,7 @@ Draft the email body now.
 """
     
     try:
-        raw_email, powered_by = await generate_content_with_fallback(
-            prompt=prompt,
-            system_instruction=_EMAIL_SYSTEM_PROMPT,
-            temperature=0.4,
-            max_tokens=800,
-            response_format_json=False,
-            cache_ttl=0 # No caching needed for this one-off task
-        )
+        raw_email, powered_by = await run_lyzr_agent("Email Agent - MeetMaxxing", prompt)
         logger.info(f"[Email Agent] Successfully drafted email using {powered_by}")
         return raw_email.strip()
     except Exception as e:
@@ -79,9 +72,7 @@ async def send_followup_email(
     # might require the OAuth token flow which is handled elsewhere.
     logger.info(f"[Email Agent] Sending email to {to_email} with subject '{subject}'")
     try:
-        from ..api.dependencies import google_auth
-        # If google_auth has a send_email method, we call it here.
-        # For now, we return True to simulate success.
+        # Mock email sending success
         return True
     except Exception as e:
         logger.error(f"[Email Agent] Failed to send email: {e}")

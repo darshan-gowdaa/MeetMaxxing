@@ -2,15 +2,15 @@
 
 :root {
   /* Google Meet Material 3 Expressive Dark Theme Tokens */
-  --background: #131314;
-  --surface-low: #1e1f20;
-  --surface: #28292a;
+  --background: #141518;
+  --surface-low: #27292c;
+  --surface: #27292c;
   --surface-high: #333537;
   --surface-highest: #3e4042;
   --border: rgba(227, 227, 227, 0.12);
   --border-highlight: rgba(168, 199, 250, 0.4);
-  --foreground: #e3e3e3;
-  --foreground-variant: #c4c7c5;
+  --foreground: #ffffff;
+  --foreground-variant: #868e96;
   --primary: #a8c7fa;
   --primary-container: #0842a0;
   --on-primary-container: #d3e3fd;
@@ -51,7 +51,7 @@ body {
 
 /* Expressive elevation & card styles */
 .card-expressive {
-  background: linear-gradient(135deg, #1e1f20 0%, #28292a 100%);
+  background: linear-gradient(135deg, #27292c 0%, #27292c 100%);
   border: 1px solid rgba(227, 227, 227, 0.1);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
 }

@@ -52,20 +52,32 @@ async def get_meeting_detail(
     import uuid
     from fastapi import HTTPException
     
+    is_uuid = False
     try:
         uuid.UUID(meeting_id)
+        is_uuid = True
     except ValueError:
-        raise HTTPException(status_code=404, detail="Meeting not found")
+        pass
 
     supabase = get_supabase_admin()
-    meeting = (
-        supabase.table("meetings")
-        .select("*")
-        .eq("id", meeting_id)
-        .eq("org_id", user["org_id"])
-        .single()
-        .execute()
-    )
+    
+    query = supabase.table("meetings").select("*")
+    if is_uuid:
+        query = query.eq("id", meeting_id)
+    else:
+        query = query.eq("google_meet_link", meeting_id)
+        
+    try:
+        meeting = (
+            query
+            .eq("org_id", user["org_id"])
+            .single()
+            .execute()
+        )
+    except Exception as e:
+        if not is_uuid and "does not exist" in str(e):
+            raise HTTPException(status_code=404, detail="Meeting not found (google_meet_link column may be missing)")
+        raise HTTPException(status_code=404, detail="Meeting not found")
     if not meeting.data:
         raise HTTPException(status_code=404, detail="Meeting not found")
 

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS meetings (
   attendees TEXT[],             -- email addresses
   start_at TIMESTAMPTZ DEFAULT NOW(),
   end_at TIMESTAMPTZ,
+  google_meet_link TEXT,
   status TEXT DEFAULT 'active', -- active | completed | no_transcript
   -- Post-processing outputs
   transcript_data JSONB,        -- array of {speaker, text, timestamp_ms}

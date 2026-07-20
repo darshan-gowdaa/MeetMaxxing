@@ -135,7 +135,13 @@ async def run_memory_agent(
 Retrieved context from past meetings:
 {context_block}
 
-Answer the question based solely on the context above."""
+Answer the question based solely on the context above. 
+You MUST format your response as a valid JSON object:
+{{
+  "answer": "Your detailed answer here. You must explicitly cite the context used by appending [Context N] to your sentences.",
+  "confidence": "high|medium|low",
+  "sources_used": [0, 1, 2] 
+}}"""
 
     if settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key", ""] or not settings.GEMINI_API_KEY:
         return {
@@ -147,34 +153,38 @@ Answer the question based solely on the context above."""
         }
     else:
         try:
-            from ..core.llm_fallback import generate_content_with_fallback
-            raw, powered_by = await generate_content_with_fallback(
-                prompt=prompt,
-                system_instruction=_SYSTEM_PROMPT,
-                temperature=0.1,
-                max_tokens=1024,
-                response_format_json=True,
-                cache_ttl=0 # Memory queries usually unique
-            )
+            from ..core.lyzr_integration import run_lyzr_agent
+            raw, powered_by = await run_lyzr_agent("Memory Agent - MeetMaxxing", prompt)
+            
+            import re
             
             cleaned = raw.strip()
-            if cleaned.startswith("```json"):
-                cleaned = cleaned[7:]
-            elif cleaned.startswith("```"):
-                cleaned = cleaned[3:]
-            if cleaned.endswith("```"):
-                cleaned = cleaned[:-3]
+            # Extract JSON if wrapped in markdown or has conversational text before/after
+            json_match = re.search(r'\{.*\}', cleaned, re.DOTALL)
+            if json_match:
+                cleaned = json_match.group(0)
+            else:
+                # If no brackets found, fallback will catch it
+                pass
             
-            result = json.loads(cleaned.strip() or "{}")
+            try:
+                result = json.loads(cleaned)
+            except json.JSONDecodeError:
+                # If LLM ignored JSON rules and returned plain text (e.g. "I don't know")
+                result = {
+                    "answer": raw.strip(),
+                    "confidence": "low",
+                    "sources_used": []
+                }
         except Exception as e:
             err_str = str(e)
             return {
-                "answer": f"Error querying LLM for memory summary (all fallback APIs failed): {err_str[:150]}",
+                "answer": f"Error querying Lyzr Memory Agent: {err_str[:150]}",
                 "confidence": "low",
                 "sources": sources,
                 "total_retrieved": len(results),
                 "error": err_str[:150],
-                "powered_by": "All LLM Fallbacks Failed"
+                "powered_by": "Lyzr SDK Error"
             }
 
     # Map source indices to full source objects

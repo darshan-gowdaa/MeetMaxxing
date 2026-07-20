@@ -1,115 +1,165 @@
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
-/* ── MD3 Expressive Design Tokens ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MD3 EXPRESSIVE · Google Meet Dark Mode Design System
+   All colors follow WCAG AA contrast on dark surfaces.
+   NO hardcoded rgba() in component selectors — use tokens only.
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* Background / Surface Hierarchy (Google Meet Theme) */
-  --bg:               #111114;
-  --surface-dim:      #171717;
-  --surface:          #303134;
-  --surface-container-lowest: #28292a;
-  --surface-container-low:    #3c4043;
-  --surface-container:        #4a4d51;
-  --surface-container-high:   #5f6368;
-  --surface-container-highest:#767a80;
+  /* ── Base / Background ──────────────────────────────────────────────────
+     Lighter Google Meet dark: less harsh contrast on root bg.      */
+  --background:       #141518;
+  --bg:               #141518;
 
-  /* Primary (Google Blue expressive) */
-  --primary:          #a8c7fa;
-  --on-primary:       #062e6f;
-  --primary-container:#0842a0;
-  --on-primary-container: #d6e3ff;
-  --primary-dim:      rgba(168,199,250,0.12);
-  --primary-glow:     rgba(168,199,250,0.08);
+  /* ── Surface Hierarchy (tonal elevation via lightness steps) ────────────
+     lowest → highest maps to depth: deepest card layer → topmost overlay.  */
+  --surface-container-lowest:  #27292c;
+  --surface-container-low:     #27292c;
+  --surface:                   #27292c;
+  --surface-container:         #27292c;
+  --surface-container-high:    #33353c;
+  --surface-container-highest: #3b3d46;
 
-  /* Secondary */
-  --secondary:        #bfc6dc;
-  --secondary-container: #3b4664;
-  --on-secondary-container: #dbe2f9;
+  /* surface-dim: used for empty/disabled inset areas — must be DARKER than
+     surface, not lighter.      */
+  --surface-dim:               #27292c;
 
-  /* Tertiary (purple-ish accent) */
-  --tertiary:         #dbb9fd;
-  --tertiary-container: #5b3589;
-  --on-tertiary-container: #f3daff;
+  /* Tailwind shorthand aliases used in components */
+  --surface2:                  var(--surface-container-high);
+  --surface3:                  var(--surface-container-highest);
+  --surface-highest:           var(--surface-container-highest);
 
-  /* States / Semantic */
-  --success:          #6dd58c;
-  --success-container:#0d3f23;
-  --warning:          #ffc107;
-  --warning-container:#3d2a00;
-  --risk:             #f2b8b5;
-  --risk-container:   #601410;
+  /* ── Primary — Google Blue (MD3 dark scheme) ────────────────────────── */
+  --primary:                   #a8c7fa;   /* on-dark text / icon */
+  --on-primary:                #062e6f;   /* text on filled primary button */
+  --primary-container:         #0842a0;   /* filled chip / nav active bg */
+  --on-primary-container:      #d6e3ff;   /* text on primary-container */
 
-  /* Extra aliases */
-  --surface-highest:  var(--surface-container-highest);
-  --warning-container: #3d2a00;
-  --success-container: #0d3f23;
+  /* Semi-transparent overlays — use CSS color-mix or fixed alpha tokens */
+  --primary-dim:               #a8c7fa1f;  /* ~12% primary for subtle tints */
+  --primary-glow:              #a8c7fa14;  /* ~8%  primary for glow layers  */
+  --primary-glow-hover:        #a8c7fa40;  /* ~25% primary for hover glows  */
 
-  /* Outline */
-  --border:           rgba(168,199,250,0.12);
-  --border-strong:    rgba(168,199,250,0.24);
+  /* ── Secondary ──────────────────────────────────────────────────────── */
+  --secondary:                 #bfc6dc;
+  --on-secondary:              #293041;
+  --secondary-container:       #3b4664;
+  --on-secondary-container:    #dbe2f9;
 
-  /* Text */
-  --text:             #e2e8f8;
-  --text-muted:       #8eaac8;
-  --text-variant:     #4f6484;
+  /* ── Tertiary — Expressive Purple accent ────────────────────────────── */
+  --tertiary:                  #dbb9fd;
+  --on-tertiary:               #3b1060;
+  --tertiary-container:        #5b3589;
+  --on-tertiary-container:     #f3daff;
 
-  /* Misc */
-  --foreground: #e2e8f8;
-  --background: #111114;
+  /* ── Semantic / State colors ────────────────────────────────────────── */
+  --success:                   #6dd58c;
+  --on-success:                #003920;
+  --success-container:         #0d3f23;
+  --on-success-container:      #89f5a8;
+
+  --warning:                   #ffc107;
+  --on-warning:                #3c2800;
+  --warning-container:         #3d2a00;
+  --on-warning-container:      #ffd966;
+
+  --risk:                      #f2b8b5;   /* error/danger on dark */
+  --on-risk:                   #601410;
+  --risk-container:            #601410;
+  --on-risk-container:         #ffdad7;
+
+  /* ── Outline / Border ───────────────────────────────────────────────── */
+  --border:                    #a8c7fa1f;  /* ~12% primary = subtle outline  */
+  --border-strong:             #a8c7fa3d;  /* ~24% primary = visible outline */
+  --outline:                   #8d9199;   /* MD3 outline role */
+  --outline-variant:           #41474e;   /* MD3 outline-variant role */
+
+  /* ── Text / Foreground ──────────────────────────────────────────────── */
+  --foreground:                #ffffff;
+  --text:                      #ffffff;   /* primary readable text */
+  --text-muted:                #868e96;   /* secondary text — meets AA 4.5:1 */
+  --text-variant:              #7e7d78;   /* tertiary / hint text */
+
+  /* ── Gradient stops (used in blobs / decorative gradients) ─────────── */
+  --grad-primary:              #a8c7fa29; /* 16% */
+  --grad-tertiary:             #dbb9fd1f; /* 12% */
 }
 
+/* ── Tailwind v4 theme mapping ────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: 'Google Sans', 'Google Sans Display', system-ui, sans-serif;
 
-  --color-bg:                       var(--bg);
-  --color-surface-dim:              var(--surface-dim);
-  --color-surface:                  var(--surface);
-  --color-surface-container-lowest: var(--surface-container-lowest);
-  --color-surface-container-low:    var(--surface-container-low);
-  --color-surface-container:        var(--surface-container);
-  --color-surface-container-high:   var(--surface-container-high);
-  --color-surface-container-highest:var(--surface-container-highest);
-  --color-surface2:                 var(--surface-container);
-  --color-surface3:                 var(--surface-container-high);
-  --color-surface-highest:          var(--surface-container-highest);
+  /* Background */
+  --color-background:                   var(--background);
+  --color-foreground:                   var(--foreground);
+  --color-bg:                           var(--bg);
 
-  --color-primary:                  var(--primary);
-  --color-on-primary:               var(--on-primary);
-  --color-primary-container:        var(--primary-container);
-  --color-on-primary-container:     var(--on-primary-container);
-  --color-primary-dim:              var(--primary-dim);
+  /* Surfaces */
+  --color-surface-dim:                  var(--surface-dim);
+  --color-surface:                      var(--surface);
+  --color-surface-container-lowest:     var(--surface-container-lowest);
+  --color-surface-container-low:        var(--surface-container-low);
+  --color-surface-container:            var(--surface-container);
+  --color-surface-container-high:       var(--surface-container-high);
+  --color-surface-container-highest:    var(--surface-container-highest);
+  --color-surface2:                     var(--surface2);
+  --color-surface3:                     var(--surface3);
+  --color-surface-highest:              var(--surface-highest);
 
-  --color-secondary:                var(--secondary);
-  --color-secondary-container:      var(--secondary-container);
-  --color-tertiary:                 var(--tertiary);
-  --color-tertiary-container:       var(--tertiary-container);
-  --color-on-tertiary-container:    var(--on-tertiary-container);
+  /* Primary */
+  --color-primary:                      var(--primary);
+  --color-on-primary:                   var(--on-primary);
+  --color-primary-container:            var(--primary-container);
+  --color-on-primary-container:         var(--on-primary-container);
+  --color-primary-dim:                  var(--primary-dim);
+  --color-primary-glow:                 var(--primary-glow);
 
-  --color-border:                   var(--border);
-  --color-border-strong:            var(--border-strong);
-  --color-text:                     var(--text);
-  --color-text-muted:               var(--text-muted);
-  --color-text-variant:             var(--text-variant);
+  /* Secondary */
+  --color-secondary:                    var(--secondary);
+  --color-on-secondary:                 var(--on-secondary);
+  --color-secondary-container:          var(--secondary-container);
+  --color-on-secondary-container:       var(--on-secondary-container);
 
-  --color-success:                  var(--success);
-  --color-success-container:        var(--success-container);
-  --color-warning:                  var(--warning);
-  --color-warning-container:        var(--warning-container);
-  --color-risk:                     var(--risk);
-  --color-risk-container:           var(--risk-container);
-  --color-risk-bg:                  var(--risk-container);
-  --color-surface-highest:          var(--surface-highest);
-  --color-warning-container:        var(--warning-container);
-  --color-success-container:        var(--success-container);
+  /* Tertiary */
+  --color-tertiary:                     var(--tertiary);
+  --color-on-tertiary:                  var(--on-tertiary);
+  --color-tertiary-container:           var(--tertiary-container);
+  --color-on-tertiary-container:        var(--on-tertiary-container);
+
+  /* Semantic */
+  --color-success:                      var(--success);
+  --color-on-success:                   var(--on-success);
+  --color-success-container:            var(--success-container);
+  --color-on-success-container:         var(--on-success-container);
+
+  --color-warning:                      var(--warning);
+  --color-on-warning:                   var(--on-warning);
+  --color-warning-container:            var(--warning-container);
+  --color-on-warning-container:         var(--on-warning-container);
+
+  --color-risk:                         var(--risk);
+  --color-on-risk:                      var(--on-risk);
+  --color-risk-container:               var(--risk-container);
+  --color-on-risk-container:            var(--on-risk-container);
+  --color-risk-bg:                      var(--risk-container);
+
+  /* Borders */
+  --color-border:                       var(--border);
+  --color-border-strong:                var(--border-strong);
+  --color-outline:                      var(--outline);
+  --color-outline-variant:              var(--outline-variant);
+
+  /* Text */
+  --color-text:                         var(--text);
+  --color-text-muted:                   var(--text-muted);
+  --color-text-variant:                 var(--text-variant);
 }
 
-/* ── Base ─────────────────────────────────────────────────────────────────── */
+/* ── Base reset ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
-
 
 body {
   background: var(--bg);
@@ -119,22 +169,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── MD3 Expressive Loading Indicator (shape-morphing) ────────────────────── */
+/* ── MD3 Expressive Keyframes ─────────────────────────────────────────────── */
 @keyframes md3-morph {
-  0%   { border-radius: 50%;        transform: rotate(0deg)   scale(1);    }
+  0%   { border-radius: 50%;                              transform: rotate(0deg)   scale(1);    }
   14%  { border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; transform: rotate(51deg)  scale(1.05); }
   28%  { border-radius: 30% 70% 30% 70% / 70% 30% 70% 30%; transform: rotate(103deg) scale(0.95); }
   42%  { border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%; transform: rotate(154deg) scale(1.05); }
   57%  { border-radius: 60% 40% 70% 30% / 30% 60% 40% 70%; transform: rotate(206deg) scale(0.95); }
   71%  { border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; transform: rotate(257deg) scale(1.02); }
   85%  { border-radius: 50% 50% 60% 40% / 40% 60% 50% 50%; transform: rotate(309deg) scale(0.98); }
-  100% { border-radius: 50%;        transform: rotate(360deg) scale(1);    }
+  100% { border-radius: 50%;                              transform: rotate(360deg) scale(1);    }
 }
 
 @keyframes md3-morph-color {
   0%   { background: var(--primary); }
-  33%  { background: var(--tertiary); }
-  66%  { background: var(--secondary); }
   100% { background: var(--primary); }
 }
 
@@ -145,7 +193,7 @@ body {
 
 @keyframes md3-shimmer {
   0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  100% { background-position:  200% center; }
 }
 
 @keyframes md3-ripple {
@@ -163,66 +211,105 @@ body {
   to   { opacity: 1; transform: scale(1); }
 }
 
-@keyframes wavy {
-  0%   { d: path("M0,10 C20,0 40,20 60,10 C80,0 100,20 120,10"); }
-  50%  { d: path("M0,10 C20,20 40,0 60,10 C80,20 100,0 120,10"); }
-  100% { d: path("M0,10 C20,0 40,20 60,10 C80,0 100,20 120,10"); }
+@keyframes spin-fade {
+  0% { transform: rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: rotate(360deg); opacity: 0; }
 }
 
-/* ── MD3 Loading Indicator component ────────────────────────────────────────── */
+/* ── MD3 Loading Indicator ────────────────────────────────────────────────── */
 .md3-loading-indicator {
   display: inline-block;
-  animation: md3-morph 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite,
-             md3-morph-color 2.4s linear infinite;
+  animation:
+    md3-morph       2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    md3-morph-color 2.4s linear                        infinite;
   flex-shrink: 0;
 }
 
-.md3-loading-indicator-sm  { width: 20px; height: 20px; }
-.md3-loading-indicator-md  { width: 40px; height: 40px; }
-.md3-loading-indicator-lg  { width: 64px; height: 64px; }
+.md3-loading-indicator-sm { width: 20px; height: 20px; }
+.md3-loading-indicator-md { width: 40px; height: 40px; }
+.md3-loading-indicator-lg { width: 64px; height: 64px; }
 
-/* ── MD3 Expressive Spring Transitions ───────────────────────────────────── */
-.spring { transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+/* ── MD3 Spring Transitions ───────────────────────────────────────────────── */
+.spring    { transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .spring-sm { transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.spring-colors { transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                              color 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.spring-colors {
+  transition:
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color     0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color            0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-/* ── Elevation glow ─────────────────────────────────────────────────────── */
-.md3-glow-primary { box-shadow: 0 0 0 1px var(--border); }
-.md3-glow-primary:hover { box-shadow: 0 0 0 1px var(--border-strong), 0 16px 48px -12px rgba(168,199,250,0.25); }
+/* ── Tonal Elevation Glow (border + directional shadow) ──────────────────── */
+.md3-glow-primary {
+  box-shadow: 0 0 0 1px var(--border);
+}
+.md3-glow-primary:hover {
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 16px 40px -16px var(--primary-glow-hover);
+}
 
-/* ── Shimmer skeleton ─────────────────────────────────────────────────── */
+.md3-glow-secondary {
+  box-shadow: 0 0 0 1px var(--border);
+}
+.md3-glow-secondary:hover {
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 16px 40px -16px #bfc6dc30;
+}
+
+.md3-glow-tertiary {
+  box-shadow: 0 0 0 1px var(--border);
+}
+.md3-glow-tertiary:hover {
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 16px 40px -16px #dbb9fd30;
+}
+
+/* ── Shimmer Skeleton ─────────────────────────────────────────────────────── */
 .md3-skeleton {
-  background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-container)      25%,
+    var(--surface-container-high) 50%,
+    var(--surface-container)      75%
+  );
   background-size: 200% 100%;
   animation: md3-shimmer 1.5s ease-in-out infinite;
   border-radius: 12px;
 }
 
-/* ── Animate in ─────────────────────────────────────────────────────────── */
-.animate-slide-up { animation: md3-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+/* ── Animate Utilities ────────────────────────────────────────────────────── */
+.animate-slide-up  { animation: md3-slide-up  0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 .animate-fade-scale { animation: md3-fade-scale 0.3s ease-out both; }
+.animate-spin-once { animation: spin-fade 2.5s ease-in-out forwards; }
 
-/* ── Scrollbar ──────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-variant); }
+/* ── Custom Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 6px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--border-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--text-variant); }
 
-/* ── MD3 Ripple base (for interactive surfaces) ───────────────────────── */
+/* ── MD3 Ripple Surface ───────────────────────────────────────────────────── */
 .ripple-container { position: relative; overflow: hidden; }
 .ripple-container::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(168,199,250,0.15) 0%, transparent 60%);
+  background: radial-gradient(
+    circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    var(--primary-dim) 0%,
+    transparent 60%
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 .ripple-container:active::after { opacity: 1; }
 
-/* ── Material Web component overrides ────────────────────────────────── */
+/* ── Material Web component token overrides ───────────────────────────────── */
 md-circular-progress {
   --md-circular-progress-active-indicator-color: var(--primary);
 }

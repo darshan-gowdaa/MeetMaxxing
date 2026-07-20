@@ -26,14 +26,13 @@ _SYSTEM_PROMPT = """You are MeetMaxxing, an AI meeting copilot giving LIVE assis
 Your job:
 1. SUGGESTIONS — 1-3 concise action prompts the speaker could say RIGHT NOW (questions to ask, points to clarify, things to propose). Keep each under 15 words.
 2. RISKS — Flag any red flags in the conversation (commitment without timeline, vague ownership, contradictions, pricing discussions without specifics). 1-2 max. Only flag real issues visible in the text.
-3. NEXT_QUESTION — The single best question to ask next given the conversation flow. 1 sentence.
-4. RECAP — A 2-3 sentence recap for someone joining late right now. Include who said what.
+3. NEXT_QUESTION — A highly strategic, thought-provoking question to ask next to drive the conversation forward or clarify a key ambiguity. Must be exactly 1 sentence. NEVER output "Waiting for more context" or similar phrases; ALWAYS provide a real, constructive question even if context is limited (e.g. "Could you elaborate on the primary objective?").
+4. RECAP — 2-3 sentences summarizing the main discussion so far. Ground this in the exact text.
 
 CRITICAL RULES:
 - Only reference names, numbers, and facts that EXPLICITLY appear in the transcript.
 - Do NOT invent any statements, names, or commitments not in the text.
 - If no risks, return empty array for risks.
-- Always provide a recap, even if the transcript is very short.
 
 Respond ONLY in valid JSON matching this exact schema:
 {
@@ -119,15 +118,10 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
         if meeting_id in _last_results:
             return _last_results[meeting_id]
 
-    # Delta-only Analysis Context Construction
-    new_chunks = chunks[max(0, last_count-3):] # Take 3 chunks overlap
-    print(f"\n[MeetMaxxing Realtime Agent] Analyzing {len(new_chunks)} new chunks (overlap 3) out of {len(chunks)} total chunks for {meeting_id}...")
+    # Pass the entire rolling window so fallback LLMs have context
+    print(f"\n[MeetMaxxing Realtime Agent] Analyzing {len(chunks)} chunks (window) for {meeting_id}...")
     
-    # Compress context if too large
-    if len(chunks) > 30:
-        transcript_text = "(Previous conversation context omitted for brevity)\n" + _format_window(chunks[-30:])
-    else:
-        transcript_text = _format_window(chunks)
+    transcript_text = _format_window(chunks)
 
     context_block = ""
     if context:
@@ -139,40 +133,36 @@ Meeting context:
 
 """
 
-    prompt = f"""{context_block}Current transcript (rolling window):
-{transcript_text}
+    prompt = f"""{_SYSTEM_PROMPT}
 
-Analyze the above and respond with suggestions, risks, next question, and recap."""
+{context_block}New transcript utterances:
+{transcript_text}"""
 
     try:
-        from ..core.llm_fallback import generate_content_with_fallback
-        print(f"[MeetMaxxing LLM Pipeline] Generating real-time insights with automatic failover...")
-        raw, powered_by = await generate_content_with_fallback(
-            prompt=prompt,
-            system_instruction=_SYSTEM_PROMPT,
-            temperature=0.3,
-            max_tokens=512,
-            response_format_json=True,
-            cache_ttl=300, # Cache for 5 mins
+        from ..core.lyzr_integration import run_lyzr_agent
+        print(f"[MeetMaxxing LLM Pipeline] Generating real-time insights with Lyzr SDK...")
+        raw, powered_by = await run_lyzr_agent(
+            "Realtime Agent - MeetMaxxing", 
+            prompt,
+            session_id=meeting_id
         )
         result = _parse_json_clean(raw or "{}")
         result["powered_by"] = powered_by
         print(f"[MeetMaxxing API] Success ({powered_by})! Generated {len(result.get('suggestions', []))} suggestions & {len(result.get('risks', []))} risk flags.")
     except Exception as e:
         err_str = str(e)
-        print(f"[MeetMaxxing API] ERROR during generate_content_with_fallback: {err_str}")
+        print(f"[MeetMaxxing API] ERROR during Lyzr SDK execution: {err_str}")
         if meeting_id in _last_results and _last_results[meeting_id].get("suggestions"):
-            print("[MeetMaxxing Gemini API] Fallback failed. Returning last valid cached insights.")
+            print("[MeetMaxxing API] Lyzr failed. Returning last valid cached insights.")
             return _last_results[meeting_id]
         return {
             "meeting_id": meeting_id,
-            "error": "Rate limit reached or all fallback APIs failed. Insights will auto-refresh shortly.",
-            "suggestions": ["Rate limit reached. Insights will auto-refresh shortly once quota resets."],
+            "error": f"Lyzr API Error: {err_str}. Insights will auto-refresh shortly.",
+            "suggestions": ["Lyzr API temporarily unavailable. Insights will auto-refresh."],
             "risks": [],
-            "next_question": "Rate limit temporarily reached. Auto-refreshing soon.",
-            "recap": "Late-join recap delayed by rate limits. Auto-refreshing soon.",
+            "next_question": "Waiting for Lyzr API...",
             "transcript_chunks": len(chunks),
-            "powered_by": "Cached Insight / API Failed"
+            "powered_by": "Lyzr API Failed"
         }
 
     # Run Lyzr light guardrail validation on real suggestions
@@ -185,7 +175,6 @@ Analyze the above and respond with suggestions, risks, next question, and recap.
         "suggestions": validated_suggs,
         "risks": result.get("risks", []),
         "next_question": result.get("next_question", ""),
-        "recap": result.get("recap", ""),
         "transcript_chunks": len(chunks),
         "powered_by": result.get("powered_by", "Unknown API"),
     }

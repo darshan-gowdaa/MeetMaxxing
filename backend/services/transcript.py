@@ -66,20 +66,44 @@ async def create_meeting_record(
     user_id: str,
     title: str,
     attendees: list[str],
+    google_meet_link: str = "",
 ) -> dict:
     """Create a meeting record in Supabase and return it."""
+    from ..core.redis_client import set_meeting_alias
+    
+    clean_code = google_meet_link.strip().replace("https://meet.google.com/", "").strip("/")
+    if clean_code and (not title or title in ["Google Meet", "Untitled Meeting", "Google Meet Session"]):
+        final_title = f"Meet - {clean_code}"
+    elif clean_code and not title.startswith("Meet - "):
+        final_title = f"Meet - {clean_code}"
+    else:
+        final_title = title or "Meet - Live Session"
+
+    meeting_id = str(uuid.uuid4())
     supabase = get_supabase_admin()
-    result = (
-        supabase.table("meetings")
-        .insert({
-            "id": str(uuid.uuid4()),
-            "org_id": org_id,
-            "user_id": user_id,
-            "title": title,
-            "attendees": attendees,
-            "start_at": datetime.now(timezone.utc).isoformat(),
-            "status": "active",
-        })
-        .execute()
-    )
+    
+    insert_data = {
+        "id": meeting_id,
+        "org_id": org_id,
+        "user_id": user_id,
+        "title": final_title,
+        "attendees": attendees,
+        "start_at": datetime.now(timezone.utc).isoformat(),
+        "status": "active",
+    }
+    if clean_code:
+        insert_data["google_meet_link"] = clean_code
+
+    try:
+        result = supabase.table("meetings").insert(insert_data).execute()
+    except Exception as e:
+        if "google_meet_link" in str(e):
+            insert_data.pop("google_meet_link", None)
+            result = supabase.table("meetings").insert(insert_data).execute()
+        else:
+            raise e
+    
+    if clean_code:
+        await set_meeting_alias(meeting_id, clean_code)
+        
     return result.data[0] if result.data else {}

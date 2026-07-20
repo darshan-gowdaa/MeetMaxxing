@@ -21,7 +21,7 @@ import type { TranscriptChunk, CopilotUpdate } from "./types";
 declare const chrome: any;
 
 export default function App() {
-  const [meetingId, setMeetingId] = useState<string>("live_meeting");
+  const [meetingId, setMeetingId] = useState<string>("");
   const [meetingTitle, setMeetingTitle] = useState<string>("Google Meet Session");
   const [activeTab, setActiveTab] = useState<"insights" | "transcript">("insights");
   const [isEnded, setIsEnded] = useState<boolean>(false);
@@ -57,7 +57,9 @@ export default function App() {
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy"], (res: any) => {
-        if (res.currentMeetingId) setMeetingId(res.currentMeetingId);
+        if (res.currentMeetingId) {
+          setMeetingId(res.currentMeetingId);
+        }
         if (res.currentMeetingTitle) setMeetingTitle(res.currentMeetingTitle);
         if (res.transcript && Array.isArray(res.transcript)) setTranscriptLines(res.transcript);
         if (res.poweredBy) setPoweredBy(res.poweredBy);
@@ -94,6 +96,7 @@ export default function App() {
             setIsEnded(true);
           } else if (changes.currentMeetingId.newValue) {
             setIsEnded(false);
+            setMeetingId(changes.currentMeetingId.newValue);
           }
         }
       }
@@ -207,9 +210,9 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#131314] text-[#e3e3e3] select-none font-sans overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#141518] text-[#ffffff] select-none font-sans overflow-hidden">
       {/* Material 3 Expressive Header Container (`#1e1f20`) */}
-      <header className="px-4 pt-4 pb-3.5 bg-gradient-to-b from-[#1e1f20] to-[#1a1b1c] border-b border-[#e3e3e3]/10 flex flex-col gap-3 shrink-0 shadow-md">
+      <header className="px-4 pt-4 pb-3.5 bg-gradient-to-b from-[#1e1f20] to-[#1a1b1c] border-b border-[#ffffff]/10 flex flex-col gap-3 shrink-0 shadow-md">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-[#0842a0] border border-[#a8c7fa]/40 flex items-center justify-center shrink-0 shadow-sm animate-pulse-glow">
@@ -219,65 +222,92 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#6dd58c] animate-pulse shrink-0" />
                 <h1 className="text-sm font-bold text-white truncate tracking-tight">
-                  {meetingTitle}
+                  {meetingId ? meetingTitle : "MeetMaxxing AI Copilot"}
                 </h1>
               </div>
-              <span className="text-[11px] text-[#8e918f] font-mono truncate flex items-center gap-1.5">
+              <span className="text-[11px] text-[#868e96] font-mono truncate flex items-center gap-1.5">
                 <span>Material 3 Expressive</span>
                 <span>•</span>
                 <span className="text-[#a8c7fa]">AI Copilot</span>
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="px-2.5 py-1.5 rounded-xl bg-[#28292a] border border-[#e3e3e3]/10 text-xs font-mono text-[#a8c7fa] flex items-center gap-1.5 shadow-inner">
-              <Clock className="w-3.5 h-3.5 text-[#a8c7fa]" />
-              {elapsedTime}
-            </span>
-            <button
-              onClick={() => triggerAction("REQUEST_END_MEETING")}
-              className="px-2.5 py-1.5 rounded-xl bg-[#7a2730]/40 border border-[#f2b8b5]/20 text-[10px] font-bold text-[#f2b8b5] hover:bg-[#7a2730]/70 transition-all shadow-sm uppercase tracking-wider flex items-center gap-1.5 shrink-0"
-              title="End Meeting"
-            >
-              <div className="w-1.5 h-1.5 rounded-sm bg-[#f2b8b5] shrink-0" />
-              Stop
-            </button>
-          </div>
+          {meetingId && !isEnded && (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="px-2.5 py-1.5 rounded-xl bg-[#27292c] border border-[#ffffff]/10 text-xs font-mono text-[#a8c7fa] flex items-center gap-1.5 shadow-inner">
+                <Clock className="w-3.5 h-3.5 text-[#a8c7fa]" />
+                {elapsedTime}
+              </span>
+              <button
+                onClick={() => triggerAction("REQUEST_END_MEETING")}
+                className="px-2.5 py-1.5 rounded-xl bg-[#7a2730]/40 border border-[#f2b8b5]/20 text-[10px] font-bold text-[#f2b8b5] hover:bg-[#7a2730]/70 transition-all shadow-sm uppercase tracking-wider flex items-center gap-1.5 shrink-0"
+                title="End Meeting"
+              >
+                <div className="w-1.5 h-1.5 rounded-sm bg-[#f2b8b5] shrink-0" />
+                Stop
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Expressive Powered By API Chip Badge */}
-        <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-[#28292a] border border-[#a8c7fa]/30 shadow-inner">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-lg bg-[#0842a0]/60 flex items-center justify-center shrink-0">
-              <Zap className="w-3.5 h-3.5 text-[#fdd663]" />
+        {meetingId && (
+          <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-[#27292c] border border-[#a8c7fa]/30 shadow-inner">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-lg bg-[#0842a0]/60 flex items-center justify-center shrink-0">
+                <Zap className="w-3.5 h-3.5 text-[#fdd663]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] uppercase font-bold text-[#a8c7fa] tracking-wider leading-tight">
+                  Active Provider
+                </span>
+                <span className="text-xs font-semibold text-white truncate">
+                  {poweredBy}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[10px] uppercase font-bold text-[#a8c7fa] tracking-wider leading-tight">
-                Active Provider
-              </span>
-              <span className="text-xs font-semibold text-white truncate">
-                {poweredBy}
-              </span>
-            </div>
+            {!isEnded && (
+              <button
+                onClick={() => triggerAction("ASK_SUGGESTIONS")}
+                disabled={isProcessing}
+                title="Force refresh AI insights"
+                className="p-2 rounded-xl bg-[#27292c] hover:bg-[#333537] text-[#a8c7fa] border border-[#ffffff]/10 disabled:opacity-50 transition-all shadow-sm shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? "animate-spin text-[#7fcfff]" : ""}`} />
+              </button>
+            )}
           </div>
-          <button
-            onClick={() => triggerAction("ASK_SUGGESTIONS")}
-            disabled={isProcessing}
-            title="Force refresh AI insights"
-            className="p-2 rounded-xl bg-[#1e1f20] hover:bg-[#333537] text-[#a8c7fa] border border-[#e3e3e3]/10 disabled:opacity-50 transition-all shadow-sm shrink-0"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? "animate-spin text-[#7fcfff]" : ""}`} />
-          </button>
-        </div>
+        )}
       </header>
 
-      {isEnded ? (
-        <main className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center bg-[#131314]">
+      {!meetingId ? (
+        <main className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center bg-[#141518]">
+          <div className="w-16 h-16 rounded-full bg-[#0842a0]/20 border border-[#a8c7fa]/20 flex items-center justify-center mb-4 shadow-inner">
+            <MessageSquare className="w-8 h-8 text-[#a8c7fa]" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">No Active Meeting</h2>
+          <p className="text-sm text-[#868e96] text-center mb-8 max-w-[280px] leading-relaxed">
+            Join a Google Meet session and click "Allow & Start" to activate the MeetMaxxing AI Copilot.
+          </p>
+          <div className="flex flex-col gap-3 w-full max-w-[300px]">
+            <a
+              href="http://localhost:3000"
+              target="_blank"
+              rel="noreferrer"
+              className="w-full px-4 py-3 rounded-2xl bg-[#0842a0] hover:bg-[#0842a0]/80 border border-[#a8c7fa]/20 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
+            >
+              <ExternalLink className="w-4 h-4 text-[#a8c7fa]" />
+              Open Dashboard
+            </a>
+          </div>
+        </main>
+      ) : isEnded ? (
+        <main className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center bg-[#141518]">
           <div className="w-16 h-16 rounded-full bg-[#6dd58c]/10 flex items-center justify-center mb-4 shadow-inner">
             <Check className="w-8 h-8 text-[#6dd58c]" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Meeting Completed</h2>
-          <p className="text-sm text-[#8e918f] text-center mb-8 max-w-[280px] leading-relaxed">
+          <p className="text-sm text-[#868e96] text-center mb-8 max-w-[280px] leading-relaxed">
             Your transcript has been processed and stored in the meeting memory.
           </p>
           
@@ -291,33 +321,42 @@ export default function App() {
               <ExternalLink className="w-4 h-4 text-[#a8c7fa]" />
               View Summarization Details
             </a>
-            <button className="w-full px-4 py-3 rounded-2xl bg-[#1e1f20] hover:bg-[#28292a] border border-[#e3e3e3]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+            <button className="w-full px-4 py-3 rounded-2xl bg-[#27292c] hover:bg-[#27292c] border border-[#ffffff]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
               <History className="w-4 h-4" />
               Sync to GCalendar
             </button>
-            <button className="w-full px-4 py-3 rounded-2xl bg-[#1e1f20] hover:bg-[#28292a] border border-[#e3e3e3]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+            <button className="w-full px-4 py-3 rounded-2xl bg-[#27292c] hover:bg-[#27292c] border border-[#ffffff]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
               <MessageSquare className="w-4 h-4" />
               Send Follow-up (Gmail)
             </button>
+            <a
+              href="http://localhost:3000"
+              target="_blank"
+              rel="noreferrer"
+              className="w-full px-4 py-3 rounded-2xl bg-[#27292c] hover:bg-[#333537] border border-[#ffffff]/10 text-[#a8c7fa] hover:text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all mt-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open Dashboard
+            </a>
           </div>
         </main>
       ) : (
         <>
           {/* Expressive Pill Tab Switcher */}
-          <div className="px-3 pt-3 pb-2 bg-[#1a1b1c] border-b border-[#e3e3e3]/10 shrink-0">
-        <div className="flex p-1 rounded-2xl bg-[#1e1f20] border border-[#e3e3e3]/10 gap-1 shadow-inner">
+          <div className="px-3 pt-3 pb-2 bg-[#27292c] border-b border-[#ffffff]/10 shrink-0">
+        <div className="flex p-1 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 gap-1 shadow-inner">
           <button
             onClick={() => setActiveTab("insights")}
             className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               activeTab === "insights"
                 ? "bg-[#0842a0] text-white shadow-md border border-[#a8c7fa]/30"
-                : "text-[#8e918f] hover:text-[#e3e3e3] hover:bg-[#28292a]/50"
+                : "text-[#868e96] hover:text-[#ffffff] hover:bg-[#27292c]/50"
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Live AI Insights</span>
             {suggestions.length > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#131314]/80 text-[10px] font-mono text-[#d3e3fd]">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#141518]/80 text-[10px] font-mono text-[#d3e3fd]">
                 {suggestions.length}
               </span>
             )}
@@ -327,12 +366,12 @@ export default function App() {
             className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               activeTab === "transcript"
                 ? "bg-[#0842a0] text-white shadow-md border border-[#a8c7fa]/30"
-                : "text-[#8e918f] hover:text-[#e3e3e3] hover:bg-[#28292a]/50"
+                : "text-[#868e96] hover:text-[#ffffff] hover:bg-[#27292c]/50"
             }`}
           >
             <Radio className={`w-3.5 h-3.5 shrink-0 ${activeTab === "transcript" ? "animate-pulse text-[#6dd58c]" : ""}`} />
             <span className="truncate">Spoken Transcript</span>
-            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#28292a] text-[10px] font-mono text-[#8e918f]">
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#27292c] text-[10px] font-mono text-[#868e96]">
               {transcriptLines.length}
             </span>
           </button>
@@ -364,7 +403,7 @@ export default function App() {
         {activeTab === "insights" ? (
           <div className="space-y-4">
             {/* Expressive Hero Status Banner */}
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-[#1e1f20] via-[#28292a] to-[#1e1f20] border border-[#e3e3e3]/10 shadow-lg flex items-center justify-between gap-3">
+            <div className="p-4 rounded-3xl bg-gradient-to-r from-[#1e1f20] via-[#28292a] to-[#1e1f20] border border-[#ffffff]/10 shadow-lg flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-[#0d3f23] border border-[#6dd58c]/30 flex items-center justify-center shrink-0">
                   <Shield className="w-4 h-4 text-[#6dd58c]" />
@@ -373,7 +412,7 @@ export default function App() {
                   <span className="text-xs font-bold text-white tracking-tight">
                     Real-Time Guardrails Active
                   </span>
-                  <span className="text-[10px] text-[#8e918f]">
+                  <span className="text-[10px] text-[#868e96]">
                     Fallback hierarchy order locked
                   </span>
                 </div>
@@ -390,13 +429,13 @@ export default function App() {
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span>Suggested Talking Points</span>
                 </div>
-                <span className="text-[10px] font-mono text-[#8e918f]">Tap card to copy</span>
+                <span className="text-[10px] font-mono text-[#868e96]">Tap card to copy</span>
               </div>
 
               {isProcessing && suggestions.length === 0 ? (
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-[#1e1f20] border border-[#e3e3e3]/10 animate-pulse flex items-center gap-3">
+                    <div key={i} className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 animate-pulse flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full bg-[#a8c7fa]/20 shrink-0" />
                       <div className="flex-1 space-y-1.5">
                         <div className="h-3 bg-[#e3e3e3]/10 rounded w-5/6" />
@@ -413,24 +452,24 @@ export default function App() {
                       onClick={() => copyToClipboard(sug, idx)}
                       className="group card-expressive rounded-2xl p-4 hover:border-[#a8c7fa]/50 transition-all cursor-pointer flex items-start justify-between gap-3 shadow-md"
                     >
-                      <span className="text-xs text-[#e3e3e3] leading-relaxed break-words font-medium group-hover:text-white">
+                      <span className="text-xs text-[#ffffff] leading-relaxed break-words font-medium group-hover:text-white">
                         {sug}
                       </span>
                       {copiedIndex === idx ? (
                         <Check className="w-4 h-4 text-[#6dd58c] shrink-0 mt-0.5" />
                       ) : (
-                        <Copy className="w-3.5 h-3.5 text-[#8e918f] group-hover:text-[#a8c7fa] shrink-0 mt-0.5 transition-colors" />
+                        <Copy className="w-3.5 h-3.5 text-[#868e96] group-hover:text-[#a8c7fa] shrink-0 mt-0.5 transition-colors" />
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 rounded-3xl bg-[#1e1f20] border border-[#e3e3e3]/10 text-center flex flex-col items-center gap-2.5 shadow-sm">
-                  <div className="w-10 h-10 rounded-2xl bg-[#28292a] flex items-center justify-center">
+                <div className="p-6 rounded-3xl bg-[#27292c] border border-[#ffffff]/10 text-center flex flex-col items-center gap-2.5 shadow-sm">
+                  <div className="w-10 h-10 rounded-2xl bg-[#27292c] flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-[#a8c7fa] animate-pulse" />
                   </div>
                   <span className="text-xs font-semibold text-white">Listening to discussion flow...</span>
-                  <span className="text-[11px] text-[#8e918f] max-w-[240px] leading-relaxed">
+                  <span className="text-[11px] text-[#868e96] max-w-[240px] leading-relaxed">
                     Ensure Closed Captions (CC) are active on your Google Meet screen.
                   </span>
                 </div>
@@ -494,7 +533,7 @@ export default function App() {
                   )}
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-[#1e1f20] border border-[#e3e3e3]/10 text-center text-xs text-[#8e918f] italic">
+                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
                   Waiting for sufficient discussion depth...
                 </div>
               )}
@@ -518,16 +557,16 @@ export default function App() {
               </div>
 
               {isProcessing && !recap ? (
-                <div className="p-4 rounded-2xl bg-[#1e1f20] border border-[#6dd58c]/40 animate-pulse flex items-center gap-3 text-xs text-[#6dd58c]">
+                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#6dd58c]/40 animate-pulse flex items-center gap-3 text-xs text-[#6dd58c]">
                   <RefreshCw className="w-4 h-4 animate-spin text-[#6dd58c] shrink-0" />
                   <span>Synthesizing key decisions via fallback pipeline...</span>
                 </div>
               ) : recap ? (
-                <div className="p-4 rounded-2xl bg-[#1e1f20] border border-[#e3e3e3]/15 text-xs text-[#e3e3e3] leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto shadow-inner">
+                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/15 text-xs text-[#ffffff] leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto shadow-inner">
                   {recap}
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-[#1e1f20] border border-[#e3e3e3]/10 text-center text-xs text-[#8e918f] italic">
+                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
                   Click Generate Summary for instant executive brief.
                 </div>
               )}
@@ -541,34 +580,34 @@ export default function App() {
                 <Radio className="w-3.5 h-3.5 text-[#6dd58c] animate-pulse" />
                 <span>Live Spoken Stream</span>
               </div>
-              <span className="font-mono text-[10px] text-[#8e918f] lowercase">Auto-scrolling</span>
+              <span className="font-mono text-[10px] text-[#868e96] lowercase">Auto-scrolling</span>
             </div>
 
-            <div className="flex-1 rounded-3xl bg-[#1e1f20] border border-[#e3e3e3]/10 p-4 overflow-y-auto flex flex-col gap-3 text-xs shadow-inner">
+            <div className="flex-1 rounded-3xl bg-[#27292c] border border-[#ffffff]/10 p-4 overflow-y-auto flex flex-col gap-3 text-xs shadow-inner">
               {transcriptLines.length === 0 ? (
-                <div className="m-auto text-center flex flex-col items-center gap-2.5 text-[#8e918f] py-10">
-                  <div className="w-12 h-12 rounded-2xl bg-[#28292a] flex items-center justify-center">
+                <div className="m-auto text-center flex flex-col items-center gap-2.5 text-[#868e96] py-10">
+                  <div className="w-12 h-12 rounded-2xl bg-[#27292c] flex items-center justify-center">
                     <Mic className="w-6 h-6 text-[#a8c7fa] animate-pulse" />
                   </div>
                   <span className="font-semibold text-white">0 utterances captured</span>
-                  <span className="text-[11px] max-w-[240px] leading-relaxed text-[#8e918f]">
+                  <span className="text-[11px] max-w-[240px] leading-relaxed text-[#868e96]">
                     Verify Google Meet Captions (CC) are active in your bottom Meet toolbar.
                   </span>
                 </div>
               ) : (
                 transcriptLines.map((line, idx) => (
-                  <div key={idx} className="p-3 rounded-2xl bg-[#28292a]/60 border border-[#e3e3e3]/5 flex flex-col gap-1.5">
+                  <div key={idx} className="p-3 rounded-2xl bg-[#27292c]/60 border border-[#ffffff]/5 flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <span className="px-2 py-0.5 rounded-lg bg-[#0842a0]/50 border border-[#a8c7fa]/30 font-bold text-[#d3e3fd] text-[11px]">
                         {line.speaker}
                       </span>
                       {line.timestamp && (
-                        <span className="text-[10px] font-mono text-[#8e918f]">
+                        <span className="text-[10px] font-mono text-[#868e96]">
                           {new Date(line.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                         </span>
                       )}
                     </div>
-                    <p className="text-[#e3e3e3] leading-relaxed break-words font-normal pl-1">
+                    <p className="text-[#ffffff] leading-relaxed break-words font-normal pl-1">
                       {line.text}
                     </p>
                   </div>
@@ -583,16 +622,16 @@ export default function App() {
       )}
 
       {/* Material 3 Expressive Footer (`#1e1f20`) */}
-      <footer className="px-4 py-3 bg-gradient-to-t from-[#1a1b1c] to-[#1e1f20] border-t border-[#e3e3e3]/10 flex items-center justify-between text-[11px] text-[#8e918f] shrink-0 shadow-lg">
+      <footer className="px-4 py-3 bg-gradient-to-t from-[#1a1b1c] to-[#1e1f20] border-t border-[#ffffff]/10 flex items-center justify-between text-[11px] text-[#868e96] shrink-0 shadow-lg">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#6dd58c]" />
-          <span className="font-mono text-xs font-semibold text-[#e3e3e3]">MeetMaxxing v2.5</span>
+          <span className="font-mono text-xs font-semibold text-[#ffffff]">MeetMaxxing v2.5</span>
         </div>
         <a
           href="http://localhost:3000"
           target="_blank"
           rel="noreferrer"
-          className="px-2.5 py-1 rounded-xl bg-[#28292a] hover:bg-[#333537] text-[#a8c7fa] hover:text-white font-semibold border border-[#e3e3e3]/10 flex items-center gap-1.5 transition-all shadow-sm"
+          className="px-2.5 py-1 rounded-xl bg-[#27292c] hover:bg-[#333537] text-[#a8c7fa] hover:text-white font-semibold border border-[#ffffff]/10 flex items-center gap-1.5 transition-all shadow-sm"
         >
           <span>Open Dashboard</span>
           <ExternalLink className="w-3.5 h-3.5" />

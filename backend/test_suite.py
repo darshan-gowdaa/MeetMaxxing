@@ -21,6 +21,7 @@ if __package__ is None or __package__ == "":
 from backend.core.database import get_supabase_admin
 from backend.services.transcript import ingest_chunk, create_meeting_record
 from backend.agents.realtime_agent import run_realtime_agent
+from backend.agents.late_join_agent import generate_late_join_recap
 from backend.agents.summary_agent import run_summary_agent
 from backend.agents.memory_agent import run_memory_agent
 from backend.agents.scheduler_agent import run_scheduler_agent
@@ -31,10 +32,12 @@ from backend.memory.schemas import MemoryFilter, MemoryType
 
 class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        await ensure_collection()
+        self.meeting_id = "33333333-3333-3333-3333-333333333333"
         self.org_id = "11111111-1111-1111-1111-111111111111"
         self.user_id = "22222222-2222-2222-2222-222222222222"
-        self.meeting_id = "33333333-3333-3333-3333-333333333333"
+        await ensure_collection()
+
+        # Seed user
         supabase = get_supabase_admin()
         try:
             supabase.table("users").upsert({
@@ -68,7 +71,7 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
             {"meeting_id": m_id, "speaker": "Sriya", "text": "We need to ensure Gemini Flash API gives under 2s latency for live suggestions.", "timestamp_ms": 15000},
             {"meeting_id": m_id, "speaker": "Rahul", "text": "Also make sure late joiners get instant recap summaries.", "timestamp_ms": 30000},
             {"meeting_id": m_id, "speaker": "Sriya", "text": "I will handle the summary agent and Lyzr integration.", "timestamp_ms": 45000},
-            {"meeting_id": m_id, "speaker": "Rahul", "text": "Great, then the architecture looks solid.", "timestamp_ms": 60000},
+            {"meeting_id": m_id, "speaker": "Rahul", "text": "Pricing will be $49/user/month with a 14-day free trial.", "timestamp_ms": 60000},
         ]
         for utt in utterances:
             res = await ingest_chunk(utt)
@@ -79,10 +82,11 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         self.assertIn("suggestions", realtime_output)
         self.assertIn("risks", realtime_output)
         self.assertIn("next_question", realtime_output)
-        self.assertIn("recap", realtime_output)
-        # Verify late call join recap
-        self.assertTrue(len(realtime_output["recap"]) > 0)
-        print(f"-> Realtime Recap (Late Join Insights): {realtime_output['recap']}")
+        
+        recap_output = await generate_late_join_recap(m_id)
+        self.assertIn("recap", recap_output)
+        self.assertTrue(len(recap_output["recap"]) > 0)
+        print(f"-> Realtime Recap (Late Join Insights): {recap_output['recap']}")
         print(f"-> Realtime Suggestions: {realtime_output['suggestions']}")
 
     async def test_02_meeting_end_and_guardrails(self):
@@ -92,6 +96,10 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
             {"speaker": "Rahul", "text": "We decided to adopt Qdrant vector DB for memory storage.", "timestamp_ms": 1000},
             {"speaker": "Sriya", "text": "I will handle the Google Calendar and Gmail API reminder integration by tomorrow.", "timestamp_ms": 5000},
         ]
+        for u in utterances:
+            u["meeting_id"] = self.meeting_id
+            await ingest_chunk(u)
+
         summary = await run_summary_agent(
             meeting_id=self.meeting_id,
             title="AI Memory & Scheduling Sync",

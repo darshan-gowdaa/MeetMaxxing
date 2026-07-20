@@ -7,8 +7,8 @@ from enum import Enum
 import json
 import grpc.aio
 import logging
-from .. import grpc_bus_pb2
-from .. import grpc_bus_pb2_grpc
+from ..grpc_bus import grpc_bus_pb2
+from ..grpc_bus import grpc_bus_pb2_grpc
 
 logger = logging.getLogger(__name__)
 
@@ -30,36 +30,46 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     
     grpc_payload = dict(payload)
     
-    match trigger:
-        case AgentTrigger.REALTIME_TICK:
-            agent_name = "realtime"
-        case AgentTrigger.MEETING_END:
-            agent_name = "summary"
-        case AgentTrigger.USER_QUERY:
-            agent_name = "memory"
-        case AgentTrigger.SCHEDULE_FOLLOWUP:
-            agent_name = "scheduler"
-        case AgentTrigger.LATE_JOIN_RECAP:
-            agent_name = "late_join"
-        case AgentTrigger.SEND_EMAIL:
-            agent_name = "email"
-            grpc_payload["summary"] = {
-                "title": payload.get("meeting_title", ""),
-                "attendees": payload.get("attendees", []),
-                "summary": payload.get("summary", ""),
-                "action_items": [{"text": item} for item in payload.get("action_items", [])],
-                "host_email": payload.get("to_email", ""),
-                "user_id": payload.get("user_id", "")
-            }
-        case AgentTrigger.SEND_SLACK:
-            agent_name = "slack"
-            grpc_payload["summary"] = {
-                "title": payload.get("meeting_title", ""),
-                "summary": payload.get("summary", ""),
-                "action_items": [{"text": item} for item in payload.get("action_items", [])]
-            }
-        case _:
-            raise ValueError(f"Unknown trigger: {trigger}")
+    from ..core.lyzr_integration import run_lyzr_agent
+    
+    prompt = f"Incoming Trigger: {trigger.value}\nRaw Payload: {json.dumps(payload)}\n\nDetermine the exact agent_name (realtime, summary, memory, scheduler, late_join, email, slack, transcription) and construct the final grpc_payload dictionary based on your instructions. Return ONLY valid JSON: {{\"agent_name\": \"...\", \"grpc_payload\": {{...}}}}"
+    
+    # Fast path for realtime to avoid latency
+    if trigger == AgentTrigger.REALTIME_TICK:
+        agent_name = "realtime"
+        grpc_payload = dict(payload)
+    else:
+        try:
+            raw_response, _ = await run_lyzr_agent("Orchestrator Agent - MeetMaxxing", prompt)
+            
+            # Clean JSON
+            cleaned = raw_response.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned[7:]
+            elif cleaned.startswith("```"):
+                cleaned = cleaned[3:]
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]
+                
+            routing_data = json.loads(cleaned.strip())
+            agent_name = routing_data.get("agent_name", "")
+            grpc_payload = routing_data.get("grpc_payload", dict(payload))
+        except Exception as e:
+            logger.error(f"[Orchestrator] Lyzr routing failed, falling back to manual routing: {e}")
+            agent_name = ""
+            grpc_payload = dict(payload)
+            match trigger:
+                case AgentTrigger.MEETING_END: agent_name = "summary"
+                case AgentTrigger.USER_QUERY: agent_name = "memory"
+                case AgentTrigger.SCHEDULE_FOLLOWUP: agent_name = "scheduler"
+                case AgentTrigger.LATE_JOIN_RECAP: agent_name = "late_join"
+                case AgentTrigger.SEND_EMAIL: 
+                    agent_name = "email"
+                    grpc_payload["summary"] = payload
+                case AgentTrigger.SEND_SLACK:
+                    agent_name = "slack"
+                    grpc_payload["summary"] = payload
+                case _: raise ValueError(f"Unknown trigger fallback: {trigger}")
 
     try:
         async with grpc.aio.insecure_channel('localhost:50051') as channel:
