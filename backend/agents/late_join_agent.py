@@ -3,24 +3,19 @@ import time
 from typing import Dict, Any
 
 from ..core.redis_client import get_transcript_window
-from ..core.lyzr_integration import run_lyzr_agent
+from ..core.llm_fallback import generate_content_with_fallback
 
-_SYSTEM_PROMPT = """You are MeetMaxxing's Late Join Recap Agent. 
-Your goal is to provide a concise, structured recap for someone who just joined the meeting late.
+_SYSTEM_PROMPT = """You are MeetMaxxing's Late-Join Agent. The user just asked for an executive recap of the meeting so far.
+Analyze the transcript and provide a highly refined, concise summary covering:
+- The main current topic.
+- Key decisions made so far.
+- Who said what (brief highlights).
 
-Analyze the transcript and provide a summary covering:
-1. 'recap': 2-3 sentences summarizing the main discussion so far.
-2. 'key_decisions_so_far': A list of 1-3 decisions made. If none, return empty list.
-3. 'current_topic': 1 sentence describing what is being discussed right now.
-4. 'who_said_what': A brief list mapping speaker names to their main contribution/stance.
-
-CRITICAL RULES:
-- Ground everything in the exact text. Do not invent details.
-- Respond ONLY in valid JSON matching this schema:
+Keep it extremely brief and professional. Do NOT output unnecessary details. Return ONLY a valid JSON object matching this schema:
 {
-  "recap": "...",
-  "key_decisions_so_far": ["...", "..."],
+  "recap": "2-3 sentences max.",
   "current_topic": "...",
+  "key_decisions_so_far": ["...", "..."],
   "who_said_what": ["Speaker A: ...", "Speaker B: ..."]
 }"""
 
@@ -60,7 +55,7 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict
     prompt = f"{_SYSTEM_PROMPT}\n\nGenerate a late join recap for the following transcript:\n\n{transcript_text}"
     
     try:
-        raw, powered_by = await run_lyzr_agent("Late-Join Agent - MeetMaxxing", prompt)
+        raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
         
         cleaned = raw.strip()
         if cleaned.startswith("```json"):

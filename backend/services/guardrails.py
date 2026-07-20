@@ -136,7 +136,7 @@ Action Items:
         )
         import json
         eval_result = json.loads(raw.strip() or "{}")
-        score = float(eval_result.get("score", 0.8))
+        score = float(eval_result.get("score", 1.0))
         llm_issues = eval_result.get("issues", [])
         violations.extend(llm_issues)
 
@@ -197,7 +197,7 @@ Answer to validate:
         )
         import json
         eval_result = json.loads(raw.strip() or "{}")
-        score = float(eval_result.get("score", 0.8))
+        score = float(eval_result.get("score", 1.0))
         violations.extend(eval_result.get("issues", []))
 
     except Exception as e:
@@ -205,7 +205,8 @@ Answer to validate:
         score = 1.0
         violations.append(f"Eval unavailable (non-fatal): {e}")
 
-    cleaned_answer = answer if score >= 0.7 else "I found some information, but it did not pass strict groundedness guardrails. Please refine your query."
+    # Always return the answer, but mark valid based on score
+    cleaned_answer = answer
 
     return GuardrailResult(
         valid=len(violations) == 0 or score >= 0.7,

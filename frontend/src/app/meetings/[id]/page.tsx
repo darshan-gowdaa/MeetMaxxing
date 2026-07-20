@@ -225,20 +225,10 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
               {/* Status chips */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-success bg-success/10 border border-success/20 rounded-full px-3 py-1">
-                  <Radio className="w-3 h-3 animate-pulse" />
-                  Completed & Summarized
-                </span>
-                {meeting.guardrail_score !== undefined && (
-                  <span className="flex items-center gap-1.5 text-[11px] font-semibold text-secondary bg-secondary-container rounded-full px-3 py-1 border border-secondary/20">
-                    <Shield className="w-3 h-3" />
-                    Safety: {Math.round(meeting.guardrail_score * 100)}%
-                  </span>
-                )}
-                {meeting.powered_by && (
-                  <span className="flex items-center gap-1.5 text-[11px] font-semibold text-tertiary bg-tertiary-container rounded-full px-3 py-1 border border-tertiary/20">
-                    <Zap className="w-3 h-3 animate-pulse" />
-                    {meeting.powered_by}
+                {meeting.summary && (
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold text-success bg-success/10 border border-success/20 rounded-full px-3 py-1">
+                    <Radio className="w-3 h-3 animate-pulse" />
+                    Completed & Summarized
                   </span>
                 )}
               </div>
@@ -246,18 +236,22 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Action buttons */}
             <div className="flex flex-col items-start md:items-end gap-3 shrink-0">
-              <div className="flex flex-wrap gap-2">
-                <ActionButton label="Send via Gmail" icon={GmailIcon} state={gmailState}
-                  successLabel="Gmail Opened" onClick={handleGmail} />
-                <ActionButton label="Sync Calendar" icon={GoogleCalendarIcon} state={calendarState}
-                  successLabel="Calendar Synced" errorLabel="Authorize Calendar" onClick={handleCalendar} />
-              </div>
-              {meeting.scheduling_result?.html_link && (
-                <a href={meeting.scheduling_result.html_link} target="_blank" rel="noopener noreferrer"
-                   className="flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline">
-                  <ExternalLink className="w-3 h-3" />
-                  View Calendar Event
-                </a>
+              {meeting.summary && (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    <ActionButton label="Send via Gmail" icon={GmailIcon} state={gmailState}
+                      successLabel="Gmail Opened" onClick={handleGmail} />
+                    <ActionButton label="Sync Calendar" icon={GoogleCalendarIcon} state={calendarState}
+                      successLabel="Calendar Synced" errorLabel="Authorize Calendar" onClick={handleCalendar} />
+                  </div>
+                  {meeting.scheduling_result?.html_link && (
+                    <a href={meeting.scheduling_result.html_link} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline">
+                      <ExternalLink className="w-3 h-3" />
+                      View Calendar Event
+                    </a>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -291,7 +285,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               Executive Summary
             </h2>
           </div>
-          {meeting.summary ? (
+          {meeting.summary && meeting.status !== "error" && meeting.status !== "failed" ? (
             <p className="text-[13.5px] text-text leading-[1.75] whitespace-pre-wrap">
               {meeting.summary}
             </p>
@@ -307,11 +301,15 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               </p>
             </div>
           ) : (
-            <p className="text-[13.5px] text-text-muted/70 italic leading-relaxed py-2">
-              {meeting.status === "no_transcript"
-                ? "No transcript was captured during this meeting."
-                : "Executive summary unavailable for this meeting."}
-            </p>
+            <div className="bg-risk-container/10 border border-risk/30 rounded-xl p-4 my-2">
+              <p className="text-[13.5px] text-risk/90 italic leading-relaxed">
+                {meeting.status === "no_transcript"
+                  ? "No transcript was captured during this meeting, so no summary could be generated."
+                  : meeting.status === "error" || meeting.status === "failed" 
+                  ? `An error occurred during summarization: ${meeting.summary || "The meeting might have been too short or the AI service was unavailable."}`
+                  : "Executive summary is not available for this meeting. It may not have contained enough conversational data."}
+              </p>
+            </div>
           )}
         </div>
 

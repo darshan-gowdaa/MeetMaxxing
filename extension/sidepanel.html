@@ -126,55 +126,84 @@
     <!-- Active meeting state -->
     <div id="active-state" class="state-container hidden">
 
-      <!-- Quick action row -->
-      <div class="quick-actions">
-        <button id="test-copilot-btn" class="btn btn-primary quick-btn">
-          <i class="ri-flashlight-line"></i>
-          Suggestions
-        </button>
-        <button id="ask-next-btn" class="btn btn-secondary quick-btn">
-          <i class="ri-question-line"></i>
-          Next Q
-        </button>
-        <button id="recap-btn" class="btn btn-secondary quick-btn">
-          <i class="ri-file-list-3-line"></i>
-          Recap
-        </button>
-      </div>
-
-      <!-- Recap box -->
-      <div id="recap-content" class="recap-box hidden"></div>
-
-      <!-- Live Transcription Feed -->
-      <div class="section" id="live-transcript-section">
-        <h3 class="section-title">
-          <i class="ri-chat-voice-line"></i>
-          Live Transcript
-          <span id="transcript-count" class="count-pill">0</span>
-        </h3>
-        <div id="transcript-feed" class="transcript-feed-box">
-          <p id="transcript-empty" class="empty-text">Enable Captions (CC) — live speech will appear here</p>
+      <!-- Live Transcription Feed on Top -->
+      <div class="section md3-card" id="live-transcript-section">
+        <div class="section-header" style="justify-content: flex-start; gap: 8px;">
+          <button id="toggle-transcript-btn" class="btn btn-ghost btn-sm" style="color: var(--primary); padding: 2px 4px;">
+            <i class="ri-arrow-down-s-line" style="font-size: 16px;"></i>
+          </button>
+          <h3 class="section-title">
+            <i class="ri-chat-voice-fill" style="color: var(--primary);"></i>
+            Live Transcription
+            <span id="transcript-count" class="count-pill">0</span>
+          </h3>
+        </div>
+        <div id="transcript-feed-wrapper" class="smooth-collapse collapsed">
+          <div id="transcript-feed" class="transcript-feed-box">
+            <p id="transcript-empty" class="empty-text">Enable Captions (CC) — live speech will appear here</p>
+          </div>
         </div>
       </div>
 
-      <!-- AI Suggestions -->
-      <div id="suggestions-section" class="section">
-        <h3 class="section-title">
-          <i class="ri-sparkling-line"></i>
-          AI Suggestions
-        </h3>
-        <div id="suggestions-list">
-          <p class="empty-text">Click Suggestions when ready for AI insights</p>
+      <!-- What to answer Agent -->
+      <div id="suggestions-section" class="section md3-card">
+        <div class="section-header" style="justify-content: flex-start; gap: 8px;">
+          <button id="toggle-suggestions-btn" class="btn btn-ghost btn-sm" style="color: #a8c7fa; padding: 2px 4px;">
+            <i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>
+          </button>
+          <h3 class="section-title" style="flex: 1;">
+            <i class="ri-sparkling-fill" style="color: #a8c7fa;"></i>
+            "What to answer" Agent
+          </h3>
+          <button id="test-copilot-btn" class="btn btn-primary btn-sm">
+            <i class="ri-refresh-line"></i> Suggest
+          </button>
+        </div>
+        <div id="suggestions-list-wrapper" class="smooth-collapse">
+          <div id="suggestions-list" class="content-box">
+            <p class="empty-text">Click Suggest when ready for AI insights</p>
+          </div>
         </div>
       </div>
 
-      <!-- Next question -->
-      <div id="next-question-section" class="section hidden">
-        <h3 class="section-title next-q-title">
-          <i class="ri-question-answer-line"></i>
-          Ask Next
-        </h3>
-        <div id="next-question-text" class="next-question-card">Click Next Q above to generate what to ask right now.</div>
+      <!-- Suggestion of what to Ask -->
+      <div id="next-question-section" class="section md3-card smooth-collapse collapsed" style="border: none; padding: 0; margin-bottom: 0;">
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 12px; background: var(--surface);">
+          <div class="section-header" style="justify-content: flex-start; gap: 8px;">
+            <button id="toggle-nextq-btn" class="btn btn-ghost btn-sm" style="color: #7fcfff; padding: 2px 4px;">
+              <i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>
+            </button>
+            <h3 class="section-title next-q-title" style="flex: 1;">
+              <i class="ri-question-answer-fill" style="color: #7fcfff;"></i>
+              "Suggestion of what to Ask"
+            </h3>
+            <button id="ask-next-btn" class="btn btn-secondary btn-sm" style="background: rgba(127, 207, 255, 0.1); color: #7fcfff;">
+              <i class="ri-refresh-line"></i> Generate
+            </button>
+          </div>
+          <div id="next-question-wrapper" class="smooth-collapse">
+            <div id="next-question-text" class="next-question-card content-box">Click Generate to formulate a question.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recap Agent -->
+      <div class="section md3-card" id="recap-section">
+        <div class="section-header" style="justify-content: flex-start; gap: 8px;">
+          <button id="toggle-recap-btn" class="btn btn-ghost btn-sm" style="color: #6dd58c; padding: 2px 4px;">
+            <i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>
+          </button>
+          <h3 class="section-title" style="flex: 1;">
+            <i class="ri-file-list-3-fill" style="color: #6dd58c;"></i>
+            "Recap Agent"
+          </h3>
+          <button id="recap-btn" class="btn btn-secondary btn-sm" style="background: rgba(109, 213, 140, 0.1); color: #6dd58c;">
+            <i class="ri-refresh-line"></i> Recap
+          </button>
+        </div>
+        <div id="recap-wrapper" class="smooth-collapse">
+          <div id="recap-content" class="recap-box content-box">Click Recap for an executive summary.</div>
+        </div>
       </div>
 
     </div>

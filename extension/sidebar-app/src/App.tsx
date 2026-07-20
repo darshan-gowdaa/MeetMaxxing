@@ -2,19 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import {
   RiMicLine as Mic,
   RiChat1Line as MessageSquare,
-  RiAlertLine as AlertTriangle,
   RiQuestionLine as HelpCircle,
   RiHistoryLine as History,
   RiFileCopyLine as Copy,
   RiCheckLine as Check,
-  RiRadioButtonLine as Radio,
   RiRefreshLine as RefreshCw,
   RiSparklingLine as Sparkles,
   RiFlashlightLine as Zap,
   RiAlertLine as ShieldAlert,
   RiTimeLine as Clock,
-  RiExternalLinkLine as ExternalLink,
-  RiShieldCheckLine as Shield
+  RiExternalLinkLine as ExternalLink
 } from "@remixicon/react";
 import type { TranscriptChunk, CopilotUpdate } from "./types";
 
@@ -23,14 +20,17 @@ declare const chrome: any;
 export default function App() {
   const [meetingId, setMeetingId] = useState<string>("");
   const [meetingTitle, setMeetingTitle] = useState<string>("Google Meet Session");
-  const [activeTab, setActiveTab] = useState<"insights" | "transcript">("insights");
+  const [isTranscriptMaximized, setIsTranscriptMaximized] = useState<boolean>(false);
   const [isEnded, setIsEnded] = useState<boolean>(false);
   
   const [transcriptLines, setTranscriptLines] = useState<TranscriptChunk[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [risks, setRisks] = useState<string[]>([]);
+
   const [nextQuestion, setNextQuestion] = useState<string>("");
   const [recap, setRecap] = useState<string>("");
+  const [isNextQMaximized, setIsNextQMaximized] = useState<boolean>(true);
+  const [isSuggestionsMaximized, setIsSuggestionsMaximized] = useState<boolean>(true);
+  const [isRecapMaximized, setIsRecapMaximized] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [poweredBy, setPoweredBy] = useState<string>("OpenRouter API (Priority 1)");
@@ -124,10 +124,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "transcript") {
+    if (isTranscriptMaximized) {
       transcriptBottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [transcriptLines, activeTab]);
+  }, [transcriptLines, isTranscriptMaximized]);
 
   const appendTranscriptChunk = (chunk: TranscriptChunk) => {
     if (!chunk || !chunk.text) return;
@@ -174,9 +174,7 @@ export default function App() {
     if (data.suggestions && Array.isArray(data.suggestions)) {
       setSuggestions(data.suggestions);
     }
-    if (data.risks && Array.isArray(data.risks)) {
-      setRisks(data.risks);
-    }
+
     if (data.next_question) {
       setNextQuestion(data.next_question);
     }
@@ -184,6 +182,8 @@ export default function App() {
       setRecap(data.recap);
     }
   };
+
+
 
   const triggerAction = (actionType: string) => {
     setIsProcessing(true);
@@ -257,13 +257,14 @@ export default function App() {
               <div className="w-6 h-6 rounded-lg bg-[#0842a0]/60 flex items-center justify-center shrink-0">
                 <Zap className="w-3.5 h-3.5 text-[#fdd663]" />
               </div>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 overflow-hidden w-full">
                 <span className="text-[10px] uppercase font-bold text-[#a8c7fa] tracking-wider leading-tight">
-                  Active Provider
+                  Active:
                 </span>
-                <span className="text-xs font-semibold text-white truncate">
-                  {poweredBy}
-                </span>
+                <span 
+                  className="text-xs font-semibold text-white whitespace-nowrap overflow-hidden" 
+                  dangerouslySetInnerHTML={{ __html: `<marquee scrollamount="2">${poweredBy}</marquee>` }}
+                />
               </div>
             </div>
             {!isEnded && (
@@ -342,283 +343,232 @@ export default function App() {
         </main>
       ) : (
         <>
-          {/* Expressive Pill Tab Switcher */}
-          <div className="px-3 pt-3 pb-2 bg-[#27292c] border-b border-[#ffffff]/10 shrink-0">
-        <div className="flex p-1 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 gap-1 shadow-inner">
-          <button
-            onClick={() => setActiveTab("insights")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-              activeTab === "insights"
-                ? "bg-[#0842a0] text-white shadow-md border border-[#a8c7fa]/30"
-                : "text-[#868e96] hover:text-[#ffffff] hover:bg-[#27292c]/50"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Live AI Insights</span>
-            {suggestions.length > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#141518]/80 text-[10px] font-mono text-[#d3e3fd]">
-                {suggestions.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("transcript")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-              activeTab === "transcript"
-                ? "bg-[#0842a0] text-white shadow-md border border-[#a8c7fa]/30"
-                : "text-[#868e96] hover:text-[#ffffff] hover:bg-[#27292c]/50"
-            }`}
-          >
-            <Radio className={`w-3.5 h-3.5 shrink-0 ${activeTab === "transcript" ? "animate-pulse text-[#6dd58c]" : ""}`} />
-            <span className="truncate">Spoken Transcript</span>
-            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#27292c] text-[10px] font-mono text-[#868e96]">
-              {transcriptLines.length}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Area (`#131314` base) */}
-      <main className="flex-1 overflow-y-auto p-3.5 space-y-4">
-        {/* Error Alert Banner */}
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-[#3f1d20] border border-[#f2b8b5]/40 flex items-start justify-between gap-3 text-xs text-[#f2b8b5] shadow-lg animate-fade-in">
-            <div className="flex items-start gap-2.5">
-              <ShieldAlert className="w-4 h-4 text-[#f2b8b5] shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-1">
-                <span className="font-bold text-white tracking-wide">API Fallback Notice ({poweredBy})</span>
-                <span className="leading-relaxed opacity-95 break-words">{errorMessage}</span>
-              </div>
-            </div>
-            <button
-              onClick={() => triggerAction("ASK_SUGGESTIONS")}
-              disabled={isProcessing}
-              className="px-3 py-1.5 rounded-xl bg-[#f2b8b5]/20 hover:bg-[#f2b8b5]/30 text-[11px] font-semibold text-white border border-[#f2b8b5]/50 shrink-0 transition-all disabled:opacity-50"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {activeTab === "insights" ? (
-          <div className="space-y-4">
-            {/* Expressive Hero Status Banner */}
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-[#1e1f20] via-[#28292a] to-[#1e1f20] border border-[#ffffff]/10 shadow-lg flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[#0d3f23] border border-[#6dd58c]/30 flex items-center justify-center shrink-0">
-                  <Shield className="w-4 h-4 text-[#6dd58c]" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-white tracking-tight">
-                    Real-Time Guardrails Active
-                  </span>
-                  <span className="text-[10px] text-[#868e96]">
-                    Fallback hierarchy order locked
-                  </span>
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-y-auto p-3.5 space-y-4">
+            
+            {/* Live Transcription Section */}
+            <section className="bg-[#27292c] rounded-2xl border border-[#ffffff]/10 shadow-sm flex flex-col transition-all duration-300">
+              <div className="flex items-center justify-between p-3 border-b border-[#ffffff]/5">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setIsTranscriptMaximized(!isTranscriptMaximized)} className="text-[#a8c7fa] hover:text-[#d3e3fd] p-1 rounded hover:bg-[#0842a0]/40 transition-colors">
+                    {isTranscriptMaximized ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    )}
+                  </button>
+                  <Mic className="w-4 h-4 text-[#6dd58c] animate-pulse" />
+                  <span className="text-xs font-bold text-[#ffffff] tracking-tight">Live Transcription</span>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-xl bg-[#0842a0]/50 border border-[#a8c7fa]/30 text-[10px] font-mono text-[#d3e3fd]">
-                100% Protected
-              </span>
-            </div>
-
-            {/* Action Suggestions Section */}
-            <section className="space-y-2.5">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#a8c7fa]">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Suggested Talking Points</span>
-                </div>
-                <span className="text-[10px] font-mono text-[#868e96]">Tap card to copy</span>
-              </div>
-
-              {isProcessing && suggestions.length === 0 ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 animate-pulse flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-[#a8c7fa]/20 shrink-0" />
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-3 bg-[#e3e3e3]/10 rounded w-5/6" />
-                        <div className="h-2.5 bg-[#e3e3e3]/10 rounded w-4/6" />
+              <div 
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${isTranscriptMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+              >
+                <div>
+                  <div className="p-3 max-h-[200px] overflow-y-auto flex flex-col gap-2.5 text-xs">
+                    {transcriptLines.length === 0 ? (
+                      <div className="text-center text-[#868e96] italic py-4">
+                        Enable Captions (CC) on Meet to start live transcription.
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : suggestions.length > 0 ? (
-                <div className="space-y-2.5">
-                  {suggestions.map((sug, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => copyToClipboard(sug, idx)}
-                      className="group card-expressive rounded-2xl p-4 hover:border-[#a8c7fa]/50 transition-all cursor-pointer flex items-start justify-between gap-3 shadow-md"
-                    >
-                      <span className="text-xs text-[#ffffff] leading-relaxed break-words font-medium group-hover:text-white">
-                        {sug}
-                      </span>
-                      {copiedIndex === idx ? (
-                        <Check className="w-4 h-4 text-[#6dd58c] shrink-0 mt-0.5" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5 text-[#868e96] group-hover:text-[#a8c7fa] shrink-0 mt-0.5 transition-colors" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 rounded-3xl bg-[#27292c] border border-[#ffffff]/10 text-center flex flex-col items-center gap-2.5 shadow-sm">
-                  <div className="w-10 h-10 rounded-2xl bg-[#27292c] flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-[#a8c7fa] animate-pulse" />
+                    ) : (
+                      transcriptLines.map((line, idx) => (
+                        <div key={idx} className="bg-[#1e1f20] p-2 rounded-lg border border-[#ffffff]/5">
+                          <span className="font-bold text-[#6dd58c] text-[10px] uppercase tracking-wider block mb-1">
+                            {line.speaker}
+                          </span>
+                          <span className="text-[#e3e3e3] leading-relaxed">{line.text}</span>
+                        </div>
+                      ))
+                    )}
+                    <div ref={transcriptBottomRef} />
                   </div>
-                  <span className="text-xs font-semibold text-white">Listening to discussion flow...</span>
-                  <span className="text-[11px] text-[#868e96] max-w-[240px] leading-relaxed">
-                    Ensure Closed Captions (CC) are active on your Google Meet screen.
-                  </span>
                 </div>
-              )}
-            </section>
-
-            {/* Discussion Risk & Guardrail Flags */}
-            {risks.length > 0 && (
-              <section className="space-y-2">
-                <div className="flex items-center gap-1.5 px-1 text-xs font-bold uppercase tracking-wider text-[#f2b8b5]">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Risk & Guardrail Alerts</span>
-                </div>
-                <div className="space-y-2">
-                  {risks.map((risk, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-2xl bg-[#3f1d20]/70 border border-[#f2b8b5]/40 text-xs text-[#f2b8b5] leading-relaxed font-semibold shadow-sm"
-                    >
-                      {risk}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Recommended Next Question */}
-            <section className="space-y-2.5">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#7fcfff]">
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span>Strategic Next Question</span>
-                </div>
-                <button
-                  onClick={() => triggerAction("ASK_NEXT_QUESTION")}
-                  disabled={isProcessing}
-                  className="text-[11px] text-[#a8c7fa] hover:text-[#d3e3fd] font-semibold disabled:opacity-50 flex items-center gap-1 transition-colors"
-                >
-                  {isProcessing && <RefreshCw className="w-3 h-3 animate-spin" />}
-                  <span>Synthesize New</span>
-                </button>
               </div>
-
-              {isProcessing && !nextQuestion ? (
-                <div className="card-primary-expressive rounded-2xl p-4 animate-pulse flex items-center gap-3 text-xs text-[#d3e3fd]">
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#a8c7fa] shrink-0" />
-                  <span>Analyzing context to formulate strategic question...</span>
-                </div>
-              ) : nextQuestion ? (
-                <div
-                  onClick={() => copyToClipboard(nextQuestion)}
-                  className="group card-primary-expressive rounded-2xl p-4 transition-all cursor-pointer flex items-start justify-between gap-3 shadow-md hover:border-white/50"
-                >
-                  <span className="text-xs text-white font-semibold leading-relaxed break-words">
-                    {nextQuestion}
-                  </span>
-                  {copiedQuestion ? (
-                    <Check className="w-4 h-4 text-[#6dd58c] shrink-0 mt-0.5" />
+              {!isTranscriptMaximized && (
+                <div className="p-3 text-xs text-[#ffffff] truncate">
+                  {transcriptLines.length > 0 ? (
+                    <span className="opacity-90">
+                      <strong className="text-[#d3e3fd]">{transcriptLines[transcriptLines.length - 1].speaker}:</strong> {transcriptLines[transcriptLines.length - 1].text}
+                    </span>
                   ) : (
-                    <Copy className="w-3.5 h-3.5 text-[#a8c7fa] group-hover:text-white shrink-0 mt-0.5 transition-colors" />
+                    <span className="text-[#868e96] italic">Listening...</span>
                   )}
                 </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
-                  Waiting for sufficient discussion depth...
-                </div>
               )}
             </section>
 
-            {/* Late-Join Executive Recap (`#1e1f20`) */}
+            {/* Error Alert Banner */}
+            {errorMessage && (
+              <div className="p-4 rounded-2xl bg-[#3f1d20] border border-[#f2b8b5]/40 flex items-start justify-between gap-3 text-xs text-[#f2b8b5] shadow-lg animate-fade-in">
+                <div className="flex items-start gap-2.5">
+                  <ShieldAlert className="w-4 h-4 text-[#f2b8b5] shrink-0 mt-0.5" />
+                  <div className="flex flex-col gap-1">
+                    <span className="font-bold text-white tracking-wide">API Fallback Notice ({poweredBy})</span>
+                    <span className="leading-relaxed opacity-95 break-words">{errorMessage}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => triggerAction("ASK_SUGGESTIONS")}
+                  disabled={isProcessing}
+                  className="px-3 py-1.5 rounded-xl bg-[#f2b8b5]/20 hover:bg-[#f2b8b5]/30 text-[11px] font-semibold text-white border border-[#f2b8b5]/50 shrink-0 transition-all disabled:opacity-50"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {/* What to answer Agent */}
+            <section className="space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#a8c7fa]">
+                  <button onClick={() => setIsSuggestionsMaximized(!isSuggestionsMaximized)} className="text-[#a8c7fa] hover:text-white p-1 rounded hover:bg-[#ffffff]/10 transition-colors">
+                    {isSuggestionsMaximized ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    )}
+                  </button>
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Realtime Insights</span>
+                </div>
+                <button
+                  onClick={() => triggerAction("ASK_SUGGESTIONS")}
+                  disabled={isProcessing}
+                  className="text-[10px] text-[#0842a0] hover:text-white bg-[#a8c7fa] hover:bg-[#d3e3fd] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1 transition-colors pointer-events-auto disabled:pointer-events-none"
+                >
+                  {isProcessing ? <span className="md3-loading-indicator md3-loading-indicator-sm" style={{borderColor: "transparent", borderTopColor: "currentColor", borderRightColor: "currentColor"}}></span> : null}
+                  <span>Suggest</span>
+                </button>
+              </div>
+              <div 
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${isSuggestionsMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+              >
+                <div>
+                  <div className="pt-2">
+                    {suggestions.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {suggestions.map((sug, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => copyToClipboard(sug, idx)}
+                            className="p-3 rounded-2xl bg-[#27292c] border-l-[3px] border-l-[#a8c7fa] border-y border-r border-[#ffffff]/10 hover:bg-[#333537] hover:border-[#a8c7fa]/40 cursor-pointer transition-all text-xs text-[#ffffff] leading-relaxed shadow-sm hover:shadow-md"
+                          >
+                            <div className="flex justify-between items-start">
+                              <span>{sug}</span>
+                              {copiedIndex === idx ? (
+                                <Check className="w-4 h-4 text-[#6dd58c] shrink-0 ml-2" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5 text-[#868e96] shrink-0 ml-2" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
+                        Click Suggest to get answers.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Next Question Agent */}
+            <section className="space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#7fcfff]">
+                  <button onClick={() => setIsNextQMaximized(!isNextQMaximized)} className="text-[#7fcfff] hover:text-white p-1 rounded hover:bg-[#ffffff]/10 transition-colors">
+                    {isNextQMaximized ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    )}
+                  </button>
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Next Question Agent</span>
+                </div>
+                  <button
+                    onClick={() => triggerAction("ASK_NEXT_QUESTION")}
+                    disabled={isProcessing}
+                    className="text-[10px] text-[#004a77] hover:text-white bg-[#7fcfff] hover:bg-[#a3dbff] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1 transition-colors pointer-events-auto disabled:pointer-events-none"
+                  >
+                    {isProcessing ? <span className="md3-loading-indicator md3-loading-indicator-sm" style={{borderColor: "transparent", borderTopColor: "currentColor", borderRightColor: "currentColor"}}></span> : null}
+                    <span>Generate</span>
+                  </button>
+                </div>
+                <div 
+                  className={`transition-all duration-300 ease-in-out overflow-hidden ${isNextQMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                  <div>
+                    <div className="pt-2">
+                      {nextQuestion ? (
+                        <div
+                          onClick={() => copyToClipboard(nextQuestion)}
+                          className="p-3 rounded-2xl bg-[#27292c] border-l-[3px] border-l-[#7fcfff] border-y border-r border-[#ffffff]/10 hover:bg-[#333537] hover:border-[#7fcfff]/40 cursor-pointer transition-all text-xs text-[#ffffff] leading-relaxed shadow-sm hover:shadow-md"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span>{nextQuestion}</span>
+                            {copiedQuestion ? (
+                              <Check className="w-4 h-4 text-[#6dd58c] shrink-0 ml-2" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 text-[#868e96] shrink-0 ml-2" />
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
+                          Click Generate for a question.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            {/* Recap Agent */}
             <section className="space-y-2.5 pb-2">
               <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#6dd58c]">
-                  <History className="w-3.5 h-3.5" />
-                  <span>Executive Recap</span>
+                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#6dd58c]">
+                  <button onClick={() => setIsRecapMaximized(!isRecapMaximized)} className="text-[#6dd58c] hover:text-white p-1 rounded hover:bg-[#ffffff]/10 transition-colors">
+                    {isRecapMaximized ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    )}
+                  </button>
+                  <History className="w-4 h-4" />
+                  <span>Late-Join Recap</span>
                 </div>
                 <button
                   onClick={() => triggerAction("REQUEST_RECAP")}
                   disabled={isProcessing}
-                  className="text-[11px] text-[#6dd58c] hover:text-white font-semibold disabled:opacity-50 flex items-center gap-1 transition-colors"
+                  className="text-[10px] text-[#0d3f23] hover:text-white bg-[#6dd58c] hover:bg-[#8eebb0] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50 flex items-center gap-1 transition-colors pointer-events-auto disabled:pointer-events-none"
                 >
-                  {isProcessing && <RefreshCw className="w-3 h-3 animate-spin" />}
-                  <span>Generate Summary</span>
+                  {isProcessing ? <span className="md3-loading-indicator md3-loading-indicator-sm" style={{borderColor: "transparent", borderTopColor: "currentColor", borderRightColor: "currentColor"}}></span> : null}
+                  <span>Recap</span>
                 </button>
               </div>
-
-              {isProcessing && !recap ? (
-                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#6dd58c]/40 animate-pulse flex items-center gap-3 text-xs text-[#6dd58c]">
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#6dd58c] shrink-0" />
-                  <span>Synthesizing key decisions via fallback pipeline...</span>
+              <div 
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${isRecapMaximized ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+              >
+                <div>
+                  <div className="pt-2">
+                    {recap ? (
+                      <div className="p-4 rounded-2xl bg-[#27292c] border border-[#6dd58c]/30 text-xs text-[#ffffff] leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto shadow-inner">
+                        {recap}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
+                        Click Recap for an executive brief.
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : recap ? (
-                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/15 text-xs text-[#ffffff] leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto shadow-inner">
-                  {recap}
-                </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-[#27292c] border border-[#ffffff]/10 text-center text-xs text-[#868e96] italic">
-                  Click Generate Summary for instant executive brief.
-                </div>
-              )}
-            </section>
-          </div>
-        ) : (
-          /* Spoken Transcript Tab */
-          <div className="flex flex-col h-full space-y-3">
-            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#a8c7fa] px-1 shrink-0">
-              <div className="flex items-center gap-2">
-                <Radio className="w-3.5 h-3.5 text-[#6dd58c] animate-pulse" />
-                <span>Live Spoken Stream</span>
               </div>
-              <span className="font-mono text-[10px] text-[#868e96] lowercase">Auto-scrolling</span>
-            </div>
-
-            <div className="flex-1 rounded-3xl bg-[#27292c] border border-[#ffffff]/10 p-4 overflow-y-auto flex flex-col gap-3 text-xs shadow-inner">
-              {transcriptLines.length === 0 ? (
-                <div className="m-auto text-center flex flex-col items-center gap-2.5 text-[#868e96] py-10">
-                  <div className="w-12 h-12 rounded-2xl bg-[#27292c] flex items-center justify-center">
-                    <Mic className="w-6 h-6 text-[#a8c7fa] animate-pulse" />
-                  </div>
-                  <span className="font-semibold text-white">0 utterances captured</span>
-                  <span className="text-[11px] max-w-[240px] leading-relaxed text-[#868e96]">
-                    Verify Google Meet Captions (CC) are active in your bottom Meet toolbar.
-                  </span>
-                </div>
-              ) : (
-                transcriptLines.map((line, idx) => (
-                  <div key={idx} className="p-3 rounded-2xl bg-[#27292c]/60 border border-[#ffffff]/5 flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-lg bg-[#0842a0]/50 border border-[#a8c7fa]/30 font-bold text-[#d3e3fd] text-[11px]">
-                        {line.speaker}
-                      </span>
-                      {line.timestamp && (
-                        <span className="text-[10px] font-mono text-[#868e96]">
-                          {new Date(line.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[#ffffff] leading-relaxed break-words font-normal pl-1">
-                      {line.text}
-                    </p>
-                  </div>
-                ))
-              )}
-              <div ref={transcriptBottomRef} />
-            </div>
-          </div>
-        )}
-      </main>
-      </>
+            </section>
+          </main>
+        </>
       )}
 
       {/* Material 3 Expressive Footer (`#1e1f20`) */}
@@ -631,10 +581,10 @@ export default function App() {
           href="http://localhost:3000"
           target="_blank"
           rel="noreferrer"
-          className="px-2.5 py-1 rounded-xl bg-[#27292c] hover:bg-[#333537] text-[#a8c7fa] hover:text-white font-semibold border border-[#ffffff]/10 flex items-center gap-1.5 transition-all shadow-sm"
+          className="px-2 py-0.5 text-[11px] rounded bg-[#27292c] hover:bg-[#333537] text-[#a8c7fa] hover:text-white font-medium border border-[#ffffff]/10 flex items-center gap-1 transition-all shadow-sm"
         >
           <span>Open Dashboard</span>
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink className="w-3 h-3" />
         </a>
       </footer>
     </div>

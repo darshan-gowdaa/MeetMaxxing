@@ -122,12 +122,14 @@ async def run_summary_agent(
     meeting_id: str,
     title: str = "",
     attendees: list[str] | None = None,
+    utterances: list[dict] | None = None,
 ) -> dict:
     """
     Main entry point — loads full transcript, generates structured summary.
     Returns raw output; Lyzr guardrail validation happens in guardrails.py before persistence.
     """
-    utterances = await get_full_transcript(meeting_id)
+    if not utterances:
+        utterances = await get_full_transcript(meeting_id)
     raw_lines = _format_full_transcript(utterances).split("\n")
     transcript_text = "\n".join(raw_lines)
 

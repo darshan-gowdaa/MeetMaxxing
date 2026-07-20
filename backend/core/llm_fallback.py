@@ -21,6 +21,7 @@ async def generate_content_with_fallback(
     max_tokens: int = 600,
     response_format_json: bool = False,
     cache_ttl: int = 300,
+    bypass_cache: bool = False,
 ) -> tuple[str, str]:
     """
     Generate text adhering strictly to fallback order requested by user:
@@ -33,10 +34,11 @@ async def generate_content_with_fallback(
     """
     
     # Check cache first
-    cached = await rate_limiter.get_cached_response(prompt, "fallback", temperature)
-    if cached:
-        print("[MeetMaxxing LLM Fallback] Returning cached response.")
-        return cached["text"], cached["provider"]
+    if not bypass_cache:
+        cached = await rate_limiter.get_cached_response(prompt, "fallback", temperature)
+        if cached:
+            print("[MeetMaxxing LLM Fallback] Returning cached response.")
+            return cached["text"], cached["provider"]
 
     http_client = get_http_client()
     errors = []

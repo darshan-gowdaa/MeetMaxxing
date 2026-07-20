@@ -58,7 +58,8 @@ class AgentTaskBusServicer(grpc_bus_pb2_grpc.AgentTaskBusServicer):
                     return await run_summary_agent(
                         meeting_id=request.meeting_id,
                         title=payload.get("title", ""),
-                        attendees=payload.get("attendees", [])
+                        attendees=payload.get("attendees", []),
+                        utterances=payload.get("utterances", None)
                     )
                 elif request.agent_name == "realtime":
                     return await run_realtime_agent(

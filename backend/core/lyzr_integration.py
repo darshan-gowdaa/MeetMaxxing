@@ -90,13 +90,16 @@ async def run_lyzr_agent(name: str, prompt: str, session_id: Optional[str] = Non
         if knowledge_bases:
             kwargs["knowledge_bases"] = knowledge_bases
             
-        studio = get_studio()
-        async with studio:
-            response = await agent.arun(message=prompt, **kwargs)
+        def _sync_call():
+            if hasattr(agent, "chat"):
+                return agent.chat(prompt, **kwargs)
+            return agent.run(message=prompt, **kwargs)
+
+        response = await loop.run_in_executor(None, _sync_call)
         
         text = response.response if hasattr(response, "response") else str(response)
         if text and text.strip():
-            return text.strip(), f"Lyzr Studio ({name})"
+            return text.strip(), "AI Synthesized Answer"
     except Exception as e:
         print(f"[Lyzr Integration] Lyzr agent '{name}' failed ({e}). Falling back to Gemini/Groq...")
 

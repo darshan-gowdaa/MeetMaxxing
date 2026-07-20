@@ -87,7 +87,7 @@ async def ingest_transcript_chunk(
     if chunk.meeting_id in _active_connections:
         for ws in list(_active_connections[chunk.meeting_id]):
             try:
-                await ws.send_json({"type": "live_caption_chunk", "chunk": chunk.model_dump()})
+                await ws.send_json({"type": "live_caption_chunk", "chunk": result})
             except Exception:
                 pass
     return {"status": "ingested", "chunk_id": result.get("id")}
@@ -173,11 +173,11 @@ async def ingest_audio_chunk(
             "timestamp_ms": 0,
             "platform": "google_meet",
         }
-        await ingest_chunk(chunk_data)
+        clean_chunk = await ingest_chunk(chunk_data)
         if req.meeting_id in _active_connections:
             for ws in list(_active_connections[req.meeting_id]):
                 try:
-                    await ws.send_json({"type": "live_caption_chunk", "chunk": chunk_data})
+                    await ws.send_json({"type": "live_caption_chunk", "chunk": clean_chunk})
                 except Exception:
                     pass
 
@@ -210,12 +210,12 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
 
             raw["meeting_id"] = meeting_id
             print(f"[MeetMaxxing WS Ingest] [MSG] {raw.get('speaker', 'Speaker')}: \"{raw.get('text', '')}\"")
-            await ingest_chunk(raw)
+            clean_chunk = await ingest_chunk(raw)
 
             # Broadcast live caption to all connected clients
             for ws_conn in list(_active_connections.get(meeting_id, set())):
                 try:
-                    await ws_conn.send_json({"type": "live_caption_chunk", "chunk": raw})
+                    await ws_conn.send_json({"type": "live_caption_chunk", "chunk": clean_chunk})
                 except Exception:
                     pass
 

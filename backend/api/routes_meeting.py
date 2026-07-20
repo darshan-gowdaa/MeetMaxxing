@@ -170,8 +170,13 @@ async def _run_end_pipeline(
     summary = await dispatch(AgentTrigger.MEETING_END, {
         "meeting_id": target_id or meeting_id,
         "title": final_title,
-        "attendees": attendees
+        "attendees": attendees,
+        "utterances": utterances
     })
+
+    if summary.get("error"):
+        logger.error(f"Failed to generate summary: {summary.get('error')}")
+        summary["summary"] = f"Error generating summary: {summary.get('error')}"
 
     # 3. Lyzr guardrail validation
     raw_transcript = summary.pop("raw_transcript", "")
@@ -183,15 +188,22 @@ async def _run_end_pipeline(
     today = datetime.now(timezone.utc).date().isoformat()
 
     if target_id:
+        final_sum_text = final_summary.get("summary") or final_summary.get("executive_summary") or final_summary.get("recap") or ""
+        if not final_sum_text and "error" in summary:
+            final_sum_text = summary["error"]
+        
+        # Determine status based on whether it was successful
+        final_status = "error" if "error" in summary or not final_summary.get("summary") else "completed"
+        
         supabase.table("meetings").update(
             {
                 "title": final_title,
-                "summary": final_summary.get("summary") or final_summary.get("executive_summary") or final_summary.get("recap") or "",
+                "summary": final_sum_text,
                 "decisions": final_summary.get("decisions", []),
                 "action_items": final_summary.get("action_items", []),
                 "follow_up": final_summary.get("follow_up", {}),
                 "guardrail_score": guardrail_result.score,
-                "status": "completed",
+                "status": final_status,
             }
         ).eq("id", target_id).execute()
 

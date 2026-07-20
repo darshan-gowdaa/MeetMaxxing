@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { queryMemory } from "@/lib/api";
 import type { Meeting, MemoryResult } from "@/types";
 import { Md3LoadingIndicator } from "@/components/Md3Loading";
@@ -250,9 +251,10 @@ export default function MemoryPage() {
                 {sourcesOpen && (
                   <div className="flex flex-col gap-3 px-5 pb-5 border-t border-border pt-4">
                     {result.sources.map((src, idx) => (
-                      <div
+                      <Link
                         key={idx}
-                        className="bg-surface2 rounded-[16px] border border-border p-4 flex flex-col gap-3 animate-slide-up"
+                        href={`/meetings/${src.meeting_id}`}
+                        className="bg-surface2 hover:bg-surface3 rounded-[16px] border border-border hover:border-primary/50 p-4 flex flex-col gap-3 animate-slide-up transition-colors group cursor-pointer"
                         style={{ animationDelay: `${idx * 50}ms` }}
                       >
                         <div className="flex items-center justify-between">
@@ -271,10 +273,10 @@ export default function MemoryPage() {
                             {Math.round((src.score || 0) * 100)}% match
                           </span>
                         </div>
-                        <blockquote className="text-[12.5px] text-text-muted leading-relaxed italic border-l-2 border-primary/40 pl-3 ml-1">
+                        <blockquote className="text-[12.5px] text-text-muted group-hover:text-text leading-relaxed italic border-l-2 border-primary/40 pl-3 ml-1 transition-colors">
                           &ldquo;{src.excerpt}&rdquo;
                         </blockquote>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}

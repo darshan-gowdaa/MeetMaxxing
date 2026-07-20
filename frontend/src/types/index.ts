@@ -23,6 +23,7 @@ export interface Meeting {
   powered_by?: string;
   email_result?: { sent: boolean; mock?: boolean; message_id?: string; error?: string };
   scheduling_result?: { status: string; event_id?: string; html_link?: string; error?: string };
+  status?: string;
 }
 
 // ─── Memory ───────────────────────────────────────────────────────────────────

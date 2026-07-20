@@ -20,6 +20,7 @@ class AgentTrigger(str, Enum):
     LATE_JOIN_RECAP = "late_join_recap"
     SEND_EMAIL = "send_email"
     SEND_SLACK = "send_slack"
+    TRANSCRIPT_CHUNK = "transcript_chunk"
 
 async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     """
@@ -37,6 +38,9 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     # Fast path for realtime to avoid latency
     if trigger == AgentTrigger.REALTIME_TICK:
         agent_name = "realtime"
+        grpc_payload = dict(payload)
+    elif trigger == AgentTrigger.TRANSCRIPT_CHUNK:
+        agent_name = "transcription"
         grpc_payload = dict(payload)
     else:
         try:
@@ -63,6 +67,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 case AgentTrigger.USER_QUERY: agent_name = "memory"
                 case AgentTrigger.SCHEDULE_FOLLOWUP: agent_name = "scheduler"
                 case AgentTrigger.LATE_JOIN_RECAP: agent_name = "late_join"
+                case AgentTrigger.TRANSCRIPT_CHUNK: agent_name = "transcription"
                 case AgentTrigger.SEND_EMAIL: 
                     agent_name = "email"
                     grpc_payload["summary"] = payload

@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from ..core.redis_client import append_transcript_chunk
 from ..core.database import get_supabase_admin
+from ..agents.orchestrator import dispatch, AgentTrigger
 
 
 def normalize_chunk(raw: dict) -> dict:
@@ -38,6 +39,20 @@ async def ingest_chunk(raw_chunk: dict) -> dict:
     """Normalize and store a single transcript chunk to Redis."""
     chunk = normalize_chunk(raw_chunk)
     if chunk["meeting_id"] and chunk["text"]:
+        # Run it through transcription agent to clean/diarize
+        try:
+            result = await dispatch(AgentTrigger.TRANSCRIPT_CHUNK, {
+                "meeting_id": chunk["meeting_id"],
+                "raw_text": chunk["text"],
+                "speaker": chunk["speaker"],
+                "timestamp_ms": chunk["timestamp_ms"]
+            })
+            if result and result.get("text"):
+                chunk["text"] = result["text"]
+                chunk["speaker"] = result.get("speaker", chunk["speaker"])
+        except Exception as e:
+            print(f"[Transcript Service] Transcription agent failed: {e}")
+            
         await append_transcript_chunk(chunk["meeting_id"], chunk)
     return chunk
 

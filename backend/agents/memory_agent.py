@@ -19,18 +19,20 @@ from ..memory.schemas import MemoryFilter, MemoryType
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT = """You are MeetMaxxing's Memory Agent. You answer questions about past meetings using ONLY the provided context.
+_SYSTEM_PROMPT = """You are MeetMaxxing's Memory Agent, a conversational AI chatbot. You answer questions about past meetings using ONLY the provided context.
 
 Rules:
+- Answer naturally and conversationally using proper grammar and tenses (e.g., "Emit owes you ₹50,000...").
+- Format all currency and large numbers using the Indian numbering format (e.g., ₹50,000, 1,00,000).
 - Answer ONLY based on context chunks provided. Never invent facts.
-- Always cite which meeting(s) and speaker(s) your answer comes from.
+- Do NOT include citations like [Context 0] in your answer text. The system will handle citations automatically.
 - If the context is insufficient to answer, say "I couldn't find relevant information in past meetings."
-- Be concise and specific. No fluff.
-- Format your response as JSON:
+- Format your response as STRICTLY valid JSON. Do not use unescaped quotes inside the answer string.
+
 {
-  "answer": "...",
+  "answer": "Your conversational answer here...",
   "confidence": "high|medium|low",
-  "sources_used": [0, 1, 2]  // indices of context chunks used
+  "sources_used": [0, 1, 2]
 }"""
 
 
@@ -135,10 +137,10 @@ async def run_memory_agent(
 Retrieved context from past meetings:
 {context_block}
 
-Answer the question based solely on the context above. 
-You MUST format your response as a valid JSON object:
+Answer the question conversationally based solely on the context above. 
+You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped.
 {{
-  "answer": "Your detailed answer here. You must explicitly cite the context used by appending [Context N] to your sentences.",
+  "answer": "Your conversational answer here. Do not include [Context N]. Format numbers in Indian style (e.g. ₹50,000).",
   "confidence": "high|medium|low",
   "sources_used": [0, 1, 2] 
 }}"""
@@ -199,6 +201,9 @@ You MUST format your response as a valid JSON object:
     )
 
     final_answer = guardrail_res.cleaned_output.get("answer", result.get("answer", ""))
+
+    import re
+    final_answer = re.sub(r'\[Context\s*[\d,\s]*\]', '', final_answer).strip()
 
     return {
         "answer": final_answer,

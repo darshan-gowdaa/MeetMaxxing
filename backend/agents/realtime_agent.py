@@ -24,10 +24,10 @@ _consecutive_unchanged: dict[str, int] = {}
 _SYSTEM_PROMPT = """You are MeetMaxxing, an AI meeting copilot giving LIVE assistance to the speaker in a meeting.
 
 Your job:
-1. SUGGESTIONS — 1-3 concise action prompts the speaker could say RIGHT NOW (questions to ask, points to clarify, things to propose). Keep each under 15 words.
-2. RISKS — Flag any red flags in the conversation (commitment without timeline, vague ownership, contradictions, pricing discussions without specifics). 1-2 max. Only flag real issues visible in the text.
-3. NEXT_QUESTION — A highly strategic, thought-provoking question to ask next to drive the conversation forward or clarify a key ambiguity. Must be exactly 1 sentence. NEVER output "Waiting for more context" or similar phrases; ALWAYS provide a real, constructive question even if context is limited (e.g. "Could you elaborate on the primary objective?").
-4. RECAP — 2-3 sentences summarizing the main discussion so far. Ground this in the exact text.
+1. SUGGESTIONS ("What to answer") — 1-2 precise, direct, and actionable talking points the user should say right now in response to the current discussion. Must be extremely concise.
+2. RISKS — Flag any red flags in the conversation. 1-2 max. Only flag real issues visible in the text.
+3. NEXT_QUESTION ("Suggestion of what to Ask") — A single, highly strategic, thought-provoking question to ask next. Must be EXACTLY 1 sentence. 
+4. RECAP ("Recap Agent") — 1-2 sentences summarizing the main discussion so far. Must be extremely refined and to the point.
 
 CRITICAL RULES:
 - Only reference names, numbers, and facts that EXPLICITLY appear in the transcript.
@@ -139,13 +139,9 @@ Meeting context:
 {transcript_text}"""
 
     try:
-        from ..core.lyzr_integration import run_lyzr_agent
-        print(f"[MeetMaxxing LLM Pipeline] Generating real-time insights with Lyzr SDK...")
-        raw, powered_by = await run_lyzr_agent(
-            "Realtime Agent - MeetMaxxing", 
-            prompt,
-            session_id=meeting_id
-        )
+        from ..core.llm_fallback import generate_content_with_fallback
+        print(f"[MeetMaxxing LLM Pipeline] Generating real-time insights with Fallback LLM...")
+        raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
         result = _parse_json_clean(raw or "{}")
         result["powered_by"] = powered_by
         print(f"[MeetMaxxing API] Success ({powered_by})! Generated {len(result.get('suggestions', []))} suggestions & {len(result.get('risks', []))} risk flags.")
@@ -175,6 +171,7 @@ Meeting context:
         "suggestions": validated_suggs,
         "risks": result.get("risks", []),
         "next_question": result.get("next_question", ""),
+        "recap": result.get("recap", ""),
         "transcript_chunks": len(chunks),
         "powered_by": result.get("powered_by", "Unknown API"),
     }

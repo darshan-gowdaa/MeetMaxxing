@@ -24,6 +24,7 @@ const suggestionsList   = $("suggestions-list");
 const nextQSection      = $("next-question-section");
 const nextQText         = $("next-question-text");
 const recapBtn          = $("recap-btn");
+const toggleTranscriptBtn= $("toggle-transcript-btn");
 const testCopilotBtn    = $("test-copilot-btn");
 const askNextBtn        = $("ask-next-btn");
 const recapContent      = $("recap-content");
@@ -253,12 +254,28 @@ function clearSuggestions() {
   if (suggestionsList) {
     suggestionsList.innerHTML = '<p class="empty-text">Click Suggestions when ready for AI insights</p>';
   }
-  if (nextQSection) nextQSection.classList.add("hidden");
+  if (nextQSection) nextQSection.classList.add("collapsed");
   if (nextQText) nextQText.textContent = "Click Next Q above to generate what to ask right now.";
-  if (recapContent) { recapContent.classList.add("hidden"); recapContent.textContent = ""; }
+  if (recapContent) { recapContent.textContent = ""; }
+  const recapWrapper = document.getElementById("recap-wrapper");
+  if (recapWrapper) recapWrapper.classList.add("collapsed");
+  
+  const transcriptWrapper = document.getElementById("transcript-feed-wrapper");
   if (transcriptFeed) {
     transcriptFeed.innerHTML = '<p id="transcript-empty" class="empty-text">Enable Captions (CC) — live speech will appear here</p>';
+    if (transcriptWrapper) transcriptWrapper.classList.add("collapsed");
   }
+  if (toggleTranscriptBtn) toggleTranscriptBtn.innerHTML = '<i class="ri-arrow-down-s-line" style="font-size: 16px;"></i>';
+
+  const sections = ["suggestions-list-wrapper", "next-question-wrapper", "recap-wrapper"];
+  const toggles = ["toggle-suggestions-btn", "toggle-nextq-btn", "toggle-recap-btn"];
+  for (let i = 0; i < sections.length; i++) {
+    const el = $(sections[i]);
+    const btn = $(toggles[i]);
+    if (el) el.classList.remove("collapsed");
+    if (btn) btn.innerHTML = '<i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>';
+  }
+
   totalTranscriptLines = 0;
   if (transcriptCount) transcriptCount.textContent = "0";
   if (llmStatusChip) llmStatusChip.classList.add("hidden");
@@ -343,8 +360,12 @@ if (endMeetingTopBtn) {
 // ─── Test Copilot / Ask Suggestions ──────────────────────────────────────────
 if (testCopilotBtn) {
   testCopilotBtn.addEventListener("click", () => {
-    testCopilotBtn.innerHTML = `<span class="btn-spinner"></span> Generating…`;
+    testCopilotBtn.innerHTML = `<span class="md3-loading-indicator md3-loading-indicator-sm" style="border-color:transparent; border-top-color:currentColor; border-right-color:currentColor;"></span> Suggest`;
     testCopilotBtn.disabled = true;
+    testCopilotBtn.style.pointerEvents = "none";
+    if (suggestionsList) {
+      suggestionsList.innerHTML = `<div style="display:flex; justify-content:center; padding: 12px;"><span class="md3-loading-indicator md3-loading-indicator-md"></span></div>`;
+    }
 
     chrome.runtime.sendMessage({ type: "FORCE_TEST_UPDATE", meetingId: currentMeetingId });
     if (currentMeetingId) {
@@ -358,8 +379,9 @@ if (testCopilotBtn) {
     }
 
     setTimeout(() => {
-      testCopilotBtn.innerHTML = `<i class="ri-flashlight-line"></i> Suggestions`;
+      testCopilotBtn.innerHTML = `<i class="ri-refresh-line"></i> Suggest`;
       testCopilotBtn.disabled = false;
+      testCopilotBtn.style.pointerEvents = "auto";
     }, 2500);
   });
 }
@@ -367,8 +389,12 @@ if (testCopilotBtn) {
 // ─── Ask Next Question ────────────────────────────────────────────────────────
 if (askNextBtn) {
   askNextBtn.addEventListener("click", () => {
-    askNextBtn.innerHTML = `<span class="btn-spinner"></span> Thinking…`;
+    askNextBtn.innerHTML = `<span class="md3-loading-indicator md3-loading-indicator-sm" style="border-color:transparent; border-top-color:currentColor; border-right-color:currentColor;"></span> Generate`;
     askNextBtn.disabled = true;
+    askNextBtn.style.pointerEvents = "none";
+    if (nextQText) {
+      nextQText.innerHTML = `<div style="display:flex; justify-content:center; padding: 12px;"><span class="md3-loading-indicator md3-loading-indicator-md"></span></div>`;
+    }
 
     if (currentMeetingId) {
       fetch(
@@ -379,10 +405,10 @@ if (askNextBtn) {
         .then((data) => {
           if (data.next_question) {
             nextQText.textContent = data.next_question;
-            if (nextQSection) nextQSection.classList.remove("hidden");
+            if (nextQSection) nextQSection.classList.remove("collapsed");
           } else if (data.error) {
             nextQText.innerHTML = `<span style="color:var(--risk)">${data.error}</span>`;
-            if (nextQSection) nextQSection.classList.remove("hidden");
+            if (nextQSection) nextQSection.classList.remove("collapsed");
           } else {
             nextQText.textContent = "Waiting for more conversation context…";
           }
@@ -393,13 +419,14 @@ if (askNextBtn) {
         })
         .finally(() => {
           setTimeout(() => {
-            askNextBtn.innerHTML = `<i class="ri-question-line"></i> Next Q`;
+            askNextBtn.innerHTML = `<i class="ri-refresh-line"></i> Generate`;
             askNextBtn.disabled = false;
+            askNextBtn.style.pointerEvents = "auto";
           }, 2000);
         });
     } else {
       nextQText.textContent = "No active meeting. Join a Google Meet first.";
-      askNextBtn.innerHTML = `<i class="ri-question-line"></i> Next Q`;
+      askNextBtn.innerHTML = `<i class="ri-refresh-line"></i> Generate`;
       askNextBtn.disabled = false;
     }
   });
@@ -409,10 +436,12 @@ if (askNextBtn) {
 if (recapBtn) {
   recapBtn.addEventListener("click", () => {
     if (!recapContent) return;
-    recapContent.classList.remove("hidden");
-    recapContent.textContent = "Generating recap…";
-    recapBtn.innerHTML = `<span class="btn-spinner"></span> Loading…`;
+    const recapWrapper = document.getElementById("recap-wrapper");
+    if (recapWrapper) recapWrapper.classList.remove("collapsed");
+    recapContent.innerHTML = `<div style="display:flex; justify-content:center; padding: 12px;"><span class="md3-loading-indicator md3-loading-indicator-md"></span></div>`;
+    recapBtn.innerHTML = `<span class="md3-loading-indicator md3-loading-indicator-sm" style="border-color:transparent; border-top-color:currentColor; border-right-color:currentColor;"></span> Recap`;
     recapBtn.disabled = true;
+    recapBtn.style.pointerEvents = "none";
 
     const doRecap = (meetId) => {
       fetch(
@@ -434,14 +463,8 @@ if (recapBtn) {
             recapText = "No speech captured yet. Enable Captions (CC) on Google Meet.";
           }
 
-          if (data.current_topic && data.current_topic !== "Unknown") {
-            recapText += `\n\nCurrent Topic:\n${data.current_topic}`;
-          }
           if (data.key_decisions_so_far && data.key_decisions_so_far.length) {
             recapText += `\n\nDecisions:\n- ${data.key_decisions_so_far.join("\n- ")}`;
-          }
-          if (data.who_said_what && data.who_said_what.length) {
-            recapText += `\n\nWho said what:\n- ${data.who_said_what.join("\n- ")}`;
           }
 
           if (data.error) {
@@ -465,8 +488,9 @@ if (recapBtn) {
         })
         .finally(() => {
           setTimeout(() => {
-            recapBtn.innerHTML = `<i class="ri-file-list-3-line"></i> Recap`;
+            recapBtn.innerHTML = `<i class="ri-refresh-line"></i> Recap`;
             recapBtn.disabled = false;
+            recapBtn.style.pointerEvents = "auto";
           }, 2000);
         });
     };
@@ -474,12 +498,51 @@ if (recapBtn) {
     if (currentMeetingId) {
       doRecap(currentMeetingId);
     } else {
-      recapContent.textContent = "No active meeting ID found. Please refresh Google Meet tab.";
-      recapBtn.innerHTML = `<i class="ri-file-list-3-line"></i> Recap`;
-      recapBtn.disabled = false;
+      chrome.storage.local.get(["currentMeetingId"], (res) => {
+        if (res.currentMeetingId) {
+          currentMeetingId = res.currentMeetingId;
+          doRecap(res.currentMeetingId);
+        } else {
+          recapContent.textContent = "No active meeting. Join a Google Meet first.";
+          recapBtn.innerHTML = `<i class="ri-refresh-line"></i> Recap`;
+          recapBtn.disabled = false;
+        }
+      });
     }
   });
 }
+
+if (toggleTranscriptBtn) {
+  toggleTranscriptBtn.addEventListener("click", () => {
+    if (transcriptFeed.classList.contains("collapsed")) {
+      transcriptFeed.classList.remove("collapsed");
+      toggleTranscriptBtn.innerHTML = '<i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>';
+    } else {
+      transcriptFeed.classList.add("collapsed");
+      toggleTranscriptBtn.innerHTML = '<i class="ri-arrow-down-s-line" style="font-size: 16px;"></i>';
+    }
+  });
+}
+
+function setupToggle(btnId, contentId) {
+  const btn = $(btnId);
+  const content = $(contentId);
+  if (btn && content) {
+    btn.addEventListener("click", () => {
+      if (content.classList.contains("hidden")) {
+        content.classList.remove("hidden");
+        btn.innerHTML = '<i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>';
+      } else {
+        content.classList.add("hidden");
+        btn.innerHTML = '<i class="ri-arrow-down-s-line" style="font-size: 16px;"></i>';
+      }
+    });
+  }
+}
+
+setupToggle("toggle-suggestions-btn", "suggestions-list");
+setupToggle("toggle-nextq-btn", "next-question-text");
+setupToggle("toggle-recap-btn", "recap-content");
 
 // ─── Render Copilot updates ───────────────────────────────────────────────────
 function renderCopilotUpdate(data) {
@@ -513,9 +576,11 @@ function renderCopilotUpdate(data) {
         navigator.clipboard.writeText(text).catch(() => {});
         card.style.opacity = "0.6";
         setTimeout(() => (card.style.opacity = "1"), 500);
+        if (nextQSection) nextQSection.classList.remove("collapsed");
       });
       suggestionsList.appendChild(card);
     });
+    if (nextQSection) nextQSection.classList.remove("collapsed");
   } else if (totalTranscriptLines > 0) {
     suggestionsList.innerHTML =
       '<p class="empty-text">No actionable suggestions right now. Keep talking!</p>';
