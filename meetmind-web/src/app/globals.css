@@ -1,51 +1,228 @@
-@import url('https://fonts.googleapis.com/css2?family=Product+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
+/* ── MD3 Expressive Design Tokens ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  
-  --bg: #09090b;
-  --surface: #18181b;
-  --surface2: #27272a;
-  --surface3: #3f3f46;
-  --primary: #1a73e8;
-  --primary-container: rgba(26, 115, 232, 0.2);
-  --border: #3f3f46;
-  --text: #fafafa;
-  --text-muted: #a1a1aa;
-  
-  --success: #22c55e;
-  --warning: #eab308;
-  --risk: #ef4444;
-  --risk-bg: rgba(239, 68, 68, 0.2);
+  /* Background / Surface Hierarchy (tonal elevation) */
+  --bg:               #0a0d12;
+  --surface-dim:      #0f1318;
+  --surface:          #141922;
+  --surface-container-lowest: #0f1318;
+  --surface-container-low:    #181e28;
+  --surface-container:        #1e2533;
+  --surface-container-high:   #252d3e;
+  --surface-container-highest:#2d3648;
+
+  /* Primary (Google Blue expressive) */
+  --primary:          #a8c7fa;
+  --on-primary:       #062e6f;
+  --primary-container:#0842a0;
+  --on-primary-container: #d6e3ff;
+  --primary-dim:      rgba(168,199,250,0.12);
+  --primary-glow:     rgba(168,199,250,0.08);
+
+  /* Secondary */
+  --secondary:        #bfc6dc;
+  --secondary-container: #3b4664;
+  --on-secondary-container: #dbe2f9;
+
+  /* Tertiary (purple-ish accent) */
+  --tertiary:         #dbb9fd;
+  --tertiary-container: #5b3589;
+  --on-tertiary-container: #f3daff;
+
+  /* States / Semantic */
+  --success:          #6dd58c;
+  --success-container:#0d3f23;
+  --warning:          #ffc107;
+  --warning-container:#3d2a00;
+  --risk:             #f2b8b5;
+  --risk-container:   #601410;
+
+  /* Extra aliases */
+  --surface-highest:  var(--surface-container-highest);
+  --warning-container: #3d2a00;
+  --success-container: #0d3f23;
+
+  /* Outline */
+  --border:           rgba(168,199,250,0.12);
+  --border-strong:    rgba(168,199,250,0.24);
+
+  /* Text */
+  --text:             #e2e8f8;
+  --text-muted:       #8eaac8;
+  --text-variant:     #4f6484;
+
+  /* Misc */
+  --foreground: #e2e8f8;
+  --background: #0a0d12;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Google Sans', 'Google Sans Display', system-ui, sans-serif;
 
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface2: var(--surface2);
-  --color-surface3: var(--surface3);
-  --color-primary: var(--primary);
-  --color-primary-container: var(--primary-container);
-  --color-border: var(--border);
-  --color-text: var(--text);
-  --color-text-muted: var(--text-muted);
+  --color-bg:                       var(--bg);
+  --color-surface-dim:              var(--surface-dim);
+  --color-surface:                  var(--surface);
+  --color-surface-low:              var(--surface-container-low);
+  --color-surface2:                 var(--surface-container);
+  --color-surface3:                 var(--surface-container-high);
+  --color-surface-highest:          var(--surface-container-highest);
 
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-risk: var(--risk);
-  --color-risk-bg: var(--risk-bg);
+  --color-primary:                  var(--primary);
+  --color-on-primary:               var(--on-primary);
+  --color-primary-container:        var(--primary-container);
+  --color-on-primary-container:     var(--on-primary-container);
+  --color-primary-dim:              var(--primary-dim);
+
+  --color-secondary:                var(--secondary);
+  --color-secondary-container:      var(--secondary-container);
+  --color-tertiary:                 var(--tertiary);
+  --color-tertiary-container:       var(--tertiary-container);
+  --color-on-tertiary-container:    var(--on-tertiary-container);
+
+  --color-border:                   var(--border);
+  --color-border-strong:            var(--border-strong);
+  --color-text:                     var(--text);
+  --color-text-muted:               var(--text-muted);
+  --color-text-variant:             var(--text-variant);
+
+  --color-success:                  var(--success);
+  --color-success-container:        var(--success-container);
+  --color-warning:                  var(--warning);
+  --color-warning-container:        var(--warning-container);
+  --color-risk:                     var(--risk);
+  --color-risk-container:           var(--risk-container);
+  --color-risk-bg:                  var(--risk-container);
+  --color-surface-highest:          var(--surface-highest);
+  --color-warning-container:        var(--warning-container);
+  --color-success-container:        var(--success-container);
 }
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Product Sans', 'Google Sans', Arial, Helvetica, sans-serif;
+  font-family: 'Google Sans', 'Google Sans Display', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── MD3 Expressive Loading Indicator (shape-morphing) ────────────────────── */
+@keyframes md3-morph {
+  0%   { border-radius: 50%;        transform: rotate(0deg)   scale(1);    }
+  14%  { border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; transform: rotate(51deg)  scale(1.05); }
+  28%  { border-radius: 30% 70% 30% 70% / 70% 30% 70% 30%; transform: rotate(103deg) scale(0.95); }
+  42%  { border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%; transform: rotate(154deg) scale(1.05); }
+  57%  { border-radius: 60% 40% 70% 30% / 30% 60% 40% 70%; transform: rotate(206deg) scale(0.95); }
+  71%  { border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; transform: rotate(257deg) scale(1.02); }
+  85%  { border-radius: 50% 50% 60% 40% / 40% 60% 50% 50%; transform: rotate(309deg) scale(0.98); }
+  100% { border-radius: 50%;        transform: rotate(360deg) scale(1);    }
+}
+
+@keyframes md3-morph-color {
+  0%   { background: var(--primary); }
+  33%  { background: var(--tertiary); }
+  66%  { background: var(--secondary); }
+  100% { background: var(--primary); }
+}
+
+@keyframes md3-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes md3-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes md3-ripple {
+  0%   { transform: scale(0); opacity: 0.4; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes md3-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes md3-fade-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes wavy {
+  0%   { d: path("M0,10 C20,0 40,20 60,10 C80,0 100,20 120,10"); }
+  50%  { d: path("M0,10 C20,20 40,0 60,10 C80,20 100,0 120,10"); }
+  100% { d: path("M0,10 C20,0 40,20 60,10 C80,0 100,20 120,10"); }
+}
+
+/* ── MD3 Loading Indicator component ────────────────────────────────────────── */
+.md3-loading-indicator {
+  display: inline-block;
+  animation: md3-morph 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+             md3-morph-color 2.4s linear infinite;
+  flex-shrink: 0;
+}
+
+.md3-loading-indicator-sm  { width: 20px; height: 20px; }
+.md3-loading-indicator-md  { width: 40px; height: 40px; }
+.md3-loading-indicator-lg  { width: 64px; height: 64px; }
+
+/* ── MD3 Expressive Spring Transitions ───────────────────────────────────── */
+.spring { transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.spring-sm { transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.spring-colors { transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                              color 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* ── Elevation glow ─────────────────────────────────────────────────────── */
+.md3-glow-primary { box-shadow: 0 0 0 1px var(--border), 0 8px 32px -8px rgba(168,199,250,0.15); }
+.md3-glow-primary:hover { box-shadow: 0 0 0 1px var(--border-strong), 0 16px 48px -12px rgba(168,199,250,0.25); }
+
+/* ── Shimmer skeleton ─────────────────────────────────────────────────── */
+.md3-skeleton {
+  background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%);
+  background-size: 200% 100%;
+  animation: md3-shimmer 1.5s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+/* ── Animate in ─────────────────────────────────────────────────────────── */
+.animate-slide-up { animation: md3-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.animate-fade-scale { animation: md3-fade-scale 0.3s ease-out both; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-variant); }
+
+/* ── MD3 Ripple base (for interactive surfaces) ───────────────────────── */
+.ripple-container { position: relative; overflow: hidden; }
+.ripple-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(168,199,250,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.ripple-container:active::after { opacity: 1; }
+
+/* ── Material Web component overrides ────────────────────────────────── */
+md-circular-progress {
+  --md-circular-progress-active-indicator-color: var(--primary);
+}
+md-linear-progress {
+  --md-linear-progress-active-indicator-color: var(--primary);
+  --md-linear-progress-track-color: var(--surface-container-high);
+}

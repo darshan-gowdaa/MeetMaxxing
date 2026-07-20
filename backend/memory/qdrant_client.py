@@ -18,8 +18,10 @@ _client: AsyncQdrantClient | None = None
 async def get_qdrant() -> AsyncQdrantClient:
     global _client
     if _client is None:
-        if settings.QDRANT_URL in [":memory:", "memory", "local"]:
+        if settings.QDRANT_URL in [":memory:", "memory"]:
             _client = AsyncQdrantClient(location=":memory:")
+        elif settings.QDRANT_URL == "local":
+            _client = AsyncQdrantClient(path="./qdrant_data")
         else:
             try:
                 test_client = AsyncQdrantClient(

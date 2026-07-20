@@ -54,3 +54,26 @@ export async function updateActionItem(id: string, updates: Record<string, strin
   const text = await res.text();
   return safeParse(text);
 }
+
+export async function deleteMeeting(id: string, token: string) {
+  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to delete meeting");
+  return true;
+}
+
+export async function updateMeeting(id: string, updates: Record<string, string>, token: string) {
+  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error("Failed to update meeting");
+  const text = await res.text();
+  return safeParse(text);
+}

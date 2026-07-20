@@ -48,8 +48,10 @@ npm-debug.log*
 # ── TypeScript ────────────────────────────────────────────────────────────────
 tsconfig.tsbuildinfo
 
+# ── Data / DB ─────────────────────────────────────────────────────────────────
+qdrant_data/
+backend/qdrant_data/
+
 # ── Markdown ────────────────────────────────────────────────────────────────
-*.md
-!README.md
-!Readme.md
-!readme.md
+# Track README and docs
+

@@ -1,11 +1,10 @@
 "use client";
-import "@material/web/progress/circular-progress.js";
-import "@material/web/progress/linear-progress.js";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Topbar from "@/components/Topbar";
 import { queryMemory } from "@/lib/api";
 import type { MemoryResult } from "@/types";
+import { Md3LoadingIndicator } from "@/components/Md3Loading";
 import {
   RiBrainLine,
   RiSearchLine,
@@ -14,6 +13,8 @@ import {
   RiFlashlightLine,
   RiChat1Line,
   RiArrowRightLine,
+  RiCloseLine,
+  RiShieldCheckLine,
 } from "@remixicon/react";
 
 const EXAMPLE_QUERIES = [
@@ -23,10 +24,10 @@ const EXAMPLE_QUERIES = [
   "When is the mobile launch scheduled?",
 ];
 
-const CONFIDENCE_COLORS: Record<string, string> = {
-  high: "text-success bg-success-dim border-success/25",
-  medium: "text-warning bg-[rgba(253,214,99,0.1)] border-[rgba(253,214,99,0.25)]",
-  low: "text-risk bg-risk-bg border-[rgba(242,139,130,0.25)]",
+const CONFIDENCE_STYLES: Record<string, { bar: string; chip: string; label: string }> = {
+  high:   { bar: "bg-success", chip: "bg-success/15 text-success border-success/30", label: "High confidence" },
+  medium: { bar: "bg-warning", chip: "bg-warning/15 text-warning border-warning/30", label: "Medium confidence" },
+  low:    { bar: "bg-risk",    chip: "bg-risk/15 text-risk border-risk/30",           label: "Low confidence" },
 };
 
 export default function MemoryPage() {
@@ -34,6 +35,28 @@ export default function MemoryPage() {
   const [result, setResult] = useState<MemoryResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>(EXAMPLE_QUERIES);
+
+  useEffect(() => {
+    import("@/lib/api").then(({ fetchMeetings }) => {
+      fetchMeetings("dev_token")
+        .then((data) => {
+          const list: any[] = Array.isArray(data) ? data : data.meetings || [];
+          if (list.length > 0) {
+            // Generate dynamic questions based on recent meetings
+            const recentTitles = list.slice(0, 4).map(m => m.title || "Untitled Meeting");
+            const dynamicQueries = [
+              `What were the main decisions in ${recentTitles[0]}?`,
+              recentTitles.length > 1 ? `What are the action items from ${recentTitles[1]}?` : "What's pending for me to do?",
+              `Summarize the key points discussed about pricing.`,
+              `What was discussed in the last few meetings?`
+            ];
+            setSuggestions(dynamicQueries);
+          }
+        })
+        .catch(() => {});
+    });
+  }, []);
 
   const handleQuery = async (q: string = query) => {
     if (!q.trim()) return;
@@ -47,155 +70,213 @@ export default function MemoryPage() {
     } catch (err: unknown) {
       const error = err as Error;
       setResult({
-        answer: error.message || "Failed to retrieve memory answer from server or no relevant memories found.",
+        answer: error.message || "No relevant memories found.",
         confidence: "low",
         total_retrieved: 0,
         sources: [],
         error: error.message,
-        powered_by: "All LLM Fallbacks Failed"
+        powered_by: "Fallback",
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const conf = result ? (CONFIDENCE_STYLES[result.confidence] ?? CONFIDENCE_STYLES.low) : null;
+
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-bg">
+    <div className="flex flex-col min-h-screen bg-bg">
       <Topbar />
 
-      <main className="flex-1 overflow-y-auto p-[12px] flex flex-col gap-[8px] max-w-5xl mx-auto w-full">
-        
-        {/* Memory Hero (MD3 Expressive Small) */}
-        <div className="flex flex-col items-center gap-[10px] p-[16px_14px] text-center bg-surface2 border border-border rounded-2xl relative overflow-hidden mt-[4px]">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[120px] bg-tertiary/10 rounded-full blur-[40px] pointer-events-none"></div>
-          
-          <div className="w-[42px] h-[42px] rounded-[12px] bg-primary-dim border-[1.5px] border-[rgba(168,199,250,0.3)] flex items-center justify-center shrink-0 relative z-10 shadow-inner">
-            <RiBrainLine size={20} className="text-tertiary" />
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+
+        {/* ── Hero ──────────────────────────────────────────────────────── */}
+        <div className="relative rounded-[32px] bg-surface-container border border-border overflow-hidden p-8 text-center">
+          {/* Ambient blobs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-48 rounded-full blur-[80px]"
+                 style={{ background: "radial-gradient(circle, rgba(219,185,253,0.12) 0%, transparent 70%)" }} />
+            <div className="absolute bottom-0 right-0 w-48 h-40 rounded-full blur-[60px]"
+                 style={{ background: "radial-gradient(circle, rgba(168,199,250,0.08) 0%, transparent 70%)" }} />
           </div>
-          
-          <div className="relative z-10 flex flex-col items-center gap-[2px]">
-            <h1 className="font-sans text-[16px] font-bold text-white tracking-tight">AI Semantic Memory</h1>
-            <p className="text-[12px] text-text-muted max-w-[280px] leading-[1.4]">Query past discussions and decisions across all your meetings.</p>
+
+          <div className="relative z-10 flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-[20px] bg-tertiary-container border border-tertiary/20 flex items-center justify-center shadow-lg spring">
+              <RiBrainLine className="w-7 h-7 text-tertiary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-text">AI Semantic Memory</h1>
+              <p className="text-[13px] text-text-muted mt-1.5 max-w-sm mx-auto leading-relaxed">
+                Query past discussions, decisions, and insights across all your recorded meetings.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative mt-2">
-          <RiSearchLine className="absolute left-[12px] top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+        {/* ── Search box ────────────────────────────────────────────────── */}
+        <div className="relative">
+          <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
           <input
             type="text"
-            placeholder="Ask your meeting memory..."
+            placeholder="Ask your meeting memory…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleQuery();
-            }}
-            className="w-full bg-surface border border-border rounded-[10px] pl-[36px] pr-[80px] py-[10px] text-[13px] text-white placeholder:text-text-muted focus:outline-none focus:border-border-hover transition-colors shadow-[0_4px_14px_rgba(0,0,0,0.1)]"
+            onKeyDown={(e) => { if (e.key === "Enter") handleQuery(); }}
+            className="w-full h-14 bg-surface2 border border-border rounded-2xl pl-11 pr-32 text-[14px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors shadow-lg"
           />
+          {query && (
+            <button
+              onClick={() => { setQuery(""); setResult(null); }}
+              className="absolute right-24 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
+            >
+              <RiCloseLine className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => handleQuery()}
             disabled={loading || !query.trim()}
-            className="absolute right-[6px] top-1/2 -translate-y-1/2 btn btn-primary !py-[5px] !px-[12px] !text-[11px]"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:scale-[0.96] disabled:opacity-40"
           >
-            {loading ? <md-circular-progress indeterminate style={{ '--md-circular-progress-size': '14px' } as React.CSSProperties}></md-circular-progress> : "Ask"}
+            {loading ? <Md3LoadingIndicator size="sm" /> : <RiSparklingLine className="w-4 h-4" />}
+            Ask
           </button>
         </div>
 
-        {/* Example Queries */}
+        {/* ── Example queries (idle) ─────────────────────────────────── */}
         {!result && !loading && (
-          <div className="mt-4 flex flex-col gap-[8px]">
-            <div className="section-title">
-              <RiSparklingLine size={13} />
-              Suggested Queries
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
-              {EXAMPLE_QUERIES.map((q) => (
+          <div className="flex flex-col gap-3 animate-slide-up">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-text-muted flex items-center gap-1.5">
+              <RiSparklingLine className="w-3 h-3 text-tertiary" />
+              Suggested queries
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {suggestions.map((q) => (
                 <button
                   key={q}
                   onClick={() => handleQuery(q)}
-                  className="bg-surface2 border border-border hover:border-primary border-l-[2.5px] rounded-[8px] p-[10px_12px] text-[12.5px] font-normal leading-[1.5] text-left text-text-main hover:bg-surface3 transition-all flex items-center justify-between group"
+                  className="group bg-surface-container hover:bg-surface2 border border-border hover:border-primary/40 rounded-2xl px-4 py-3.5 text-[13px] text-left text-text-muted hover:text-text spring-colors flex items-center justify-between gap-3"
                 >
-                  <span className="line-clamp-1">{q}</span>
-                  <RiArrowRightLine size={14} className="text-text-muted group-hover:text-primary transition-colors shrink-0 ml-2" />
+                  <span className="line-clamp-2 leading-relaxed">{q}</span>
+                  <RiArrowRightLine className="w-4 h-4 shrink-0 text-text-muted group-hover:text-primary spring-colors" />
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* ── Loading ────────────────────────────────────────────────────── */}
         {loading && (
-          <div className="mt-4 bg-surface2 border border-dashed border-[rgba(255,255,255,0.06)] rounded-[10px] p-[30px] flex flex-col items-center justify-center gap-[12px] text-center">
-            <md-circular-progress indeterminate style={{ '--md-circular-progress-size': '32px' } as React.CSSProperties}></md-circular-progress>
-            <p className="text-text-main text-[13px] font-medium">Scanning semantic embeddings...</p>
-            <p className="text-text-muted text-[11px] italic">Synthesizing answer using LLM</p>
+          <div className="flex flex-col items-center justify-center gap-5 rounded-[28px] border border-dashed border-border bg-surface-dim py-16 animate-fade-scale">
+            <Md3LoadingIndicator size="lg" />
+            <div className="text-center">
+              <p className="text-[14px] font-semibold text-text">Scanning semantic embeddings…</p>
+              <p className="text-[12px] text-text-muted mt-1">Synthesizing answer with Gemini</p>
+            </div>
           </div>
         )}
 
-        {/* Results */}
+        {/* ── Result ─────────────────────────────────────────────────────── */}
         {result && !loading && (
-          <div className="flex flex-col gap-[12px] mt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Answer Box - styling matching recap-box in extension */}
-            <div className="bg-surface2 rounded-[10px] p-[14px] text-[13px] leading-[1.6] text-text-main border border-border border-l-[3px] border-l-warning flex flex-col gap-[12px]">
-              <div className="flex items-center justify-between pb-[8px] border-b border-border">
-                <div className="flex items-center gap-[6px] text-[12px] font-bold text-white">
-                  <RiSparklingLine size={14} className="text-warning" />
+          <div className="flex flex-col gap-4 animate-slide-up">
+
+            {/* Answer card */}
+            <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden shadow-xl">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                <div className="flex items-center gap-2 text-[13px] font-bold text-text">
+                  <RiSparklingLine className="w-4 h-4 text-tertiary" />
                   AI Synthesized Answer
                 </div>
-                <div className="flex items-center gap-[6px]">
+                <div className="flex items-center gap-2">
                   {result.powered_by && (
-                    <div className="badge !text-tertiary">
-                      <RiFlashlightLine size={10} />
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-secondary bg-secondary-container rounded-full px-2.5 py-1">
+                      <RiFlashlightLine className="w-3 h-3" />
                       {result.powered_by}
-                    </div>
+                    </span>
                   )}
-                  <div className={`badge ${CONFIDENCE_COLORS[result.confidence] || CONFIDENCE_COLORS.low}`}>
-                    {result.confidence}
-                  </div>
+                  {conf && (
+                    <span className={`text-[11px] font-bold border rounded-full px-2.5 py-1 ${conf.chip}`}>
+                      {conf.label}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="whitespace-pre-wrap">{result.answer}</div>
+
+              {/* Confidence bar */}
+              {conf && (
+                <div className="h-0.5 w-full bg-surface2">
+                  <div
+                    className={`h-full ${conf.bar} transition-all duration-700`}
+                    style={{
+                      width:
+                        result.confidence === "high" ? "85%" :
+                        result.confidence === "medium" ? "55%" : "25%",
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Body */}
+              <div className="p-5 text-[13.5px] text-text leading-relaxed whitespace-pre-wrap">
+                {result.answer}
+              </div>
+
+              {/* Footer */}
+              {result.total_retrieved > 0 && (
+                <div className="px-5 pb-4 flex items-center gap-1.5 text-[11px] text-text-muted">
+                  <RiShieldCheckLine className="w-3.5 h-3.5" />
+                  Retrieved from {result.total_retrieved} memory chunks
+                </div>
+              )}
             </div>
 
-            {/* Cited Sources */}
+            {/* Cited sources */}
             {result.sources && result.sources.length > 0 && (
-              <div className="section !p-0 overflow-hidden mt-[4px]">
+              <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden">
+                {/* Collapsible header */}
                 <button
-                  onClick={() => setSourcesOpen(!sourcesOpen)}
-                  className="w-full flex items-center justify-between p-[12px_14px] hover:bg-surface2 transition-colors cursor-pointer"
+                  onClick={() => setSourcesOpen((o) => !o)}
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface2 spring-colors"
                 >
-                  <div className="flex items-center gap-[8px]">
-                    <RiChat1Line size={15} className="text-primary" />
-                    <span className="text-[13px] font-bold text-white tracking-[-0.2px]">
-                      Cited Meetings ({result.sources.length})
+                  <div className="flex items-center gap-2.5 text-[13px] font-bold text-text">
+                    <RiChat1Line className="w-4 h-4 text-primary" />
+                    Cited Meetings
+                    <span className="text-[11px] text-text-muted font-normal bg-surface2 border border-border rounded-full px-2">
+                      {result.sources.length}
                     </span>
                   </div>
-                  <RiArrowDownSLine size={16} className={`text-text-muted transition-transform ${sourcesOpen ? "rotate-180" : ""}`} />
+                  <RiArrowDownSLine
+                    className={`w-5 h-5 text-text-muted spring ${sourcesOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
-                
+
                 {sourcesOpen && (
-                  <div className="flex flex-col gap-[6px] p-[0_12px_12px_12px] border-t border-border">
+                  <div className="flex flex-col gap-3 px-5 pb-5 border-t border-border pt-4">
                     {result.sources.map((src, idx) => (
-                      <div key={idx} className="bg-surface border border-border rounded-[8px] p-[10px] mt-[6px]">
-                        <div className="flex items-center justify-between mb-[6px]">
-                          <div className="flex items-center gap-[6px]">
-                            <div className="w-[18px] h-[18px] rounded-full bg-primary-container text-primary flex items-center justify-center text-[9px] font-bold shrink-0">
+                      <div
+                        key={idx}
+                        className="bg-surface2 rounded-[16px] border border-border p-4 flex flex-col gap-3 animate-slide-up"
+                        style={{ animationDelay: `${idx * 50}ms` }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-primary-container text-on-primary-container text-[11px] font-bold flex items-center justify-center">
                               {src.speaker_name ? src.speaker_name.charAt(0).toUpperCase() : "?"}
                             </div>
-                            <span className="text-[11px] font-bold text-white uppercase tracking-[0.5px]">
+                            <span className="text-[12px] font-bold text-text">
                               {src.speaker_name || "Participant"}
                             </span>
-                            <span className="text-text-muted text-[10px] bg-surface2 px-[6px] py-[2px] rounded-pill border border-border">
-                              {src.meeting_date || "Recent Call"}
+                            <span className="text-[10px] text-text-muted bg-surface3 border border-border rounded-full px-2 py-0.5">
+                              {src.meeting_date || "Recent"}
                             </span>
                           </div>
-                          <span className="badge">
-                            Match: {Math.round((src.score || 0) * 100)}%
+                          <span className="text-[11px] font-semibold text-primary bg-primary-dim border border-primary/20 rounded-full px-2.5 py-0.5">
+                            {Math.round((src.score || 0) * 100)}% match
                           </span>
                         </div>
-                        <p className="text-[12.5px] text-text-main leading-[1.6] pl-[8px] border-l-[2px] border-primary-dim italic bg-surface2 p-[6px_8px] rounded-r-[6px]">
-                          &quot;{src.excerpt}&quot;
-                        </p>
+                        <blockquote className="text-[12.5px] text-text-muted leading-relaxed italic border-l-2 border-primary/40 pl-3 ml-1">
+                          &ldquo;{src.excerpt}&rdquo;
+                        </blockquote>
                       </div>
                     ))}
                   </div>
@@ -208,4 +289,3 @@ export default function MemoryPage() {
     </div>
   );
 }
-

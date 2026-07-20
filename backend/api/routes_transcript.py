@@ -40,7 +40,7 @@ async def get_realtime_insights(
     user: dict = Depends(get_current_user),
 ):
     """On-demand generation of suggestions, next question, and late-join recap."""
-    print(f"[MeetMaxxing REST] ⚡ On-demand realtime insights requested for meeting {meeting_id} (force={force})...")
+    print(f"[MeetMaxxing REST] [ON-DEMAND] On-demand realtime insights requested for meeting {meeting_id} (force={force})...")
     result = await dispatch(AgentTrigger.REALTIME_TICK, {"meeting_id": meeting_id, "force": force})
     return result
 
@@ -51,7 +51,7 @@ async def get_late_recap(
     user: dict = Depends(get_current_user),
 ):
     """Generates an executive late join recap."""
-    print(f"[MeetMaxxing REST] 📝 Late join recap requested for {meeting_id}")
+    print(f"[MeetMaxxing REST] [RECAP] Late join recap requested for {meeting_id}")
     result = await dispatch(AgentTrigger.LATE_JOIN_RECAP, {"meeting_id": meeting_id, "force": force})
     return result
 
@@ -77,7 +77,7 @@ async def ingest_transcript_chunk(
     user: dict = Depends(get_current_user),
 ):
     """REST fallback for transcript ingestion (used if WebSocket unavailable)."""
-    print(f"[MeetMaxxing REST Ingest] 🎤 {chunk.speaker}: \"{chunk.text}\"")
+    print(f"[MeetMaxxing REST Ingest] [AUDIO] {chunk.speaker}: \"{chunk.text}\"")
     result = await ingest_chunk(chunk.model_dump())
     # Broadcast to active WS connections if any exist
     if chunk.meeting_id in _active_connections:
@@ -121,7 +121,7 @@ async def ingest_audio_chunk(
         )
         transcript_text = response.text.strip() if response.text else ""
     except Exception as e:
-        print(f"[MeetMaxxing Audio Ingest] ⚠️ Gemini audio transcription failed ({e}). Checking Groq fallback...")
+        print(f"[MeetMaxxing Audio Ingest] [WARN] Gemini audio transcription failed ({e}). Checking Groq fallback...")
         groq_key = getattr(settings, "GROQ_API_KEY", "")
         if groq_key and groq_key.strip():
             try:
@@ -139,18 +139,18 @@ async def ingest_audio_chunk(
                     )
                     if res.status_code == 200:
                         transcript_text = res.json().get("text", "").strip()
-                        print(f"[MeetMaxxing Audio Ingest] ✅ Groq Whisper fallback succeeded! Transcribed: \"{transcript_text[:50]}...\"")
+                        print(f"[MeetMaxxing Audio Ingest] [SUCCESS] Groq Whisper fallback succeeded! Transcribed: \"{transcript_text[:50]}...\"")
                     else:
-                        print(f"[MeetMaxxing Audio Ingest] ❌ Groq Whisper error: {res.text}")
+                        print(f"[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper error: {res.text}")
             except Exception as groq_err:
-                print(f"[MeetMaxxing Audio Ingest] ❌ Groq Whisper exception: {groq_err}")
+                print(f"[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper exception: {groq_err}")
         if not transcript_text:
             return {"status": "skipped", "reason": str(e), "copilot_update": None}
 
     if not transcript_text:
         return {"status": "empty", "copilot_update": None}
 
-    print(f"[MeetMaxxing Audio Ingest] 🔊 Transcribed audio: \"{transcript_text[:80]}...\"")
+    print(f"[MeetMaxxing Audio Ingest] [TRANSCRIBED] Transcribed audio: \"{transcript_text[:80]}...\"")
 
     # Store each line as a transcript chunk
     for line in transcript_text.splitlines():
@@ -189,7 +189,7 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
     AI insights run ON DEMAND when explicitly requested via button click.
     """
     await websocket.accept()
-    print(f"[MeetMaxxing WS] 🔌 Client connected for meeting {meeting_id}")
+    print(f"[MeetMaxxing WS] [CONNECT] Client connected for meeting {meeting_id}")
 
     # Register connection
     if meeting_id not in _active_connections:
@@ -205,7 +205,7 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
                 continue
 
             raw["meeting_id"] = meeting_id
-            print(f"[MeetMaxxing WS Ingest] 💬 {raw.get('speaker', 'Speaker')}: \"{raw.get('text', '')}\"")
+            print(f"[MeetMaxxing WS Ingest] [MSG] {raw.get('speaker', 'Speaker')}: \"{raw.get('text', '')}\"")
             await ingest_chunk(raw)
 
             # Broadcast live caption to all connected clients

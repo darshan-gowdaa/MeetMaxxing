@@ -106,21 +106,13 @@ async def validate_summary_output(
                 f"Action item owner '{owner}' not found in transcript speakers: {speaker_names}"
             )
 
-    # 3. Lyzr groundedness eval — validate summary against transcript
+    # 3. LLM groundedness eval — validate summary against transcript using fallback
     try:
-        studio = _get_studio()
-        # Use Lyzr Studio to create a temporary evaluation agent
-        eval_agent = studio.create_agent(
-            name="MeetMaxxing Groundedness Evaluator",
-            provider="gemini-2.0-flash",
-            role="Evaluator",
-            goal="Check if meeting summary is grounded in the provided transcript",
-            instructions="""Evaluate if the provided summary, decisions, and action items 
+        from ..core.llm_fallback import generate_content_with_fallback
+        instructions = """Evaluate if the provided summary, decisions, and action items 
 are all supported by evidence in the transcript.
 Score from 0.0 (completely hallucinated) to 1.0 (fully grounded).
-Return JSON: {"score": 0.9, "issues": ["..."]}""",
-            llm_judge=True,
-        )
+Return JSON: {"score": 0.9, "issues": ["..."]}"""
 
         eval_input = f"""Transcript (first 2000 chars):
 {transcript[:2000]}
@@ -134,23 +126,24 @@ Decisions:
 Action Items:
 {[a.get('text') for a in action_items]}"""
 
-        response = eval_agent.run(eval_input)
+        raw, _ = await generate_content_with_fallback(
+            prompt=eval_input,
+            system_instruction=instructions,
+            temperature=0.1,
+            max_tokens=512,
+            response_format_json=True,
+            cache_ttl=300
+        )
         import json
-        eval_result = json.loads(response.response)
+        eval_result = json.loads(raw.strip() or "{}")
         score = float(eval_result.get("score", 0.8))
-        lyzr_issues = eval_result.get("issues", [])
-        violations.extend(lyzr_issues)
+        llm_issues = eval_result.get("issues", [])
+        violations.extend(llm_issues)
 
     except Exception as e:
-        # Lyzr eval failure non-fatal — trust the output when eval is unavailable
+        # Eval failure non-fatal — trust the output when eval is unavailable
         score = 1.0
-        violations.append(f"Lyzr eval unavailable (non-fatal): {e}")
-    finally:
-        if 'eval_agent' in locals() and hasattr(eval_agent, 'id'):
-            try:
-                studio.delete_agent(eval_agent.id)
-            except:
-                pass
+        violations.append(f"Eval unavailable (non-fatal): {e}")
 
     # Clean output — remove violations if score too low
     cleaned = dict(summary_output)
@@ -179,17 +172,10 @@ async def validate_memory_output(answer: str, sources: list[dict]) -> GuardrailR
         return GuardrailResult(valid=True, score=1.0, violations=[], cleaned_output={"answer": answer})
 
     try:
-        studio = _get_studio()
-        eval_agent = studio.create_agent(
-            name="MeetMaxxing Cross-Context Evaluator",
-            provider="gemini-2.0-flash",
-            role="Evaluator",
-            goal="Check if the memory answer is grounded in the retrieved cross-meeting context",
-            instructions='''Evaluate if the provided answer is supported by evidence in the context.
+        from ..core.llm_fallback import generate_content_with_fallback
+        instructions = '''Evaluate if the provided answer is supported by evidence in the context.
 Score from 0.0 (completely hallucinated) to 1.0 (fully grounded).
-Return JSON: {"score": 0.9, "issues": ["..."]}''',
-            llm_judge=True,
-        )
+Return JSON: {"score": 0.9, "issues": ["..."]}'''
 
         context_text = "\\n".join(
             [f"Context {i}: {s.get('excerpt', '')}" for i, s in enumerate(sources)]
@@ -201,22 +187,23 @@ Return JSON: {"score": 0.9, "issues": ["..."]}''',
 Answer to validate:
 {answer}"""
 
-        response = eval_agent.run(eval_input)
+        raw, _ = await generate_content_with_fallback(
+            prompt=eval_input,
+            system_instruction=instructions,
+            temperature=0.1,
+            max_tokens=512,
+            response_format_json=True,
+            cache_ttl=300
+        )
         import json
-        eval_result = json.loads(response.response)
+        eval_result = json.loads(raw.strip() or "{}")
         score = float(eval_result.get("score", 0.8))
         violations.extend(eval_result.get("issues", []))
 
     except Exception as e:
-        # Lyzr eval failure non-fatal — trust the answer when eval is unavailable
+        # Eval failure non-fatal — trust the answer when eval is unavailable
         score = 1.0
-        violations.append(f"Lyzr eval unavailable (non-fatal): {e}")
-    finally:
-        if 'eval_agent' in locals() and hasattr(eval_agent, 'id'):
-            try:
-                studio.delete_agent(eval_agent.id)
-            except:
-                pass
+        violations.append(f"Eval unavailable (non-fatal): {e}")
 
     cleaned_answer = answer if score >= 0.7 else "I found some information, but it did not pass strict groundedness guardrails. Please refine your query."
 

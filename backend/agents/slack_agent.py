@@ -26,7 +26,7 @@ async def push_to_slack(
             "type": "header",
             "text": {
                 "type": "plain_text",
-                "text": f"🎯 Meeting Recap: {meeting_title}",
+                "text": f"Meeting Recap: {meeting_title}",
                 "emoji": True
             }
         },

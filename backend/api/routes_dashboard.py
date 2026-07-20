@@ -120,3 +120,38 @@ async def update_action_item(
         .execute()
     )
     return result.data[0] if result.data else {}
+
+
+@router.patch("/meetings/{meeting_id}")
+async def update_meeting(
+    meeting_id: str,
+    updates: dict,
+    user: dict = Depends(get_current_user),
+):
+    """Update meeting details (e.g. title)."""
+    supabase = get_supabase_admin()
+    allowed = {"title", "summary"}
+    safe_updates = {k: v for k, v in updates.items() if k in allowed}
+    result = (
+        supabase.table("meetings")
+        .update(safe_updates)
+        .eq("id", meeting_id)
+        .eq("org_id", user["org_id"])
+        .execute()
+    )
+    return result.data[0] if result.data else {}
+
+
+@router.delete("/meetings/{meeting_id}")
+async def delete_meeting(
+    meeting_id: str,
+    user: dict = Depends(get_current_user),
+):
+    """Delete a meeting and its associated records."""
+    supabase = get_supabase_admin()
+    # Delete associated action items first (if no cascade in DB)
+    supabase.table("action_items").delete().eq("meeting_id", meeting_id).eq("org_id", user["org_id"]).execute()
+    # Delete meeting
+    result = supabase.table("meetings").delete().eq("id", meeting_id).eq("org_id", user["org_id"]).execute()
+    return {"status": "deleted"}
+
