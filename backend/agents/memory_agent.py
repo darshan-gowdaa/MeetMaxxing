@@ -67,8 +67,8 @@ def _rerank_results(results):
         MemoryType.KEY_TOPIC: 1.2
     }
     
-    # Filter score > 0.3
-    filtered = [r for r in results if r.score > 0.3]
+    # Filter score > 0.05
+    filtered = [r for r in results if r.score > 0.05]
     
     for r in filtered:
         weight = priority_weights.get(r.memory_type, 1.0)

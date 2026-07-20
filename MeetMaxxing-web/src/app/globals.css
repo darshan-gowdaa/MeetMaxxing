@@ -4,14 +4,14 @@
 /* ── MD3 Expressive Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Background / Surface Hierarchy (Google Meet Theme) */
-  --bg:               #202124;
+  --bg:               #111114;
   --surface-dim:      #171717;
   --surface:          #303134;
-  --surface-container-lowest: #1f1f1f;
-  --surface-container-low:    #28292a;
-  --surface-container:        #3c4043;
-  --surface-container-high:   #4a4d51;
-  --surface-container-highest:#5f6368;
+  --surface-container-lowest: #28292a;
+  --surface-container-low:    #3c4043;
+  --surface-container:        #4a4d51;
+  --surface-container-high:   #5f6368;
+  --surface-container-highest:#767a80;
 
   /* Primary (Google Blue expressive) */
   --primary:          #a8c7fa;
@@ -55,7 +55,7 @@
 
   /* Misc */
   --foreground: #e2e8f8;
-  --background: #202124;
+  --background: #111114;
 }
 
 @theme inline {
@@ -66,7 +66,11 @@
   --color-bg:                       var(--bg);
   --color-surface-dim:              var(--surface-dim);
   --color-surface:                  var(--surface);
-  --color-surface-low:              var(--surface-container-low);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low:    var(--surface-container-low);
+  --color-surface-container:        var(--surface-container);
+  --color-surface-container-high:   var(--surface-container-high);
+  --color-surface-container-highest:var(--surface-container-highest);
   --color-surface2:                 var(--surface-container);
   --color-surface3:                 var(--surface-container-high);
   --color-surface-highest:          var(--surface-container-highest);
@@ -185,7 +189,7 @@ body {
                               color 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 
 /* ── Elevation glow ─────────────────────────────────────────────────────── */
-.md3-glow-primary { box-shadow: 0 0 0 1px var(--border), 0 8px 32px -8px rgba(168,199,250,0.15); }
+.md3-glow-primary { box-shadow: 0 0 0 1px var(--border); }
 .md3-glow-primary:hover { box-shadow: 0 0 0 1px var(--border-strong), 0 16px 48px -12px rgba(168,199,250,0.25); }
 
 /* ── Shimmer skeleton ─────────────────────────────────────────────────── */

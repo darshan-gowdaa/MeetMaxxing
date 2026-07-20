@@ -47,6 +47,7 @@ async def query_memory(
     if req.memory_type:
         filters["memory_type"] = req.memory_type
 
+    print(f"Memory Query Debug -> question: {req.question}, user_id: {user['user_id']}, org_id: {user['org_id']}")
     result = await run_memory_agent(
         question=req.question,
         org_id=user["org_id"],

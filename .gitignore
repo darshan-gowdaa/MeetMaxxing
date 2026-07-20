@@ -55,3 +55,7 @@ backend/qdrant_data/
 # ── Markdown ────────────────────────────────────────────────────────────────
 # Track README and docs
 
+*.md
+|README.md
+
+.gemini_rules

@@ -109,7 +109,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         setActionItems(data.action_items || []);
         setErrorMsg("");
         if (data.email_result?.sent) setGmailState("success");
-        if (data.scheduling_result?.status !== "skipped" && !data.scheduling_result?.error)
+        if (data.scheduling_result && ["success", "scheduled", "gcal_url_generated"].includes(data.scheduling_result.status))
           setCalendarState("success");
       })
       .catch((err: Error) => {
