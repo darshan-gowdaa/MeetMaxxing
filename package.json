@@ -4,15 +4,15 @@
   "description": "MeetMaxxing — Enterprise AI Meeting Copilot monorepo",
   "private": true,
   "scripts": {
-    "install:all": "npm install && cd MeetMaxxing-web && npm install",
+    "install:all": "npm install && cd frontend && npm install",
     "dev": "concurrently --kill-others --prefix-colors \"blue,green\" --names \"Backend,Frontend\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000",
-    "dev:frontend": "cd MeetMaxxing-web && npm run dev",
-    "build": "cd MeetMaxxing-web && npm run build",
-    "lint": "cd MeetMaxxing-web && npm run lint",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "lint": "cd frontend && npm run lint",
     "start": "concurrently --kill-others --prefix-colors \"blue,green\" --names \"Backend,Frontend\" \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "cd backend && venv\\Scripts\\python.exe -m uvicorn main:app --port 8000",
-    "start:frontend": "cd MeetMaxxing-web && npm run start"
+    "start:frontend": "cd frontend && npm run start"
   },
   "dependencies": {
     "concurrently": "^8.2.2"
