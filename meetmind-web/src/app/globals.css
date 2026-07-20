@@ -3,15 +3,15 @@
 
 /* ── MD3 Expressive Design Tokens ─────────────────────────────────────────── */
 :root {
-  /* Background / Surface Hierarchy (tonal elevation) */
-  --bg:               #0a0d12;
-  --surface-dim:      #0f1318;
-  --surface:          #141922;
-  --surface-container-lowest: #0f1318;
-  --surface-container-low:    #181e28;
-  --surface-container:        #1e2533;
-  --surface-container-high:   #252d3e;
-  --surface-container-highest:#2d3648;
+  /* Background / Surface Hierarchy (Google Meet Theme) */
+  --bg:               #202124;
+  --surface-dim:      #171717;
+  --surface:          #303134;
+  --surface-container-lowest: #1f1f1f;
+  --surface-container-low:    #28292a;
+  --surface-container:        #3c4043;
+  --surface-container-high:   #4a4d51;
+  --surface-container-highest:#5f6368;
 
   /* Primary (Google Blue expressive) */
   --primary:          #a8c7fa;
@@ -55,7 +55,7 @@
 
   /* Misc */
   --foreground: #e2e8f8;
-  --background: #0a0d12;
+  --background: #202124;
 }
 
 @theme inline {

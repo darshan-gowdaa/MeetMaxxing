@@ -260,9 +260,14 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               {/* Date */}
               <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-primary bg-primary-dim border border-primary/20 rounded-full px-3.5 py-1 w-fit">
                 <Calendar className="w-3 h-3" />
-                {meeting.start_at
-                  ? format(new Date(meeting.start_at), "EEEE, MMMM d, yyyy • h:mm a")
-                  : "Recent Google Meet Call"}
+                {meeting.start_at ? (
+                  <span>
+                    {format(new Date(meeting.start_at), "EEEE, MMMM d, yyyy • h:mm a")}
+                    {meeting.end_at ? ` – ${format(new Date(meeting.end_at), "h:mm a")}` : ""}
+                  </span>
+                ) : (
+                  "Recent Google Meet Call"
+                )}
               </div>
               <h1 className="text-xl md:text-2xl font-bold text-text tracking-tight leading-tight">
                 {meeting.title}
