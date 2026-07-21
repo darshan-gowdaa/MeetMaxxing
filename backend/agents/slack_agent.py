@@ -58,7 +58,7 @@ async def run_slack_agent(meeting_id: str, summary_output: dict) -> dict:
     """
     logger.info(f"[Slack Agent] Pushing summary to Slack for meeting {meeting_id}")
     summary = summary_output.get("summary", "")
-    action_items = [item.get("text", "") for item in summary_output.get("action_items", [])]
+    action_items = summary_output.get("action_items", [])
     
     success = await push_to_slack(
         meeting_title=summary_output.get("title", "Meeting Recap"),

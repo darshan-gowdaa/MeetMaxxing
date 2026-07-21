@@ -210,7 +210,15 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
 
             raw["meeting_id"] = meeting_id
             print(f"[MeetMaxxing WS Ingest] [MSG] {raw.get('speaker', 'Speaker')}: \"{raw.get('text', '')}\"")
-            clean_chunk = await ingest_chunk(raw)
+
+            async def broadcast_ai_chunk(ai_chunk):
+                for ws_conn in list(_active_connections.get(meeting_id, set())):
+                    try:
+                        await ws_conn.send_json({"type": "live_caption_chunk", "chunk": ai_chunk})
+                    except Exception:
+                        pass
+
+            clean_chunk = await ingest_chunk(raw, on_ai_chunk_ready=broadcast_ai_chunk)
 
             # Broadcast live caption to all connected clients
             for ws_conn in list(_active_connections.get(meeting_id, set())):

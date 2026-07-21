@@ -36,7 +36,7 @@ def normalize_chunk(raw: dict) -> dict:
     }
 
 
-async def ingest_chunk(raw_chunk: dict) -> dict:
+async def ingest_chunk(raw_chunk: dict, on_ai_chunk_ready=None) -> dict:
     """Normalize and store a single transcript chunk to Redis."""
     chunk = normalize_chunk(raw_chunk)
     if chunk["meeting_id"] and chunk["text"]:
@@ -54,13 +54,18 @@ async def ingest_chunk(raw_chunk: dict) -> dict:
                     "speaker": chunk["speaker"],
                     "timestamp_ms": chunk["timestamp_ms"]
                 })
-                if result and result.get("text") and result["text"] != chunk["text"]:
+                if result and result.get("text"):
                     ai_chunk = dict(chunk)
                     ai_chunk["text"] = result["text"]
                     ai_chunk["speaker"] = result.get("speaker", chunk["speaker"])
                     ai_chunk["source"] = "audio"
                     ai_chunk["id"] = str(uuid.uuid4())
                     await append_transcript_chunk(ai_chunk["meeting_id"], ai_chunk)
+                    if on_ai_chunk_ready:
+                        if asyncio.iscoroutinefunction(on_ai_chunk_ready):
+                            await on_ai_chunk_ready(ai_chunk)
+                        else:
+                            on_ai_chunk_ready(ai_chunk)
             except Exception as e:
                 print(f"[Transcript Service] Transcription background agent failed: {e}")
                 

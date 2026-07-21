@@ -27,6 +27,7 @@ Produce:
 
 CRITICAL RULES:
 - EVEN IF THE MEETING IS EXTREMELY SHORT OR CONTAINS ONLY A FEW WORDS, YOU MUST PROVIDE A 'summary'. (e.g., 'The meeting was brief with limited context.').
+- Granularity: Break down grouped or list-like tasks into separate, individual action items. If multiple things need to be bought or done (e.g., "buy X, Y, and Z"), create separate action items for each (X, Y, Z) rather than consolidating them into a single "checklist" action.
 - Every decision must cite the exact speaker name from the transcript. If unclear, use "Team".
 - Every action item must cite an owner from the transcript. Never invent owners.
 - Dates/deadlines must be exactly as stated in transcript — never assume.
@@ -54,6 +55,7 @@ You will be given multiple sub-summaries from a very long meeting.
 Your task is to merge them into a single, cohesive, non-repetitive final JSON output matching the exact schema.
 
 Merge all decisions, action items, and create a single unified summary.
+CRITICAL RULE: Break down grouped or list-like tasks into separate, individual action items. If multiple things need to be bought or done, keep them as separate action items rather than consolidating them into a single "checklist".
 
 Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
@@ -78,6 +80,40 @@ def _format_full_transcript(utterances: list[dict]) -> str:
     for utt in utterances:
         speaker = utt.get("speaker", "Unknown")
         text = utt.get("text", "")
+        
+        # Handle cases where the text itself is a JSON array string from the AI service
+        if isinstance(text, str) and text.strip().startswith("["):
+            try:
+                import json
+                parsed = json.loads(text)
+                if isinstance(parsed, list):
+                    extracted_texts = []
+                    for item in parsed:
+                        if isinstance(item, dict):
+                            val = item.get("text") or item.get("utterance") or item.get("raw_text") or item.get("refined_text") or ""
+                            if val:
+                                extracted_texts.append(val)
+                        elif isinstance(item, str):
+                            extracted_texts.append(item)
+                    if extracted_texts:
+                        text = " ".join(extracted_texts)
+            except Exception:
+                pass
+        elif isinstance(text, str) and text.strip().startswith("{"):
+            try:
+                import json
+                parsed = json.loads(text)
+                if isinstance(parsed, dict):
+                    if "dialog_turn" in parsed and isinstance(parsed["dialog_turn"], list):
+                        texts = []
+                        for t in parsed["dialog_turn"]:
+                            texts.append(t.get("refined_text") or t.get("raw_text") or "")
+                        text = " ".join([t for t in texts if t])
+                    else:
+                        text = parsed.get("text") or parsed.get("utterance") or text
+            except Exception:
+                pass
+
         ts = utt.get("timestamp_ms", 0)
         mins = ts // 60000
         secs = (ts % 60000) // 1000
@@ -124,13 +160,12 @@ async def run_summary_agent(
     try:
         prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\nDuration: {len(utterances)} utterances recorded\n\nFull transcript:\n{transcript_text}\n\nExtract the structured meeting intelligence as per instructions."
         from ..core.llm_fallback import generate_content_with_fallback
-        raw, powered_by = await generate_content_with_fallback(prompt)
+        raw, powered_by = await generate_content_with_fallback(prompt, response_format_json=True)
             
         result = parse_json_clean(raw or "{}")
         if not result or "summary" not in result:
             if not result:
                 result = {}
-                result["error"] = "JSON parse failed"
             result["summary"] = result.get("summary", "The meeting was too brief or context was limited, but it has been successfully logged.")
             result["decisions"] = result.get("decisions", [])
             result["action_items"] = result.get("action_items", [])

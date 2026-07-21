@@ -134,8 +134,8 @@ Action Items:
             response_format_json=True,
             cache_ttl=300
         )
-        import json
-        eval_result = json.loads(raw.strip() or "{}")
+        from ..core.utils import parse_json_clean
+        eval_result = parse_json_clean(raw or "{}")
         score = float(eval_result.get("score", 1.0))
         llm_issues = eval_result.get("issues", [])
         violations.extend(llm_issues)
@@ -195,8 +195,8 @@ Answer to validate:
             response_format_json=True,
             cache_ttl=300
         )
-        import json
-        eval_result = json.loads(raw.strip() or "{}")
+        from ..core.utils import parse_json_clean
+        eval_result = parse_json_clean(raw or "{}")
         score = float(eval_result.get("score", 1.0))
         violations.extend(eval_result.get("issues", []))
 

@@ -43,6 +43,26 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     elif trigger == AgentTrigger.TRANSCRIPT_CHUNK:
         agent_name = "transcription"
         grpc_payload = dict(payload)
+    elif trigger == AgentTrigger.MEETING_END:
+        agent_name = "summary"
+        grpc_payload = dict(payload)
+    elif trigger == AgentTrigger.SEND_EMAIL:
+        agent_name = "email"
+        grpc_payload = dict(payload)
+        grpc_payload["summary"] = payload
+    elif trigger == AgentTrigger.SEND_SLACK:
+        agent_name = "slack"
+        grpc_payload = dict(payload)
+        grpc_payload["summary"] = payload
+    elif trigger == AgentTrigger.SCHEDULE_FOLLOWUP:
+        agent_name = "scheduler"
+        grpc_payload = dict(payload)
+    elif trigger == AgentTrigger.LATE_JOIN_RECAP:
+        agent_name = "late_join"
+        grpc_payload = dict(payload)
+    elif trigger == AgentTrigger.USER_QUERY:
+        agent_name = "memory"
+        grpc_payload = dict(payload)
     else:
         try:
             raw_response, _ = await run_lyzr_agent("Orchestrator Agent - MeetMaxxing", prompt)

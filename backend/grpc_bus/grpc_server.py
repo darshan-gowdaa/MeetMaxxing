@@ -109,12 +109,18 @@ class AgentTaskBusServicer(grpc_bus_pb2_grpc.AgentTaskBusServicer):
         )
 
 def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    grpc_bus_pb2_grpc.add_AgentTaskBusServicer_to_server(AgentTaskBusServicer(), server)
-    server.add_insecure_port('[::]:50051')
-    logger.info("Starting gRPC Task Bus on port 50051...")
-    server.start()
-    server.wait_for_termination()
+    try:
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        grpc_bus_pb2_grpc.add_AgentTaskBusServicer_to_server(AgentTaskBusServicer(), server)
+        port = server.add_insecure_port('[::]:50051')
+        if port == 0:
+            logger.warning("[gRPC Task Bus] Port 50051 already bound or unavailable. Skipping gRPC server startup.")
+            return
+        logger.info("Starting gRPC Task Bus on port 50051...")
+        server.start()
+        server.wait_for_termination()
+    except Exception as e:
+        logger.warning(f"[gRPC Task Bus] Could not start gRPC server: {e}")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

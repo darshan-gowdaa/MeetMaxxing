@@ -62,13 +62,13 @@ export function useCopilot() {
           if (text === last.text) return prev;
           if (text.startsWith(last.text) || last.text.startsWith(text) || text.includes(last.text)) {
             updated = [...prev];
-            updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now };
+            updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now, source: chunk.source || last.source };
             if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
             return updated;
           }
         }
       }
-      updated = [...prev, { speaker, text, timestamp: now }];
+      updated = [...prev, { speaker, text, timestamp: now, source: chunk.source }];
       if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
       return updated;
     });
@@ -141,20 +141,61 @@ export function useCopilot() {
     try {
       if (actionType === "GENERATE_INSIGHTS") {
         const [realtimeRes, recapRes] = await Promise.all([
-          fetch(`http://localhost:8000/ingest/realtime/${meetingId}?force=true`, { method: "POST" }),
-          fetch(`http://localhost:8000/recap/${meetingId}`, { method: "GET" })
+          fetch(`http://localhost:8000/ingest/realtime/${meetingId}?force=true`, { 
+            method: "POST",
+            headers: { "Authorization": "Bearer dev_token" } 
+          }),
+          fetch(`http://localhost:8000/ingest/late-recap/${meetingId}?force=true`, { 
+            method: "GET",
+            headers: { "Authorization": "Bearer dev_token" } 
+          })
         ]);
         const realtimeData = await realtimeRes.json();
         const recapData = await recapRes.json();
         handleCopilotUpdate(realtimeData);
-        setRecap(recapData.recap || "");
+        
+        // Follow background.js formatting for recap
+        let recapText = "";
+        if (recapData.recap && recapData.recap.trim().length > 0) {
+          recapText = `Recap:\n${recapData.recap}`;
+        } else {
+          recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
+        }
+        if (recapData.current_topic && recapData.current_topic !== "Unknown") {
+          recapText += `\n\nCurrent Topic:\n${recapData.current_topic}`;
+        }
+        if (recapData.key_decisions_so_far && recapData.key_decisions_so_far.length) {
+          recapText += `\n\nDecisions:\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
+        }
+        if (recapData.who_said_what && recapData.who_said_what.length) {
+          recapText += `\n\nWho said what:\n- ${recapData.who_said_what.join("\n- ")}`;
+        }
+        setRecap(recapText);
       } else {
         const isRecap = actionType === "REQUEST_RECAP";
-        const endpoint = isRecap ? `/recap/${meetingId}` : `/ingest/realtime/${meetingId}?force=true`;
-        const response = await fetch(`http://localhost:8000${endpoint}`, { method: isRecap ? "GET" : "POST" });
+        const endpoint = isRecap ? `/ingest/late-recap/${meetingId}?force=true` : `/ingest/realtime/${meetingId}?force=true`;
+        const response = await fetch(`http://localhost:8000${endpoint}`, { 
+          method: isRecap ? "GET" : "POST",
+          headers: { "Authorization": "Bearer dev_token" } 
+        });
         const data = await response.json();
         if (isRecap) {
-          setRecap(data.recap || "");
+          let recapText = "";
+          if (data.recap && data.recap.trim().length > 0) {
+            recapText = `Recap:\n${data.recap}`;
+          } else {
+            recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
+          }
+          if (data.current_topic && data.current_topic !== "Unknown") {
+            recapText += `\n\nCurrent Topic:\n${data.current_topic}`;
+          }
+          if (data.key_decisions_so_far && data.key_decisions_so_far.length) {
+            recapText += `\n\nDecisions:\n- ${data.key_decisions_so_far.join("\n- ")}`;
+          }
+          if (data.who_said_what && data.who_said_what.length) {
+            recapText += `\n\nWho said what:\n- ${data.who_said_what.join("\n- ")}`;
+          }
+          setRecap(recapText);
         } else {
           handleCopilotUpdate(data);
         }

@@ -97,7 +97,7 @@ async def run_memory_agent(
     # Build memory filter — org_id always mandatory
     mem_filter = MemoryFilter(
         org_id=org_id,
-        user_id=user_id,
+        user_id=filters.get("user_id", ""),
         speaker_id=filters.get("speaker_id", ""),
         topic=filters.get("topic", ""),
         date_from=filters.get("date_from", ""),
@@ -158,20 +158,9 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
             from ..core.lyzr_integration import run_lyzr_agent
             raw, powered_by = await run_lyzr_agent("Memory Agent - MeetMaxxing", prompt)
             
-            import re
-            
-            cleaned = raw.strip()
-            # Extract JSON if wrapped in markdown or has conversational text before/after
-            json_match = re.search(r'\{.*\}', cleaned, re.DOTALL)
-            if json_match:
-                cleaned = json_match.group(0)
-            else:
-                # If no brackets found, fallback will catch it
-                pass
-            
-            try:
-                result = json.loads(cleaned)
-            except json.JSONDecodeError:
+            from ..core.utils import parse_json_clean
+            result = parse_json_clean(raw)
+            if not result:
                 # If LLM ignored JSON rules and returned plain text (e.g. "I don't know")
                 result = {
                     "answer": raw.strip(),

@@ -18,14 +18,14 @@ export function LiveTranscript({ transcriptLines }: { transcriptLines: Transcrip
     if (!feedRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
     // If user is within 40px of bottom, auto-scroll is true. Otherwise false.
-    setAutoScroll(scrollHeight - scrollTop - clientHeight < 40);
+    setAutoScroll(scrollHeight - Math.ceil(scrollTop) - clientHeight < 40);
   };
 
   useEffect(() => {
-    if (autoScroll) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll && feedRef.current) {
+      feedRef.current.scrollTop = feedRef.current.scrollHeight;
     }
-  }, [filteredLines, autoScroll]);
+  }, [filteredLines]);
 
   const toggle = () => {
     setIsMax(!isMax);
@@ -76,7 +76,7 @@ export function LiveTranscript({ transcriptLines }: { transcriptLines: Transcrip
                     </div>
                     {line.speaker}
                   </span>
-                  {line.source && <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{line.source}</span>}
+                  {line.source && <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{line.source === "audio" ? "AI Transcripted(correct)" : line.source}</span>}
                 </div>
                 <span className="text-[12.5px] text-zinc-200 leading-relaxed break-words pl-5">{line.text}</span>
               </div>

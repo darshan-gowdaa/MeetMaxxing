@@ -6,6 +6,9 @@ from contextlib import asynccontextmanager
 import sys
 from pathlib import Path
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 # Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
@@ -54,7 +57,10 @@ from .grpc_bus.grpc_server import serve as grpc_serve
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: ensure Qdrant collection + indexes exist and start gRPC server."""
-    await ensure_collection()
+    try:
+        await ensure_collection()
+    except Exception as e:
+        print(f"Warning: Failed to initialize Qdrant memory: {e}")
     
     # Start gRPC Task Bus in background
     grpc_thread = threading.Thread(target=grpc_serve, daemon=True)

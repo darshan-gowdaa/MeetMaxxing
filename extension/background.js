@@ -83,7 +83,7 @@ function connectWebSocket(meetingId) {
         chrome.storage.local.set({ lastCopilotUpdate: update, copilot_state: update, poweredBy: update.powered_by });
         chrome.runtime.sendMessage({ type: "COPILOT_UPDATE", data: update }, () => { let _ = chrome.runtime.lastError; });
       } else if (msg.type === "live_caption_chunk" && msg.chunk) {
-        chrome.runtime.sendMessage({ type: "LIVE_CAPTION_CHUNK", chunk: { ...msg.chunk, source: "audio" } }, () => { let _ = chrome.runtime.lastError; });
+        chrome.runtime.sendMessage({ type: "LIVE_CAPTION_CHUNK", chunk: msg.chunk }, () => { let _ = chrome.runtime.lastError; });
       }
     } catch (e) {}
   };

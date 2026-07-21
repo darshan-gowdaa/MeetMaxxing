@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   RiVideoChatLine,
   RiBrainLine,
-  RiSparklingLine,
+  RiSparkling2Fill,
 } from "@remixicon/react";
 
 export default function Topbar() {
@@ -15,18 +15,13 @@ export default function Topbar() {
     <header className="sticky top-0 z-50 bg-[#1e2023] backdrop-blur-xl border-b border-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[16px] bg-primary-container flex items-center justify-center shadow-lg"
-               style={{ boxShadow: "0 4px 16px var(--primary-glow-hover)" }}>
-            <RiVideoChatLine className="text-on-primary-container w-5 h-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[15px] font-bold tracking-tight text-text leading-none">MeetMaxxing</span>
-            <span className="text-[11px] text-text-muted font-medium mt-0.5 flex items-center gap-1">
-              <RiSparklingLine className="w-2.5 h-2.5 text-tertiary" />
-              AI Copilot
-            </span>
-          </div>
+        <Link href="/" className="flex items-center gap-1.5 drop-shadow-[0_2px_10px_rgba(59,130,246,0.3)] hover:drop-shadow-[0_4px_16px_rgba(59,130,246,0.5)] transition-all">
+          <span className="text-blue-500 flex items-center justify-center shrink-0">
+            <RiSparkling2Fill className="w-6 h-6" />
+          </span>
+          <span className="font-black text-[17px] tracking-tight bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent truncate">
+            MeetMaxxing
+          </span>
         </Link>
 
         {/* Nav */}

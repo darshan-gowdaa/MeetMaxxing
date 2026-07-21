@@ -67,7 +67,35 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       .finally(() => setLoading(false));
   }, [id]);
 
-  useEffect(() => { setTimeout(loadMeeting, 0); }, [loadMeeting]);
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const poll = async () => {
+      try {
+        const data = await fetchMeeting(id, "dev_token");
+        setMeeting(data);
+        setActionItems(data.action_items || []);
+        setErrorMsg("");
+        if (data.email_result?.sent) setGmailState("success");
+        if (data.scheduling_result && ["success", "scheduled", "gcal_url_generated"].includes(data.scheduling_result.status))
+          setCalendarState("success");
+
+        if (data.status === "active" || data.status === "processing") {
+          timeoutId = setTimeout(poll, 3000);
+        }
+      } catch (err: unknown) {
+        setMeeting(null);
+        setErrorMsg((err as Error).message || "Failed to fetch meeting from backend");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // setLoading(true);  // Removed to fix React hook warning, poll will set data anyway
+    poll();
+    
+    return () => clearTimeout(timeoutId);
+  }, [id]);
 
   const toggleItemStatus = async (itemId: string) => {
     const item = actionItems.find((a) => a.id === itemId);
@@ -286,11 +314,11 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               Executive Summary
             </h2>
           </div>
-          {meeting.summary && meeting.status !== "error" && meeting.status !== "failed" ? (
+          {meeting.summary ? (
             <p className="text-[13.5px] text-text leading-[1.75] whitespace-pre-wrap">
               {meeting.summary}
             </p>
-          ) : meeting.status === "active" ? (
+          ) : meeting.status === "active" || meeting.status === "processing" ? (
             <div className="flex flex-col items-center justify-center py-6 gap-4">
               <div className="flex items-center justify-center gap-2">
                 <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
@@ -307,7 +335,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                 {meeting.status === "no_transcript"
                   ? "No transcript was captured during this meeting, so no summary could be generated."
                   : meeting.status === "error" || meeting.status === "failed" 
-                  ? `An error occurred during summarization: ${meeting.summary || "The meeting might have been too short or the AI service was unavailable."}`
+                  ? "An error occurred during summarization. The meeting might have been too short or the AI service was unavailable."
                   : "Executive summary is not available for this meeting. It may not have contained enough conversational data."}
               </p>
             </div>
@@ -458,7 +486,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
                 <select 
                   value={sourceFilter} 
-                  onChange={(e) => setSourceFilter(e.target.value as any)}
+                  onChange={(e) => setSourceFilter(e.target.value as "all" | "dom" | "audio")}
                   className="bg-surface3 border border-border rounded text-[12px] font-medium text-text py-1 px-2 outline-none focus:border-primary transition-colors cursor-pointer"
                 >
                   <option value="all">All sources</option>
@@ -476,7 +504,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             {transcriptOpen && (
               <div className="border-t border-border px-6 pb-6 pt-4 flex flex-col gap-1.5 max-h-[520px] overflow-y-auto custom-scrollbar">
                 {meeting.transcript_data
-                  .filter(chunk => sourceFilter === "all" ? true : ((chunk as any).source || "dom") === sourceFilter)
+                  .filter(chunk => sourceFilter === "all" ? true : (((chunk as Record<string, unknown>).source as string) || "dom") === sourceFilter)
                   .map((chunk, idx) => (
                   <div
                     key={idx}
@@ -485,14 +513,14 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2 text-[12px] font-bold text-primary">
                         <span className="w-6 h-6 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold flex items-center justify-center">
-                          {chunk.speaker.charAt(0).toUpperCase()}
+                          {(chunk.speaker || "?").charAt(0).toUpperCase()}
                         </span>
-                        {chunk.speaker}
+                        {chunk.speaker || "Unknown"}
                       </span>
                       <div className="flex items-center gap-2">
-                        {(chunk as any).source && (
+                        {!!(chunk as any).source && (
                           <span className="text-[9px] text-text-muted uppercase tracking-wider font-semibold bg-surface3 px-2 py-0.5 rounded-full border border-border">
-                            {(chunk as any).source}
+                            {(chunk as Record<string, unknown>).source as string}
                           </span>
                         )}
                         {chunk.timestamp_ms && (
@@ -502,7 +530,35 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                         )}
                       </div>
                     </div>
-                    <p className="text-[12.5px] text-text-muted leading-relaxed pl-8">{chunk.text}</p>
+                    <div className="text-[12.5px] text-text-muted leading-relaxed pl-8">
+                      {(() => {
+                        let content = chunk.text;
+                        if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {
+                          try { content = JSON.parse(content); } catch (e) {}
+                        }
+                        
+                        if (Array.isArray(content)) {
+                          return content.map((item: unknown, i: number) => {
+                            const obj = item as Record<string, unknown>;
+                            const text = typeof item === "string" ? item : (obj.text || obj.utterance || obj.raw_text || obj.refined_text || JSON.stringify(item));
+                            return <span key={i} className="block mb-1">{text as string}</span>;
+                          });
+                        }
+                        
+                        if (content && typeof content === "object" && Array.isArray((content as Record<string, unknown>).dialog_turn)) {
+                          return ((content as Record<string, unknown>).dialog_turn as unknown[]).map((t: unknown, i: number) => {
+                            const obj = t as Record<string, unknown>;
+                            return (
+                            <span key={i} className="block mb-1">
+                              {obj.speaker && obj.speaker !== chunk.speaker && obj.speaker !== "Unknown" && obj.speaker !== "You" ? <strong className="mr-1 text-primary">{obj.speaker as string}:</strong> : null}
+                              {(obj.refined_text || obj.raw_text) as string}
+                            </span>
+                            );
+                          });
+                        }
+                        return typeof chunk.text === "string" ? chunk.text : JSON.stringify(chunk.text);
+                      })()}
+                    </div>
                   </div>
                 ))}
               </div>

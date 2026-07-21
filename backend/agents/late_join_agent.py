@@ -60,18 +60,19 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict
         from ..core.utils import parse_json_clean
         result = parse_json_clean(raw)
         
-        if not result or not isinstance(result, dict):
-            result = {
-                "recap": "Error generating recap due to LLM output parsing failure.",
-                "key_decisions_so_far": [],
-                "current_topic": "Unknown",
-                "who_said_what": []
-            }
+        if not result or not isinstance(result, dict) or "Error" in result.get("recap", ""):
+            if not result or not isinstance(result, dict):
+                result = {
+                    "recap": "Error generating recap due to LLM output parsing failure.",
+                    "key_decisions_so_far": [],
+                    "current_topic": "Unknown",
+                    "who_said_what": []
+                }
+        else:
+            _last_recaps[meeting_id] = result
+            _last_recap_times[meeting_id] = now
             
         result["powered_by"] = powered_by
-        
-        _last_recaps[meeting_id] = result
-        _last_recap_times[meeting_id] = now
         
         return result
     except Exception as e:

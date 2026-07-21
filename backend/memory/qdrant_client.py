@@ -8,6 +8,9 @@ Collection: meetmaxxing_memories
 """
 
 import uuid
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 from qdrant_client import AsyncQdrantClient, models as qmodels
 from ..core.config import settings
 from .schemas import MemoryPoint, MemoryFilter, MemoryResult
@@ -18,20 +21,20 @@ _client: AsyncQdrantClient | None = None
 async def get_qdrant() -> AsyncQdrantClient:
     global _client
     if _client is None:
-        if settings.QDRANT_URL in [":memory:", "memory"]:
-            _client = AsyncQdrantClient(location=":memory:")
-        elif settings.QDRANT_URL == "local":
-            _client = AsyncQdrantClient(path="./qdrant_data")
-        else:
-            try:
-                test_client = AsyncQdrantClient(
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            if settings.QDRANT_URL in [":memory:", "memory"]:
+                _client = AsyncQdrantClient(location=":memory:", check_compatibility=False)
+            elif settings.QDRANT_URL == "local":
+                _client = AsyncQdrantClient(path="./qdrant_data", check_compatibility=False)
+            else:
+                _client = AsyncQdrantClient(
                     url=settings.QDRANT_URL,
                     api_key=settings.QDRANT_API_KEY or None,
+                    check_compatibility=False,
                 )
-                await test_client.get_collections()
-                _client = test_client
-            except Exception:
-                _client = AsyncQdrantClient(location=":memory:")
+                await _client.get_collections()
     return _client
 
 
@@ -71,12 +74,18 @@ async def ensure_collection() -> None:
             ("speaker_id", qmodels.PayloadSchemaType.KEYWORD),
             ("priority", qmodels.PayloadSchemaType.INTEGER),
         ]
-        for field_name, schema_type in indexed_fields:
-            await client.create_payload_index(
-                collection_name=collection_name,
-                field_name=field_name,
-                field_schema=schema_type,
-            )
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            for field_name, schema_type in indexed_fields:
+                try:
+                    await client.create_payload_index(
+                        collection_name=collection_name,
+                        field_name=field_name,
+                        field_schema=schema_type,
+                    )
+                except Exception:
+                    pass
 
 
 async def upsert_memories(points: list[MemoryPoint]) -> None:
