@@ -14,6 +14,7 @@ from typing import List, Dict, Any
 from ..core.config import settings
 from ..core.redis_client import get_full_transcript
 from ..core.lyzr_integration import run_lyzr_agent
+from ..core.utils import parse_json_clean
 
 logger = logging.getLogger(__name__)
 _SYSTEM_PROMPT = """You are MeetMaxxing's Summary Agent. You extract structured meeting intelligence from transcripts.
@@ -70,23 +71,7 @@ Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or `
   }
 }"""
 
-def _parse_json_clean(raw: str) -> dict:
-    cleaned = raw.strip()
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:]
-    elif cleaned.startswith("```"):
-        cleaned = cleaned[3:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
-    cleaned = cleaned.strip()
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        cleaned = cleaned[start : end + 1]
-    try:
-        return json.loads(cleaned)
-    except:
-        return {}
+
 
 def _format_full_transcript(utterances: list[dict]) -> str:
     lines = []
@@ -136,31 +121,12 @@ async def run_summary_agent(
 
     attendee_str = ", ".join(attendees or []) or "Unknown"
     
-    # If transcript is massive, we use Hierarchical Summarization
-    # Rough approximation: 1 char is ~0.25 tokens. 15000 chars is ~3750 tokens.
-    MAX_CHARS_PER_CHUNK = 15000
-    
     try:
-        if len(transcript_text) > MAX_CHARS_PER_CHUNK * 1.2:
-            logger.info(f"[Summary Agent] Transcript is large ({len(transcript_text)} chars). Using hierarchical summarization.")
-            chunks = _chunk_transcript(raw_lines, MAX_CHARS_PER_CHUNK)
-            sub_summaries = []
-            for i, chunk in enumerate(chunks):
-                logger.info(f"[Summary Agent] Summarizing chunk {i+1}/{len(chunks)}")
-                sub_sum = await _summarize_chunk(chunk, title, attendee_str)
-                sub_summaries.append(sub_sum)
+        prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\nDuration: {len(utterances)} utterances recorded\n\nFull transcript:\n{transcript_text}\n\nExtract the structured meeting intelligence as per instructions."
+        from ..core.llm_fallback import generate_content_with_fallback
+        raw, powered_by = await generate_content_with_fallback(prompt)
             
-            # Synthesize
-            synthesis_prompt = f"{_SYNTHESIS_PROMPT}\n\nMerge the following sub-summaries into one cohesive JSON:\n\n"
-            for i, s in enumerate(sub_summaries):
-                synthesis_prompt += f"--- SUB-SUMMARY {i+1} ---\n{s}\n\n"
-                
-            raw, powered_by = await run_lyzr_agent("Summary Agent - MeetMaxxing", synthesis_prompt)
-        else:
-            prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\nDuration: {len(utterances)} utterances recorded\n\nFull transcript:\n{transcript_text}\n\nExtract the structured meeting intelligence as per instructions."
-            raw, powered_by = await run_lyzr_agent("Summary Agent - MeetMaxxing", prompt)
-            
-        result = _parse_json_clean(raw or "{}")
+        result = parse_json_clean(raw or "{}")
         if not result or "summary" not in result:
             if not result:
                 result = {}

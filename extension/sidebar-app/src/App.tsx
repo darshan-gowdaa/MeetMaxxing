@@ -12,9 +12,7 @@ export default function App() {
   } = useCopilot();
 
   const handleGenerateInsights = () => {
-    triggerAction("ASK_SUGGESTIONS");
-    triggerAction("ASK_NEXT_QUESTION");
-    triggerAction("REQUEST_RECAP");
+    triggerAction("GENERATE_INSIGHTS");
   };
 
   return (

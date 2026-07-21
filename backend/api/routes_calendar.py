@@ -6,7 +6,7 @@ import urllib.parse
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from ..core.auth import get_current_user
-from ..core.database import get_supabase_admin
+from ..core.database import get_supabase_admin, get_meeting_record
 from ..services.calendar_service import get_calendar_auth_url, exchange_calendar_code
 from ..core.config import settings
 
@@ -90,18 +90,9 @@ async def get_calendar_add_url(
     No OAuth token required — user clicks the link to add to their own calendar.
     """
     supabase = get_supabase_admin()
-    result = (
-        supabase.table("meetings")
-        .select("title,summary,attendees,action_items,follow_up,start_at,end_at")
-        .eq("id", meeting_id)
-        .eq("org_id", user["org_id"])
-        .single()
-        .execute()
-    )
-    if not result.data:
+    m = get_meeting_record(supabase, meeting_id, user["org_id"])
+    if not m:
         raise HTTPException(status_code=404, detail="Meeting not found")
-
-    m = result.data
     title, details = _build_event_details(m, meeting_id)
     start_dt = _parse_start_dt(m)
 
@@ -173,18 +164,9 @@ async def schedule_followup(
     2. Falls back to a Google Calendar template URL (no OAuth) when token missing.
     """
     supabase = get_supabase_admin()
-    result = (
-        supabase.table("meetings")
-        .select("*")
-        .eq("id", meeting_id)
-        .eq("org_id", user["org_id"])
-        .single()
-        .execute()
-    )
-    if not result.data:
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
-
-    meeting = result.data
 
     # Try stored OAuth token
     calendar_token = None

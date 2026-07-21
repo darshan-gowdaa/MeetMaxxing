@@ -11,7 +11,7 @@ export interface Meeting {
   follow_up: { required: boolean; suggested_topic: string };
   attendees: string[];
   guardrail_score: number;
-  transcript_data: Array<{ speaker: string; text: string; timestamp_ms: number }>;
+  transcript_data: Array<{ speaker: string; text: string; timestamp_ms: number; source?: "dom" | "audio" }>;
   action_items: Array<{
     id: string;
     description: string;

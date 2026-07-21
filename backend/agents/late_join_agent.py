@@ -57,22 +57,10 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict
     try:
         raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
         
-        cleaned = raw.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        elif cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-        cleaned = cleaned.strip()
-        start = cleaned.find("{")
-        end = cleaned.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            cleaned = cleaned[start : end + 1]
-            
-        try:
-            result = json.loads(cleaned)
-        except Exception:
+        from ..core.utils import parse_json_clean
+        result = parse_json_clean(raw)
+        
+        if not result or not isinstance(result, dict):
             result = {
                 "recap": "Error generating recap due to LLM output parsing failure.",
                 "key_decisions_so_far": [],

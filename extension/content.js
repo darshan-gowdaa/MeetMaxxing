@@ -212,7 +212,7 @@ function flushUtterance(speaker) {
   const sent = safeSendMessage({
     type: "INGEST_CHUNK",
     meetingId: meetingId,
-    chunk: { speaker, text, timestamp_ms: now - meetingStartTime, platform: "google_meet" },
+    chunk: { speaker, text, timestamp_ms: now - meetingStartTime, platform: "google_meet", source: "dom" },
   });
   if (sent) console.log(`[MeetMaxxing] ✓ Utterance → ${speaker}: "${text.slice(0, 80)}"`);
   else console.warn("[MeetMaxxing] Context invalidated — refresh this tab (F5).");
@@ -229,13 +229,7 @@ function trackUtterance(speaker, rawText) {
   if (existing) {
     clearTimeout(existing.timer);
     existing.text = text; // always keep the latest (longest) version
-    
-    // Force flush if speaker hasn't paused but has talked for a very long time
-    if (text.length >= MAX_CHARS) {
-      flushUtterance(speaker);
-    } else {
-      existing.timer = setTimeout(() => flushUtterance(speaker), SILENCE_MS);
-    }
+    existing.timer = setTimeout(() => flushUtterance(speaker), SILENCE_MS);
   } else {
     utteranceMap.set(speaker, {
       text,
@@ -467,50 +461,77 @@ function toggleHideCaptions() {
 
 function injectVisibilityButton() {
   if (document.getElementById("mm-caption-visibility-btn")) return;
-  const btn = document.createElement("div");
+  const btn = document.createElement("button");
   btn.id = "mm-caption-visibility-btn";
   btn.style.cssText = `
-    position: fixed; bottom: 85px; left: 24px; z-index: 999999;
-    background: #1e1f20; color: #a8c7fa; padding: 8px 16px;
-    border-radius: 99px; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: 600;
-    cursor: pointer; border: 1px solid rgba(168, 199, 250, 0.3);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s;
-    display: flex; align-items: center; gap: 8px; user-select: none;
+    position: fixed; bottom: 18px; left: 240px; z-index: 999999;
+    background: #3c4043; color: #e8eaed; width: 40px; height: 40px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    transition: background 0.2s;
   `;
   
-  const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c5.392 0 9.878 3.88 10.819 9-.94 5.12-5.427 9-10.819 9-5.392 0-9.878-3.88-10.819-9C2.121 6.88 6.608 3 12 3zm0 16a9.005 9.005 0 0 0 8.777-7A9.005 9.005 0 0 0 12 5a9.005 9.005 0 0 0-8.777 7A9.005 9.005 0 0 0 12 19zm0-2a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>`;
-  const eyeCloseSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10.94 6.088c.348-.057.708-.088 1.06-.088 5.392 0 9.878 3.88 10.819 9-.263 1.43-.876 2.733-1.723 3.84l-1.446-1.445a9.006 9.006 0 0 0 1.15-2.395A9.005 9.005 0 0 0 12 5c-.476 0-.94.037-1.393.107l.333 1.011zm9.645 15.427-1.414 1.414-3.791-3.79a11.196 11.196 0 0 1-3.38.261c-5.392 0-9.878-3.88-10.819-9a10.966 10.966 0 0 1 2.37-4.47l-2.228-2.228 1.414-1.414 17.848 17.848zM4.654 7.483A9.013 9.013 0 0 0 3.223 12a9.005 9.005 0 0 0 8.777 7c.803 0 1.58-.105 2.316-.304L12.52 16.9a5 5 0 0 1-5.421-5.42L4.654 7.483zM14 12a2 2 0 0 1-2 2l-1.748-1.748c.046-.732.616-1.302 1.348-1.348L14 12.001zM11.95 7a5 5 0 0 1 4.95 4.95l-1.921-1.921A3.003 3.003 0 0 0 11.95 7z"></path></svg>`;
+  const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c5.392 0 9.878 3.88 10.819 9-.94 5.12-5.427 9-10.819 9-5.392 0-9.878-3.88-10.819-9C2.121 6.88 6.608 3 12 3zm0 16a9.005 9.005 0 0 0 8.777-7A9.005 9.005 0 0 0 12 5a9.005 9.005 0 0 0-8.777 7A9.005 9.005 0 0 0 12 19zm0-2a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>`;
+  const eyeCloseSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10.94 6.088c.348-.057.708-.088 1.06-.088 5.392 0 9.878 3.88 10.819 9-.263 1.43-.876 2.733-1.723 3.84l-1.446-1.445a9.006 9.006 0 0 0 1.15-2.395A9.005 9.005 0 0 0 12 5c-.476 0-.94.037-1.393.107l.333 1.011zm9.645 15.427-1.414 1.414-3.791-3.79a11.196 11.196 0 0 1-3.38.261c-5.392 0-9.878-3.88-10.819-9a10.966 10.966 0 0 1 2.37-4.47l-2.228-2.228 1.414-1.414 17.848 17.848zM4.654 7.483A9.013 9.013 0 0 0 3.223 12a9.005 9.005 0 0 0 8.777 7c.803 0 1.58-.105 2.316-.304L12.52 16.9a5 5 0 0 1-5.421-5.42L4.654 7.483zM14 12a2 2 0 0 1-2 2l-1.748-1.748c.046-.732.616-1.302 1.348-1.348L14 12.001zM11.95 7a5 5 0 0 1 4.95 4.95l-1.921-1.921A3.003 3.003 0 0 0 11.95 7z"></path></svg>`;
 
   if (!hideCaptionsStyle) toggleHideCaptions();
-  btn.innerHTML = `<span style="display:flex;align-items:center;">${eyeCloseSvg}</span> <span>Captions Hidden</span>`;
+  btn.innerHTML = eyeCloseSvg;
+  btn.title = "Captions Hidden (MeetMaxxing)";
+  btn.style.background = "#ea4335";
+  btn.style.color = "#fff";
+
+  btn.onmouseover = () => {
+    if (!hideCaptionsStyle) btn.style.background = "#4d5156";
+  };
+  btn.onmouseout = () => {
+    if (!hideCaptionsStyle) btn.style.background = "#3c4043";
+  };
 
   btn.onclick = () => {
     toggleHideCaptions();
     if (hideCaptionsStyle) {
-      btn.innerHTML = `<span style="display:flex;align-items:center;">${eyeCloseSvg}</span> <span>Captions Hidden</span>`;
-      btn.style.background = "#1e1f20";
+      btn.innerHTML = eyeCloseSvg;
+      btn.style.background = "#ea4335";
+      btn.style.color = "#fff";
+      btn.title = "Captions Hidden (MeetMaxxing)";
     } else {
-      btn.innerHTML = `<span style="display:flex;align-items:center;">${eyeOpenSvg}</span> <span>Captions Visible</span>`;
-      btn.style.background = "#0842a0";
+      btn.innerHTML = eyeOpenSvg;
+      btn.style.background = "#3c4043";
+      btn.style.color = "#e8eaed";
+      btn.title = "Captions Visible (MeetMaxxing)";
     }
   };
   document.body.appendChild(btn);
 }
 
 function autoEnableCC() {
-  // Give Meet a second to render the bottom bar
-  setTimeout(() => {
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
     const ccBtns = document.querySelectorAll('button[aria-label*="caption" i], button[data-tooltip*="caption" i]');
+    
     for (const btn of ccBtns) {
       const isPressed = btn.getAttribute("aria-pressed") === "true" || btn.classList.contains("VfPpkd-Bz112c-LgbsSe-OWXEXe-INsBxf");
       const label = btn.getAttribute("aria-label") || btn.getAttribute("data-tooltip") || "";
+      
       if (!isPressed && label.toLowerCase().includes("turn on")) {
         btn.click();
         console.log("[MeetMaxxing] Auto-enabled CC.");
-        break;
+        clearInterval(interval);
+        return;
+      } else if (isPressed || label.toLowerCase().includes("turn off")) {
+        console.log("[MeetMaxxing] CC already enabled.");
+        clearInterval(interval);
+        return;
       }
     }
-  }, 2000);
+    
+    if (attempts >= 15) {
+      clearInterval(interval);
+      console.log("[MeetMaxxing] Gave up trying to auto-enable CC after 15 seconds.");
+    }
+  }, 1000);
 }
 
 function startMeeting() {
@@ -585,6 +606,11 @@ function endMeeting() {
   // Flush all pending utterances before ending
   for (const sp of [...utteranceMap.keys()]) flushUtterance(sp);
   if (captionObserver) { try { captionObserver.disconnect(); } catch (e) {} captionObserver = null; }
+
+  const toggleBtn = document.getElementById("meetmaxxing-cc-toggle");
+  if (toggleBtn) toggleBtn.remove();
+  const styleEl = document.getElementById("meetmaxxing-hide-cc");
+  if (styleEl) styleEl.remove();
 
   safeSendMessage({ type: "END_MEETING", meetingId, title: document.title });
 

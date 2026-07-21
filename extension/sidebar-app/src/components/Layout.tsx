@@ -8,12 +8,12 @@ export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) 
           <span className="logo-icon"><i className="ri-sparkling-2-fill"></i></span>
           <span>MeetMaxxing</span>
         </div>
+      </div>
+      <div className="header-right">
         <div id="status-badge" className={`badge ${meetingId && !isEnded ? 'badge-live' : 'badge-idle'}`}>
           <span className="badge-dot"></span>
           <span className="badge-label">{meetingId && !isEnded ? 'Live' : 'Idle'}</span>
         </div>
-      </div>
-      <div className="header-right">
         <div id="timer" className="timer">{elapsedTime}</div>
         {meetingId && !isEnded && (
           <button

@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from .config import settings
+from .utils import is_valid_uuid
 try:
     from supabase import create_client, Client
 except Exception:
@@ -162,3 +163,38 @@ def get_supabase_admin() -> Client | MemorySupabaseClient:
     if _should_use_memory_supabase():
         return MemorySupabaseClient()
     return create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+
+
+def get_meeting_record(supabase, meeting_id: str, org_id: str = None) -> dict | None:
+    """Helper to fetch a meeting by UUID or google_meet_link/title."""
+    is_uuid = is_valid_uuid(meeting_id)
+
+    query = supabase.table("meetings").select("*")
+    if is_uuid:
+        query = query.eq("id", meeting_id)
+    else:
+        query = query.eq("google_meet_link", meeting_id)
+        
+    if org_id:
+        query = query.eq("org_id", org_id)
+
+    try:
+        res = query.single().execute()
+        if res.data:
+            return res.data
+    except Exception:
+        pass
+
+    # Fallback for non-UUIDs: try checking title like "%meeting_id%"
+    if not is_uuid:
+        try:
+            res = supabase.table("meetings").select("*").like("title", f"%{meeting_id}%")
+            if org_id:
+                res = res.eq("org_id", org_id)
+            res = res.execute()
+            if res.data:
+                return res.data[0]
+        except Exception:
+            pass
+
+    return None

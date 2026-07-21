@@ -2,6 +2,7 @@ export interface TranscriptChunk {
   speaker: string;
   text: string;
   timestamp?: number;
+  source?: string;
 }
 
 export interface CopilotUpdate {

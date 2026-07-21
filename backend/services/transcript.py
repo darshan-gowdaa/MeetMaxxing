@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from ..core.redis_client import append_transcript_chunk
 from ..core.database import get_supabase_admin
 from ..agents.orchestrator import dispatch, AgentTrigger
+from ..core.utils import is_valid_uuid, generate_meeting_title
 
 
 def normalize_chunk(raw: dict) -> dict:
@@ -39,21 +40,32 @@ async def ingest_chunk(raw_chunk: dict) -> dict:
     """Normalize and store a single transcript chunk to Redis."""
     chunk = normalize_chunk(raw_chunk)
     if chunk["meeting_id"] and chunk["text"]:
-        # Run it through transcription agent to clean/diarize
-        try:
-            result = await dispatch(AgentTrigger.TRANSCRIPT_CHUNK, {
-                "meeting_id": chunk["meeting_id"],
-                "raw_text": chunk["text"],
-                "speaker": chunk["speaker"],
-                "timestamp_ms": chunk["timestamp_ms"]
-            })
-            if result and result.get("text"):
-                chunk["text"] = result["text"]
-                chunk["speaker"] = result.get("speaker", chunk["speaker"])
-        except Exception as e:
-            print(f"[Transcript Service] Transcription agent failed: {e}")
-            
+        chunk["source"] = "dom"
+        # Save immediately to prevent race condition with end_meeting
         await append_transcript_chunk(chunk["meeting_id"], chunk)
+
+        # Run transcription agent in background
+        import asyncio
+        async def background_transcribe():
+            try:
+                result = await dispatch(AgentTrigger.TRANSCRIPT_CHUNK, {
+                    "meeting_id": chunk["meeting_id"],
+                    "raw_text": chunk["text"],
+                    "speaker": chunk["speaker"],
+                    "timestamp_ms": chunk["timestamp_ms"]
+                })
+                if result and result.get("text") and result["text"] != chunk["text"]:
+                    ai_chunk = dict(chunk)
+                    ai_chunk["text"] = result["text"]
+                    ai_chunk["speaker"] = result.get("speaker", chunk["speaker"])
+                    ai_chunk["source"] = "audio"
+                    ai_chunk["id"] = str(uuid.uuid4())
+                    await append_transcript_chunk(ai_chunk["meeting_id"], ai_chunk)
+            except Exception as e:
+                print(f"[Transcript Service] Transcription background agent failed: {e}")
+                
+        asyncio.create_task(background_transcribe())
+
     return chunk
 
 
@@ -62,9 +74,7 @@ async def persist_transcript_to_db(meeting_id: str, utterances: list[dict]) -> N
     Persist full transcript to Supabase after meeting ends.
     Stored as JSONB in meetings.transcript_data column.
     """
-    try:
-        uuid.UUID(meeting_id)
-    except ValueError:
+    if not is_valid_uuid(meeting_id):
         print(f"Skipping database persistence: invalid UUID meeting_id: {meeting_id}")
         return
     supabase = get_supabase_admin()
@@ -86,13 +96,8 @@ async def create_meeting_record(
     """Create a meeting record in Supabase and return it."""
     from ..core.redis_client import set_meeting_alias
     
+    final_title = generate_meeting_title(title, google_meet_link)
     clean_code = google_meet_link.strip().replace("https://meet.google.com/", "").strip("/")
-    if clean_code and (not title or title in ["Google Meet", "Untitled Meeting", "Google Meet Session"]):
-        final_title = f"Meet - {clean_code}"
-    elif clean_code and not title.startswith("Meet - "):
-        final_title = f"Meet - {clean_code}"
-    else:
-        final_title = title or "Meet - Live Session"
 
     meeting_id = str(uuid.uuid4())
     supabase = get_supabase_admin()

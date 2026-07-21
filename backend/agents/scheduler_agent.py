@@ -15,6 +15,7 @@ import logging
 from ..core.config import settings
 from ..services.calendar_service import create_calendar_event
 from ..core.lyzr_integration import run_lyzr_agent
+from ..core.utils import parse_json_clean
 
 logger = logging.getLogger(__name__)
 
@@ -37,23 +38,6 @@ Respond ONLY in JSON:
   "reminder_minutes_before": [10, 1440]
 }"""
 
-def _parse_json_clean(raw: str) -> dict:
-    cleaned = raw.strip()
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:]
-    elif cleaned.startswith("```"):
-        cleaned = cleaned[3:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
-    cleaned = cleaned.strip()
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        cleaned = cleaned[start : end + 1]
-    try:
-        return json.loads(cleaned)
-    except:
-        return {}
 
 
 async def run_scheduler_agent(
@@ -103,7 +87,7 @@ Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for the `start_date
     else:
         try:
             raw, powered_by = await run_lyzr_agent("Scheduler Agent - MeetMaxxing", prompt)
-            event_plan = _parse_json_clean(raw or "{}")
+            event_plan = parse_json_clean(raw or "{}")
         except Exception as e:
             err_str = str(e)
             return {"scheduled": False, "reason": f"Fallback API error during scheduling: {err_str[:150]}"}

@@ -39,10 +39,10 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     @apply flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-extrabold tracking-[0.1em] uppercase transition-colors shrink-0;
   }
   .badge-live {
-    @apply bg-red-500/15 text-red-400 border border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.15)];
+    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)];
   }
   .badge-live .badge-dot {
-    @apply w-2 h-2 rounded-full bg-red-500 animate-[pulseDot_2s_infinite];
+    @apply w-2 h-2 rounded-full bg-emerald-500 animate-[pulseDot_2s_infinite];
   }
   .badge-idle {
     @apply bg-zinc-800/60 text-zinc-400 border border-zinc-700/60;
@@ -89,8 +89,8 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 }
 
 @keyframes pulseDot {
-  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
-  50%      { opacity:0.7; box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+  50%      { opacity:0.7; box-shadow: 0 0 0 4px rgba(16,185,129,0); }
 }
 
 @keyframes m3-morph {

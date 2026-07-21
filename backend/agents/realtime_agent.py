@@ -15,6 +15,7 @@ from google import genai
 from google.genai import types as genai_types
 from ..core.config import settings
 from ..core.redis_client import get_transcript_window
+from ..core.utils import parse_json_clean
 
 _last_call_times: dict[str, float] = {}
 _last_results: dict[str, dict] = {}
@@ -43,23 +44,7 @@ Respond ONLY in valid JSON matching this exact schema. Do NOT include markdown c
 }"""
 
 
-def _parse_json_clean(raw: str) -> dict:
-    cleaned = raw.strip()
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:]
-    elif cleaned.startswith("```"):
-        cleaned = cleaned[3:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
-    cleaned = cleaned.strip()
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        cleaned = cleaned[start : end + 1]
-    try:
-        return json.loads(cleaned)
-    except:
-        return {}
+
 
 
 def _format_window(chunks: list[dict]) -> str:
@@ -83,10 +68,13 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
     context: optional dict with meeting title, attendees, agenda for richer suggestions.
     """
     # Fetch last N chunks from Redis (approx REALTIME_WINDOW_MINUTES of speech)
-    chunks = await get_transcript_window(
+    raw_chunks = await get_transcript_window(
         meeting_id,
-        last_n=settings.REALTIME_WINDOW_MINUTES * 10,  # ~10 utterances/minute
+        last_n=settings.REALTIME_WINDOW_MINUTES * 20,  # pull more to allow filtering
     )
+    chunks = [c for c in raw_chunks if c.get("source") != "audio"]
+    # Limit to the last N relevant chunks
+    chunks = chunks[-(settings.REALTIME_WINDOW_MINUTES * 10):]
 
     if not chunks:
         return {
@@ -142,7 +130,7 @@ Meeting context:
         from ..core.llm_fallback import generate_content_with_fallback
         print(f"[MeetMaxxing LLM Pipeline] Generating real-time insights with Fallback LLM...")
         raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
-        result = _parse_json_clean(raw or "{}")
+        result = parse_json_clean(raw or "{}")
         result["powered_by"] = powered_by
         print(f"[MeetMaxxing API] Success ({powered_by})! Generated {len(result.get('suggestions', []))} suggestions & {len(result.get('risks', []))} risk flags.")
     except Exception as e:

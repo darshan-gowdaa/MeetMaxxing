@@ -9,6 +9,7 @@ import grpc.aio
 import logging
 from ..grpc_bus import grpc_bus_pb2
 from ..grpc_bus import grpc_bus_pb2_grpc
+from ..core.utils import parse_json_clean
 
 logger = logging.getLogger(__name__)
 
@@ -46,16 +47,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
         try:
             raw_response, _ = await run_lyzr_agent("Orchestrator Agent - MeetMaxxing", prompt)
             
-            # Clean JSON
-            cleaned = raw_response.strip()
-            if cleaned.startswith("```json"):
-                cleaned = cleaned[7:]
-            elif cleaned.startswith("```"):
-                cleaned = cleaned[3:]
-            if cleaned.endswith("```"):
-                cleaned = cleaned[:-3]
-                
-            routing_data = json.loads(cleaned.strip())
+            routing_data = parse_json_clean(raw_response)
             agent_name = routing_data.get("agent_name", "")
             grpc_payload = routing_data.get("grpc_payload", dict(payload))
         except Exception as e:
@@ -76,21 +68,69 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                     grpc_payload["summary"] = payload
                 case _: raise ValueError(f"Unknown trigger fallback: {trigger}")
 
+    # A2A using Lyzr API (direct agent function execution) instead of gRPC stub
+    result = {}
+    error_msg = ""
     try:
-        async with grpc.aio.insecure_channel('localhost:50051') as channel:
-            stub = grpc_bus_pb2_grpc.AgentTaskBusStub(channel)
-            request = grpc_bus_pb2.TaskRequest(
-                agent_name=agent_name,
-                meeting_id=meeting_id,
-                payload_json=json.dumps(grpc_payload)
+        if agent_name == "memory":
+            from ..agents.memory_agent import run_memory_agent
+            result = await run_memory_agent(
+                question=grpc_payload.get("question", ""),
+                org_id=grpc_payload.get("org_id", ""),
+                user_id=grpc_payload.get("user_id", "")
             )
-            response = await stub.DispatchTask(request)
+        elif agent_name == "scheduler":
+            from ..agents.scheduler_agent import run_scheduler_agent
+            result = await run_scheduler_agent(
+                summary_output=grpc_payload.get("summary", {}),
+                attendee_emails=grpc_payload.get("attendees", []),
+                calendar_token=grpc_payload.get("token", {}),
+                org_id=grpc_payload.get("org_id", "")
+            )
+        elif agent_name == "summary":
+            from ..agents.summary_agent import run_summary_agent
+            result = await run_summary_agent(
+                meeting_id=meeting_id,
+                title=grpc_payload.get("title", ""),
+                attendees=grpc_payload.get("attendees", []),
+                utterances=grpc_payload.get("utterances", None)
+            )
+        elif agent_name == "realtime":
+            from ..agents.realtime_agent import run_realtime_agent
+            result = await run_realtime_agent(
+                meeting_id=meeting_id,
+                context=grpc_payload.get("context", {}),
+                force=grpc_payload.get("force", False)
+            )
+        elif agent_name == "email":
+            from ..agents.email_agent import run_email_agent
+            result = await run_email_agent(
+                meeting_id=meeting_id,
+                summary_output=grpc_payload.get("summary", {})
+            )
+        elif agent_name == "slack":
+            from ..agents.slack_agent import run_slack_agent
+            result = await run_slack_agent(
+                meeting_id=meeting_id,
+                summary_output=grpc_payload.get("summary", {})
+            )
+        elif agent_name == "late_join":
+            from ..agents.late_join_agent import run_late_join_agent
+            result = await run_late_join_agent(
+                meeting_id=meeting_id
+            )
+        elif agent_name == "transcription":
+            from ..agents.transcription_agent import process_transcript_chunk
+            result = await process_transcript_chunk(
+                meeting_id=meeting_id,
+                raw_text=grpc_payload.get("raw_text", ""),
+                speaker=grpc_payload.get("speaker", ""),
+                timestamp_ms=grpc_payload.get("timestamp_ms", 0)
+            )
+        else:
+            return {"error": f"Unknown agent: {agent_name}"}
             
-            if response.success:
-                return json.loads(response.result_json) if response.result_json else {}
-            else:
-                logger.error(f"Agent {agent_name} failed: {response.error_message}")
-                return {"error": response.error_message}
+        return result
     except Exception as e:
-        logger.error(f"gRPC dispatch failed: {e}")
+        logger.error(f"A2A dispatch failed for {agent_name}: {e}")
         return {"error": str(e)}

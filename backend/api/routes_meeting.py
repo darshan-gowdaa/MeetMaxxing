@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from ..core.auth import get_current_user
-from ..core.database import get_supabase_admin
+from ..core.database import get_supabase_admin, get_meeting_record
 from ..core.redis_client import get_full_transcript
 from ..services.transcript import persist_transcript_to_db
 from ..services.guardrails import validate_summary_output
@@ -15,6 +15,7 @@ from ..agents.orchestrator import dispatch, AgentTrigger
 from ..memory.qdrant_client import upsert_memories
 from ..memory.embeddings import embed_batch, chunk_transcript
 from ..memory.schemas import MemoryPoint, MemoryType
+from ..core.utils import is_valid_uuid, generate_meeting_title
 
 router = APIRouter(prefix="/meeting", tags=["meeting"])
 
@@ -59,34 +60,12 @@ async def get_meeting(
     user: dict = Depends(get_current_user),
 ):
     """Fetch meeting record with summary, decisions, and action items."""
-    import uuid
-    is_uuid = False
-    try:
-        uuid.UUID(meeting_id)
-        is_uuid = True
-    except ValueError:
-        pass
-
     supabase = get_supabase_admin()
-    query = supabase.table("meetings").select("*")
-    if is_uuid:
-        query = query.eq("id", meeting_id)
-    else:
-        query = query.eq("google_meet_link", meeting_id)
-
-    try:
-        result = (
-            query
-            .eq("org_id", user["org_id"])
-            .single()
-            .execute()
-        )
-    except Exception as e:
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    
+    if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
-
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Meeting not found")
-    return result.data
+    return meeting
 
 
 async def _run_end_pipeline(
@@ -101,33 +80,9 @@ async def _run_end_pipeline(
     supabase = get_supabase_admin()
 
     # Resolve meeting record by ID or google_meet_link
-    is_uuid = False
-    try:
-        uuid.UUID(meeting_id)
-        is_uuid = True
-    except ValueError:
-        pass
+    meeting_row = get_meeting_record(supabase, meeting_id, org_id)
 
-    meeting_row = None
-    if is_uuid:
-        try:
-            res = supabase.table("meetings").select("*").eq("id", meeting_id).execute()
-            if res.data:
-                meeting_row = res.data[0]
-        except Exception:
-            pass
-    else:
-        try:
-            res = supabase.table("meetings").select("*").like("title", f"%{meeting_id}%").execute()
-            if res.data:
-                meeting_row = res.data[0]
-            else:
-                # Fallback to checking google_meet_link just in case schema is intact
-                res = supabase.table("meetings").select("*").eq("google_meet_link", meeting_id).execute()
-                if res.data:
-                    meeting_row = res.data[0]
-        except Exception:
-            pass
+    is_uuid = is_valid_uuid(meeting_id)
 
     target_id = meeting_row["id"] if meeting_row else (meeting_id if is_uuid else None)
     google_code = meeting_row.get("google_meet_link") if meeting_row else (meeting_id if not is_uuid else None)
@@ -140,6 +95,10 @@ async def _run_end_pipeline(
         utterances = await get_full_transcript(target_id)
     if not utterances and meeting_row and meeting_row.get("transcript_data"):
         utterances = meeting_row["transcript_data"]
+
+    # Filter out duplicate AI agent transcripts so summary agent only uses the primary DOM capture
+    if utterances:
+        utterances = [u for u in utterances if u.get("source") != "audio"]
 
     # Persist transcript to DB if target_id exists
     if target_id and utterances:
@@ -157,14 +116,10 @@ async def _run_end_pipeline(
             google_code = match.group(1)
 
     # Determine title
-    final_title = title or (meeting_row.get("title") if meeting_row else "")
-    if google_code and (not final_title or final_title in ["Google Meet", "Untitled Meeting", "Google Meet Session"]):
-        final_title = f"Meet - {google_code}"
-    elif google_code and not final_title.startswith("Meet - "):
-        final_title = f"Meet - {google_code}"
-
-    if not final_title:
-        final_title = "Meet - Live Session"
+    final_title = generate_meeting_title(
+        title or (meeting_row.get("title") if meeting_row else ""),
+        google_code
+    )
 
     # gen summary
     summary = await dispatch(AgentTrigger.MEETING_END, {

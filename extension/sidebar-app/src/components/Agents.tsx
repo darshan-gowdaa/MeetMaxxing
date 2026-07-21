@@ -4,12 +4,28 @@ import type { TranscriptChunk } from "../types";
 
 export function LiveTranscript({ transcriptLines }: { transcriptLines: TranscriptChunk[] }) {
   const [isMax, setIsMax] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<"all" | "dom" | "audio">("dom");
   const bottomRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
 
+  const filteredLines = transcriptLines.filter(line => 
+    sourceFilter === "all" ? true : (line.source || "dom") === sourceFilter
+  );
+
+  const [autoScroll, setAutoScroll] = useState(true);
+
+  const handleScroll = () => {
+    if (!feedRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
+    // If user is within 40px of bottom, auto-scroll is true. Otherwise false.
+    setAutoScroll(scrollHeight - scrollTop - clientHeight < 40);
+  };
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [transcriptLines]);
+    if (autoScroll) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [filteredLines, autoScroll]);
 
   const toggle = () => {
     setIsMax(!isMax);
@@ -28,26 +44,40 @@ export function LiveTranscript({ transcriptLines }: { transcriptLines: Transcrip
             Live Transcript
           </h3>
         </div>
-        <span className="px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/50 text-[10px] font-bold text-zinc-400 font-mono">
-          {transcriptLines.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <select 
+            value={sourceFilter} 
+            onChange={(e) => setSourceFilter(e.target.value as any)}
+            className="bg-zinc-900 border border-zinc-700 rounded text-[11px] font-medium text-zinc-300 py-0.5 px-1 outline-none focus:border-blue-500 transition-colors"
+          >
+            <option value="all">All sources</option>
+            <option value="dom">DOM (CC)</option>
+            <option value="audio">Agent (AI)</option>
+          </select>
+          <span className="px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/50 text-[10px] font-bold text-zinc-400 font-mono">
+            {filteredLines.length}
+          </span>
+        </div>
       </div>
       
       <div className={`transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden ${isMax ? 'h-[240px]' : 'h-[72px]'}`}>
-        <div ref={feedRef} className="h-full overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-          {transcriptLines.length === 0 ? (
+        <div ref={feedRef} onScroll={handleScroll} className="h-full overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+          {filteredLines.length === 0 ? (
             <p className="text-xs text-zinc-400 italic text-center p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700/50">
               Enable Captions (CC) — live speech will appear here
             </p>
           ) : (
-            transcriptLines.map((line, idx) => (
+            filteredLines.map((line, idx) => (
               <div key={idx} className="flex flex-col gap-1 p-2.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/50">
-                <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase text-blue-400">
-                  <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center text-[9px] shrink-0">
-                    {line.speaker.charAt(0)}
-                  </div>
-                  {line.speaker}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase text-blue-400">
+                    <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center text-[9px] shrink-0">
+                      {line.speaker.charAt(0)}
+                    </div>
+                    {line.speaker}
+                  </span>
+                  {line.source && <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{line.source}</span>}
+                </div>
                 <span className="text-[12.5px] text-zinc-200 leading-relaxed break-words pl-5">{line.text}</span>
               </div>
             ))

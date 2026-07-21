@@ -4,7 +4,7 @@ Dashboard endpoints — meeting list, summaries, action items.
 
 from fastapi import APIRouter, Depends, Query
 from ..core.auth import get_current_user
-from ..core.database import get_supabase_admin
+from ..core.database import get_supabase_admin, get_meeting_record
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -49,36 +49,12 @@ async def get_meeting_detail(
     user: dict = Depends(get_current_user),
 ):
     """Full meeting detail including transcript, decisions, action items."""
-    import uuid
     from fastapi import HTTPException
     
-    is_uuid = False
-    try:
-        uuid.UUID(meeting_id)
-        is_uuid = True
-    except ValueError:
-        pass
-
     supabase = get_supabase_admin()
-    
-    query = supabase.table("meetings").select("*")
-    if is_uuid:
-        query = query.eq("id", meeting_id)
-    else:
-        query = query.eq("google_meet_link", meeting_id)
-        
-    try:
-        meeting = (
-            query
-            .eq("org_id", user["org_id"])
-            .single()
-            .execute()
-        )
-    except Exception as e:
-        if not is_uuid and "does not exist" in str(e):
-            raise HTTPException(status_code=404, detail="Meeting not found (google_meet_link column may be missing)")
-        raise HTTPException(status_code=404, detail="Meeting not found")
-    if not meeting.data:
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+
+    if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
 
     actions = (
@@ -90,7 +66,7 @@ async def get_meeting_detail(
     )
 
     return {
-        **meeting.data,
+        **meeting,
         "action_items": actions.data or [],
     }
 

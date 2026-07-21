@@ -83,7 +83,7 @@ function connectWebSocket(meetingId) {
         chrome.storage.local.set({ lastCopilotUpdate: update, copilot_state: update, poweredBy: update.powered_by });
         chrome.runtime.sendMessage({ type: "COPILOT_UPDATE", data: update }, () => { let _ = chrome.runtime.lastError; });
       } else if (msg.type === "live_caption_chunk" && msg.chunk) {
-        chrome.runtime.sendMessage({ type: "LIVE_CAPTION_CHUNK", chunk: msg.chunk }, () => { let _ = chrome.runtime.lastError; });
+        chrome.runtime.sendMessage({ type: "LIVE_CAPTION_CHUNK", chunk: { ...msg.chunk, source: "audio" } }, () => { let _ = chrome.runtime.lastError; });
       }
     } catch (e) {}
   };
@@ -176,12 +176,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         activeMeetingId = existing.id;
         console.log(`[MeetMaxxing Background] Reusing meeting ${activeMeetingId} for code ${meetCode}`);
         
-        chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: existing.timestamp });
+        chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: now });
         connectWebSocket(activeMeetingId);
-        chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: existing.timestamp, reused: true }, () => { let _ = chrome.runtime.lastError; });
+        chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now, reused: true }, () => { let _ = chrome.runtime.lastError; });
         
         sendResponse({ success: true, meetingId: activeMeetingId });
-        if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
+        // if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
         return;
       }
 
@@ -201,7 +201,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           }
           chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now }, () => { let _ = chrome.runtime.lastError; });
           sendResponse({ success: true, meetingId: activeMeetingId });
-          if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
+          // if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
         })
         .catch(() => {
           meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
@@ -209,7 +209,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           connectWebSocket(activeMeetingId);
           chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now }, () => { let _ = chrome.runtime.lastError; });
           sendResponse({ success: true, meetingId: activeMeetingId });
-          if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
+          // if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
         });
     });
 

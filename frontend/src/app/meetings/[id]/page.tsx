@@ -43,6 +43,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<"all" | "dom" | "audio">("all");
   const [actionItems, setActionItems] = useState<Meeting["action_items"]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [gmailState, setGmailState] = useState<BtnState>("idle");
@@ -445,28 +446,38 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         {/* ── Full Transcript ───────────────────────────────────────────── */}
         {meeting.transcript_data && meeting.transcript_data.length > 0 && (
           <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden">
-            <button
-              onClick={() => setTranscriptOpen((o) => !o)}
-              className="w-full flex items-center justify-between px-6 py-5 hover:bg-surface2 spring-colors group"
-            >
+            <div className="w-full flex items-center justify-between px-6 py-5 hover:bg-surface2 spring-colors group cursor-pointer" onClick={() => setTranscriptOpen((o) => !o)}>
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-[12px] bg-surface3 border border-border flex items-center justify-center group-hover:bg-primary-container spring-colors">
                   <MessageSquare className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-[14px] font-bold text-text group-hover:text-primary spring-colors">
-                  Full Transcript ({meeting.transcript_data.length} utterances)
+                  Full Transcript ({meeting.transcript_data.length} total)
                 </span>
               </div>
-              <div className="w-7 h-7 rounded-full bg-surface3 border border-border flex items-center justify-center group-hover:bg-primary-container spring-colors">
-                {transcriptOpen
-                  ? <ChevronUp className="w-4 h-4 text-text group-hover:text-primary spring-colors" />
-                  : <ChevronDown className="w-4 h-4 text-text group-hover:text-primary spring-colors" />}
+              <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                <select 
+                  value={sourceFilter} 
+                  onChange={(e) => setSourceFilter(e.target.value as any)}
+                  className="bg-surface3 border border-border rounded text-[12px] font-medium text-text py-1 px-2 outline-none focus:border-primary transition-colors cursor-pointer"
+                >
+                  <option value="all">All sources</option>
+                  <option value="dom">DOM (CC)</option>
+                  <option value="audio">Agent (AI)</option>
+                </select>
+                <div className="w-7 h-7 rounded-full bg-surface3 border border-border flex items-center justify-center group-hover:bg-primary-container spring-colors cursor-pointer" onClick={() => setTranscriptOpen((o) => !o)}>
+                  {transcriptOpen
+                    ? <ChevronUp className="w-4 h-4 text-text group-hover:text-primary spring-colors" />
+                    : <ChevronDown className="w-4 h-4 text-text group-hover:text-primary spring-colors" />}
+                </div>
               </div>
-            </button>
+            </div>
 
             {transcriptOpen && (
-              <div className="border-t border-border px-6 pb-6 pt-4 flex flex-col gap-1.5 max-h-[520px] overflow-y-auto">
-                {meeting.transcript_data.map((chunk, idx) => (
+              <div className="border-t border-border px-6 pb-6 pt-4 flex flex-col gap-1.5 max-h-[520px] overflow-y-auto custom-scrollbar">
+                {meeting.transcript_data
+                  .filter(chunk => sourceFilter === "all" ? true : ((chunk as any).source || "dom") === sourceFilter)
+                  .map((chunk, idx) => (
                   <div
                     key={idx}
                     className="flex flex-col gap-1.5 py-3 px-3 rounded-[14px] hover:bg-surface2 spring-colors border border-transparent hover:border-border last:border-b-0"
@@ -478,11 +489,18 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                         </span>
                         {chunk.speaker}
                       </span>
-                      {chunk.timestamp_ms && (
-                        <span className="text-[10px] font-mono text-text-muted bg-surface3 px-2 py-0.5 rounded-md">
-                          {format(new Date(chunk.timestamp_ms), "h:mm:ss a")}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {(chunk as any).source && (
+                          <span className="text-[9px] text-text-muted uppercase tracking-wider font-semibold bg-surface3 px-2 py-0.5 rounded-full border border-border">
+                            {(chunk as any).source}
+                          </span>
+                        )}
+                        {chunk.timestamp_ms && (
+                          <span className="text-[10px] font-mono text-text-muted bg-surface3 px-2 py-0.5 rounded-md">
+                            {format(new Date(chunk.timestamp_ms), "h:mm:ss a")}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-[12.5px] text-text-muted leading-relaxed pl-8">{chunk.text}</p>
                   </div>

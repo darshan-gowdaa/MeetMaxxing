@@ -26,9 +26,14 @@ export function useCopilot() {
       }
       const diff = Math.floor((Date.now() - meetingStartTime) / 1000);
       if (diff < 0) return;
-      const mins = Math.floor(diff / 60);
+      const hours = Math.floor(diff / 3600);
+      const mins = Math.floor((diff % 3600) / 60);
       const secs = diff % 60;
-      setElapsedTime(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
+      if (hours > 0) {
+        setElapsedTime(`${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
+      } else {
+        setElapsedTime(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, [meetingStartTime, meetingId, isEnded]);
@@ -133,22 +138,32 @@ export function useCopilot() {
       return;
     }
     
-    const isRecap = actionType === "REQUEST_RECAP";
-    const endpoint = isRecap ? `/recap/${meetingId}` : `/ingest/realtime/${meetingId}?force=true`;
-    
     try {
-      const response = await fetch(`http://localhost:8000${endpoint}`, { method: isRecap ? "GET" : "POST" });
-      const data = await response.json();
-      if (isRecap) {
-        setRecap(data.recap || "");
+      if (actionType === "GENERATE_INSIGHTS") {
+        const [realtimeRes, recapRes] = await Promise.all([
+          fetch(`http://localhost:8000/ingest/realtime/${meetingId}?force=true`, { method: "POST" }),
+          fetch(`http://localhost:8000/recap/${meetingId}`, { method: "GET" })
+        ]);
+        const realtimeData = await realtimeRes.json();
+        const recapData = await recapRes.json();
+        handleCopilotUpdate(realtimeData);
+        setRecap(recapData.recap || "");
       } else {
-        handleCopilotUpdate(data);
+        const isRecap = actionType === "REQUEST_RECAP";
+        const endpoint = isRecap ? `/recap/${meetingId}` : `/ingest/realtime/${meetingId}?force=true`;
+        const response = await fetch(`http://localhost:8000${endpoint}`, { method: isRecap ? "GET" : "POST" });
+        const data = await response.json();
+        if (isRecap) {
+          setRecap(data.recap || "");
+        } else {
+          handleCopilotUpdate(data);
+        }
       }
     } catch (err: any) {
       const msg = `Backend unreachable: ${err.message}. Ensure FastAPI server is on port 8000.`;
       setErrorMessage(msg);
-      if (actionType === "ASK_NEXT_QUESTION") setNextQuestion(msg);
-      else if (actionType === "REQUEST_RECAP") setRecap(msg);
+      if (actionType === "ASK_NEXT_QUESTION" || actionType === "GENERATE_INSIGHTS") setNextQuestion(msg);
+      if (actionType === "REQUEST_RECAP" || actionType === "GENERATE_INSIGHTS") setRecap(msg);
     } finally {
       setActiveRequests(prev => Math.max(0, prev - 1));
     }
