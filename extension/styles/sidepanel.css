@@ -1,3 +1,4 @@
+/* We are using react for this */
 /* MeetMaxxing Side Panel — Material Design 3 Expressive v2 */
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,700;8..144,900&display=swap');
 
@@ -490,11 +491,12 @@ main::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
   padding: 8px;
   font-size: 13px;
   line-height: 1.6;
-  max-height: 180px;
+  height: 180px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .transcript-line {
   display: flex;
@@ -673,8 +675,8 @@ main::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
   min-height: 40px;
 }
 .transcript-feed-box.collapsed {
-  max-height: 40px;
-  overflow: hidden;
+  height: 68px;
+  overflow-y: hidden;
 }
 
 /* Smooth collapse for sections using CSS grid */
@@ -711,3 +713,4 @@ main::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+

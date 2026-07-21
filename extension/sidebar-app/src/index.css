@@ -36,7 +36,18 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Material Expressive Custom Scrollbar */
@@ -52,22 +63,4 @@ body {
 
 .animate-pulse-glow {
   animation: pulse-glow 3s infinite ease-in-out;
-}
-
-/* Expressive elevation & card styles */
-.card-expressive {
-  background: linear-gradient(135deg, #27292c 0%, #27292c 100%);
-  border: 1px solid rgba(227, 227, 227, 0.1);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-}
-
-.card-expressive:hover {
-  border-color: rgba(168, 199, 250, 0.35);
-  box-shadow: 0 6px 24px -2px rgba(168, 199, 250, 0.12);
-}
-
-.card-primary-expressive {
-  background: linear-gradient(135deg, rgba(8, 66, 160, 0.45) 0%, rgba(8, 66, 160, 0.65) 100%);
-  border: 1px solid rgba(168, 199, 250, 0.4);
-  box-shadow: 0 4px 20px -4px rgba(168, 199, 250, 0.2);
 }

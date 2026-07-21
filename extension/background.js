@@ -30,31 +30,39 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => 
 chrome.sidePanel.setOptions({ path: "dist/index.html", enabled: true }).catch(() => {});
 
 // Enable side panel on Google Meet room tabs (but don't force open)
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+  if (activeMeetTabId === tabId) {
+    handleMeetingEnd(tabId);
+  }
+});
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url?.includes("meet.google.com")) {
     chrome.sidePanel.setOptions({ tabId, path: "dist/index.html", enabled: true }).catch(() => {});
   }
-});
-
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  if (activeMeetTabId === tabId) {
-    console.log("[MeetMaxxing Background] Meet tab closed, triggering END_MEETING");
-    const meetingIdToEnd = activeMeetingId;
-    if (meetingIdToEnd) {
-      fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-        body: JSON.stringify({ title: "Google Meet", attendees: [] }),
-      }).catch(() => {});
-    }
-    stopTabCapture();
-    if (ws) { try { ws.close(); } catch (e) {} ws = null; }
-    activeMeetingId = null;
-    activeMeetTabId = null;
-    chrome.storage.local.remove("currentMeetingId");
-    chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
+  if (changeInfo.url && activeMeetTabId === tabId && !changeInfo.url.includes("meet.google.com")) {
+    handleMeetingEnd(tabId);
   }
 });
+
+function handleMeetingEnd(tabId) {
+  console.log("[MeetMaxxing Background] Meet tab left, triggering END_MEETING");
+  const meetingIdToEnd = activeMeetingId;
+  if (meetingIdToEnd) {
+    fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
+      body: JSON.stringify({ title: "Google Meet", attendees: [] }),
+    }).catch(() => {});
+  }
+  stopTabCapture();
+  if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+  activeMeetingId = null;
+  activeMeetTabId = null;
+  chrome.storage.local.remove(["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"]);
+  chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
+}
+
 
 // ─── WebSocket ──────────────────────────────────────────────────────────────────
 function connectWebSocket(meetingId) {
@@ -163,14 +171,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const now = Date.now();
       const existing = meetCode ? meetCodeMap[meetCode] : null;
 
-      // Reuse meeting if within 12 hours (43,200,000 ms)
-      if (existing && existing.id && (now - existing.timestamp < 43200000)) {
+      // Reuse meeting if within 2 hours (7,200,000 ms) instead of 12 hours
+      if (existing && existing.id && (now - existing.timestamp < 7200000)) {
         activeMeetingId = existing.id;
         console.log(`[MeetMaxxing Background] Reusing meeting ${activeMeetingId} for code ${meetCode}`);
         
-        chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode });
+        chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: existing.timestamp });
         connectWebSocket(activeMeetingId);
-        chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title }, () => { let _ = chrome.runtime.lastError; });
+        chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: existing.timestamp, reused: true }, () => { let _ = chrome.runtime.lastError; });
         
         sendResponse({ success: true, meetingId: activeMeetingId });
         if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
@@ -188,18 +196,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           if (data.meeting_id) {
             activeMeetingId = data.meeting_id;
             meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
-            chrome.storage.local.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title });
+            chrome.storage.local.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
             connectWebSocket(activeMeetingId);
           }
-          chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title }, () => { let _ = chrome.runtime.lastError; });
+          chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now }, () => { let _ = chrome.runtime.lastError; });
           sendResponse({ success: true, meetingId: activeMeetingId });
           if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
         })
         .catch(() => {
           meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
-          chrome.storage.local.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title });
+          chrome.storage.local.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
           connectWebSocket(activeMeetingId);
-          chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title }, () => { let _ = chrome.runtime.lastError; });
+          chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now }, () => { let _ = chrome.runtime.lastError; });
           sendResponse({ success: true, meetingId: activeMeetingId });
           if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
         });
@@ -316,7 +324,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const finishEnd = () => {
       activeMeetingId = null;
       activeMeetTabId = null;
-      chrome.storage.local.remove("currentMeetingId");
+      chrome.storage.local.remove(["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"]);
       chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
       sendResponse({ success: true });
     };

@@ -1,3 +1,4 @@
+// We are using react for this
 /**
  * MeetMaxxing Side Panel JS v2 — Remix Icons, no emojis, ended = dashboard only
  */
@@ -517,9 +518,11 @@ if (toggleTranscriptBtn) {
     if (transcriptFeed.classList.contains("collapsed")) {
       transcriptFeed.classList.remove("collapsed");
       toggleTranscriptBtn.innerHTML = '<i class="ri-arrow-up-s-line" style="font-size: 16px;"></i>';
+      setTimeout(() => transcriptFeed.scrollTop = transcriptFeed.scrollHeight, 50);
     } else {
       transcriptFeed.classList.add("collapsed");
       toggleTranscriptBtn.innerHTML = '<i class="ri-arrow-down-s-line" style="font-size: 16px;"></i>';
+      setTimeout(() => transcriptFeed.scrollTop = transcriptFeed.scrollHeight, 50);
     }
   });
 }
@@ -654,11 +657,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-chrome.storage.local.get(["currentMeetingId", "meetingTitle", "lastCopilotUpdate", "copilot_state"], (result) => {
+chrome.storage.local.get(["currentMeetingId", "meetingTitle", "lastCopilotUpdate", "copilot_state", "transcript"], (result) => {
   if (result.meetingTitle) currentMeetingTitle = result.meetingTitle;
 
   if (result.currentMeetingId) {
     showActive(result.currentMeetingId);
+    if (result.transcript && Array.isArray(result.transcript)) {
+      result.transcript.forEach(chunk => appendLiveCaption(chunk));
+    }
   } else {
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
       if (
@@ -668,6 +674,7 @@ chrome.storage.local.get(["currentMeetingId", "meetingTitle", "lastCopilotUpdate
         !tab.url.includes("landing") &&
         tab.url.length > 24
       ) {
+        chrome.storage.local.remove(["lastCopilotUpdate", "copilot_state", "transcript"]);
         const fallbackId = "live_" + Date.now();
         chrome.storage.local.set({
           currentMeetingId: fallbackId,
@@ -691,3 +698,4 @@ chrome.storage.local.get(["currentMeetingId", "meetingTitle", "lastCopilotUpdate
     }
   }
 });
+

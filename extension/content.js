@@ -24,8 +24,9 @@ let authToken = null;
  * Flushed when speaker pauses ≥ SILENCE_MS or utterance block is removed.
  */
 const utteranceMap = new Map();
-const SILENCE_MS = 1500;          // ms of silence before treating as sentence complete
-const DEDUP_TTL  = 60_000;        // ms to remember sent chunks to avoid re-send
+const SILENCE_MS = 1200;          // ms of silence before treating as sentence complete
+const MAX_CHARS  = 200;           // force flush if utterance exceeds this length to prevent stalling
+const DEDUP_TTL  = 3500;          // ms to remember sent chunks (prevents double-fires but allows repeated words)
 const recentSent = new Map();     // key: "speaker||text" → timestamp
 
 // ─── All known caption selectors (2024-2026 community verified) ────────────────
@@ -228,7 +229,13 @@ function trackUtterance(speaker, rawText) {
   if (existing) {
     clearTimeout(existing.timer);
     existing.text = text; // always keep the latest (longest) version
-    existing.timer = setTimeout(() => flushUtterance(speaker), SILENCE_MS);
+    
+    // Force flush if speaker hasn't paused but has talked for a very long time
+    if (text.length >= MAX_CHARS) {
+      flushUtterance(speaker);
+    } else {
+      existing.timer = setTimeout(() => flushUtterance(speaker), SILENCE_MS);
+    }
   } else {
     utteranceMap.set(speaker, {
       text,

@@ -1,3 +1,4 @@
+<!-- We are using react for this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -90,26 +91,7 @@
           <span id="llm-status-text">Processing…</span>
         </div>
 
-        <!-- Stats row -->
-        <div class="ended-stats">
-          <div class="ended-stat">
-            <i class="ri-chat-1-line"></i>
-            <span id="ended-transcript-count">0</span>
-            <span class="stat-label">Lines</span>
-          </div>
-          <div class="ended-stat-divider"></div>
-          <div class="ended-stat">
-            <i class="ri-flashlight-line"></i>
-            <span>AI</span>
-            <span class="stat-label">Powered</span>
-          </div>
-          <div class="ended-stat-divider"></div>
-          <div class="ended-stat">
-            <i class="ri-shield-check-line"></i>
-            <span>Safe</span>
-            <span class="stat-label">Guardrail</span>
-          </div>
-        </div>
+
 
         <!-- Single CTA: Open Dashboard -->
         <div class="ended-cta">
@@ -138,8 +120,8 @@
             <span id="transcript-count" class="count-pill">0</span>
           </h3>
         </div>
-        <div id="transcript-feed-wrapper" class="smooth-collapse collapsed">
-          <div id="transcript-feed" class="transcript-feed-box">
+        <div id="transcript-feed-wrapper" class="transcript-wrapper">
+          <div id="transcript-feed" class="transcript-feed-box collapsed">
             <p id="transcript-empty" class="empty-text">Enable Captions (CC) — live speech will appear here</p>
           </div>
         </div>
@@ -221,3 +203,4 @@
   <script src="sidepanel.js"></script>
 </body>
 </html>
+
