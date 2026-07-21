@@ -84,9 +84,19 @@ Attendees to include: {', '.join(suggested_attendees or attendee_emails)}
 Open action items from this meeting:
 {action_items_text}
 
-Today's date: {datetime.utcnow().strftime('%Y-%m-%d')}
+Today's date (UTC): {datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
 
-Determine optimal follow-up meeting details."""
+Determine optimal follow-up meeting details.
+CRITICAL: Respond ONLY in valid JSON format matching this schema exactly:
+{{
+  "title": "Follow-up: [topic]",
+  "description": "Clear, professional calendar event description",
+  "duration_minutes": 30,
+  "start_datetime_iso": "YYYY-MM-DDTHH:MM:SSZ",
+  "attendees": ["email1@example.com"],
+  "reminder_minutes_before": [10, 1440]
+}}
+Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for the `start_datetime_iso`, usually 3-5 days from today unless a specific date is mentioned."""
 
     if settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key", ""] or not settings.GEMINI_API_KEY:
         return {"scheduled": False, "reason": "GEMINI_API_KEY not configured in .env."}
@@ -99,10 +109,18 @@ Determine optimal follow-up meeting details."""
             return {"scheduled": False, "reason": f"Fallback API error during scheduling: {err_str[:150]}"}
 
     # Calculate event datetime
-    offset_days = event_plan.get("suggested_date_offset_days", 5)
-    event_start = datetime.utcnow() + timedelta(days=offset_days)
-    # Move to 10 AM if off-hours
-    event_start = event_start.replace(hour=10, minute=0, second=0, microsecond=0)
+    iso_start = event_plan.get("start_datetime_iso")
+    if iso_start:
+        try:
+            event_start = datetime.fromisoformat(iso_start.replace("Z", "+00:00"))
+        except:
+            event_start = datetime.utcnow() + timedelta(days=5)
+            event_start = event_start.replace(hour=10, minute=0, second=0, microsecond=0)
+    else:
+        offset_days = event_plan.get("suggested_date_offset_days", 5)
+        event_start = datetime.utcnow() + timedelta(days=offset_days)
+        event_start = event_start.replace(hour=10, minute=0, second=0, microsecond=0)
+        
     event_end = event_start + timedelta(minutes=event_plan.get("duration_minutes", 30))
 
     final_attendees = list(set(

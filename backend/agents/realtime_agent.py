@@ -34,7 +34,7 @@ CRITICAL RULES:
 - Do NOT invent any statements, names, or commitments not in the text.
 - If no risks, return empty array for risks.
 
-Respond ONLY in valid JSON matching this exact schema:
+Respond ONLY in valid JSON matching this exact schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
   "suggestions": ["...", "..."],
   "risks": ["..."],

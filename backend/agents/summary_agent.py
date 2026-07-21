@@ -32,7 +32,7 @@ CRITICAL RULES:
 - If a decision is ambiguous or debated without conclusion, mark confidence "medium".
 - Do NOT fabricate commitments that aren't clearly stated.
 
-Respond ONLY in this exact JSON schema:
+Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
   "summary": "...",
   "decisions": [
@@ -54,7 +54,7 @@ Your task is to merge them into a single, cohesive, non-repetitive final JSON ou
 
 Merge all decisions, action items, and create a single unified summary.
 
-Respond ONLY in this exact JSON schema:
+Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
   "summary": "...",
   "decisions": [

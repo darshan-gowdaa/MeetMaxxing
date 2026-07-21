@@ -27,7 +27,7 @@ Rules:
 - Answer ONLY based on context chunks provided. Never invent facts.
 - Do NOT include citations like [Context 0] in your answer text. The system will handle citations automatically.
 - If the context is insufficient to answer, say "I couldn't find relevant information in past meetings."
-- Format your response as STRICTLY valid JSON. Do not use unescaped quotes inside the answer string.
+- Format your response as STRICTLY valid JSON. Do not use unescaped quotes inside the answer string. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 
 {
   "answer": "Your conversational answer here...",
@@ -138,7 +138,7 @@ Retrieved context from past meetings:
 {context_block}
 
 Answer the question conversationally based solely on the context above. 
-You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped.
+You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {{
   "answer": "Your conversational answer here. Do not include [Context N]. Format numbers in Indian style (e.g. ₹50,000).",
   "confidence": "high|medium|low",

@@ -28,8 +28,7 @@ async def draft_followup_email(
     """
     Uses the LLM fallback pipeline to draft a professional follow-up email.
     """
-    prompt = f"""
-Meeting Title: {meeting_title}
+    prompt = f"""Meeting Title: {meeting_title}
 Attendees: {', '.join(attendees) if attendees else 'Unknown'}
 
 Summary:
@@ -38,8 +37,14 @@ Summary:
 Action Items:
 {chr(10).join(f'- {item}' for item in action_items)}
 
-Draft the email body now.
-"""
+Draft a highly professional, well-formatted plain-text follow-up email.
+Use clear sections:
+1. A polite greeting
+2. A brief 1-2 sentence executive summary
+3. Bulleted action items (assigning names where available)
+4. A professional sign-off
+
+Do NOT include subject lines, markdown code blocks, or HTML tags. Return only the final ready-to-send text body."""
     
     try:
         raw_email, powered_by = await run_lyzr_agent("Email Agent - MeetMaxxing", prompt)
@@ -72,7 +77,7 @@ async def send_followup_email(
     # might require the OAuth token flow which is handled elsewhere.
     logger.info(f"[Email Agent] Sending email to {to_email} with subject '{subject}'")
     try:
-        # Mock email sending success
+        # TODO: wire up direct sending if needed, for now routes_meeting handles it
         return True
     except Exception as e:
         logger.error(f"[Email Agent] Failed to send email: {e}")

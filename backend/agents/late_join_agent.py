@@ -11,7 +11,7 @@ Analyze the transcript and provide a highly refined, concise summary covering:
 - Key decisions made so far.
 - Who said what (brief highlights).
 
-Keep it extremely brief and professional. Do NOT output unnecessary details. Return ONLY a valid JSON object matching this schema:
+Keep it extremely brief and professional. Do NOT output unnecessary details. Return ONLY a valid JSON object matching this schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
   "recap": "2-3 sentences max.",
   "current_topic": "...",

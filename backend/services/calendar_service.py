@@ -33,16 +33,8 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
     event_body: Full Google Calendar event resource dict.
     token_data: OAuth2 token dict stored for the user.
     """
-    if not token_data or not token_data.get("access_token") or token_data.get("access_token") == "mock_access_token":
-        import uuid
-        return {
-            "id": f"mock_event_{uuid.uuid4().hex[:8]}",
-            "htmlLink": "https://calendar.google.com/calendar/event?eid=mock",
-            "summary": event_body.get("summary", ""),
-            "start": event_body.get("start", {}),
-            "end": event_body.get("end", {}),
-            "status": "confirmed",
-        }
+    if not token_data or not token_data.get("access_token"):
+        raise ValueError("Missing OAuth token data")
 
     try:
         service = _build_service(token_data)
@@ -59,14 +51,7 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
     except HttpError as e:
         raise RuntimeError(f"Calendar API error: {e.status_code} — {e.reason}")
     except Exception as e:
-        import uuid
-        return {
-            "id": f"fallback_event_{uuid.uuid4().hex[:8]}",
-            "htmlLink": "https://calendar.google.com/calendar/event?eid=fallback",
-            "summary": event_body.get("summary", ""),
-            "status": "confirmed",
-            "note": str(e),
-        }
+        raise RuntimeError(f"Failed to create event: {e}")
 
 
 async def update_calendar_event(

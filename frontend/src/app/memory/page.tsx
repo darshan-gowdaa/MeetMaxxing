@@ -118,6 +118,7 @@ export default function MemoryPage() {
             type="text"
             placeholder="Ask your meeting memory…"
             value={query}
+            autoFocus
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleQuery(); }}
             className="w-full h-14 bg-surface2 border border-border rounded-2xl pl-11 pr-32 text-[14px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors shadow-lg"

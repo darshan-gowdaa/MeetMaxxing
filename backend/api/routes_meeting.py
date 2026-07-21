@@ -132,7 +132,7 @@ async def _run_end_pipeline(
     target_id = meeting_row["id"] if meeting_row else (meeting_id if is_uuid else None)
     google_code = meeting_row.get("google_meet_link") if meeting_row else (meeting_id if not is_uuid else None)
 
-    # 1. Fetch transcript checking meeting_id, google_code, and target_id
+    # get transcript
     utterances = await get_full_transcript(meeting_id)
     if not utterances and google_code:
         utterances = await get_full_transcript(google_code)
@@ -166,7 +166,7 @@ async def _run_end_pipeline(
     if not final_title:
         final_title = "Meet - Live Session"
 
-    # 2. Run summary agent
+    # gen summary
     summary = await dispatch(AgentTrigger.MEETING_END, {
         "meeting_id": target_id or meeting_id,
         "title": final_title,
@@ -178,12 +178,12 @@ async def _run_end_pipeline(
         logger.error(f"Failed to generate summary: {summary.get('error')}")
         summary["summary"] = f"Error generating summary: {summary.get('error')}"
 
-    # 3. Lyzr guardrail validation
+    # lyzr checks
     raw_transcript = summary.pop("raw_transcript", "")
     guardrail_result = await validate_summary_output(summary, raw_transcript)
     final_summary = guardrail_result.cleaned_output
 
-    # 4. Persist summary to Supabase using target_id (UUID)
+    # save to db
     from datetime import datetime, timezone
     today = datetime.now(timezone.utc).date().isoformat()
 
@@ -207,7 +207,7 @@ async def _run_end_pipeline(
             }
         ).eq("id", target_id).execute()
 
-    # 5. Persist action items to dedicated table
+    # save action items
     if target_id:
         for ai in final_summary.get("action_items", []):
             supabase.table("action_items").insert(
@@ -223,7 +223,7 @@ async def _run_end_pipeline(
                 }
             ).execute()
 
-    # 6. Embed + upsert memories to Qdrant
+    # embed for qdrant
     chunks = chunk_transcript(utterances)
     if chunks:
         texts = [c["text"] for c in chunks]
@@ -266,7 +266,7 @@ async def _run_end_pipeline(
 
         await upsert_memories(memory_points)
 
-    # 7. Auto-schedule follow-up & send Gmail reminder if needed
+    # schedule follow-up and send gmail reminder if needed
     if not calendar_token:
         try:
             user_res = supabase.table("users").select("calendar_token").eq("id", user_id).single().execute()
@@ -276,7 +276,7 @@ async def _run_end_pipeline(
             calendar_token = None
 
     if final_summary.get("follow_up", {}).get("required") or attendees:
-        if not calendar_token or not calendar_token.get("access_token") or calendar_token.get("access_token") == "mock_access_token":
+        if not calendar_token or not calendar_token.get("access_token"):
             supabase.table("meetings").update(
                 {"scheduling_result": {"status": "skipped", "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders."}}
             ).eq("id", meeting_id).execute()
@@ -291,7 +291,7 @@ async def _run_end_pipeline(
                 {"scheduling_result": schedule_result}
             ).eq("id", meeting_id).execute()
 
-    # 8. Send Slack and Email notifications
+    # send notifications
     slack_result = await dispatch(AgentTrigger.SEND_SLACK, {
         "meeting_title": title or "Untitled Meeting",
         "summary": final_summary.get("summary", ""),

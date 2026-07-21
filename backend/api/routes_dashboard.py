@@ -19,7 +19,7 @@ async def list_meetings(
     supabase = get_supabase_admin()
     result = (
         supabase.table("meetings")
-        .select("id, title, start_at, end_at, summary, status, attendees, guardrail_score")
+        .select("id, title, start_at, end_at, summary, status, attendees, guardrail_score", count="exact")
         .eq("org_id", user["org_id"])
         .order("start_at", desc=True)
         .range(offset, offset + limit - 1)
@@ -27,12 +27,12 @@ async def list_meetings(
     )
     action_items_res = (
         supabase.table("action_items")
-        .select("id")
+        .select("id", count="exact")
         .eq("org_id", user["org_id"])
         .execute()
     )
-    total_actions = len(action_items_res.data or [])
-    total_meetings = len(result.data or [])
+    total_actions = action_items_res.count if hasattr(action_items_res, 'count') and action_items_res.count is not None else len(action_items_res.data or [])
+    total_meetings = result.count if hasattr(result, 'count') and result.count is not None else len(result.data or [])
     total_memories = total_meetings * 18 + total_actions * 4
 
     return {
@@ -165,5 +165,14 @@ async def delete_meeting(
     supabase.table("action_items").delete().eq("meeting_id", meeting_id).eq("org_id", user["org_id"]).execute()
     # Delete meeting
     result = supabase.table("meetings").delete().eq("id", meeting_id).eq("org_id", user["org_id"]).execute()
+    
+    # Delete associated memories from Qdrant
+    try:
+        from ..memory.qdrant_client import delete_meeting_memories
+        await delete_meeting_memories(meeting_id, user["org_id"])
+    except Exception as e:
+        import logging
+        logging.warning(f"Could not delete memories from Qdrant: {e}")
+
     return {"status": "deleted"}
 

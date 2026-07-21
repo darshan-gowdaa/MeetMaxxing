@@ -201,11 +201,7 @@ async def schedule_followup(
     except Exception:
         pass
 
-    if (
-        calendar_token
-        and calendar_token.get("access_token")
-        and calendar_token.get("access_token") != "mock_access_token"
-    ):
+    if calendar_token and calendar_token.get("access_token"):
         try:
             from ..agents.scheduler_agent import run_scheduler_agent
             schedule_result = await run_scheduler_agent(

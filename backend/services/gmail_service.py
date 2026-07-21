@@ -41,14 +41,8 @@ async def send_reminder_email(
     if not to_emails:
         return {"sent": False, "reason": "No recipient emails provided"}
 
-    if not token_data or not token_data.get("access_token") or token_data.get("access_token") == "mock_access_token":
-        return {
-            "sent": True,
-            "mock": True,
-            "message_id": "mock_gmail_msg_id_12345",
-            "recipients": to_emails,
-            "subject": subject,
-        }
+    if not token_data or not token_data.get("access_token"):
+        return {"sent": False, "error": "Missing OAuth token data"}
 
     try:
         service = _build_service(token_data)
@@ -66,7 +60,6 @@ async def send_reminder_email(
         )
         return {
             "sent": True,
-            "mock": False,
             "message_id": sent_message.get("id"),
             "recipients": to_emails,
             "subject": subject,
@@ -79,10 +72,6 @@ async def send_reminder_email(
         }
     except Exception as e:
         return {
-            "sent": True,
-            "mock": True,
-            "message_id": "fallback_gmail_msg_id",
-            "recipients": to_emails,
-            "subject": subject,
-            "note": str(e),
+            "sent": False,
+            "error": str(e),
         }

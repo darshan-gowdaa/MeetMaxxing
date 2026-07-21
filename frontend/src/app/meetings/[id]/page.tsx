@@ -372,7 +372,16 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             </div>
           ) : (
             <div className="flex flex-col gap-2.5">
-              {actionItems.map((item) => {
+              {[...actionItems].sort((a, b) => {
+                const statusOrder: Record<string, number> = { open: 0, in_progress: 1, done: 2 };
+                const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+                const aStatus = statusOrder[a.status] ?? 3;
+                const bStatus = statusOrder[b.status] ?? 3;
+                if (aStatus !== bStatus) return aStatus - bStatus;
+                const aPri = priorityOrder[a.priority] ?? 3;
+                const bPri = priorityOrder[b.priority] ?? 3;
+                return aPri - bPri;
+              }).map((item) => {
                 const isDone = item.status === "done";
                 const isInProgress = item.status === "in_progress";
                 const pStyle = PRIORITY[item.priority] ?? PRIORITY.medium;

@@ -577,8 +577,12 @@ function renderCopilotUpdate(data) {
       card.title = "Click to copy";
       card.addEventListener("click", () => {
         navigator.clipboard.writeText(text).catch(() => {});
-        card.style.opacity = "0.6";
-        setTimeout(() => (card.style.opacity = "1"), 500);
+        card.textContent = "Copied!";
+        card.style.color = "var(--success)";
+        setTimeout(() => {
+          card.textContent = text;
+          card.style.color = "";
+        }, 1000);
         if (nextQSection) nextQSection.classList.remove("collapsed");
       });
       suggestionsList.appendChild(card);
@@ -591,6 +595,18 @@ function renderCopilotUpdate(data) {
 
   if (next_question && nextQText) {
     nextQText.textContent = next_question;
+    nextQText.title = "Click to copy";
+    nextQText.style.cursor = "pointer";
+    nextQText.onclick = () => {
+      navigator.clipboard.writeText(next_question).catch(() => {});
+      const originalText = nextQText.textContent;
+      nextQText.textContent = "Copied!";
+      nextQText.style.color = "var(--success)";
+      setTimeout(() => {
+        nextQText.textContent = originalText;
+        nextQText.style.color = "";
+      }, 1000);
+    };
     if (nextQSection) nextQSection.classList.remove("hidden");
   }
 

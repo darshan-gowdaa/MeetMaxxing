@@ -254,7 +254,13 @@ export default function Dashboard() {
                   const older: Record<string, Meeting[]> = {};
                   const order: string[] = [];
 
-                  filtered.forEach(m => {
+                  const sortedFiltered = [...filtered].sort((a, b) => {
+                    const dateA = a.start_at ? new Date(a.start_at).getTime() : 0;
+                    const dateB = b.start_at ? new Date(b.start_at).getTime() : 0;
+                    return dateB - dateA;
+                  });
+
+                  sortedFiltered.forEach(m => {
                     const d = m.start_at ? new Date(m.start_at) : new Date();
                     if (isToday(d)) {
                       today.push(m);

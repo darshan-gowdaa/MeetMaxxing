@@ -42,7 +42,7 @@ async def push_to_slack(
 
     from ..core.lyzr_integration import run_lyzr_agent
     
-    prompt = f"Meeting Title: {meeting_title}\nSummary: {summary}\nAction Items: {action_items}\n\nFormat a highly readable Slack markdown update and use your tool to send it."
+    prompt = f"Meeting Title: {meeting_title}\nSummary: {summary}\nAction Items: {action_items}\n\nFormat a highly readable, highly professional Slack markdown update. Use bolding, clear sections, bullet points with emojis, and use your tool to send it."
     
     try:
         await run_lyzr_agent("Slack Agent - MeetMaxxing", prompt, local_tools=[send_slack_message])
