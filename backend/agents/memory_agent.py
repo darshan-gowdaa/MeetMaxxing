@@ -98,6 +98,7 @@ async def run_memory_agent(
     mem_filter = MemoryFilter(
         org_id=org_id,
         user_id=filters.get("user_id", ""),
+        meeting_id=filters.get("meeting_id"),
         speaker_id=filters.get("speaker_id", ""),
         topic=filters.get("topic", ""),
         date_from=filters.get("date_from", ""),

@@ -10,18 +10,13 @@ import {
   RiGroupLine as Users,
   RiTimeLine as Clock,
   RiCheckLine as CheckCircle2,
-  RiAlertLine as AlertTriangle,
   RiCalendarLine as Calendar,
-  RiShieldCheckLine as Shield,
   RiArrowDownSLine as ChevronDown,
   RiArrowUpSLine as ChevronUp,
   RiChat1Line as MessageSquare,
   RiSparklingLine as Sparkles,
-  RiFlashlightLine as Zap,
   RiCheckLine as Check,
   RiRadioButtonLine as Radio,
-  RiMailLine as Mail,
-  RiCalendar2Line as CalendarSync,
   RiExternalLinkLine as ExternalLink,
   RiRefreshLine as RefreshCw,
   RiUserLine as UserIcon,
@@ -37,6 +32,7 @@ const PRIORITY: Record<string, { chip: string; dot: string }> = {
 };
 
 import { ActionButton, GmailIcon, GoogleCalendarIcon, type BtnState } from "@/components/ActionButtons";
+
 
 export default function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -518,7 +514,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                         {chunk.speaker || "Unknown"}
                       </span>
                       <div className="flex items-center gap-2">
-                        {!!(chunk as any).source && (
+                        {!!(chunk as Record<string, unknown>).source && (
                           <span className="text-[9px] text-text-muted uppercase tracking-wider font-semibold bg-surface3 px-2 py-0.5 rounded-full border border-border">
                             {(chunk as Record<string, unknown>).source as string}
                           </span>
@@ -534,7 +530,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                       {(() => {
                         let content = chunk.text;
                         if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {
-                          try { content = JSON.parse(content); } catch (e) {}
+                          try { content = JSON.parse(content); } catch { }
                         }
                         
                         if (Array.isArray(content)) {
@@ -565,6 +561,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
         )}
+
       </div>
     </div>
   );

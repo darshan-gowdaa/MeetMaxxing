@@ -55,10 +55,11 @@ class MemoryFilter:
     """Used to build Qdrant filter conditions for retrieval."""
 
     org_id: str
-    user_id: str = ""
-    meeting_id: str = ""
-    speaker_id: str = ""
+    user_id: str | None = None
+    meeting_id: str | list[str] | None = None
+    speaker_id: str | None = None
     topic: str = ""
+    query_text: str = ""
     memory_type: MemoryType | None = None
     date_from: str = ""              # ISO date YYYY-MM-DD
     date_to: str = ""

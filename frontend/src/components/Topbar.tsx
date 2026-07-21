@@ -6,6 +6,7 @@ import {
   RiVideoChatLine,
   RiBrainLine,
   RiSparkling2Fill,
+  RiFolderOpenLine,
 } from "@remixicon/react";
 
 export default function Topbar() {
@@ -47,6 +48,17 @@ export default function Topbar() {
           >
             <RiBrainLine className="w-4 h-4" />
             <span className="hidden sm:inline">Memory</span>
+          </Link>
+          <Link
+            href="/context"
+            className={`flex items-center gap-2 px-4 h-9 rounded-full text-sm font-medium spring-colors ${
+              pathname === "/context"
+                ? "bg-primary-container text-on-primary-container"
+                : "text-text-muted hover:text-text hover:bg-surface2"
+            }`}
+          >
+            <RiFolderOpenLine className="w-4 h-4" />
+            <span className="hidden sm:inline">Context</span>
           </Link>
         </nav>
       </div>

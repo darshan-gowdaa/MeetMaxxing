@@ -1,28 +1,18 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { createPortal } from "react-dom";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { fetchMeetings, deleteMeeting, updateMeeting } from "@/lib/api";
 import { format, isToday, isYesterday } from "date-fns";
 import {
   RiVideoChatLine,
-  RiBrainLine,
-  RiCalendarLine,
-  RiArrowRightLine,
   RiSearchLine,
   RiTimeLine,
-  RiGroupLine,
   RiSparklingLine,
-  RiDeleteBinLine,
-  RiEditLine,
-  RiCheckLine,
   RiCloseLine,
-  RiMoreLine,
   RiShieldCheckLine,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
-import { Md3LoadingIndicator, Md3Skeleton } from "@/components/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/Md3Loading";
 
 import DeleteDialog from "@/components/DeleteDialog";
 import EditDialog from "@/components/EditDialog";
@@ -323,7 +313,8 @@ export default function Dashboard() {
       {/* ── Dialogs ────────────────────────────────────────────────────────── */}
       {deleteTarget && (
         <DeleteDialog
-          meeting={deleteTarget}
+          title={deleteTarget.title || ""}
+          itemName="Meeting"
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
           busy={deleteBusy}
@@ -331,7 +322,8 @@ export default function Dashboard() {
       )}
       {editTarget && (
         <EditDialog
-          meeting={editTarget}
+          initialTitle={editTarget.title || ""}
+          itemName="Meeting"
           onSave={handleEdit}
           onCancel={() => setEditTarget(null)}
           busy={editBusy}

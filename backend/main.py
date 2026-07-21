@@ -49,6 +49,7 @@ from .api.routes_meeting import router as meeting_router
 from .api.routes_memory import router as memory_router
 from .api.routes_calendar import router as calendar_router
 from .api.routes_dashboard import router as dashboard_router
+from .api.routes_context import router as context_router
 
 
 import threading
@@ -84,6 +85,8 @@ app.add_middleware(
         "chrome-extension://*",  # Allow Chrome extension
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -96,6 +99,7 @@ app.include_router(meeting_router)
 app.include_router(memory_router)
 app.include_router(calendar_router)
 app.include_router(dashboard_router)
+app.include_router(context_router)
 
 
 @app.get("/health")

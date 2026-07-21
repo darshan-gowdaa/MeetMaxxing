@@ -4,20 +4,21 @@ import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { RiEditLine, RiCheckLine } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/Md3Loading";
-import type { Meeting } from "@/types";
 
 export default function EditDialog({
-  meeting,
+  initialTitle,
+  itemName = "Meeting",
   onSave,
   onCancel,
   busy,
 }: {
-  meeting: Meeting;
+  initialTitle: string;
+  itemName?: string;
   onSave: (title: string) => void;
   onCancel: () => void;
   busy: boolean;
 }) {
-  const [title, setTitle] = useState(meeting.title || "");
+  const [title, setTitle] = useState(initialTitle || "");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [mounted, setMounted] = useState(false);
@@ -40,7 +41,7 @@ export default function EditDialog({
           <RiEditLine className="w-6 h-6 text-primary" />
         </div>
         <h2 className="text-[18px] font-bold text-text text-center tracking-tight mb-4">
-          Rename Meeting
+          Rename {itemName}
         </h2>
         <input
           ref={inputRef}
@@ -49,7 +50,7 @@ export default function EditDialog({
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && title.trim()) onSave(title.trim()); }}
           className="w-full h-12 bg-surface2 border border-border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors mb-4"
-          placeholder="Meeting title…"
+          placeholder={`${itemName} title…`}
           maxLength={120}
         />
         <div className="flex gap-3">

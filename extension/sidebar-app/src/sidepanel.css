@@ -4,23 +4,23 @@
 main {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 main::-webkit-scrollbar { width: 4px; }
 main::-webkit-scrollbar-track { background: transparent; }
 main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
 main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-.state-container { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.state-container { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 
 /* Global utilities to support DRY */
 @layer components {
   /* Header & Top Bar */
   .header {
-    @apply flex items-center justify-between px-3 py-3 bg-zinc-900/60 backdrop-blur-2xl border-b border-zinc-800/50 shrink-0 shadow-sm z-10 w-full box-border;
+    @apply flex items-center justify-between px-3 py-2.5 bg-zinc-900/80 backdrop-blur-3xl border-b border-zinc-800/80 shrink-0 shadow-sm z-10 w-full box-border;
   }
   .header-left {
     @apply flex items-center gap-2 shrink truncate;
@@ -56,7 +56,7 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   }
 
   .md3-card {
-    @apply bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-[28px] p-5 shadow-lg flex flex-col gap-3 transition-colors duration-300;
+    @apply bg-zinc-900/50 backdrop-blur-2xl border border-zinc-800/60 rounded-[20px] p-3.5 shadow-lg flex flex-col gap-2 transition-colors duration-300;
   }
   .md3-card:hover {
     @apply border-blue-500/20 shadow-blue-500/5;

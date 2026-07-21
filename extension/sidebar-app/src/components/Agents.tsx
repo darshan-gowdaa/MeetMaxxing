@@ -3,7 +3,6 @@ import { copyToClipboard } from "../lib/utils";
 import type { TranscriptChunk } from "../types";
 
 export function LiveTranscript({ transcriptLines }: { transcriptLines: TranscriptChunk[] }) {
-  const [isMax, setIsMax] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<"all" | "dom" | "audio">("dom");
   const bottomRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -27,18 +26,10 @@ export function LiveTranscript({ transcriptLines }: { transcriptLines: Transcrip
     }
   }, [filteredLines]);
 
-  const toggle = () => {
-    setIsMax(!isMax);
-    setTimeout(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, 50);
-  };
-
   return (
-    <div className="md3-card !bg-zinc-800/40 !border-zinc-700/50">
-      <div className="flex items-center justify-between mb-2">
+    <div className="md3-card !bg-zinc-800/40 !border-zinc-700/50 !p-3 flex-1 flex flex-col min-h-0">
+      <div className="flex items-center justify-between mb-1 shrink-0">
         <div className="flex items-center gap-2">
-          <button onClick={toggle} className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors">
-            <i className={isMax ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"}></i>
-          </button>
           <h3 className="md3-title !text-blue-400">
             <i className="ri-chat-voice-fill text-sm"></i>
             Live Transcript
@@ -60,8 +51,8 @@ export function LiveTranscript({ transcriptLines }: { transcriptLines: Transcrip
         </div>
       </div>
       
-      <div className={`transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden ${isMax ? 'h-[240px]' : 'h-[72px]'}`}>
-        <div ref={feedRef} onScroll={handleScroll} className="h-full overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+      <div className="flex-1 overflow-hidden rounded-xl border border-zinc-700/30 min-h-0 relative">
+        <div ref={feedRef} onScroll={handleScroll} className="h-full overflow-y-auto pr-2 space-y-2 custom-scrollbar p-1">
           {filteredLines.length === 0 ? (
             <p className="text-xs text-zinc-400 italic text-center p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700/50">
               Enable Captions (CC) — live speech will appear here
@@ -84,37 +75,38 @@ export function LiveTranscript({ transcriptLines }: { transcriptLines: Transcrip
           )}
           <div ref={bottomRef} />
         </div>
+        
+        {!autoScroll && (
+          <button 
+            onClick={() => {
+              setAutoScroll(true);
+              if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+            }}
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-10"
+            title="Resume auto-scroll"
+          >
+            <i className="ri-arrow-down-line"></i>
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: string[], isProcessing?: boolean }) {
-  const [isMax, setIsMax] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (suggestions && suggestions.length > 0) {
-      setIsMax(true);
-    }
-  }, [suggestions]);
-
   return (
-    <div className="md3-card">
+    <div className="md3-card !p-3">
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMax(!isMax)}>
-          <button className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors">
-            <i className={isMax ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"}></i>
-          </button>
+        <div className="flex items-center gap-2">
           <h3 className="md3-title !text-blue-400">
             <i className="ri-sparkling-fill text-sm"></i> Answers
           </h3>
         </div>
       </div>
       
-      <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isMax ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-        <div className="overflow-hidden">
-          <div className="mt-2 space-y-2">
+      <div className="mt-1 flex flex-col gap-2">
             {suggestions.length > 0 ? (
               suggestions.map((sug: string, idx: number) => (
                 <div key={idx} onClick={() => copyToClipboard(sug, () => { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); })}
@@ -138,38 +130,24 @@ export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: st
               </p>
             )}
           </div>
-        </div>
-      </div>
     </div>
   );
 }
 
 export function NextQuestionAgent({ nextQuestion, isProcessing }: { nextQuestion: string, isProcessing?: boolean }) {
-  const [isMax, setIsMax] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (nextQuestion) {
-      setIsMax(true);
-    }
-  }, [nextQuestion]);
-
   return (
-    <div className="md3-card !bg-cyan-900/20 !border-cyan-800/30">
+    <div className="md3-card !bg-cyan-900/20 !border-cyan-800/30 !p-3">
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMax(!isMax)}>
-          <button className="w-6 h-6 flex items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors">
-            <i className={isMax ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"}></i>
-          </button>
+        <div className="flex items-center gap-2">
           <h3 className="md3-title !text-cyan-400">
             <i className="ri-question-answer-fill text-sm"></i> What to Ask
           </h3>
         </div>
       </div>
       
-      <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isMax ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-        <div className="overflow-hidden">
-          <div className="mt-2">
+      <div className="mt-1">
             {nextQuestion ? (
               <div onClick={() => copyToClipboard(nextQuestion, () => { setCopied(true); setTimeout(() => setCopied(false), 2000); })}
                    className="p-3 rounded-2xl bg-zinc-800/70 border border-cyan-800/40 hover:bg-zinc-700/70 hover:border-cyan-500/40 text-[13px] text-zinc-200 cursor-pointer transition-colors group">
@@ -191,37 +169,22 @@ export function NextQuestionAgent({ nextQuestion, isProcessing }: { nextQuestion
               </div>
             )}
           </div>
-        </div>
-      </div>
     </div>
   );
 }
 
 export function RecapAgent({ recap, isProcessing }: { recap: string, isProcessing?: boolean }) {
-  const [isMax, setIsMax] = useState(false);
-
-  useEffect(() => {
-    if (recap) {
-      setIsMax(true);
-    }
-  }, [recap]);
-
   return (
-    <div className="md3-card !bg-emerald-900/20 !border-emerald-800/30">
+    <div className="md3-card !bg-emerald-900/20 !border-emerald-800/30 !p-3">
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMax(!isMax)}>
-          <button className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">
-            <i className={isMax ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"}></i>
-          </button>
+        <div className="flex items-center gap-2">
           <h3 className="md3-title !text-emerald-400">
             <i className="ri-file-list-3-fill text-sm"></i> Recap
           </h3>
         </div>
       </div>
       
-      <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isMax ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-        <div className="overflow-hidden">
-          <div className="mt-2">
+      <div className="mt-1">
             {recap ? (
               <div className="p-4 rounded-2xl bg-zinc-800/70 border border-emerald-800/40 text-[12.5px] text-zinc-200 leading-relaxed max-h-[200px] overflow-y-auto custom-scrollbar whitespace-pre-wrap">
                 {recap}
@@ -236,8 +199,6 @@ export function RecapAgent({ recap, isProcessing }: { recap: string, isProcessin
               </div>
             )}
           </div>
-        </div>
-      </div>
     </div>
   );
 }

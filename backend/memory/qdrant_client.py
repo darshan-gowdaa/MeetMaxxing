@@ -101,8 +101,16 @@ async def upsert_memories(points: list[MemoryPoint]) -> None:
         # Generate simple hash-based sparse vector from the text content
         words = p.text.lower().split()
         freq = collections.Counter(words)
-        sparse_indices = [int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000 for w in freq.keys()]
-        sparse_values = [float(v) for v in freq.values()]
+        
+        # Deduplicate and sort sparse indices
+        sparse_dict = {}
+        for w, v in freq.items():
+            idx = int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000
+            sparse_dict[idx] = sparse_dict.get(idx, 0) + float(v)
+            
+        sorted_items = sorted(sparse_dict.items())
+        sparse_indices = [k for k, _ in sorted_items]
+        sparse_values = [v for _, v in sorted_items]
         
         vector_dict = {
             "dense": p.vector,
@@ -151,12 +159,20 @@ async def search_memories(
             )
         )
     if memory_filter.meeting_id:
-        must_conditions.append(
-            qmodels.FieldCondition(
-                key="meeting_id",
-                match=qmodels.MatchValue(value=memory_filter.meeting_id),
+        if isinstance(memory_filter.meeting_id, list):
+            must_conditions.append(
+                qmodels.FieldCondition(
+                    key="meeting_id",
+                    match=qmodels.MatchAny(any=memory_filter.meeting_id),
+                )
             )
-        )
+        else:
+            must_conditions.append(
+                qmodels.FieldCondition(
+                    key="meeting_id",
+                    match=qmodels.MatchValue(value=memory_filter.meeting_id),
+                )
+            )
     if memory_filter.speaker_id:
         must_conditions.append(
             qmodels.FieldCondition(
@@ -169,6 +185,13 @@ async def search_memories(
             qmodels.FieldCondition(
                 key="memory_type",
                 match=qmodels.MatchValue(value=memory_filter.memory_type.value),
+            )
+        )
+    if memory_filter.topic:
+        must_conditions.append(
+            qmodels.FieldCondition(
+                key="topic",
+                match=qmodels.MatchValue(value=memory_filter.topic),
             )
         )
     if memory_filter.date_from:
@@ -190,10 +213,18 @@ async def search_memories(
     import collections
     import hashlib
     # We use a crude hash-based BM25 approximation for hackathon hybrid search
-    words = memory_filter.topic.lower().split() if memory_filter.topic else ["query"]
+    query_str = memory_filter.query_text if memory_filter.query_text else (memory_filter.topic if memory_filter.topic else "query")
+    words = query_str.lower().split()
+
     freq = collections.Counter(words)
-    sparse_indices = [int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000 for w in freq.keys()]
-    sparse_values = [float(v) for v in freq.values()]
+    sparse_dict = {}
+    for w, v in freq.items():
+        idx = int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000
+        sparse_dict[idx] = sparse_dict.get(idx, 0) + float(v)
+        
+    sorted_items = sorted(sparse_dict.items())
+    sparse_indices = [k for k, _ in sorted_items]
+    sparse_values = [v for _, v in sorted_items]
 
     prefetch = [
         qmodels.Prefetch(

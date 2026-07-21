@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { RiDeleteBinLine } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/Md3Loading";
-import type { Meeting } from "@/types";
 
 export default function DeleteDialog({
-  meeting,
+  title,
+  itemName = "Meeting",
   onConfirm,
   onCancel,
   busy,
 }: {
-  meeting: Meeting;
+  title: string;
+  itemName?: string;
   onConfirm: () => void;
   onCancel: () => void;
   busy: boolean;
@@ -42,10 +43,10 @@ export default function DeleteDialog({
           <RiDeleteBinLine className="w-6 h-6 text-risk" />
         </div>
         <h2 className="text-[18px] font-bold text-text text-center tracking-tight mb-2">
-          Delete Meeting?
+          Delete {itemName}?
         </h2>
         <p className="text-[13px] text-text-muted text-center leading-relaxed mb-6">
-          &ldquo;{meeting.title || "Untitled Meeting"}&rdquo; will be permanently removed. This cannot be undone.
+          &ldquo;{title || `Untitled ${itemName}`}&rdquo; will be permanently removed. This cannot be undone.
         </p>
         <div className="flex gap-3">
           <button

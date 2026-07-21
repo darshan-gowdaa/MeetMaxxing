@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { RiCheckLine as Check, RiAlertLine as AlertTriangle } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/Md3Loading";
 

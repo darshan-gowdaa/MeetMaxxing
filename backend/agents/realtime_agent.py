@@ -31,7 +31,7 @@ Your job:
 4. RECAP ("Recap Agent") — 1-2 sentences summarizing the main discussion so far. Must be extremely refined and to the point.
 
 CRITICAL RULES:
-- Only reference names, numbers, and facts that EXPLICITLY appear in the transcript.
+- Only reference names, numbers, and facts that EXPLICITLY appear in the transcript or Uploaded Meeting Context Documents.
 - Do NOT invent any statements, names, or commitments not in the text.
 - If no risks, return empty array for risks.
 
@@ -121,9 +121,31 @@ Meeting context:
 
 """
 
+    # Fetch uploaded context documents if any
+    uploaded_context = ""
+    try:
+        from ..memory.qdrant_client import search_memories
+        from ..memory.schemas import MemoryFilter, MemoryType
+        from ..memory.embeddings import embed_query
+        q_vec = await embed_query("meeting context overview")
+        mem_filter = MemoryFilter(
+            org_id="22222222-2222-4222-8222-222222222222", # dev org id fallback
+            meeting_id=meeting_id,
+            memory_type=MemoryType.KEY_TOPIC,
+            topic="uploaded_context",
+            query_text="meeting context overview"
+        )
+        context_res = await search_memories(query_vector=q_vec, memory_filter=mem_filter, limit=4)
+        if context_res:
+            uploaded_context = "\n\nUploaded Meeting Context Documents:\n" + "\n".join([r.text for r in context_res])
+    except Exception as e:
+        print(f"[MeetMaxxing API] Could not fetch uploaded context: {e}")
+
     prompt = f"""{_SYSTEM_PROMPT}
 
-{context_block}New transcript utterances:
+{context_block}{uploaded_context}
+
+New transcript utterances:
 {transcript_text}"""
 
     try:
