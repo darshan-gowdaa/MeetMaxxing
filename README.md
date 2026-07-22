@@ -516,12 +516,12 @@ npm run dev
 
 # Meet the Team
 
-<div align="center">
+<div>
 
 <table>
 <tr>
 
-<td width="33%">
+<td align="center" width="33%">
 
 <a href="https://github.com/darshan-gowdaa">
 
@@ -535,7 +535,7 @@ Darshan Gowda
 
 </td>
 
-<td width="33%">
+<td align="center" width="33%">
 
 <a href="https://github.com/kanikapitaliya">
 
@@ -549,7 +549,7 @@ Kanika Pitaliya
 
 </td>
 
-<td width="33%">
+<td align="center" width="33%">
 
 <a href="https://github.com/yar123yar">
 
