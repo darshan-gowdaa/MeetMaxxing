@@ -181,72 +181,9 @@ One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to
 
 Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
 
-<table align="center">
-
-<tr>
-<td></td>
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_23_34 PM" src="https://github.com/user-attachments/assets/e6def754-c3c0-456a-9ef6-8d1e1c5bc1c2" />
-</td>
-<td></td>
-</tr>
-
-<tr>
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 11_31_30 PM" src="https://github.com/user-attachments/assets/442c7072-e924-4dfb-8b2e-63e1410983d1" />
-</td>
-
-<td></td>
-
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_23_57 PM" src="https://github.com/user-attachments/assets/7cf06e1a-3819-4352-b3cd-78675aebac34" />
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_24_22 PM" src="https://github.com/user-attachments/assets/ff113d96-9afa-41f2-a8f8-a9e6ac946efe" />
-</td>
-
-<td align="center">
-<img width="260" alt="orch" src="https://github.com/user-attachments/assets/bbc433c5-0b86-4779-8bd8-de08b2b7af0d" />
-</td>
-
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_27_08 PM" src="https://github.com/user-attachments/assets/13ae623b-c698-4abe-835b-825192d80836" />
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_29_22 PM" src="https://github.com/user-attachments/assets/4d2c1cc9-4ae8-40f7-a329-734b9f94a1e8" />
-</td>
-
-<td></td>
-
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_30_10 PM" src="https://github.com/user-attachments/assets/7ab7bc1b-6ef0-40c6-ab4e-094e5e5dc5ff" />
-</td>
-
-</tr>
-
-<tr>
-
-<td></td>
-
-<td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 11_09_30 PM" src="https://github.com/user-attachments/assets/32750ed6-827a-468f-bb7c-9da64a4af030" />
-</td>
-
-<td></td>
-
-</tr>
-
-</table>
+<p align="center">
+  <img width="900" height="1200" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
+</p>
 
 This architecture allows:
 
