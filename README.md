@@ -521,7 +521,7 @@ npm run dev
 <table>
 <tr>
 
-<td align="center" width="33%">
+<td width="33%">
 
 <a href="https://github.com/darshan-gowdaa">
 
@@ -535,7 +535,7 @@ Darshan Gowda
 
 </td>
 
-<td align="center" width="33%">
+<td width="33%">
 
 <a href="https://github.com/kanikapitaliya">
 
@@ -549,7 +549,7 @@ Kanika Pitaliya
 
 </td>
 
-<td align="center" width="33%">
+<td width="33%">
 
 <a href="https://github.com/yar123yar">
 
@@ -567,6 +567,7 @@ Yarthem Muivah
 </table>
 
 </div>
+
 ---
 
 # Support
