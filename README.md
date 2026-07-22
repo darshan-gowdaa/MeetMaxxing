@@ -193,7 +193,7 @@ Instead of executing tasks sequentially within a single workflow, specialized ag
 
 <tr>
 <td align="center">
-<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_23_49 PM" src="https://github.com/user-attachments/assets/13158149-489d-43ed-9779-7f4d741ccbe5" />
+<img width="1655" height="950" alt="ChatGPT Image Jul 22, 2026, 11_31_30 PM" src="https://github.com/user-attachments/assets/442c7072-e924-4dfb-8b2e-63e1410983d1" />
 </td>
 
 <td></td>
