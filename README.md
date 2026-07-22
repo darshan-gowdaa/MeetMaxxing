@@ -251,18 +251,6 @@ This architecture offers several advantages:
 The result is an AI meeting copilot that is not only intelligent, but also demonstrates modern AI engineering practices suitable for real-world applications.
 The result is an AI meeting copilot that doesn't simply answer questions—it coordinates multiple intelligent agents to understand, remember, and act on meeting information in real time.
 
-# System Architecture
-
-MeetMaxxing is designed as a production-inspired, event-driven AI system where the Chrome Extension, backend services, and specialized AI agents work together to provide intelligent meeting assistance.
-
-<p align="center">
-<img src="assets/architecture.png" width="1000">
-</p>
-
-<p align="center">
-<i>Overall system architecture highlighting Google ADK, Lyzr orchestration, A2A communication, FastAPI services, and Qdrant semantic memory.</i>
-</p>
-
 ---
 
 # End-to-End Workflow
@@ -295,6 +283,81 @@ Realtime Agent   Summary Agent   Memory Agent
                        ▼
              AI Response to the User
 ```
+
+---
+
+# Application Showcase
+
+## Chrome Extension
+
+<p align="center">
+<img width="400" height="400" alt="Screenshot 2026-07-22 200031" src="https://github.com/user-attachments/assets/8fa09c5b-f21b-4581-8c9a-ce482baa2862" />
+</p>
+
+The Chrome Extension serves as the primary user interface, enabling real-time interaction with AI agents directly within Google Meet.
+
+---
+
+## Live AI Assistance
+
+<p align="center">
+
+</p>
+
+Receive contextual suggestions, insights, and assistance while the meeting is still ongoing.
+
+---
+
+## Meeting Summary
+
+<p align="center">
+<video src="https://github.com/user-attachments/assets/C:\Users\Kanika Pitaliya\Desktop\meetMaxxing\summary.mp4"
+         width="800"
+         controls>
+ </video>
+</p>
+
+Automatically generate concise summaries, discussion highlights, and actionable takeaways.
+
+---
+
+## Semantic Memory
+
+<p align="center">
+<img src="assets/memory.png" width="900">
+</p>
+
+Retrieve information from previous meetings using semantic similarity instead of keyword matching.
+
+---
+
+## AI Follow-up Emails
+
+<p align="center">
+<img src="assets/email.png" width="900">
+</p>
+
+Generate polished follow-up emails with meeting highlights and assigned action items.
+
+---
+
+## Smart Scheduling
+
+<p align="center">
+<img src="assets/calendar.png" width="900">
+</p>
+
+Convert action items into reminders and calendar events with minimal user effort.
+
+---
+
+## Dashboard
+
+<p align="center">
+<img src="assets/dashboard.png" width="900">
+</p>
+
+Access previous meetings, semantic memory, analytics, and meeting history from a centralized dashboard.
 
 ---
 
