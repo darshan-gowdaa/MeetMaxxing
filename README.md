@@ -43,13 +43,9 @@ Rather than being just another meeting summarizer, MeetMaxxing showcases how mul
 
 # 🎥 Demo
 
-> **Coming Soon**
+<p align="left">
 
-### 📹 Complete Walkthrough
-
-<p align="center">
-
-<!-- Replace with YouTube video -->
+<!-- google drive link -->
 <a href="YOUR_YOUTUBE_LINK">
 <img src="assets/demo-thumbnail.png" width="800"/>
 </a>
