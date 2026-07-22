@@ -207,6 +207,8 @@ Answer to validate:
 
     # Always return the answer, but mark valid based on score
     cleaned_answer = answer
+    if score < 0.7:
+        cleaned_answer = "I couldn't find relevant information in the provided context to confidently answer your question."
 
     return GuardrailResult(
         valid=len(violations) == 0 or score >= 0.7,

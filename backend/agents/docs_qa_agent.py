@@ -116,10 +116,15 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
     used_indices = result.get("sources_used", list(range(len(sources))))
     cited_sources = [sources[i] for i in used_indices if i < len(sources)]
 
-    # Skip guardrails for document QA since it's just extracting from uploaded files
+    # Apply Lyzr Guardrails to Docs QA Agent
+    from ..services.guardrails import validate_memory_output
+    guardrail_res = await validate_memory_output(
+        answer=result.get("answer", ""),
+        sources=cited_sources
+    )
     
     import re
-    final_answer = result.get("answer", "")
+    final_answer = guardrail_res.cleaned_output.get("answer", result.get("answer", ""))
     final_answer = re.sub(r'\[Context\s*[\d,\s]*\]', '', final_answer).strip()
 
     return {
@@ -127,4 +132,7 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
         "confidence": result.get("confidence", "low"),
         "sources": cited_sources,
         "powered_by": powered_by,
+        "guardrail_score": guardrail_res.score,
+        "guardrail_valid": guardrail_res.valid,
+        "guardrail_violations": guardrail_res.violations
     }
