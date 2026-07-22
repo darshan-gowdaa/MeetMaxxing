@@ -418,22 +418,222 @@ Access previous meetings, semantic memory, analytics, and meeting history from a
 ```bash
 MeetMaxxing/
 │
+├── .gemini_rules/
+│   ├── material3-expressive-meet-extension.md
+│   └── material3-expressive-meet-extension.skill
+│
 ├── backend/
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── provision_lyzr_agents.py
+│   ├── requirements.txt
+│   ├── supabase_migrations.sql
+│   ├── test_suite.py
+│   │
 │   ├── agents/
-│   ├── orchestrator/
+│   │   ├── __init__.py
+│   │   ├── docs_qa_agent.py
+│   │   ├── email_agent.py
+│   │   ├── late_join_agent.py
+│   │   ├── memory_agent.py
+│   │   ├── orchestrator.py
+│   │   ├── realtime_agent.py
+│   │   ├── scheduler_agent.py
+│   │   ├── summary_agent.py
+│   │   └── transcription_agent.py
+│   │
 │   ├── api/
-│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── routes_calendar.py
+│   │   ├── routes_context.py
+│   │   ├── routes_dashboard.py
+│   │   ├── routes_meeting.py
+│   │   ├── routes_memory.py
+│   │   ├── routes_transcript.py
+│   │   └── test_pipeline.py
+│   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   ├── llm_fallback.py
+│   │   ├── lyzr_integration.py
+│   │   ├── rate_limiter.py
+│   │   ├── redis_client.py
+│   │   └── utils.py
+│   │
+│   ├── grpc_bus/
+│   │   ├── __init__.py
+│   │   ├── grpc_bus.proto
+│   │   ├── grpc_bus_pb2.py
+│   │   ├── grpc_bus_pb2_grpc.py
+│   │   └── grpc_server.py
+│   │
 │   ├── memory/
-│   └── grpc_bus/
-│
-├── frontend/
-│
-├── extension/
+│   │   ├── __init__.py
+│   │   ├── embeddings.py
+│   │   ├── qdrant_client.py
+│   │   └── schemas.py
+│   │
+│   ├── scripts/
+│   │   └── reindex.py
+│   │
+│   └── services/
+│       ├── __init__.py
+│       ├── calendar_service.py
+│       ├── gmail_service.py
+│       ├── guardrails.py
+│       └── transcript.py
 │
 ├── docker/
+│   └── kong/
+│       └── kong.yml
 │
-├── assets/
+├── docs/
+│   ├── Architectural Flow Diagram/
+│   │   └── Architectural Flow Diagram.png
+│   └── Product Requirement Document/
+│       └── Product Requirement Document.pdf
 │
+├── extension/
+│   ├── background.js
+│   ├── config.js
+│   ├── content.js
+│   ├── manifest.json
+│   ├── offscreen.html
+│   ├── offscreen.js
+│   │
+│   ├── assets/
+│   │   └── icons/
+│   │       ├── icon16.png
+│   │       ├── icon48.png
+│   │       └── icon128.png
+│   │
+│   ├── styles/
+│   │   └── sidepanel.css
+│   │
+│   └── sidebar-app/
+│       ├── .gitignore
+│       ├── .oxlintrc.json
+│       ├── index.html
+│       ├── package-lock.json
+│       ├── package.json
+│       ├── rewrite.mjs
+│       ├── tsconfig.app.json
+│       ├── tsconfig.json
+│       ├── tsconfig.node.json
+│       ├── vite.config.ts
+│       │
+│       ├── public/
+│       │   ├── favicon.svg
+│       │   └── icons.svg
+│       │
+│       └── src/
+│           ├── App.css
+│           ├── App.tsx
+│           ├── index.css
+│           ├── main.tsx
+│           ├── sidepanel.css
+│           ├── types.ts
+│           │
+│           ├── assets/
+│           │   ├── hero.png
+│           │   ├── react.svg
+│           │   └── vite.svg
+│           │
+│           ├── components/
+│           │   ├── Agents.tsx
+│           │   ├── ContextAgent.tsx
+│           │   ├── ContextAgent.tsx.bak
+│           │   ├── Layout.tsx
+│           │   └── States.tsx
+│           │
+│           ├── hooks/
+│           │   └── useCopilot.ts
+│           │
+│           └── lib/
+│               └── utils.ts
+│
+├── frontend/
+│   ├── .env.local.example
+│   ├── .gitignore
+│   ├── eslint.config.mjs
+│   ├── next.config.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.mjs
+│   ├── tsconfig.json
+│   │
+│   ├── public/
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   └── window.svg
+│   │
+│   └── src/
+│       ├── app/
+│       │   ├── favicon.ico
+│       │   ├── globals.css
+│       │   ├── layout.tsx
+│       │   ├── page.tsx
+│       │   ├── template.tsx
+│       │   ├── context/
+│       │   │   └── page.tsx
+│       │   ├── meetings/
+│       │   │   └── [id]/
+│       │   │       └── page.tsx
+│       │   └── memory/
+│       │       └── page.tsx
+│       │
+│       ├── components/
+│       │   ├── ActionButtons.tsx
+│       │   ├── AnimatedNumber.tsx
+│       │   ├── ContextCard.tsx
+│       │   ├── ContextManager.tsx
+│       │   ├── DeleteDialog.tsx
+│       │   ├── EditDialog.tsx
+│       │   ├── Md3Loading.tsx
+│       │   ├── MeetingCard.tsx
+│       │   ├── SelectableGrid.tsx
+│       │   ├── Topbar.tsx
+│       │   ├── UploadDialog.tsx
+│       │   ├── ViewContentDialog.tsx
+│       │   └── skeletons/
+│       │       ├── CardSkeleton.tsx
+│       │       ├── GridSkeleton.tsx
+│       │       ├── MeetingSkeleton.tsx
+│       │       ├── MemorySkeleton.tsx
+│       │       └── index.ts
+│       │
+│       ├── lib/
+│       │   ├── api.ts
+│       │   └── supabase.ts
+│       │
+│       ├── scripts/
+│       │   └── apply_colors.py
+│       │
+│       └── types/
+│           ├── index.ts
+│           └── mdwc.d.ts
+│
+├── supabase/
+│   └── .temp/
+│       ├── gotrue-version
+│       ├── linked-project.json
+│       ├── pooler-url
+│       ├── postgres-version
+│       ├── project-ref
+│       ├── rest-version
+│       ├── storage-migration
+│       └── storage-version
+│
+├── .gitignore
+├── docker-compose.yml
+├── package.json
+├── package-lock.json
 └── README.md
 ```
 
@@ -456,33 +656,26 @@ cd MeetMaxxing
 ## Install Backend Dependencies
 
 ```bash
+npm install
+```
+
+```bash
+cd backend
+```
+
+```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-## Start Docker Services
-
-```bash
-docker compose up
-```
-
+---
 ---
 
-## Start Backend
+## Start all services with 
 
 ```bash
-uvicorn app.main:app --reload
-```
-
----
-
-## Start Frontend
-
-```bash
-npm install
-
-npm run dev
+npm restart
 ```
 
 ---
