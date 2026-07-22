@@ -41,18 +41,6 @@ Rather than being just another meeting summarizer, MeetMaxxing showcases how mul
 
 ---
 
-# 🎥 Demo
-
-<p align="left">
-
-<!-- google drive link -->
-<a href="https://drive.google.com/drive/folders/1Vc8LdWhR6ylptFT4KuSFU3WJ3btpmq-9">
-</a>
-
-</p>
-
----
-
 # Why MeetMaxxing?
 
 Unlike conventional AI meeting assistants that rely on a single large language model prompt, MeetMaxxing adopts a **collaborative multi-agent design**.
@@ -181,7 +169,7 @@ One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to
 Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
 
 <p align="center">
-  <img width="900" height="1000" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
+  <img width="600" height="600" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
 </p>
 
 This architecture allows:
