@@ -4,14 +4,18 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   RiFolderOpenFill, RiDeleteBinLine, RiRefreshLine, 
   RiUploadCloud2Line, RiSearchLine, RiCloseLine, RiEditLine,
-  RiFilePdfLine, RiFileWordLine, RiFileTextLine, RiEyeLine, RiFileLine
+  RiFilePdfLine, RiFileWordLine, RiFileTextLine, RiEyeLine, RiFileLine, RiCheckLine, RiMoreLine,
+  RiArrowDropDownLine
 } from "@remixicon/react";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+
 import DeleteDialog from "@/components/DeleteDialog";
 import EditDialog from "@/components/EditDialog";
 import UploadDialog from "@/components/UploadDialog";
 import ViewContentDialog from "@/components/ViewContentDialog";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import { SelectableGrid } from "@/components/SelectableGrid";
+import ContextCard from "@/components/ContextCard";
+import { GridSkeleton } from "@/components/skeletons";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
@@ -93,6 +97,27 @@ export default function ContextManagerPage() {
   }, [search, sortBy, files]);
 
   // Handlers
+  const handleMultiDelete = async (selectedFiles: ContextFile[]) => {
+    try {
+      const promises = selectedFiles.map(file => 
+        fetch(`${BACKEND_URL}/context/clear_file`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer dev_token"
+          },
+          body: JSON.stringify({ meeting_id: file.meeting_id, filename: file.filename })
+        })
+      );
+      await Promise.all(promises);
+      
+      const toDelete = new Set(selectedFiles.map(f => `${f.meeting_id}-${f.filename}`));
+      setFiles(prev => prev.filter(f => !toDelete.has(`${f.meeting_id}-${f.filename}`)));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleteBusy(true);
@@ -206,7 +231,7 @@ export default function ContextManagerPage() {
                 Global Knowledge Base
               </div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text leading-tight">
-                AI Context
+                Context
                 <span className="bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent"> Manager</span>
               </h1>
               <p className="text-[14px] text-text-muted max-w-md leading-relaxed">
@@ -216,15 +241,23 @@ export default function ContextManagerPage() {
 
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex flex-col items-center justify-center w-24 h-20 rounded-[20px] bg-surface2 border border-border">
-                <span className="text-2xl font-bold text-text">
-                  <AnimatedNumber value={loading ? 0 : files.length} />
-                </span>
+                {loading ? (
+                  <div className="w-8 h-8 rounded-md md3-skeleton mb-1" />
+                ) : (
+                  <span className="text-2xl font-bold text-text">
+                    <AnimatedNumber value={files.length} />
+                  </span>
+                )}
                 <span className="text-[10px] text-text-muted font-medium mt-1">Files</span>
               </div>
               <div className="flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border">
-                <span className="text-xl font-bold text-text">
-                  <AnimatedNumber value={loading ? 0 : totalSizeKB} formatFn={(v) => `${(v/1024).toFixed(1)}MB`} />
-                </span>
+                {loading ? (
+                  <div className="w-12 h-8 rounded-md md3-skeleton mb-1" />
+                ) : (
+                  <span className="text-xl font-bold text-text">
+                    <AnimatedNumber value={totalSizeKB} formatFn={(v) => `${(v/1024).toFixed(1)}MB`} />
+                  </span>
+                )}
                 <span className="text-[10px] text-text-muted font-medium mt-1">Total Size</span>
               </div>
               <button 
@@ -240,58 +273,8 @@ export default function ContextManagerPage() {
 
         {/* List Section */}
         <section className="flex flex-col gap-5 mt-2">
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
-              <RiFileLine className="w-5 h-5 text-text-muted" />
-              Uploaded Contexts
-              {!loading && files.length > 0 && (
-                <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
-                  {filtered.length}
-                </span>
-              )}
-            </h2>
-
-            <div className="flex items-center gap-3">
-              <select 
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "date" | "name" | "size")}
-                className="h-10 bg-surface2 border border-border rounded-full px-4 text-[13px] text-text font-medium focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none"
-              >
-                <option value="date">Sort by Date</option>
-                <option value="name">Sort by Name</option>
-                <option value="size">Sort by Size</option>
-              </select>
-
-              <div className="relative">
-                <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search files…"
-                  className="h-10 w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
-                  >
-                    <RiCloseLine className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Grid */}
           <div className="min-h-[280px]">
-            {loading ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-5 rounded-[24px] border border-dashed border-border bg-surface-dim">
-                <Md3LoadingIndicator size="lg" />
-                <p className="text-[13px] text-text-muted font-medium">Loading context files…</p>
-              </div>
-            ) : error ? (
+            {error ? (
               <div className="h-72 flex flex-col items-center justify-center gap-4 rounded-[24px] border border-risk/30 bg-risk-container/20 text-center p-6">
                 <div className="w-14 h-14 rounded-full bg-risk-container flex items-center justify-center">
                   <RiCloseLine className="w-7 h-7 text-risk" />
@@ -304,7 +287,7 @@ export default function ContextManagerPage() {
                   Retry
                 </button>
               </div>
-            ) : filtered.length === 0 ? (
+            ) : !loading && filtered.length === 0 ? (
               <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-border bg-surface-dim text-center p-6">
                 <div className="w-16 h-16 rounded-[20px] bg-surface2 border border-border flex items-center justify-center mb-1">
                   <RiFolderOpenFill className="w-8 h-8 text-text-muted" />
@@ -327,59 +310,90 @@ export default function ContextManagerPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filtered.map((f, i) => (
-                  <div 
-                    key={`${f.meeting_id}-${f.filename}`} 
-                    className="flex flex-col gap-3 p-4 rounded-[20px] bg-surface-container border border-border hover:border-primary/30 transition-all shadow-sm animate-slide-up"
-                    style={{ animationDelay: `${(i % 10) * 40}ms` }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-surface2 border border-border flex items-center justify-center shrink-0">
-                        {getFileIcon(f.filename)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button 
-                          onClick={() => setViewTarget(f)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full bg-surface2 hover:bg-surface3 text-text-muted hover:text-text transition-colors"
-                          title="View Content"
+              <div className="flex flex-col gap-8">
+                <SelectableGrid<ContextFile>
+                  storeKey="context-manager"
+                  itemTypeName="File"
+                  items={filtered}
+                  loading={loading}
+                  skeletonCount={6}
+                  getKey={(f) => `${f.meeting_id}-${f.filename}`}
+                  getDate={(f) => new Date(f.date)}
+                  onDelete={handleMultiDelete}
+                  renderHeader={({ setManualSelectionMode }) => (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                      <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
+                        <RiFileLine className="w-5 h-5 text-text-muted" />
+                        Uploaded Contexts
+                        <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
+                          {filtered.length}
+                        </span>
+                      </h2>
+
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex items-center">
+                          <select 
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as "date" | "name" | "size")}
+                            className="w-[140px] h-9 bg-surface2 border border-border rounded-full pl-4 pr-8 text-[13px] text-text font-medium focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none"
+                          >
+                            <option value="date">Sort by Date</option>
+                            <option value="name">Sort by Name</option>
+                            <option value="size">Sort by Size</option>
+                          </select>
+                      <RiArrowDropDownLine className="absolute right-2.5 w-8 h-8 text-text-muted pointer-events-none" />                        </div>
+
+                        <button
+                          onClick={() => setManualSelectionMode(true)}
+                          className="h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:scale-95 flex items-center gap-2"
                         >
-                          <RiEyeLine className="w-4 h-4" />
+                          <RiCheckLine className="w-4 h-4" />
+                          Select
                         </button>
-                        <button 
-                          onClick={() => setEditTarget(f)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full bg-surface2 hover:bg-surface3 text-text-muted hover:text-text transition-colors"
-                          title="Rename File"
-                        >
-                          <RiEditLine className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setDeleteTarget(f)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full bg-risk/5 hover:bg-risk/10 text-text-muted hover:text-risk transition-colors"
-                          title="Delete File"
-                        >
-                          <RiDeleteBinLine className="w-4 h-4" />
-                        </button>
+
+                        <div className="relative">
+                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                          <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search files…"
+                            className="h-9 w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
+                          />
+                          {search && (
+                            <button
+                              onClick={() => setSearch("")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
+                            >
+                              <RiCloseLine className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col mt-1 cursor-pointer group" onClick={() => setViewTarget(f)}>
-                      <h3 className="font-bold text-text text-[14px] truncate group-hover:text-primary transition-colors" title={f.filename}>{f.filename}</h3>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[11.5px] font-medium text-text-muted bg-surface2 px-2 py-0.5 rounded-md border border-border">
-                          {((f.chunks * 1.2) / 1024).toFixed(2)} MB
-                        </span>
-                        <span className="text-[11.5px] text-text-muted">
-                          {f.date}
-                        </span>
-                        {f.meeting_id !== "global" && (
-                          <span className="text-[10px] uppercase font-bold text-primary ml-auto">
-                            Meeting
-                          </span>
-                        )}
-                      </div>
+                  )}
+                  renderItem={(f, selected, selectionMode, onToggle) => (
+                    <div 
+                      className={`transition-transform duration-300 ${selected ? "scale-95 opacity-80" : "scale-100 opacity-100"}`}
+                      onClick={(e) => {
+                        if (selectionMode) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onToggle();
+                        }
+                      }}
+                    >
+                      <ContextCard
+                        file={f}
+                        index={0}
+                        onView={setViewTarget}
+                        onEdit={setEditTarget}
+                        onDelete={setDeleteTarget}
+                        onSelect={() => onToggle()}
+                      />
                     </div>
-                  </div>
-                ))}
+                  )}
+                />
               </div>
             )}
           </div>

@@ -44,6 +44,11 @@ class MemoryTableQuery:
         self._filters.append((column, value))
         return self
 
+    def like(self, column: str, pattern: str):
+        val = pattern.replace("%", "")
+        self._filters.append((column, val))
+        return self
+
     def order(self, column: str, desc: bool = False):
         self._order_col = column
         self._order_desc = desc

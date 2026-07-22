@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { fetchMeetings, deleteMeeting, updateMeeting } from "@/lib/api";
 import { format, isToday, isYesterday } from "date-fns";
 import {
@@ -10,22 +10,26 @@ import {
   RiSparklingLine,
   RiCloseLine,
   RiShieldCheckLine,
+  RiCheckLine,
+  RiArrowDropDownLine,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+
 
 import DeleteDialog from "@/components/DeleteDialog";
 import EditDialog from "@/components/EditDialog";
 import MeetingCard from "@/components/MeetingCard";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import { SelectableGrid } from "@/components/SelectableGrid";
+import { GridSkeleton } from "@/components/skeletons";
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [filtered, setFiltered] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "name" | "duration">("date");
 
   // Dialogs
   const [deleteTarget, setDeleteTarget] = useState<Meeting | null>(null);
@@ -39,7 +43,6 @@ export default function Dashboard() {
       .then((data) => {
         const list: Meeting[] = Array.isArray(data) ? data : data.meetings || [];
         setMeetings(list);
-        setFiltered(list);
       })
       .catch((err) => setError(err.message || "Failed to load meetings"))
       .finally(() => setLoading(false));
@@ -50,22 +53,44 @@ export default function Dashboard() {
     load();
   }, []);
 
-  // Search filter
-  useEffect(() => {
+  // Filter & Sort
+  const filtered = useMemo(() => {
+    let result = [...meetings];
     const q = search.toLowerCase();
-    // eslint-disable-next-line
-    setFiltered(
-      q
-        ? meetings.filter(
-            (m) =>
-              (m.title || "").toLowerCase().includes(q) ||
-              (m.summary || "").toLowerCase().includes(q)
-          )
-        : meetings
-    );
-  }, [search, meetings]);
+    if (q) {
+      result = result.filter(
+        (m) =>
+          (m.title || "").toLowerCase().includes(q) ||
+          (m.summary || "").toLowerCase().includes(q)
+      );
+    }
+    result.sort((a, b) => {
+      if (sortBy === "name") {
+        return (a.title || "").localeCompare(b.title || "");
+      } else if (sortBy === "duration") {
+        const durA = a.start_at && a.end_at ? new Date(a.end_at).getTime() - new Date(a.start_at).getTime() : 0;
+        const durB = b.start_at && b.end_at ? new Date(b.end_at).getTime() - new Date(b.start_at).getTime() : 0;
+        return durB - durA;
+      } else {
+        const dateA = a.start_at ? new Date(a.start_at).getTime() : 0;
+        const dateB = b.start_at ? new Date(b.start_at).getTime() : 0;
+        return dateB - dateA;
+      }
+    });
+    return result;
+  }, [search, sortBy, meetings]);
 
-  // Delete handler
+  // Multi-delete handler
+  const handleMultiDelete = async (selectedMeetings: Meeting[]) => {
+    try {
+      await Promise.all(selectedMeetings.map(m => deleteMeeting(m.id, "dev_token")));
+      setMeetings(prev => prev.filter(m => !selectedMeetings.some(s => s.id === m.id)));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Single delete handler
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleteBusy(true);
@@ -141,15 +166,23 @@ export default function Dashboard() {
             {/* Mini stats */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex flex-col items-center justify-center w-24 h-20 rounded-[20px] bg-surface2 border border-border">
-                <span className="text-2xl font-bold text-text">
-                  <AnimatedNumber value={loading ? 0 : meetings.length} />
-                </span>
+                {loading ? (
+                  <div className="w-8 h-8 rounded-md md3-skeleton mb-1" />
+                ) : (
+                  <span className="text-2xl font-bold text-text">
+                    <AnimatedNumber value={meetings.length} />
+                  </span>
+                )}
                 <span className="text-[10px] text-text-muted font-medium mt-1">Meetings</span>
               </div>
               <div className="flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border">
-                <span className="text-xl font-bold text-text">
-                  <AnimatedNumber value={loading ? 0 : totalMinutes} formatFn={formatTime} />
-                </span>
+                {loading ? (
+                  <div className="w-12 h-8 rounded-md md3-skeleton mb-1" />
+                ) : (
+                  <span className="text-xl font-bold text-text">
+                    <AnimatedNumber value={totalMinutes} formatFn={formatTime} />
+                  </span>
+                )}
                 <span className="text-[10px] text-text-muted font-medium mt-1">Recorded</span>
               </div>
               <div className="relative flex flex-col items-center justify-center w-24 h-20 rounded-[20px] bg-primary-container/20 border border-primary/20 overflow-hidden group">
@@ -169,47 +202,8 @@ export default function Dashboard() {
 
         {/* ── Meetings list ───────────────────────────────────────────────── */}
         <section className="flex flex-col gap-5 mt-2">
-          {/* Section header */}
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
-              <RiTimeLine className="w-5 h-5 text-text-muted" />
-              Recent Meetings
-              {!loading && meetings.length > 0 && (
-                <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
-                  {filtered.length}
-                </span>
-              )}
-            </h2>
-
-            {/* Search */}
-            <div className="relative">
-              <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search meetings…"
-                className="h-10 w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
-                >
-                  <RiCloseLine className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* States */}
           <div className="min-h-[280px]">
-            {loading ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-5 rounded-[24px] border border-dashed border-border bg-surface-dim">
-                <Md3LoadingIndicator size="lg" />
-                <p className="text-[13px] text-text-muted font-medium">Loading your meetings…</p>
-              </div>
-            ) : error ? (
+            {error ? (
               <div className="h-72 flex flex-col items-center justify-center gap-4 rounded-[24px] border border-risk/30 bg-risk-container/20 text-center p-6">
                 <div className="w-14 h-14 rounded-full bg-risk-container flex items-center justify-center">
                   <RiCloseLine className="w-7 h-7 text-risk" />
@@ -222,7 +216,7 @@ export default function Dashboard() {
                   Retry
                 </button>
               </div>
-            ) : filtered.length === 0 ? (
+            ) : !loading && filtered.length === 0 ? (
               <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-border bg-surface-dim text-center p-6">
                 <div className="w-16 h-16 rounded-[20px] bg-surface2 border border-border flex items-center justify-center mb-1">
                   <RiVideoChatLine className="w-8 h-8 text-text-muted" />
@@ -238,72 +232,89 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="flex flex-col gap-8">
-                {(() => {
-                  const today: Meeting[] = [];
-                  const yesterday: Meeting[] = [];
-                  const older: Record<string, Meeting[]> = {};
-                  const order: string[] = [];
+                <SelectableGrid<Meeting>
+                  storeKey="dashboard"
+                  itemTypeName="Meeting"
+                  items={filtered}
+                  loading={loading}
+                  skeletonCount={6}
+                  getKey={(m) => m.id}
+                  getDate={(m) => (m.start_at ? new Date(m.start_at) : new Date())}
+                  onDelete={handleMultiDelete}
+                  renderHeader={({ setManualSelectionMode }) => (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                      <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
+                        <RiTimeLine className="w-5 h-5 text-text-muted" />
+                        Recent Meetings
+                        <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
+                          {filtered.length}
+                        </span>
+                      </h2>
 
-                  const sortedFiltered = [...filtered].sort((a, b) => {
-                    const dateA = a.start_at ? new Date(a.start_at).getTime() : 0;
-                    const dateB = b.start_at ? new Date(b.start_at).getTime() : 0;
-                    return dateB - dateA;
-                  });
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex items-center">
+                          <select 
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as "date" | "name" | "duration")}
+                            className="w-[140px] h-9 bg-surface2 border border-border rounded-full pl-4 pr-8 text-[13px] text-text font-medium focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none"
+                          >
+                            <option value="date">Sort by Date</option>
+                            <option value="name">Sort by Name</option>
+                            <option value="duration">Sort by Duration</option>
+                          </select>
+                          <RiArrowDropDownLine className="absolute right-2.5 w-8 h-8 text-text-muted pointer-events-none" />
+                        </div>
 
-                  sortedFiltered.forEach(m => {
-                    const d = m.start_at ? new Date(m.start_at) : new Date();
-                    if (isToday(d)) {
-                      today.push(m);
-                    } else if (isYesterday(d)) {
-                      yesterday.push(m);
-                    } else {
-                      const dateStr = format(d, "MMMM d, yyyy");
-                      if (!older[dateStr]) {
-                        older[dateStr] = [];
-                        order.push(dateStr);
-                      }
-                      older[dateStr].push(m);
-                    }
-                  });
+                        <button
+                          onClick={() => setManualSelectionMode(true)}
+                          className="h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:scale-95 flex items-center gap-2"
+                        >
+                          <RiCheckLine className="w-4 h-4" />
+                          Select
+                        </button>
 
-                  let globalIdx = 0;
-                  
-                  const renderGroup = (title: string, list: Meeting[]) => {
-                    if (!list.length) return null;
-                    return (
-                      <div key={title} className="flex flex-col gap-4">
-                        <h3 className="text-[13px] font-bold text-text-muted tracking-wider">{title}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {list.map((meeting) => {
-                            const currentIdx = globalIdx++;
-                            return (
-                              <div
-                                key={meeting.id}
-                                className="animate-slide-up"
-                                style={{ animationDelay: `${(currentIdx % 10) * 40}ms` }}
-                              >
-                                <MeetingCard
-                                  meeting={meeting}
-                                  index={currentIdx}
-                                  onDelete={setDeleteTarget}
-                                  onEdit={setEditTarget}
-                                />
-                              </div>
-                            );
-                          })}
+                        <div className="relative">
+                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                          <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search meetings…"
+                            className="h-9 w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
+                          />
+                          {search && (
+                            <button
+                              onClick={() => setSearch("")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
+                            >
+                              <RiCloseLine className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
-                    );
-                  };
-
-                  return (
-                    <>
-                      {renderGroup("Today", today)}
-                      {renderGroup("Yesterday", yesterday)}
-                      {order.map(dateStr => renderGroup(dateStr, older[dateStr]))}
-                    </>
-                  );
-                })()}
+                    </div>
+                  )}
+                  renderItem={(meeting, selected, selectionMode, onToggle) => (
+                    <div 
+                      className={`transition-transform duration-300 ${selected ? "scale-95 opacity-80" : "scale-100 opacity-100"}`}
+                      onClick={(e) => {
+                        if (selectionMode) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onToggle();
+                        }
+                      }}
+                    >
+                      <MeetingCard
+                        meeting={meeting}
+                        index={0}
+                        onDelete={setDeleteTarget}
+                        onEdit={setEditTarget}
+                        onSelect={() => onToggle()}
+                      />
+                    </div>
+                  )}
+                />
               </div>
             )}
           </div>

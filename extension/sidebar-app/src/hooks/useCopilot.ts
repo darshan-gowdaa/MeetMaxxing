@@ -210,8 +210,15 @@ export function useCopilot() {
     }
   };
 
+  const clearTranscript = () => {
+    setTranscriptLines([]);
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      chrome.storage.local.set({ transcript: [] });
+    }
+  };
+
   return {
     meetingId, meetingTitle, isEnded, transcriptLines, suggestions, nextQuestion, recap,
-    errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction
+    errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction, clearTranscript
   };
 }

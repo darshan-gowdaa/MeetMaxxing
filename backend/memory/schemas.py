@@ -58,6 +58,7 @@ class MemoryFilter:
     user_id: str | None = None
     meeting_id: str | list[str] | None = None
     speaker_id: str | None = None
+    speaker_name: str | list[str] | None = None
     topic: str = ""
     query_text: str = ""
     memory_type: MemoryType | None = None

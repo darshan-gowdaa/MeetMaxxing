@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { queryMemory } from "@/lib/api";
 import type { Meeting, MemoryResult } from "@/types";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { MemorySkeleton } from "@/components/skeletons";
 import {
   RiBrainLine,
   RiSearchLine,
@@ -36,6 +36,7 @@ export default function MemoryPage() {
   const [loading, setLoading] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>(EXAMPLE_QUERIES);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
   useEffect(() => {
     import("@/lib/api").then(({ fetchMeetings }) => {
@@ -54,7 +55,8 @@ export default function MemoryPage() {
             setSuggestions(dynamicQueries);
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setLoadingSuggestions(false));
     });
   }, []);
 
@@ -143,30 +145,36 @@ export default function MemoryPage() {
 
         {/* ── Example queries (idle) ─────────────────────────────────── */}
         {!result && !loading && (
-          <div className="flex flex-col gap-3 animate-slide-up">
+          <div className="flex flex-col gap-3">
             <p className="text-[11px] font-bold uppercase tracking-widest text-text-muted flex items-center gap-1.5">
               <RiSparklingLine className="w-3 h-3 text-tertiary" />
               Suggested queries
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {suggestions.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => handleQuery(q)}
-                  className="group bg-surface-container hover:bg-surface2 border border-border hover:border-primary/40 rounded-2xl px-4 py-3.5 text-[13px] text-left text-text-muted hover:text-text spring-colors flex items-center justify-between gap-3"
-                >
-                  <span className="line-clamp-2 leading-relaxed">{q}</span>
-                  <RiArrowRightLine className="w-4 h-4 shrink-0 text-text-muted group-hover:text-primary spring-colors" />
-                </button>
-              ))}
+              {loadingSuggestions ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-[68px] rounded-2xl md3-skeleton" />
+                ))
+              ) : (
+                suggestions.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => handleQuery(q)}
+                    className="group bg-surface-container hover:bg-surface2 border border-border hover:border-primary/40 rounded-2xl px-4 py-3.5 text-[13px] text-left text-text-muted hover:text-text spring-colors flex items-center justify-between gap-3 h-[68px]"
+                  >
+                    <span className="line-clamp-2 leading-relaxed">{q}</span>
+                    <RiArrowRightLine className="w-4 h-4 shrink-0 text-text-muted group-hover:text-primary spring-colors" />
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
 
         {/* ── Loading ────────────────────────────────────────────────────── */}
         {loading && (
-          <div className="flex flex-col items-center justify-center gap-5 rounded-[28px] border border-dashed border-border bg-surface-dim py-16 animate-fade-scale">
-            <Md3LoadingIndicator size="lg" />
+          <div className="flex flex-col items-center justify-center gap-5 pt-8 animate-fade-scale">
+            <MemorySkeleton />
             <div className="text-center">
               <p className="text-[14px] font-semibold text-text">Scanning semantic embeddings…</p>
               <p className="text-[12px] text-text-muted mt-1">Synthesizing answer with Gemini</p>
@@ -176,7 +184,7 @@ export default function MemoryPage() {
 
         {/* ── Result ─────────────────────────────────────────────────────── */}
         {result && !loading && (
-          <div className="flex flex-col gap-4 animate-slide-up">
+          <div className="flex flex-col gap-4">
 
             {/* Answer card */}
             <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden shadow-xl">

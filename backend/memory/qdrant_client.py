@@ -180,6 +180,21 @@ async def search_memories(
                 match=qmodels.MatchValue(value=memory_filter.speaker_id),
             )
         )
+    if memory_filter.speaker_name:
+        if isinstance(memory_filter.speaker_name, list):
+            must_conditions.append(
+                qmodels.FieldCondition(
+                    key="speaker_name",
+                    match=qmodels.MatchAny(any=memory_filter.speaker_name),
+                )
+            )
+        else:
+            must_conditions.append(
+                qmodels.FieldCondition(
+                    key="speaker_name",
+                    match=qmodels.MatchValue(value=memory_filter.speaker_name),
+                )
+            )
     if memory_filter.memory_type:
         must_conditions.append(
             qmodels.FieldCondition(

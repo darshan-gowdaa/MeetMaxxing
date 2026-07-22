@@ -587,10 +587,10 @@ main::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
   color: white;
   border-color: rgba(168,199,250,0.2);
   box-shadow: 0 4px 20px rgba(8,66,160,0.4), 0 1px 0 rgba(255,255,255,0.05) inset;
-  font-size: 14px !important;
+  font-size: 13px !important;
   font-weight: 700;
-  padding: 14px 20px;
-  border-radius: 16px;
+  padding: 10px 16px;
+  border-radius: 14px;
 }
 .btn-cta:hover:not(:disabled) {
   background: linear-gradient(135deg, #0a4fc2 0%, #1e66d4 100%);

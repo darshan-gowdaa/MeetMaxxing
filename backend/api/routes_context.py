@@ -74,25 +74,38 @@ async def upload_context(
 class ContextChatRequest(BaseModel):
     meeting_id: str
     query: str
+    target_file: list[str] | str | None = None
 
 @router.post("/chat")
 async def chat_context(
     req: ContextChatRequest,
     user: dict = Depends(get_current_user)
 ):
+    from ..agents.docs_qa_agent import run_docs_qa_agent
     from ..agents.memory_agent import run_memory_agent
     try:
-        res = await run_memory_agent(
-            question=req.query,
-            org_id=user["org_id"],
-            user_id=user["user_id"],
-            filters={
-                "meeting_id": [req.meeting_id, "global"],
-                "topic": "uploaded_context",
-                "memory_type": "key_topic"
-            }
-        )
-        return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Memory Agent")}
+        if req.target_file:
+            res = await run_docs_qa_agent(
+                question=req.query,
+                org_id=user["org_id"],
+                user_id=user["user_id"],
+                filters={
+                    "meeting_id": req.meeting_id,
+                    "speaker_name": req.target_file,
+                }
+            )
+            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Docs QA Agent"), "sources": res.get("sources", [])}
+        else:
+            res = await run_memory_agent(
+                question=req.query,
+                org_id=user["org_id"],
+                user_id=user["user_id"],
+                filters={
+                    "meeting_id": [req.meeting_id, "global"],
+                    "memory_type": "key_topic"
+                }
+            )
+            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Memory Agent"), "sources": res.get("sources", [])}
     except Exception as e:
         return {"answer": f"Error generating answer: {str(e)}"}
 

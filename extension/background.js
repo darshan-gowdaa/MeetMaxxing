@@ -171,8 +171,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const now = Date.now();
       const existing = meetCode ? meetCodeMap[meetCode] : null;
 
-      // Reuse meeting if within 2 hours (7,200,000 ms) instead of 12 hours
-      if (existing && existing.id && (now - existing.timestamp < 7200000)) {
+      // Always reuse existing meeting for the same meet code if within 12 hours
+      if (existing && existing.id && (now - existing.timestamp < 43200000)) {
         activeMeetingId = existing.id;
         console.log(`[MeetMaxxing Background] Reusing meeting ${activeMeetingId} for code ${meetCode}`);
         
@@ -320,6 +320,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     stopTabCapture();
     if (ws) { try { ws.close(); } catch (e) {} ws = null; }
     const meetingIdToEnd = activeMeetingId || msg.meetingId;
+    if (!meetingIdToEnd) {
+      sendResponse({ success: true });
+      return false;
+    }
 
     const finishEnd = () => {
       activeMeetingId = null;
@@ -329,7 +333,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       sendResponse({ success: true });
     };
 
-    if (meetingIdToEnd) {
+    if (activeMeetingId) {
+      activeMeetingId = null; // Clear immediately to prevent re-entry
       fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },

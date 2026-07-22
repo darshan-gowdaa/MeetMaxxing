@@ -57,10 +57,12 @@ async def get_meeting_detail(
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
 
+    target_id = meeting["id"]
+
     actions = (
         supabase.table("action_items")
         .select("*")
-        .eq("meeting_id", meeting_id)
+        .eq("meeting_id", target_id)
         .order("priority", desc=True)
         .execute()
     )
@@ -137,15 +139,18 @@ async def delete_meeting(
 ):
     """Delete a meeting and its associated records."""
     supabase = get_supabase_admin()
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    target_id = meeting["id"] if meeting else meeting_id
+
     # Delete associated action items first (if no cascade in DB)
-    supabase.table("action_items").delete().eq("meeting_id", meeting_id).eq("org_id", user["org_id"]).execute()
+    supabase.table("action_items").delete().eq("meeting_id", target_id).eq("org_id", user["org_id"]).execute()
     # Delete meeting
-    result = supabase.table("meetings").delete().eq("id", meeting_id).eq("org_id", user["org_id"]).execute()
+    result = supabase.table("meetings").delete().eq("id", target_id).eq("org_id", user["org_id"]).execute()
     
     # Delete associated memories from Qdrant
     try:
         from ..memory.qdrant_client import delete_meeting_memories
-        await delete_meeting_memories(meeting_id, user["org_id"])
+        await delete_meeting_memories(target_id, user["org_id"])
     except Exception as e:
         import logging
         logging.warning(f"Could not delete memories from Qdrant: {e}")

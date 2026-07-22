@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useCallback } from "react";
 import Link from "next/link";
 import { fetchMeeting, updateActionItem } from "@/lib/api";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { MeetingSkeleton } from "@/components/skeletons";
 import { format } from "date-fns";
 import {
   RiArrowLeftLine as ArrowLeft,
@@ -157,14 +157,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
   // ── Loading fullscreen ───────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="min-h-screen bg-bg flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center gap-5">
-          <Md3LoadingIndicator size="lg" />
-          <p className="text-[13px] text-text-muted font-medium">Loading meeting data…</p>
-        </div>
-      </div>
-    );
+    return <MeetingSkeleton />;
   }
 
   // ── Processing / Not Found state ────────────────────────────────────────

@@ -273,9 +273,9 @@ body {
 .md3-skeleton {
   background: linear-gradient(
     90deg,
-    var(--surface-container)      25%,
-    var(--surface-container-high) 50%,
-    var(--surface-container)      75%
+    var(--surface-container) 35%,
+    color-mix(in srgb, var(--surface-container-high) 40%, var(--surface-container)) 50%,
+    var(--surface-container) 65%
   );
   background-size: 200% 100%;
   animation: md3-shimmer 1.5s ease-in-out infinite;

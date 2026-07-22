@@ -97,8 +97,19 @@ async def _run_end_pipeline(
             utterances = await get_full_transcript(google_code)
         if not utterances and target_id:
             utterances = await get_full_transcript(target_id)
-        if not utterances and meeting_row and meeting_row.get("transcript_data"):
-            utterances = meeting_row["transcript_data"]
+            
+        old_utterances = meeting_row.get("transcript_data") if meeting_row and meeting_row.get("transcript_data") else []
+        
+        if utterances and old_utterances:
+            seen_ids = {u.get("id") for u in old_utterances if u.get("id")}
+            merged = list(old_utterances)
+            for u in utterances:
+                if u.get("id") and u.get("id") not in seen_ids:
+                    merged.append(u)
+                    seen_ids.add(u.get("id"))
+            utterances = merged
+        elif not utterances and old_utterances:
+            utterances = old_utterances
 
         # Prefer AI cleaned transcripts (source="audio"). Keep DOM transcripts only if no AI chunk exists for that timestamp.
         if utterances:
@@ -242,7 +253,7 @@ async def _run_end_pipeline(
             if not calendar_token or not calendar_token.get("access_token"):
                 supabase.table("meetings").update(
                     {"scheduling_result": {"status": "skipped", "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders."}}
-                ).eq("id", meeting_id).execute()
+                ).eq("id", target_id or meeting_id).execute()
             else:
                 schedule_result = await dispatch(AgentTrigger.SCHEDULE_FOLLOWUP, {
                     "summary_output": final_summary,
@@ -252,7 +263,7 @@ async def _run_end_pipeline(
                 })
                 supabase.table("meetings").update(
                     {"scheduling_result": schedule_result}
-                ).eq("id", meeting_id).execute()
+                ).eq("id", target_id or meeting_id).execute()
 
             # send notifications
             slack_result = await dispatch(AgentTrigger.SEND_SLACK, {
@@ -279,7 +290,7 @@ async def _run_end_pipeline(
                         "email_result": email_result,
                         "slack_result": slack_result
                     }
-                ).eq("id", meeting_id).execute()
+                ).eq("id", target_id or meeting_id).execute()
             except Exception as e:
                 import logging
                 logging.warning(f"Could not persist email/slack results: {e}")

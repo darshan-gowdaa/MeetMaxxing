@@ -1,31 +1,39 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { format } from "date-fns";
 import {
-  RiCalendarLine,
+  RiFilePdfLine,
+  RiFileWordLine,
+  RiFileTextLine,
   RiMoreLine,
   RiEditLine,
   RiDeleteBinLine,
-  RiGroupLine,
-  RiArrowRightLine,
+  RiEyeLine,
   RiCheckLine,
+  RiArrowRightLine,
 } from "@remixicon/react";
-import type { Meeting } from "@/types";
 
-export default function MeetingCard({
-  meeting,
+export type ContextFile = {
+  meeting_id: string;
+  filename: string;
+  chunks: number;
+  date: string;
+};
+
+export default function ContextCard({
+  file,
   index,
-  onDelete,
+  onView,
   onEdit,
+  onDelete,
   onSelect,
 }: {
-  meeting: Meeting;
+  file: ContextFile;
   index: number;
-  onDelete: (m: Meeting) => void;
-  onEdit: (m: Meeting) => void;
-  onSelect?: (m: Meeting) => void;
+  onView: (f: ContextFile) => void;
+  onEdit: (f: ContextFile) => void;
+  onDelete: (f: ContextFile) => void;
+  onSelect?: (f: ContextFile) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,6 +57,13 @@ export default function MeetingCard({
   ];
   const variant = colorVariants[index % colorVariants.length];
 
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split(".").pop()?.toLowerCase();
+    if (ext === "pdf") return <RiFilePdfLine className="w-3.5 h-3.5 text-red-400" />;
+    if (ext === "docx") return <RiFileWordLine className="w-3.5 h-3.5 text-blue-400" />;
+    return <RiFileTextLine className="w-3.5 h-3.5 text-primary" />;
+  };
+
   return (
     <div className={`group relative rounded-[24px] border spring flex flex-col h-[220px] overflow-visible ${variant}`}>
       {/* Top glow accent */}
@@ -57,34 +72,56 @@ export default function MeetingCard({
       {/* 3-Dots Menu (Top Right) */}
       <div className="absolute top-4 right-4 z-20" ref={menuRef}>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen((o) => !o); }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen((o) => !o);
+          }}
           className="w-8 h-8 rounded-full bg-surface2 hover:bg-surface3 flex items-center justify-center spring-colors border border-border shadow-sm"
-          aria-label="Meeting options"
+          aria-label="File options"
         >
           <RiMoreLine className="w-4 h-4 text-text-muted" />
         </button>
 
         {menuOpen && (
-          <div className="absolute top-full right-0 mt-2 w-44 bg-surface-highest rounded-[16px] border border-border shadow-2xl animate-fade-scale overflow-hidden">
+          <div className="absolute top-full right-0 mt-2 w-44 bg-surface-highest rounded-[16px] border border-border shadow-2xl animate-fade-scale overflow-hidden z-30">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen(false);
+                onView(file);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] font-medium text-text hover:bg-surface3 spring-colors"
+            >
+              <RiEyeLine className="w-4 h-4 text-primary" />
+              View
+            </button>
             {onSelect && (
               <>
+                <div className="h-px bg-border mx-3" />
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setMenuOpen(false);
-                    onSelect(meeting);
+                    onSelect(file);
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] font-medium text-text hover:bg-surface3 spring-colors"
                 >
                   <RiCheckLine className="w-4 h-4 text-primary" />
                   Select
                 </button>
-                <div className="h-px bg-border mx-3" />
               </>
             )}
+            <div className="h-px bg-border mx-3" />
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); setTimeout(() => onEdit(meeting), 10); }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen(false);
+                setTimeout(() => onEdit(file), 10);
+              }}
               className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] font-medium text-text hover:bg-surface3 spring-colors"
             >
               <RiEditLine className="w-4 h-4 text-primary" />
@@ -92,7 +129,12 @@ export default function MeetingCard({
             </button>
             <div className="h-px bg-border mx-3" />
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); setTimeout(() => onDelete(meeting), 10); }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen(false);
+                setTimeout(() => onDelete(file), 10);
+              }}
               className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] font-medium text-risk hover:bg-risk-container/30 spring-colors"
             >
               <RiDeleteBinLine className="w-4 h-4" />
@@ -102,66 +144,38 @@ export default function MeetingCard({
         )}
       </div>
 
-      {/* Card body — clickable to navigate */}
-      <Link
-        href={`/meetings/${meeting.google_meet_link || meeting.id}`}
-        className="flex flex-col gap-3 p-5 flex-1 relative z-10 h-full"
+      {/* Card Body */}
+      <div
+        onClick={() => onView(file)}
+        className="flex flex-col gap-3 p-5 flex-1 relative z-10 h-full cursor-pointer"
       >
-        {/* Date chip */}
+        {/* Date / Type chip */}
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-primary-dim border border-primary/20 rounded-full px-3 py-1 w-fit mt-1">
-          <RiCalendarLine className="w-3 h-3" />
-          {meeting.start_at ? (
-            <span>
-              {format(new Date(meeting.start_at), "MMM d, yyyy • h:mm a")}
-              {meeting.end_at ? ` – ${format(new Date(meeting.end_at), "h:mm a")}` : ""}
-            </span>
-          ) : (
-            "Recent Call"
-          )}
+          {getFileIcon(file.filename)}
+          <span>{file.date || "Uploaded"}</span>
         </div>
 
         {/* Title */}
-        <h4 className="text-[15px] font-bold text-text leading-snug line-clamp-2 group-hover:text-primary spring-colors pr-10 mt-1">
-          {meeting.title && meeting.title !== "Google Meet" && meeting.title !== "Untitled Meeting"
-            ? meeting.title
-            : meeting.google_meet_link
-            ? `Meet - ${meeting.google_meet_link}`
-            : "Meet - Live Session"}
+        <h4 className="text-[15px] font-bold text-text leading-snug line-clamp-2 group-hover:text-primary spring-colors pr-10 mt-1" title={file.filename}>
+          {file.filename}
         </h4>
 
-        {/* Summary */}
-        {meeting.summary ? (
-          <p className="text-[12.5px] text-text-muted leading-relaxed line-clamp-3 flex-1 mt-1">
-            {meeting.summary}
-          </p>
-        ) : meeting.status === "active" ? (
-          <div className="flex-1 flex flex-col items-start justify-center gap-2 mt-1">
-            <div className="flex items-center gap-1.5 ml-0.5">
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></div>
-            </div>
-            <p className="text-[11.5px] text-text-muted font-medium animate-pulse">
-              AI is processing transcript…
-            </p>
-          </div>
-        ) : (
-          <p className="text-[12.5px] text-text-muted/60 italic leading-relaxed line-clamp-3 flex-1 mt-1">
-            {meeting.status === "no_transcript" ? "No transcript recorded for this meeting." : "Summary unavailable."}
-          </p>
-        )}
+        {/* Info */}
+        <div className="text-[12.5px] text-text-muted leading-relaxed line-clamp-2 flex-1 mt-1">
+          <span className="font-medium">Size: </span>
+          {((file.chunks * 1.2) / 1024).toFixed(2)} MB ({file.chunks} chunks)
+        </div>
 
-        {/* Footer inside link */}
+        {/* Footer */}
         <div className="pt-3 border-t border-border flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-1.5 text-[11.5px] text-text-muted font-medium">
-            <RiGroupLine className="w-3.5 h-3.5" />
-            {meeting.attendees?.length || (meeting.transcript_data ? new Set(meeting.transcript_data.map(t => t.speaker)).size : 0) || 1} participants
-          </div>
+          <span className="text-[11.5px] text-text-muted font-medium uppercase tracking-wider">
+            {file.meeting_id === "global" ? "Global Context" : `Meeting: ${file.meeting_id.slice(0, 8)}...`}
+          </span>
           <div className="w-7 h-7 rounded-full bg-surface2 group-hover:bg-primary-container flex items-center justify-center spring-colors">
             <RiArrowRightLine className="w-3.5 h-3.5 text-text-muted group-hover:text-primary spring-colors" />
           </div>
         </div>
-      </Link>
+      </div>
     </div>
   );
 }
