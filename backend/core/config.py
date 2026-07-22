@@ -57,9 +57,7 @@ class Settings(BaseSettings):
     BACKEND_URL: str = "http://localhost:8000"
     ENVIRONMENT: str = "development"
 
-    # Slack Integrations
-    SLACK_BOT_TOKEN: str = ""
-    SLACK_CHANNEL_ID: str = ""
+
 
     # Rate Limiting Settings
     RATE_LIMIT_RPM: int = 15

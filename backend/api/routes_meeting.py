@@ -290,12 +290,6 @@ async def _run_end_pipeline(
                 logger.warning(f"Could not persist scheduling_result: {e}")
 
             # send notifications
-            slack_result = await dispatch(AgentTrigger.SEND_SLACK, {
-                "meeting_title": title or "Untitled Meeting",
-                "summary": final_summary.get("summary", ""),
-                "action_items": [ai.get("text") for ai in final_summary.get("action_items", [])]
-            })
-        
             # Send email to organizer
             email_result = await dispatch(AgentTrigger.SEND_EMAIL, {
                 "meeting_title": title or "Untitled Meeting",
@@ -307,17 +301,16 @@ async def _run_end_pipeline(
                 "user_id": user_id
             })
 
-            # Persist email and slack results to Supabase
+            # Persist email result to Supabase
             try:
                 supabase.table("meetings").update(
                     {
-                        "email_result": email_result,
-                        "slack_result": slack_result
+                        "email_result": email_result
                     }
                 ).eq("id", target_id or meeting_id).execute()
             except Exception as e:
                 import logging
-                logging.warning(f"Could not persist email/slack results: {e}")
+                logging.warning(f"Could not persist email results: {e}")
 
     except Exception as e:
         logger.error(f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True)

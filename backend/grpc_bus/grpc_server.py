@@ -14,7 +14,7 @@ from ..agents.scheduler_agent import run_scheduler_agent
 from ..agents.summary_agent import run_summary_agent
 from ..agents.realtime_agent import run_realtime_agent
 from ..agents.email_agent import run_email_agent
-from ..agents.slack_agent import run_slack_agent
+
 from ..agents.late_join_agent import run_late_join_agent
 from ..agents.transcription_agent import process_transcript_chunk
 
@@ -72,11 +72,7 @@ class AgentTaskBusServicer(grpc_bus_pb2_grpc.AgentTaskBusServicer):
                         meeting_id=request.meeting_id,
                         summary_output=payload.get("summary", {})
                     )
-                elif request.agent_name == "slack":
-                    return await run_slack_agent(
-                        meeting_id=request.meeting_id,
-                        summary_output=payload.get("summary", {})
-                    )
+
                 elif request.agent_name == "late_join":
                     return await run_late_join_agent(
                         meeting_id=request.meeting_id

@@ -20,7 +20,7 @@ class AgentTrigger(str, Enum):
     SCHEDULE_FOLLOWUP = "schedule_followup"
     LATE_JOIN_RECAP = "late_join_recap"
     SEND_EMAIL = "send_email"
-    SEND_SLACK = "send_slack"
+
     TRANSCRIPT_CHUNK = "transcript_chunk"
 
 async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
@@ -34,7 +34,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     
     from ..core.lyzr_integration import run_lyzr_agent
     
-    prompt = f"Incoming Trigger: {trigger.value}\nRaw Payload: {json.dumps(payload)}\n\nDetermine the exact agent_name (realtime, summary, memory, scheduler, late_join, email, slack, transcription) and construct the final grpc_payload dictionary based on your instructions. Return ONLY valid JSON: {{\"agent_name\": \"...\", \"grpc_payload\": {{...}}}}"
+    prompt = f"Incoming Trigger: {trigger.value}\nRaw Payload: {json.dumps(payload)}\n\nDetermine the exact agent_name (realtime, summary, memory, scheduler, late_join, email, transcription) and construct the final grpc_payload dictionary based on your instructions. Return ONLY valid JSON: {{\"agent_name\": \"...\", \"grpc_payload\": {{...}}}}"
     
     # Fast path for realtime to avoid latency
     if trigger == AgentTrigger.REALTIME_TICK:
@@ -50,10 +50,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
         agent_name = "email"
         grpc_payload = dict(payload)
         grpc_payload["summary"] = payload
-    elif trigger == AgentTrigger.SEND_SLACK:
-        agent_name = "slack"
-        grpc_payload = dict(payload)
-        grpc_payload["summary"] = payload
+
     elif trigger == AgentTrigger.SCHEDULE_FOLLOWUP:
         agent_name = "scheduler"
         grpc_payload = dict(payload)
@@ -83,9 +80,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 case AgentTrigger.SEND_EMAIL: 
                     agent_name = "email"
                     grpc_payload["summary"] = payload
-                case AgentTrigger.SEND_SLACK:
-                    agent_name = "slack"
-                    grpc_payload["summary"] = payload
+
                 case _: raise ValueError(f"Unknown trigger fallback: {trigger}")
 
     # A2A using Lyzr API (direct agent function execution) instead of gRPC stub
@@ -128,12 +123,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 meeting_id=meeting_id,
                 summary_output=grpc_payload.get("summary", {})
             )
-        elif agent_name == "slack":
-            from ..agents.slack_agent import run_slack_agent
-            result = await run_slack_agent(
-                meeting_id=meeting_id,
-                summary_output=grpc_payload.get("summary", {})
-            )
+
         elif agent_name == "late_join":
             from ..agents.late_join_agent import run_late_join_agent
             result = await run_late_join_agent(

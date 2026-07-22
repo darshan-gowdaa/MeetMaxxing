@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS meetings (
   -- Post-meeting agent results
   scheduling_result JSONB,
   email_result JSONB,
-  slack_result JSONB,
+
   -- Metadata
   calendar_event_id TEXT,       -- Google Calendar event ID for follow-up
   guardrail_score FLOAT,        -- Lyzr evaluation score
