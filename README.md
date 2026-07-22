@@ -193,13 +193,13 @@ Instead of executing tasks sequentially within a single workflow, specialized ag
 
 <tr>
 <td align="center">
-<img src="assets/memory.png" width="140">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_23_49 PM" src="https://github.com/user-attachments/assets/13158149-489d-43ed-9779-7f4d741ccbe5" />
 </td>
 
 <td></td>
 
 <td align="center">
-<img src="assets/summary.png" width="140">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_23_57 PM" src="https://github.com/user-attachments/assets/7cf06e1a-3819-4352-b3cd-78675aebac34" />
 </td>
 
 </tr>
@@ -207,39 +207,39 @@ Instead of executing tasks sequentially within a single workflow, specialized ag
 <tr>
 
 <td align="center">
-<img src="assets/latejoin.png" width="140">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_24_22 PM" src="https://github.com/user-attachments/assets/ff113d96-9afa-41f2-a8f8-a9e6ac946efe" />
 </td>
 
 <td align="center">
-<img src="assets/orchestrator.png" width="260">
+<img width="260" alt="orch" src="https://github.com/user-attachments/assets/bbc433c5-0b86-4779-8bd8-de08b2b7af0d" />
 </td>
 
 <td align="center">
-<img src="assets/transcription.png" width="140">
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center">
-<img src="assets/scheduler.png" width="140">
-</td>
-
-<td></td>
-
-<td align="center">
-<img src="assets/email.png" width="140">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_27_08 PM" src="https://github.com/user-attachments/assets/13ae623b-c698-4abe-835b-825192d80836" />
 </td>
 
 </tr>
 
 <tr>
 
+<td align="center">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_29_22 PM" src="https://github.com/user-attachments/assets/4d2c1cc9-4ae8-40f7-a329-734b9f94a1e8" />
+</td>
+
 <td></td>
 
 <td align="center">
-<img src="assets/realtime.png" width="140">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_30_10 PM" src="https://github.com/user-attachments/assets/7ab7bc1b-6ef0-40c6-ab4e-094e5e5dc5ff" />
+</td>
+
+</tr>
+
+<tr>
+
+<td></td>
+
+<td align="center">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 11_09_30 PM" src="https://github.com/user-attachments/assets/32750ed6-827a-468f-bb7c-9da64a4af030" />
 </td>
 
 <td></td>
@@ -371,78 +371,6 @@ Realtime Agent   Summary Agent   Memory Agent
                        ▼
              AI Response to the User
 ```
-
----
-
-# Application Showcase
-
-## Chrome Extension
-
-<p align="center">
-<img src="assets/extension.png" width="900">
-</p>
-
-The Chrome Extension serves as the primary user interface, enabling real-time interaction with AI agents directly within Google Meet.
-
----
-
-## Live AI Assistance
-
-<p align="center">
-<img src="assets/realtime.png" width="900">
-</p>
-
-Receive contextual suggestions, insights, and assistance while the meeting is still ongoing.
-
----
-
-## Meeting Summary
-
-<p align="center">
-<img src="assets/summary.png" width="900">
-</p>
-
-Automatically generate concise summaries, discussion highlights, and actionable takeaways.
-
----
-
-## Semantic Memory
-
-<p align="center">
-<img src="assets/memory.png" width="900">
-</p>
-
-Retrieve information from previous meetings using semantic similarity instead of keyword matching.
-
----
-
-## AI Follow-up Emails
-
-<p align="center">
-<img src="assets/email.png" width="900">
-</p>
-
-Generate polished follow-up emails with meeting highlights and assigned action items.
-
----
-
-## Smart Scheduling
-
-<p align="center">
-<img src="assets/calendar.png" width="900">
-</p>
-
-Convert action items into reminders and calendar events with minimal user effort.
-
----
-
-## Dashboard
-
-<p align="center">
-<img src="assets/dashboard.png" width="900">
-</p>
-
-Access previous meetings, semantic memory, analytics, and meeting history from a centralized dashboard.
 
 ---
 
