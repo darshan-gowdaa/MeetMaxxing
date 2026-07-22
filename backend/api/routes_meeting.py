@@ -204,7 +204,7 @@ async def _run_end_pipeline(
 
         # save action items
         if target_id:
-            for ai in final_summary.get("action_items", []):
+            for ai in (final_summary.get("action_items") or []):
                 supabase.table("action_items").insert(
                     {
                         "id": str(uuid.uuid4()),
@@ -242,7 +242,7 @@ async def _run_end_pipeline(
                 )
 
             # Embed and store decisions
-            for dec in final_summary.get("decisions", []):
+            for dec in (final_summary.get("decisions") or []):
                 vec = await embed_batch([dec["text"]])
                 memory_points.append(
                     MemoryPoint(
@@ -278,9 +278,9 @@ async def _run_end_pipeline(
                     ).eq("id", target_id or meeting_id).execute()
                 else:
                     schedule_result = await dispatch(AgentTrigger.SCHEDULE_FOLLOWUP, {
-                        "summary_output": final_summary,
-                        "attendee_emails": attendees,
-                        "calendar_token": calendar_token,
+                        "summary": final_summary,
+                        "attendees": attendees,
+                        "token": calendar_token,
                         "org_id": org_id,
                     })
                     supabase.table("meetings").update(
@@ -289,28 +289,29 @@ async def _run_end_pipeline(
             except Exception as e:
                 logger.warning(f"Could not persist scheduling_result: {e}")
 
-            # send notifications
-            # Send email to organizer
-            email_result = await dispatch(AgentTrigger.SEND_EMAIL, {
-                "meeting_title": title or "Untitled Meeting",
-                "attendees": attendees,
-                "summary": final_summary.get("summary", ""),
-                "action_items": [ai.get("text") for ai in final_summary.get("action_items", [])],
-                "send_immediately": True,
-                "to_email": user_id, 
-                "user_id": user_id
-            })
+        # send notifications
+        # Send email to organizer
+        email_result = await dispatch(AgentTrigger.SEND_EMAIL, {
+            "meeting_id": target_id or meeting_id,
+            "meeting_title": title or "Untitled Meeting",
+            "attendees": attendees,
+            "summary": final_summary.get("summary", ""),
+            "action_items": [ai.get("text") for ai in (final_summary.get("action_items") or [])],
+            "send_immediately": True,
+            "to_email": user_id, 
+            "user_id": user_id
+        })
 
-            # Persist email result to Supabase
-            try:
-                supabase.table("meetings").update(
-                    {
-                        "email_result": email_result
-                    }
-                ).eq("id", target_id or meeting_id).execute()
-            except Exception as e:
-                import logging
-                logging.warning(f"Could not persist email results: {e}")
+        # Persist email result to Supabase
+        try:
+            supabase.table("meetings").update(
+                {
+                    "email_result": email_result
+                }
+            ).eq("id", target_id or meeting_id).execute()
+        except Exception as e:
+            import logging
+            logging.warning(f"Could not persist email results: {e}")
 
     except Exception as e:
         logger.error(f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True)
