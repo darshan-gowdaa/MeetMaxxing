@@ -79,11 +79,22 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   const abortControllerRef = useRef<AbortController | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   
+  const feedRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  
+  const handleScroll = () => {
+    if (!feedRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
+    setAutoScroll(scrollHeight - Math.ceil(scrollTop) - clientHeight < 40);
+  };
+
   useEffect(() => {
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 50);
-  }, [chatHistory, loadingChat, showSuggestions]);
+    if (autoScroll) {
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+    }
+  }, [chatHistory.length, loadingChat, showSuggestions, autoScroll]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -203,7 +214,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-transparent p-0 m-0 border-none">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-transparent p-0 m-0 border-none">
       <div className="flex items-center justify-between mb-3 shrink-0 px-2">
         <div className="flex items-center gap-2">
           <h3 className="text-[14px] font-medium text-zinc-200 flex items-center gap-1.5">
@@ -305,7 +316,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               )}
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 p-4 min-h-0">
+          <div ref={feedRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 p-4 min-h-0 relative">
             {chatHistory.length === 0 && (
                <div className="flex flex-col items-center justify-center h-full opacity-60">
                  <i className="ri-chat-smile-3-line text-3xl text-zinc-600 mb-2"></i>
@@ -385,6 +396,18 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
             </div>
             <div ref={chatEndRef} />
           </div>
+          {!autoScroll && (
+            <button 
+              onClick={() => {
+                setAutoScroll(true);
+                setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+              }}
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 w-8 h-8 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-20"
+              title="Resume auto-scroll"
+            >
+              <i className="ri-arrow-down-line"></i>
+            </button>
+          )}
           
           <div className="p-2 border-t border-zinc-800/60 bg-zinc-900/60 rounded-b-2xl shrink-0 sticky bottom-0 z-10 backdrop-blur-md">
             {uploadError && <div className="text-red-400 text-[10px] mb-1 px-2">{uploadError}</div>}
