@@ -3,18 +3,19 @@
 /* Base Resets */
 main {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
 }
 main::-webkit-scrollbar { width: 4px; }
 main::-webkit-scrollbar-track { background: transparent; }
 main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
 main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-.state-container { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.state-container { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
 
 /* Global utilities to support DRY */
 @layer components {
@@ -82,10 +83,17 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     @apply text-[11px] font-extrabold uppercase tracking-[0.1em] text-zinc-400 flex items-center gap-2;
   }
   
-  .md3-loader {
-    @apply w-5 h-5 bg-blue-400/80 mx-auto;
-    animation: m3-morph 1.5s cubic-bezier(0.87, 0, 0.13, 1) infinite;
+  .md3-loading-indicator {
+    display: inline-block;
+    animation:
+      md3-morph       2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+      md3-morph-color 2.4s linear                        infinite;
+    flex-shrink: 0;
   }
+  
+  .md3-loading-indicator-sm { width: 20px; height: 20px; }
+  .md3-loading-indicator-md { width: 40px; height: 40px; }
+  .md3-loading-indicator-lg { width: 64px; height: 64px; }
 }
 
 @keyframes pulseDot {
@@ -93,10 +101,39 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   50%      { opacity:0.7; box-shadow: 0 0 0 4px rgba(16,185,129,0); }
 }
 
-@keyframes m3-morph {
-  0%   { border-radius: 50%; transform: rotate(0deg) scale(0.8); }
-  25%  { border-radius: 25%; transform: rotate(90deg) scale(1.1); background-color: #60a5fa; }
-  50%  { border-radius: 10%; transform: rotate(180deg) scale(0.9); }
-  75%  { border-radius: 25%; transform: rotate(270deg) scale(1.1); }
-  100% { border-radius: 50%; transform: rotate(360deg) scale(0.8); }
+@keyframes md3-morph {
+  0%   { border-radius: 50%;                              transform: rotate(0deg)   scale(1);    }
+  14%  { border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; transform: rotate(51deg)  scale(1.05); }
+  28%  { border-radius: 30% 70% 30% 70% / 70% 30% 70% 30%; transform: rotate(103deg) scale(0.95); }
+  42%  { border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%; transform: rotate(154deg) scale(1.05); }
+  57%  { border-radius: 60% 40% 70% 30% / 30% 60% 40% 70%; transform: rotate(206deg) scale(0.95); }
+  71%  { border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; transform: rotate(257deg) scale(1.02); }
+  85%  { border-radius: 50% 50% 60% 40% / 40% 60% 50% 50%; transform: rotate(309deg) scale(0.98); }
+  100% { border-radius: 50%;                              transform: rotate(360deg) scale(1);    }
+}
+
+@keyframes md3-morph-color {
+  0%   { background-color: currentColor; }
+  100% { background-color: currentColor; }
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 2px;
+}
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background-color: currentColor;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
 }

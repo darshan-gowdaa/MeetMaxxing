@@ -80,8 +80,10 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory, loadingChat]);
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  }, [chatHistory, loadingChat, showSuggestions]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -303,7 +305,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               )}
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 p-4">
+          <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 p-4 min-h-0">
             {chatHistory.length === 0 && (
                <div className="flex flex-col items-center justify-center h-full opacity-60">
                  <i className="ri-chat-smile-3-line text-3xl text-zinc-600 mb-2"></i>
@@ -346,9 +348,11 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               </div>
             ))}
             {loadingChat && (
-              <div className="flex justify-start">
-                <div className="bg-zinc-800/90 rounded-2xl px-4 py-3 rounded-bl-sm flex items-center shadow-sm border border-zinc-700/50">
-                  <div className="md3-loader !w-4 !h-4 !bg-cyan-400"></div>
+              <div className="flex justify-start animate-fade-scale">
+                <div className="bg-zinc-800/90 rounded-2xl px-4 py-3 rounded-bl-sm shadow-sm border border-zinc-700/50">
+                  <div className="typing-dots text-cyan-400">
+                    <span></span><span></span><span></span>
+                  </div>
                 </div>
               </div>
             )}
@@ -382,7 +386,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
             <div ref={chatEndRef} />
           </div>
           
-          <div className="p-2 border-t border-zinc-800/60 bg-zinc-900/60 rounded-b-2xl shrink-0">
+          <div className="p-2 border-t border-zinc-800/60 bg-zinc-900/60 rounded-b-2xl shrink-0 sticky bottom-0 z-10 backdrop-blur-md">
             {uploadError && <div className="text-red-400 text-[10px] mb-1 px-2">{uploadError}</div>}
             <div className="flex items-end gap-2 bg-zinc-950/80 border border-zinc-800 rounded-xl p-1.5 px-2 focus-within:border-cyan-500/60 focus-within:bg-zinc-900 transition-all shadow-inner">
               <input type="file" multiple className="hidden" accept=".pdf,.docx,.txt" ref={fileInputRef} onChange={handleFileChange} />
@@ -393,7 +397,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 transition-colors shrink-0 mb-[2px]"
                 title="Upload Context Document"
               >
-                {uploading ? <div className="md3-loader !w-[14px] !h-[14px] !bg-zinc-400"></div> : <i className="ri-attachment-2 text-[16px]"></i>}
+                {uploading ? <div className="md3-loading-indicator md3-loading-indicator-sm text-zinc-400 !w-[14px] !h-[14px]"></div> : <i className="ri-attachment-2 text-[16px]"></i>}
               </button>
 
               <button 

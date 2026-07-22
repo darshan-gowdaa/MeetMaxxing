@@ -41,4 +41,23 @@ def parse_json_clean(raw: str) -> dict:
     try:
         return json.loads(cleaned)
     except:
-        return {}
+        import re
+        # Fallback regex extraction if JSON fails (e.g. unescaped quotes)
+        result = {}
+        # Try to find the answer string
+        ans_match = re.search(r'"answer"\s*:\s*"(.*?)"\s*(?:,\s*"confidence"|,\s*"sources_used"|\n\})', cleaned, re.DOTALL)
+        if ans_match:
+            result["answer"] = ans_match.group(1).replace('\\"', '"').replace('\\n', '\n')
+            
+        # Try to find confidence
+        conf_match = re.search(r'"confidence"\s*:\s*"(.*?)"', cleaned)
+        if conf_match:
+            result["confidence"] = conf_match.group(1)
+            
+        # Try to find sources
+        src_match = re.search(r'"sources_used"\s*:\s*\[(.*?)\]', cleaned)
+        if src_match:
+            src_str = src_match.group(1)
+            result["sources_used"] = [int(s.strip()) for s in src_str.split(',') if s.strip().isdigit()]
+            
+        return result

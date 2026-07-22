@@ -72,30 +72,28 @@ export default function App() {
 
             <ErrorBanner errorMessage={errorMessage} poweredBy={poweredBy} isProcessing={isProcessing} triggerAction={triggerAction} />
 
-            {activeTab === "live" && (
-              <>
+            <div className={activeTab === "live" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>
                 <button 
                   onClick={handleGenerateInsights} 
                   disabled={isProcessing} 
                   className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative"
                 >
                   {hasNewContext && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
-                  {isProcessing ? <div className="md3-loader !bg-white"></div> : <><i className="ri-sparkling-fill text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>}
+                  {isProcessing ? <div className="md3-loading-indicator md3-loading-indicator-sm text-white mx-auto"></div> : <><i className="ri-sparkling-fill text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>}
                 </button>
                 
                 <SuggestionAgent suggestions={suggestions} isProcessing={isProcessing} />
                 <NextQuestionAgent nextQuestion={nextQuestion} isProcessing={isProcessing} onSendToIntelliAgent={(q) => { setActiveTab("rag"); setPendingQuery(q); }} />
                 <RecapAgent recap={recap} isProcessing={isProcessing} />
-              </>
-            )}
+            </div>
 
-            {activeTab === "rag" && (
+            <div className={activeTab === "rag" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
               <ContextAgent meetingId={meetingId} pendingQuery={pendingQuery} clearPendingQuery={() => setPendingQuery("")} />
-            )}
+            </div>
 
-            {activeTab === "transcript" && (
+            <div className={activeTab === "transcript" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
               <LiveTranscript transcriptLines={transcriptLines} onClear={clearTranscript} />
-            )}
+            </div>
 
           </div>
         </main>

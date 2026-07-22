@@ -83,7 +83,9 @@ async def run_docs_qa_agent(
 
     context_block, sources = _build_context_block(results)
 
-    prompt = f"""Question: {question}
+    prompt = f"""{_SYSTEM_PROMPT}
+
+Question: {question}
 
 Retrieved context from documents:
 {context_block}
@@ -96,34 +98,26 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
   "sources_used": [0, 1, 2] 
 }}"""
 
-    if settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key", ""] or not settings.GEMINI_API_KEY:
+    try:
+        from ..core.lyzr_integration import run_lyzr_agent
+        raw, powered_by = await run_lyzr_agent("Docs QA Agent - MeetMaxxing", prompt)
+        
+        from ..core.utils import parse_json_clean
+        result = parse_json_clean(raw)
+        if not result:
+            result = {
+                "answer": raw.strip(),
+                "confidence": "low",
+                "sources_used": []
+            }
+    except Exception as e:
         return {
-            "answer": "Cannot run docs QA search: GEMINI_API_KEY missing.",
+            "answer": f"Error querying Lyzr Docs QA Agent: {str(e)[:150]}",
             "confidence": "low",
             "sources": sources,
-            "error": "GEMINI_API_KEY missing in .env"
+            "error": str(e)[:150],
+            "powered_by": "Lyzr SDK Error"
         }
-    else:
-        try:
-            from ..core.lyzr_integration import run_lyzr_agent
-            raw, powered_by = await run_lyzr_agent("Docs QA Agent - MeetMaxxing", prompt)
-            
-            from ..core.utils import parse_json_clean
-            result = parse_json_clean(raw)
-            if not result:
-                result = {
-                    "answer": raw.strip(),
-                    "confidence": "low",
-                    "sources_used": []
-                }
-        except Exception as e:
-            return {
-                "answer": f"Error querying Lyzr Docs QA Agent: {str(e)[:150]}",
-                "confidence": "low",
-                "sources": sources,
-                "error": str(e)[:150],
-                "powered_by": "Lyzr SDK Error"
-            }
 
     used_indices = result.get("sources_used", list(range(len(sources))))
     cited_sources = [sources[i] for i in used_indices if i < len(sources)]

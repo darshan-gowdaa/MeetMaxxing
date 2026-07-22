@@ -36,7 +36,7 @@ class MemoryTableQuery:
         self._action: str = "select"
         self._action_data: any = None
 
-    def select(self, columns: str = "*"):
+    def select(self, columns: str = "*", **kwargs):
         self._action = "select"
         return self
 

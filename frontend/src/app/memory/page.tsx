@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { queryMemory } from "@/lib/api";
 import type { Meeting, MemoryResult } from "@/types";
-import { MemorySkeleton } from "@/components/skeletons";
+import { Md3LoadingIndicator } from "@/components/Md3Loading";
 import {
   RiBrainLine,
   RiSearchLine,
@@ -174,7 +174,7 @@ export default function MemoryPage() {
         {/* ── Loading ────────────────────────────────────────────────────── */}
         {loading && (
           <div className="flex flex-col items-center justify-center gap-5 pt-8 animate-fade-scale">
-            <MemorySkeleton />
+            <Md3LoadingIndicator size="lg" />
             <div className="text-center">
               <p className="text-[14px] font-semibold text-text">Scanning semantic embeddings…</p>
               <p className="text-[12px] text-text-muted mt-1">Synthesizing answer with Gemini</p>

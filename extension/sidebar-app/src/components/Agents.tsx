@@ -25,9 +25,13 @@ export function LiveTranscript({ transcriptLines, onClear }: { transcriptLines: 
 
   useEffect(() => {
     if (autoScroll && feedRef.current) {
-      feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      setTimeout(() => {
+        if (feedRef.current) {
+          feedRef.current.scrollTop = feedRef.current.scrollHeight;
+        }
+      }, 50);
     }
-  }, [filteredLines]);
+  }, [transcriptLines.length, autoScroll, searchQuery, sourceFilter]);
 
   return (
     <div className="md3-card !bg-zinc-800/40 !border-zinc-700/50 !p-3 flex-1 flex flex-col min-h-0">
@@ -143,7 +147,7 @@ export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: st
               ))
             ) : isProcessing ? (
               <div className="text-xs text-blue-400 italic flex justify-center items-center gap-2 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                <div className="md3-loader !w-3 !h-3 !bg-blue-400"></div> Generating insights...
+                <div className="md3-loading-indicator md3-loading-indicator-sm text-blue-400 !w-3 !h-3"></div> Generating insights...
               </div>
             ) : (
               <p className="text-xs text-zinc-400 italic text-center p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700/50">
@@ -196,7 +200,7 @@ export function NextQuestionAgent({ nextQuestion, isProcessing, onSendToIntelliA
               </div>
             ) : isProcessing ? (
               <div className="text-xs text-cyan-400 italic flex justify-center items-center gap-2 p-4 bg-cyan-500/10 rounded-2xl border border-cyan-500/20">
-                <div className="md3-loader !w-3 !h-3 !bg-cyan-400"></div> Thinking of questions...
+                <div className="md3-loading-indicator md3-loading-indicator-sm text-cyan-400 !w-3 !h-3"></div> Thinking of questions...
               </div>
             ) : (
               <div className="text-xs text-zinc-400 italic text-center p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700/50">
@@ -237,7 +241,7 @@ export function RecapAgent({ recap, isProcessing }: { recap: string, isProcessin
               </div>
             ) : isProcessing ? (
               <div className="text-xs text-emerald-400 italic flex justify-center items-center gap-2 p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                <div className="md3-loader !w-3 !h-3 !bg-emerald-400"></div> Drafting recap...
+                <div className="md3-loading-indicator md3-loading-indicator-sm text-emerald-400 !w-3 !h-3"></div> Drafting recap...
               </div>
             ) : (
               <div className="text-xs text-zinc-400 italic text-center p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700/50">

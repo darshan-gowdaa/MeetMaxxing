@@ -28,7 +28,9 @@ async def draft_followup_email(
     """
     Uses the LLM fallback pipeline to draft a professional follow-up email.
     """
-    prompt = f"""Meeting Title: {meeting_title}
+    prompt = f"""{_EMAIL_SYSTEM_PROMPT}
+
+Meeting Title: {meeting_title}
 Attendees: {', '.join(attendees) if attendees else 'Unknown'}
 
 Summary:

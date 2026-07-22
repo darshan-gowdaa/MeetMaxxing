@@ -69,8 +69,8 @@ def _rerank_results(results):
         MemoryType.KEY_TOPIC: 1.2
     }
     
-    # Filter score > 0.05
-    filtered = [r for r in results if r.score > 0.05]
+    # Keep all results, RRF scores can be very low but rank is what matters
+    filtered = [r for r in results if r.score > 0.0]
     
     for r in filtered:
         weight = priority_weights.get(r.memory_type, 1.0)
@@ -101,6 +101,7 @@ async def run_memory_agent(
         meeting_id=filters.get("meeting_id"),
         speaker_id=filters.get("speaker_id", ""),
         topic=filters.get("topic", ""),
+        query_text=question,
         date_from=filters.get("date_from", ""),
         date_to=filters.get("date_to", ""),
     )
@@ -133,7 +134,9 @@ async def run_memory_agent(
 
     context_block, sources = _build_context_block(results)
 
-    prompt = f"""Question: {question}
+    prompt = f"""{_SYSTEM_PROMPT}
+
+Question: {question}
 
 Retrieved context from past meetings:
 {context_block}
@@ -146,38 +149,29 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
   "sources_used": [0, 1, 2] 
 }}"""
 
-    if settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key", ""] or not settings.GEMINI_API_KEY:
+    try:
+        from ..core.lyzr_integration import run_lyzr_agent
+        raw, powered_by = await run_lyzr_agent("Memory Agent - MeetMaxxing", prompt)
+        
+        from ..core.utils import parse_json_clean
+        result = parse_json_clean(raw)
+        if not result:
+            # If LLM ignored JSON rules and returned plain text (e.g. "I don't know")
+            result = {
+                "answer": raw.strip(),
+                "confidence": "low",
+                "sources_used": []
+            }
+    except Exception as e:
+        err_str = str(e)
         return {
-            "answer": "Cannot run natural language memory search: GEMINI_API_KEY is not configured in backend/.env. Please add your Gemini API key and restart backend on port 8000.",
+            "answer": f"Error querying Lyzr Memory Agent: {err_str[:150]}",
             "confidence": "low",
             "sources": sources,
             "total_retrieved": len(results),
-            "error": "GEMINI_API_KEY missing in .env"
+            "error": err_str[:150],
+            "powered_by": "Lyzr SDK Error"
         }
-    else:
-        try:
-            from ..core.lyzr_integration import run_lyzr_agent
-            raw, powered_by = await run_lyzr_agent("Memory Agent - MeetMaxxing", prompt)
-            
-            from ..core.utils import parse_json_clean
-            result = parse_json_clean(raw)
-            if not result:
-                # If LLM ignored JSON rules and returned plain text (e.g. "I don't know")
-                result = {
-                    "answer": raw.strip(),
-                    "confidence": "low",
-                    "sources_used": []
-                }
-        except Exception as e:
-            err_str = str(e)
-            return {
-                "answer": f"Error querying Lyzr Memory Agent: {err_str[:150]}",
-                "confidence": "low",
-                "sources": sources,
-                "total_retrieved": len(results),
-                "error": err_str[:150],
-                "powered_by": "Lyzr SDK Error"
-            }
 
     # Map source indices to full source objects
     used_indices = result.get("sources_used", list(range(len(sources))))
