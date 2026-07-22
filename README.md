@@ -181,23 +181,72 @@ One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to
 
 Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
 
-```text
-            User Request
-                  │
-                  ▼
-          Orchestrator Agent
-                  │
-      ┌───────────┼────────────┐
-      ▼           ▼            ▼
- Summary      Memory       Realtime
-  Agent        Agent         Agent
-      │           │            │
-      └───────┬───┴────────────┘
-              ▼
-      Email / Scheduler
-              ▼
-          Final Response
-```
+<table align="center">
+
+<tr>
+<td></td>
+<td align="center">
+<img width="140" alt="ChatGPT Image Jul 22, 2026, 10_23_34 PM" src="https://github.com/user-attachments/assets/e6def754-c3c0-456a-9ef6-8d1e1c5bc1c2" />
+</td>
+<td></td>
+</tr>
+
+<tr>
+<td align="center">
+<img src="assets/memory.png" width="140">
+</td>
+
+<td></td>
+
+<td align="center">
+<img src="assets/summary.png" width="140">
+</td>
+
+</tr>
+
+<tr>
+
+<td align="center">
+<img src="assets/latejoin.png" width="140">
+</td>
+
+<td align="center">
+<img src="assets/orchestrator.png" width="260">
+</td>
+
+<td align="center">
+<img src="assets/transcription.png" width="140">
+</td>
+
+</tr>
+
+<tr>
+
+<td align="center">
+<img src="assets/scheduler.png" width="140">
+</td>
+
+<td></td>
+
+<td align="center">
+<img src="assets/email.png" width="140">
+</td>
+
+</tr>
+
+<tr>
+
+<td></td>
+
+<td align="center">
+<img src="assets/realtime.png" width="140">
+</td>
+
+<td></td>
+
+</tr>
+
+</table>
 
 This architecture allows:
 
