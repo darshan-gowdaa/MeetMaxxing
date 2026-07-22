@@ -324,7 +324,6 @@ async def _run_end_pipeline(
         try:
             # Use the target_id we already resolved at the top of the function
             local_target = locals().get("target_id") or meeting_id
-            from ..core.utils import is_valid_uuid
             if local_target and is_valid_uuid(local_target):
                 supabase.table("meetings").update(
                     {

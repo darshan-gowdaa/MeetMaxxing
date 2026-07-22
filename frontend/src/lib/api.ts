@@ -13,6 +13,7 @@ function safeParse(text: string) {
 export async function fetchMeetings(token: string) {
   const res = await fetch(`${BACKEND_URL}/dashboard/meetings`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch meetings");
   const text = await res.text();
@@ -22,6 +23,7 @@ export async function fetchMeetings(token: string) {
 export async function fetchMeeting(id: string, token: string) {
   const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch meeting");
   const text = await res.text();
@@ -36,6 +38,7 @@ export async function queryMemory(question: string, token: string, filters?: Rec
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ question, ...(filters || {}) }),
+    cache: "no-store",
   });
   if (!res.ok) throw new Error("Memory query failed");
   const text = await res.text();
