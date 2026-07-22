@@ -5,6 +5,7 @@ import type { TranscriptChunk } from "../types";
 export function LiveTranscript({ transcriptLines, onClear }: { transcriptLines: TranscriptChunk[], onClear: () => void }) {
   const [sourceFilter, setSourceFilter] = useState<"all" | "dom" | "audio">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [copiedAll, setCopiedAll] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
 
@@ -50,8 +51,17 @@ export function LiveTranscript({ transcriptLines, onClear }: { transcriptLines: 
               placeholder="Search..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-zinc-900/60 border border-zinc-700/50 rounded-full text-[11px] font-medium text-zinc-300 py-1 pl-6 pr-2 outline-none focus:border-blue-500/50 transition-colors w-24 placeholder:text-zinc-500"
+              className="bg-zinc-900/60 border border-zinc-700/50 rounded-full text-[11px] font-medium text-zinc-300 py-1 pl-6 pr-6 outline-none focus:border-blue-500/50 transition-colors w-24 placeholder:text-zinc-500"
             />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                title="Clear Search"
+              >
+                <i className="ri-close-circle-fill text-[11px]"></i>
+              </button>
+            )}
           </div>
           <select 
             value={sourceFilter} 
@@ -59,12 +69,24 @@ export function LiveTranscript({ transcriptLines, onClear }: { transcriptLines: 
             className="bg-zinc-900/60 border border-zinc-700/50 rounded-full text-[11px] font-medium text-zinc-300 py-1 px-2 outline-none focus:border-blue-500/50 transition-colors cursor-pointer appearance-none"
           >
             <option value="all">All</option>
-            <option value="dom">CC</option>
-            <option value="audio">AI</option>
+            <option value="dom">CC (Live)</option>
           </select>
           <span className="px-2 py-1 rounded-full bg-blue-900/20 border border-blue-800/30 text-[9px] font-extrabold text-blue-400 font-mono flex items-center justify-center min-w-[24px]">
             {filteredLines.length}
           </span>
+          <button 
+            onClick={() => {
+              const fullText = filteredLines.map(l => `[${l.speaker}]: ${l.text}`).join('\n');
+              copyToClipboard(fullText, () => {
+                setCopiedAll(true);
+                setTimeout(() => setCopiedAll(false), 2000);
+              });
+            }} 
+            title="Copy Transcript"
+            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-zinc-700/50 text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all ml-1"
+          >
+            <i className={copiedAll ? "ri-check-line text-emerald-400 text-[12px]" : "ri-clipboard-line text-[12px]"}></i>
+          </button>
           <button 
             onClick={onClear} 
             title="Clear Transcript"
@@ -85,13 +107,13 @@ export function LiveTranscript({ transcriptLines, onClear }: { transcriptLines: 
             filteredLines.map((line, idx) => (
               <div key={idx} className="flex flex-col gap-1.5 p-3 rounded-[20px] bg-zinc-900/50 border border-zinc-800/60 hover:bg-zinc-800/50 transition-colors shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase text-blue-400">
-                    <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-[9.5px] shrink-0 border border-blue-500/30">
+                  <span className={`flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase ${line.speaker === 'You' ? 'text-emerald-400' : 'text-blue-400'}`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9.5px] shrink-0 border ${line.speaker === 'You' ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-blue-500/20 border-blue-500/30'}`}>
                       {line.speaker.charAt(0)}
                     </div>
                     {line.speaker}
                   </span>
-                  {line.source && <span className="text-[8px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 uppercase tracking-wider font-semibold border border-zinc-700/50">{line.source === "audio" ? "AI (Deep)" : "CC (Live)"}</span>}
+                  <span className="text-[8px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 uppercase tracking-wider font-semibold border border-zinc-700/50">CC</span>
                 </div>
                 <span className="text-[13px] text-zinc-200 leading-relaxed break-words pl-6">{line.text}</span>
               </div>
@@ -190,7 +212,7 @@ export function NextQuestionAgent({ nextQuestion, isProcessing, onSendToIntelliA
                       <button 
                         onClick={(e) => { e.stopPropagation(); onSendToIntelliAgent(nextQuestion); }}
                         className="w-7 h-7 flex items-center justify-center rounded-xl bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 hover:-translate-y-[1px] active:scale-[0.97] transition-all shadow-sm"
-                        title="Send to IntelliAgent"
+                        title="Send to AI Chat"
                       >
                         <i className="ri-arrow-right-up-line"></i>
                       </button>
@@ -211,6 +233,10 @@ export function NextQuestionAgent({ nextQuestion, isProcessing, onSendToIntelliA
     </div>
   );
 }
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 export function RecapAgent({ recap, isProcessing }: { recap: string, isProcessing?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -236,8 +262,10 @@ export function RecapAgent({ recap, isProcessing }: { recap: string, isProcessin
       
       <div className="mt-2">
             {recap ? (
-              <div className="p-3.5 rounded-[20px] bg-zinc-800/50 border border-emerald-800/30 text-[13px] text-zinc-200 leading-relaxed font-serif whitespace-pre-wrap shadow-inner">
-                {recap}
+              <div className="p-3.5 rounded-[20px] bg-zinc-800/50 border border-emerald-800/30 text-[13px] text-zinc-200 leading-relaxed shadow-inner">
+                <div style={{ fontFamily: "'Google Sans', 'Open Sans', 'Roboto', sans-serif" }} className="markdown-body prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:my-2 [&>li]:mb-1 [&>strong]:text-emerald-400 font-normal leading-relaxed whitespace-pre-wrap">
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{recap}</ReactMarkdown>
+                </div>
               </div>
             ) : isProcessing ? (
               <div className="text-xs text-emerald-400 italic flex justify-center items-center gap-2 p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">

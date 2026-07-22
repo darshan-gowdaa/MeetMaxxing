@@ -13,14 +13,13 @@ from ..memory.schemas import MemoryFilter, MemoryType
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT = """You are MeetMaxxing's Docs QA Agent, a conversational AI chatbot. You answer questions about uploaded documents using ONLY the provided context.
+_SYSTEM_PROMPT = """You are MeetMaxxing's AI Chatbot. You answer questions using the provided document context, but you can also answer general questions if the context doesn't apply.
 
 Rules:
 - Answer naturally and conversationally using proper grammar and tenses.
 - Use rich Markdown formatting (bolding `**key terms**`, bullet points `- `, and double explicit newlines `\\n\\n` for paragraphs) to make the answer easy to read and beautifully structured.
-- Answer ONLY based on context chunks provided. Never invent facts.
-- Do NOT include citations like [Context 0] in your answer text.
-- If the context is insufficient to answer, say "I couldn't find relevant information in the uploaded documents."
+- If the provided context is relevant, use it. Do NOT include citations like [Context 0] in your answer text.
+- If the context is NOT relevant, use your general knowledge to answer, and do not say "I couldn't find relevant information". Instead, just answer the question normally.
 - Format your response as STRICTLY valid JSON. You MUST escape all newlines as `\\n` inside the JSON string (e.g., `"answer": "Paragraph 1\\n\\nParagraph 2"`). Do not use unescaped quotes inside the answer string. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 
 {
@@ -74,12 +73,7 @@ async def run_docs_qa_agent(
         limit=6,
     )
     
-    if not results:
-        return {
-            "answer": "I couldn't find relevant information in the uploaded documents.",
-            "confidence": "low",
-            "sources": [],
-        }
+    # removed early exit for empty results so general questions still get answered
 
     context_block, sources = _build_context_block(results)
 
@@ -90,7 +84,7 @@ Question: {question}
 Retrieved context from documents:
 {context_block}
 
-Answer the question conversationally based solely on the context above. 
+Answer the question conversationally. Use the context above if relevant, otherwise use your general knowledge.
 You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {{
   "answer": "Your conversational answer here. Use Markdown for formatting (bold, bullet points `- `, and double newlines `\\n\\n`). Do not include [Context N]. Escape newlines properly.",

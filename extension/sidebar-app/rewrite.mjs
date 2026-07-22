@@ -1,187 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
+import fs from 'fs';
 
-export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { meetingId: string, pendingQuery?: string, clearPendingQuery?: () => void }) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  
-  const [showFileDropdown, setShowFileDropdown] = useState(false);
-  const [fileSearch, setFileSearch] = useState("");
-  
-  const [query, setQuery] = useState("");
-  const [chatHistory, setChatHistory] = useState<{role: "user" | "agent", content: string, sources?: any[]}[]>([]);
-  const [loadingChat, setLoadingChat] = useState(false);
-  
-  const [availableFiles, setAvailableFiles] = useState<{filename: string}[]>([]);
-  const [selectedTargetFiles, setSelectedTargetFiles] = useState<string[]>([]);
+const original = fs.readFileSync('src/components/ContextAgent.tsx.bak', 'utf-8');
+const parts = original.split('  return (');
+const header = parts[0];
 
-  const fetchFiles = async () => {
-    try {
-      const res = await fetch(`http://localhost:8000/context/files`, {
-        headers: { "Authorization": "Bearer dev_token" }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAvailableFiles(data.files || []);
-      }
-    } catch(e) {}
-  };
-
-  useEffect(() => {
-    fetchFiles();
-  }, [meetingId]);
-  
-  useEffect(() => {
-    if (pendingQuery) {
-      setQuery(pendingQuery);
-      inputRef.current?.focus();
-      if (clearPendingQuery) clearPendingQuery();
-    }
-  }, [pendingQuery, clearPendingQuery]);
-  
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  
-  const feedRef = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
-  
-  const handleScroll = () => {
-    if (!feedRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
-    setAutoScroll(scrollHeight - Math.ceil(scrollTop) - clientHeight < 40);
-  };
-
-  useEffect(() => {
-    if (autoScroll) {
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 50);
-    }
-  }, [chatHistory.length, loadingChat, autoScroll]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files;
-    setUploadError("");
-    if (!selectedFiles || selectedFiles.length === 0) return;
-    
-    setUploading(true);
-    let anyFailed = false;
-    let newlyUploaded: string[] = [];
-    
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadError(`File ${file.name} exceeds 5MB limit.`);
-        anyFailed = true;
-        continue;
-      }
-      const validExts = ['.pdf', '.txt', '.docx'];
-      if (!validExts.some(ext => file.name.toLowerCase().endsWith(ext))) {
-        setUploadError(`File ${file.name} has invalid extension.`);
-        anyFailed = true;
-        continue;
-      }
-      
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("meeting_id", meetingId);
-      try {
-        const res = await fetch(`http://localhost:8000/context/upload`, {
-          method: "POST",
-          headers: { "Authorization": "Bearer dev_token" },
-          body: formData
-        });
-        if (res.ok) {
-          newlyUploaded.push(file.name);
-        } else {
-          anyFailed = true;
-        }
-      } catch (err) {
-        anyFailed = true;
-      }
-    }
-    
-    if (newlyUploaded.length > 0) {
-      await fetchFiles();
-      setSelectedTargetFiles(prev => Array.from(new Set([...prev, ...newlyUploaded])));
-    }
-    if (anyFailed && !uploadError) {
-      setUploadError("Some uploads failed.");
-    }
-    
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const submitQuery = async (textToSubmit: string) => {
-    const textStr = String(textToSubmit || "");
-    if (!textStr.trim()) return;
-    setQuery("");
-    if (inputRef.current) inputRef.current.style.height = 'auto';
-    setChatHistory(prev => [...prev, { role: "user", content: textStr }]);
-    setLoadingChat(true);
-
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const reqBody = {
-        meeting_id: meetingId,
-        query: textStr,
-        target_file: selectedTargetFiles.length > 0 ? selectedTargetFiles : null
-      };
-      
-      const res = await fetch(`http://localhost:8000/context/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer dev_token" },
-        body: JSON.stringify(reqBody),
-        signal: abortControllerRef.current.signal
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setChatHistory(prev => [...prev, { role: "agent", content: data.answer, sources: data.sources }]);
-      } else {
-        setChatHistory(prev => [...prev, { role: "agent", content: "Error processing request." }]);
-      }
-    } catch (e: any) {
-      if (e.name === "AbortError") {
-        setChatHistory(prev => [...prev, { role: "agent", content: "Generation stopped." }]);
-      } else {
-        setChatHistory(prev => [...prev, { role: "agent", content: "Network error." }]);
-      }
-    } finally {
-      setLoadingChat(false);
-      abortControllerRef.current = null;
-    }
-  };
-
-  const handleStop = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  };
-
-  const handleClearChat = () => {
-    setChatHistory([]);
-  };
-
-  const copyToClipboard = (text: string, index: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
-
-  const handleChat = () => submitQuery(query);
-
-  const handleSettingsClick = () => {
-    window.open("http://localhost:3000/context", "_blank");
-  };
-
-  return (
+const newReturn = `  return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#1E1F22] p-0 m-0 border-none">
       
       {/* Google Meet MD3 Unified Header */}
@@ -192,15 +15,15 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
           <div className="relative flex-1 max-w-[200px]">
             <button 
               onClick={() => setShowFileDropdown(!showFileDropdown)}
-              className="w-full bg-zinc-800/50 hover:bg-zinc-800 text-[12px] font-medium text-zinc-300 rounded-full px-3 py-1.5 outline-none flex items-center gap-2 transition-colors border border-zinc-700/80 active:border-zinc-500"
+              className="w-full bg-zinc-800/50 hover:bg-zinc-800 text-[12px] font-medium text-zinc-300 rounded-full px-3 py-1.5 outline-none flex items-center gap-2 transition-colors border border-transparent active:border-zinc-700"
             >
               <i className="ri-folder-open-line text-zinc-400 text-[14px]"></i>
               <span className="truncate text-left flex-1">
                 {selectedTargetFiles.length === 0 ? "Meeting Context" : 
                  selectedTargetFiles.length === 1 ? selectedTargetFiles[0] : 
-                 `${selectedTargetFiles.length} files`}
+                 \`\${selectedTargetFiles.length} files\`}
               </span>
-              <i className={`ri-arrow-down-s-line text-zinc-400 transition-transform duration-300 ${showFileDropdown ? "rotate-180" : ""}`}></i>
+              <i className={\`ri-arrow-down-s-line text-zinc-400 transition-transform duration-300 \${showFileDropdown ? "rotate-180" : ""}\`}></i>
             </button>
             {showFileDropdown && (
               <div className="absolute left-0 top-full mt-1 w-[260px] bg-[#282A2D] border border-zinc-700 rounded-2xl shadow-xl z-30 flex flex-col overflow-hidden origin-top animate-fade-in duration-200">
@@ -218,7 +41,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                   </div>
                 </div>
                 <div className="max-h-[200px] overflow-y-auto custom-scrollbar flex flex-col p-1.5 gap-0.5">
-                  <label className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors ${selectedTargetFiles.length === 0 ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'}`}>
+                  <label className={\`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors \${selectedTargetFiles.length === 0 ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'}\`}>
                     <input 
                       type="checkbox" 
                       checked={selectedTargetFiles.length === 0} 
@@ -233,7 +56,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                     return (
                       <label 
                         key={f.filename}
-                        className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors truncate ${isSelected ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'}`}
+                        className={\`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors truncate \${isSelected ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'}\`}
                       >
                         <input 
                           type="checkbox"
@@ -287,12 +110,12 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
           )}
           
           {chatHistory.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[88%] px-4 py-2.5 text-[13px] leading-relaxed ${
+            <div key={i} className={\`flex \${msg.role === 'user' ? 'justify-end' : 'justify-start'}\`}>
+              <div className={\`max-w-[88%] px-4 py-2.5 text-[13px] leading-relaxed \${
                 msg.role === 'user' 
                   ? 'bg-[#A8C7FA] text-[#062E6F] rounded-3xl rounded-br-sm font-medium' 
                   : 'bg-[#282A2D] text-[#E3E3E3] rounded-3xl rounded-bl-sm border border-zinc-700/50'
-              }`}>
+              }\`}>
                 {msg.role === 'agent' ? (
                   <div className="flex flex-col gap-2 relative group">
                     <button 
@@ -308,9 +131,9 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                     {msg.sources && msg.sources.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1 pt-2 border-t border-zinc-700/60">
                         <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mr-1 flex items-center">Sources</span>
-                    {Array.from(new Set(msg.sources.map((s:any) => s.speaker_name))).map((sourceName: any, idx: number) => (
-                          <a key={idx} href={`http://localhost:3000/context?view=${encodeURIComponent(sourceName || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={sourceName || "Context Document"}>
-                             <i className="ri-file-text-line"></i> {sourceName ? (sourceName.length > 18 ? sourceName.substring(0, 18) + '...' : sourceName) : "Document"}
+                        {msg.sources.map((s: any, idx: number) => (
+                          <a key={idx} href={\`http://localhost:3000/context\`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={s.speaker_name || "Context Document"}>
+                             <i className="ri-file-text-line"></i> {s.speaker_name ? (s.speaker_name.length > 18 ? s.speaker_name.substring(0, 18) + '...' : s.speaker_name) : "Document"}
                           </a>
                         ))}
                       </div>
@@ -332,6 +155,24 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
             </div>
           )}
           
+          <div className={\`flex flex-col w-full gap-2 mt-auto transition-all duration-300 \${showSuggestions ? 'opacity-100 pt-4' : 'opacity-0 h-0 overflow-hidden pt-0'}\`}>
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1">
+                <i className="ri-sparkling-line"></i> Suggestions
+              </span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {randomQuestions.map((q, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => { submitQuery(q); setShowSuggestions(false); }}
+                  className="text-left text-[12px] font-medium px-4 py-2.5 rounded-2xl bg-[#282A2D] text-zinc-300 hover:bg-[#32363B] active:bg-[#3A3F45] transition-colors border border-transparent"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
           <div ref={chatEndRef} className="h-2" />
         </div>
         
@@ -351,19 +192,38 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
         {/* Input Area */}
         <div className="p-2 bg-[#1E1F22] shrink-0 z-20">
           
+          {/* Action Chips above input */}
+          <div className="flex items-center gap-1.5 mb-2 px-1">
+             <button 
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                className={\`flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors active:scale-95 border \${showSuggestions ? 'bg-[#A8C7FA] text-[#062E6F] border-transparent' : 'bg-[#282A2D] text-zinc-300 hover:bg-[#32363B] border-zinc-700/80'}\`}
+                title="Toggle Suggestions"
+              >
+                <i className="ri-lightbulb-line text-[13px]"></i> 
+                <span>Suggestions</span>
+              </button>
+              <button 
+                onClick={() => { refreshQuestions(); setShowSuggestions(true); }}
+                className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#282A2D] text-zinc-300 hover:bg-[#32363B] border border-zinc-700/80 transition-colors active:scale-95"
+                title="Refresh Suggestions"
+              >
+                <i className="ri-refresh-line text-[13px]"></i>
+              </button>
+          </div>
+
           {uploadError && (
             <div className="flex items-center gap-1.5 text-[#F2B8B5] text-[11px] font-medium mb-2 px-3 bg-[#8C1D18]/30 py-1.5 rounded-lg">
               <i className="ri-error-warning-line"></i> {uploadError}
             </div>
           )}
           
-          <div className="flex items-center gap-2 bg-[#282A2D] rounded-[24px] p-2 focus-within:ring-1 focus-within:ring-zinc-500 transition-all border border-zinc-700/50 mx-1 mb-1">
+          <div className="flex items-end gap-1.5 bg-[#282A2D] rounded-3xl p-1.5 focus-within:ring-1 focus-within:ring-zinc-500 transition-all">
             <input type="file" multiple className="hidden" accept=".pdf,.docx,.txt" ref={fileInputRef} onChange={handleFileChange} />
             
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#32363B] transition-colors shrink-0 active:scale-95"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#32363B] transition-colors shrink-0 active:scale-95 mb-0.5"
               title="Upload Context Document"
             >
               {uploading ? <div className="md3-loading-indicator md3-loading-indicator-sm text-zinc-400 !w-[16px] !h-[16px]"></div> : <i className="ri-add-line text-[20px]"></i>}
@@ -375,7 +235,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               onChange={e => {
                 setQuery(e.target.value);
                 e.target.style.height = 'auto';
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                e.target.style.height = \`\${Math.min(e.target.scrollHeight, 120)}px\`;
               }} 
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -385,17 +245,17 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               }}
               rows={1}
               placeholder="Ask anything..."
-              className="flex-1 bg-transparent border-none py-1.5 min-h-[24px] max-h-[120px] resize-none text-[13px] text-zinc-100 outline-none placeholder:text-zinc-500 custom-scrollbar flex items-center self-center"
+              className="flex-1 bg-transparent border-none py-2 min-h-[36px] max-h-[120px] resize-none text-[13px] text-zinc-100 outline-none placeholder:text-zinc-500 custom-scrollbar mb-0.5"
             />
             
-            <div className="">
+            <div className="mb-0.5 mr-0.5">
               {loadingChat ? (
                 <button onClick={handleStop} className="w-8 h-8 rounded-full flex items-center justify-center text-[#F2B8B5] bg-[#8C1D18] hover:bg-[#B3261E] transition-colors shrink-0 active:scale-95" title="Stop generating">
                   <i className="ri-stop-circle-line text-[18px]"></i>
                 </button>
               ) : (
                 <button onClick={handleChat} disabled={!String(query || "").trim() || loadingChat} className="w-8 h-8 rounded-full flex items-center justify-center text-[#1E1F22] bg-[#A8C7FA] hover:bg-[#D3E3FD] disabled:opacity-30 disabled:bg-[#32363B] disabled:text-zinc-500 transition-colors shrink-0 active:scale-95">
-                  <i className="ri-arrow-right-line text-[18px]"></i>
+                  <i className="ri-send-plane-fill text-[16px]"></i>
                 </button>
               )}
             </div>
@@ -405,3 +265,6 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/ContextAgent.tsx', header + newReturn);

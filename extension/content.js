@@ -16,6 +16,7 @@ let meetingId = null;
 let meetingStartTime = Date.now();
 let captionObserver = null;
 let authToken = null;
+let maxParticipants = 1;
 
 /**
  * Per-speaker utterance tracker.
@@ -28,6 +29,8 @@ const SILENCE_MS = 1200;          // ms of silence before treating as sentence c
 const MAX_CHARS  = 200;           // force flush if utterance exceeds this length to prevent stalling
 const DEDUP_TTL  = 3500;          // ms to remember sent chunks (prevents double-fires but allows repeated words)
 const recentSent = new Map();     // key: "speaker||text" → timestamp
+const lastSentText = new Map();   // key: speaker → last fully sent text
+const speakerHistory = new Map(); // key: speaker → array of {text, timestamp}
 
 // ─── All known caption selectors (2024-2026 community verified) ────────────────
 // Text content selectors — the actual spoken text element inside caption region
@@ -170,6 +173,50 @@ function isCleanCaption(text) {
   return true;
 }
 
+// ─── 5-Minute Overlap Deduplication ──────────────────────────────────────────
+function extractUnrepeatedText(speaker, newText) {
+  if (!newText) return "";
+  
+  const history = speakerHistory.get(speaker) || [];
+  const now = Date.now();
+  
+  // Keep only last 5 seconds of history
+  const validHistory = history.filter(h => now - h.timestamp < 5 * 1000);
+  speakerHistory.set(speaker, validHistory);
+  
+  const recentSentText = validHistory.map(h => h.text).join(" ");
+  if (!recentSentText) return newText;
+  
+  // If fully contained in history, it's a complete duplicate
+  if (recentSentText.includes(newText)) return "";
+  
+  // Suffix-prefix word overlap to handle mid-sentence flushes and corrections
+  const oldWords = recentSentText.split(/\\s+/);
+  const newWords = newText.split(/\\s+/);
+  
+  let maxOverlap = 0;
+  const minLen = Math.min(oldWords.length, newWords.length);
+  
+  for (let i = 1; i <= minLen; i++) {
+    let match = true;
+    for (let j = 0; j < i; j++) {
+      const w1 = oldWords[oldWords.length - i + j].toLowerCase().replace(/[^a-z0-9]/g, "");
+      const w2 = newWords[j].toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (w1 !== w2) {
+        match = false;
+        break;
+      }
+    }
+    if (match) maxOverlap = i;
+  }
+  
+  if (maxOverlap > 0) {
+    return newWords.slice(maxOverlap).join(" ");
+  }
+  
+  return newText;
+}
+
 // ─── Safe message sender (prevents context invalidated errors) ────────────────
 function safeSendMessage(msg, callback) {
   if (!chrome.runtime || !chrome.runtime.id) {
@@ -199,22 +246,40 @@ function flushUtterance(speaker) {
   const now = Date.now();
   const key = `${speaker}||${text}`;
 
-  // Dedup: skip if same text sent recently for same speaker
-  const last = recentSent.get(key);
+  // If this text is EXACTLY what we just sent for this speaker, DO NOT send it again ever, 
+  // until they say something new. (Fixes stale DOM elements firing repeatedly)
+  if (lastSentText.get(speaker) === text) return;
+
+  // Extract only the new unrepeated part using the 5-minute rolling overlap algorithm
+  const diffText = extractUnrepeatedText(speaker, text);
+  if (!diffText || diffText.length < 2) {
+    lastSentText.set(speaker, text);
+    return; // Completely redundant
+  }
+
+  // Dedup: skip if same exact diff sent recently
+  const diffKey = `${speaker}||${diffText}`;
+  const last = recentSent.get(diffKey);
   if (last && now - last < DEDUP_TTL) return;
 
   // Prune old dedup entries
   for (const [k, t] of recentSent.entries()) {
     if (now - t > DEDUP_TTL) recentSent.delete(k);
   }
-  recentSent.set(key, now);
+  recentSent.set(diffKey, now);
+  lastSentText.set(speaker, text);
+  
+  // Update speaker history with the new diff
+  const hist = speakerHistory.get(speaker) || [];
+  hist.push({ text: diffText, timestamp: now });
+  speakerHistory.set(speaker, hist);
 
   const sent = safeSendMessage({
     type: "INGEST_CHUNK",
     meetingId: meetingId,
-    chunk: { speaker, text, timestamp_ms: now - meetingStartTime, platform: "google_meet", source: "dom" },
+    chunk: { speaker, text: diffText, timestamp_ms: now - meetingStartTime, platform: "google_meet", source: "dom" },
   });
-  if (sent) console.log(`[MeetMaxxing] ✓ Utterance → ${speaker}: "${text.slice(0, 80)}"`);
+  if (sent) console.log(`[MeetMaxxing] ✓ Utterance → ${speaker}: "${diffText.slice(0, 80)}"`);
   else console.warn("[MeetMaxxing] Context invalidated — refresh this tab (F5).");
 }
 
@@ -224,6 +289,13 @@ function trackUtterance(speaker, rawText) {
   if (!text) return;
 
   const existing = utteranceMap.get(speaker);
+
+  if (text.length >= MAX_CHARS) {
+    if (existing) clearTimeout(existing.timer);
+    utteranceMap.set(speaker, { text, timer: null });
+    flushUtterance(speaker);
+    return;
+  }
 
   // Reset silence timer whenever text changes
   if (existing) {
@@ -544,6 +616,7 @@ function startMeeting() {
   }
 
   meetingStartTime = Date.now();
+  maxParticipants = 1;
   autoEnableCC();
   injectVisibilityButton();
   const match = location.pathname.match(/^\/([a-z0-9\-]+)/i);
@@ -581,6 +654,17 @@ function startMeeting() {
       clearInterval(endCheckInterval);
       return;
     }
+    
+    // Track max participants
+    const participantCountEl = document.querySelector('.uGOf1d') || document.querySelector('[jsname="Nqj9L"]');
+    if (participantCountEl && participantCountEl.innerText) {
+      const count = parseInt(participantCountEl.innerText, 10);
+      if (!isNaN(count) && count > maxParticipants) {
+        maxParticipants = count;
+        safeSendMessage({ type: "UPDATE_PARTICIPANTS", maxParticipants });
+      }
+    }
+
     const text = document.body.innerText || "";
     const isEndScreen = text.includes("You left the meeting") || 
                         text.includes("Return to home screen") || 
@@ -612,7 +696,7 @@ function endMeeting() {
   const styleEl = document.getElementById("meetmaxxing-hide-cc");
   if (styleEl) styleEl.remove();
 
-  safeSendMessage({ type: "END_MEETING", meetingId, title: document.title });
+  safeSendMessage({ type: "END_MEETING", meetingId, title: document.title, maxParticipants });
 
   meetingId = null;
   if (chrome.runtime && chrome.runtime.id) {

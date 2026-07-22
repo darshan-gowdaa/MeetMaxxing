@@ -26,6 +26,7 @@ router = APIRouter(prefix="/meeting", tags=["meeting"])
 class EndMeetingRequest(BaseModel):
     title: str = ""
     attendees: list[str] = []
+    max_participants: int = 1
     calendar_token: dict | None = None  # user's Google OAuth token for scheduling
 
 
@@ -50,6 +51,7 @@ async def end_meeting(
         meeting_id=meeting_id,
         title=req.title,
         attendees=req.attendees,
+        max_participants=req.max_participants,
         calendar_token=req.calendar_token,
         org_id=user["org_id"],
         user_id=user["user_id"],
@@ -75,21 +77,21 @@ async def _run_end_pipeline(
     meeting_id: str,
     title: str,
     attendees: list[str],
+    max_participants: int,
     calendar_token: dict | None,
     org_id: str,
     user_id: str,
 ) -> None:
     """Background task — full post-meeting processing pipeline."""
+    print(f"[MeetMaxxing END PIPELINE] Starting pipeline for {meeting_id}...")
+    logger.info(f"[MeetMaxxing END PIPELINE] Starting pipeline for {meeting_id}...")
     supabase = get_supabase_admin()
 
     try:
-        # Resolve meeting record by ID or google_meet_link
-        meeting_row = get_meeting_record(supabase, meeting_id, org_id)
-
-        is_uuid = is_valid_uuid(meeting_id)
-
-        target_id = meeting_row["id"] if meeting_row else (meeting_id if is_uuid else None)
-        google_code = meeting_row.get("google_meet_link") if meeting_row else (meeting_id if not is_uuid else None)
+        from ..core.database import ensure_meeting_record
+        meeting_row = ensure_meeting_record(supabase, meeting_id, org_id, user_id, title)
+        target_id = meeting_row.get("id") or meeting_id
+        google_code = meeting_row.get("google_meet_link") or (meeting_id if not is_valid_uuid(meeting_id) else None)
 
         # get transcript
         utterances = await get_full_transcript(meeting_id)
@@ -121,9 +123,10 @@ async def _run_end_pipeline(
             await persist_transcript_to_db(target_id, utterances)
 
         if not utterances:
+            logger.warning(f"No utterances found for meeting {meeting_id}, proceeding with empty transcript to ensure summary generation.")
             if target_id:
                 supabase.table("meetings").update({"status": "no_transcript"}).eq("id", target_id).execute()
-            return
+            # DO NOT RETURN, continue pipeline to generate summary
 
 
         import re
@@ -139,12 +142,14 @@ async def _run_end_pipeline(
         )
 
         # gen summary
+        logger.info(f"Dispatching MEETING_END for {meeting_id} with {len(utterances)} utterances")
         summary = await dispatch(AgentTrigger.MEETING_END, {
             "meeting_id": target_id or meeting_id,
             "title": final_title,
             "attendees": attendees,
             "utterances": utterances
         })
+        logger.info(f"Dispatch MEETING_END returned for {meeting_id}")
 
         if summary.get("error"):
             logger.error(f"Failed to generate summary: {summary.get('error')}")
@@ -168,13 +173,29 @@ async def _run_end_pipeline(
         
             # Force status to completed so the UI always displays the summary
             final_status = "completed"
+
+            # Compute max union of participants
+            all_participants = set(attendees or [])
+            if meeting_row and meeting_row.get("attendees"):
+                all_participants.update(meeting_row.get("attendees"))
+            for u in utterances:
+                spk = u.get("speaker")
+                if spk and spk not in {"Unknown", "System", ""}:
+                    all_participants.add(spk)
+            final_attendees_list = list(all_participants)
+            
+            # Pad with dummy participants to match max_participants count
+            current_count = len(final_attendees_list)
+            if max_participants > current_count:
+                for i in range(current_count + 1, max_participants + 1):
+                    final_attendees_list.append(f"Participant {i}")
         
             supabase.table("meetings").update(
                 {
                     "title": final_title,
                     "summary": final_sum_text,
+                    "attendees": final_attendees_list,
                     "decisions": final_summary.get("decisions", []),
-                    "action_items": final_summary.get("action_items", []),
                     "follow_up": final_summary.get("follow_up", {}),
                     "guardrail_score": guardrail_result.score,
                     "status": final_status,
@@ -250,20 +271,23 @@ async def _run_end_pipeline(
                 calendar_token = None
 
         if final_summary.get("follow_up", {}).get("required") or attendees:
-            if not calendar_token or not calendar_token.get("access_token"):
-                supabase.table("meetings").update(
-                    {"scheduling_result": {"status": "skipped", "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders."}}
-                ).eq("id", target_id or meeting_id).execute()
-            else:
-                schedule_result = await dispatch(AgentTrigger.SCHEDULE_FOLLOWUP, {
-                    "summary_output": final_summary,
-                    "attendee_emails": attendees,
-                    "calendar_token": calendar_token,
-                    "org_id": org_id,
-                })
-                supabase.table("meetings").update(
-                    {"scheduling_result": schedule_result}
-                ).eq("id", target_id or meeting_id).execute()
+            try:
+                if not calendar_token or not calendar_token.get("access_token"):
+                    supabase.table("meetings").update(
+                        {"scheduling_result": {"status": "skipped", "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders."}}
+                    ).eq("id", target_id or meeting_id).execute()
+                else:
+                    schedule_result = await dispatch(AgentTrigger.SCHEDULE_FOLLOWUP, {
+                        "summary_output": final_summary,
+                        "attendee_emails": attendees,
+                        "calendar_token": calendar_token,
+                        "org_id": org_id,
+                    })
+                    supabase.table("meetings").update(
+                        {"scheduling_result": schedule_result}
+                    ).eq("id", target_id or meeting_id).execute()
+            except Exception as e:
+                logger.warning(f"Could not persist scheduling_result: {e}")
 
             # send notifications
             slack_result = await dispatch(AgentTrigger.SEND_SLACK, {
@@ -298,16 +322,16 @@ async def _run_end_pipeline(
     except Exception as e:
         logger.error(f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True)
         try:
-            # Fallback update to mark the meeting as errored so it doesn't get stuck processing
-            meeting_row = get_meeting_record(supabase, meeting_id, org_id)
-            target_id = meeting_row["id"] if meeting_row else (meeting_id if is_valid_uuid(meeting_id) else None)
-            if target_id:
+            # Use the target_id we already resolved at the top of the function
+            local_target = locals().get("target_id") or meeting_id
+            from ..core.utils import is_valid_uuid
+            if local_target and is_valid_uuid(local_target):
                 supabase.table("meetings").update(
                     {
                         "status": "completed",
                         "summary": f"A pipeline error occurred: {str(e)[:200]}"
                     }
-                ).eq("id", target_id).execute()
+                ).eq("id", local_target).execute()
         except Exception as inner_e:
             logger.error(f"Failed to update error status for {meeting_id}: {inner_e}")
 

@@ -17,6 +17,7 @@ const MEETMAXXING_CONFIG = {
 let ws = null;
 let activeMeetingId = null;
 let activeMeetTabId = null;
+let activeMeetingMaxParticipants = 1;
 let activeAuthToken = "dev_token";
 
 // Init auth token
@@ -48,17 +49,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 function handleMeetingEnd(tabId) {
   console.log("[MeetMaxxing Background] Meet tab left, triggering END_MEETING");
   const meetingIdToEnd = activeMeetingId;
+  const maxPart = activeMeetingMaxParticipants;
   if (meetingIdToEnd) {
     fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-      body: JSON.stringify({ title: "Google Meet", attendees: [] }),
+      body: JSON.stringify({ title: "Google Meet", attendees: [], max_participants: maxPart }),
     }).catch(() => {});
   }
   stopTabCapture();
   if (ws) { try { ws.close(); } catch (e) {} ws = null; }
   activeMeetingId = null;
   activeMeetTabId = null;
+  activeMeetingMaxParticipants = 1;
   chrome.storage.local.remove(["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"]);
   chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
 }
@@ -269,7 +272,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       let updated = [...prev];
       if (updated.length > 0) {
         const last = updated[updated.length - 1];
-        if (last.speaker === (chunk.speaker || "Speaker") && (now - (last.timestamp || 0) < 4500)) {
+        if (last.speaker === (chunk.speaker || "Speaker") && (now - (last.timestamp || 0) < 60000)) {
           const newText = (chunk.text || "").trim();
           if (newText.startsWith(last.text) || last.text.startsWith(newText) || newText.includes(last.text)) {
             updated[updated.length - 1] = { ...last, text: newText.length > last.text.length ? newText : last.text, timestamp: now };
@@ -328,6 +331,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const finishEnd = () => {
       activeMeetingId = null;
       activeMeetTabId = null;
+      activeMeetingMaxParticipants = 1;
       chrome.storage.local.remove(["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"]);
       chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
       sendResponse({ success: true });
@@ -335,16 +339,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (activeMeetingId) {
       activeMeetingId = null; // Clear immediately to prevent re-entry
+      const maxParticipants = msg.maxParticipants || activeMeetingMaxParticipants || 1;
       fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-        body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [] }),
+        body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [], max_participants: maxParticipants }),
       }).then(finishEnd).catch(finishEnd);
       return true; // Keep service worker alive during fetch
     } else {
       finishEnd();
       return false;
     }
+  }
+
+  if (msg.type === "UPDATE_PARTICIPANTS") {
+    activeMeetingMaxParticipants = msg.maxParticipants;
+    sendResponse({ success: true });
+    return false;
   }
 
   // ── FORCE_TEST_UPDATE / ASK_SUGGESTIONS / ASK_NEXT_QUESTION / REQUEST_RECAP ──
@@ -370,19 +381,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           if (isRecap) {
             let recapText = "";
             if (data.recap && data.recap.trim().length > 0) {
-              recapText = `Recap:\n${data.recap}`;
+              recapText = `**Recap**\n${data.recap}`;
             } else {
               recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
             }
 
             if (data.current_topic && data.current_topic !== "Unknown") {
-              recapText += `\n\nCurrent Topic:\n${data.current_topic}`;
+              recapText += `\n\n**Current Topic**\n${data.current_topic}`;
             }
             if (data.key_decisions_so_far && data.key_decisions_so_far.length) {
-              recapText += `\n\nDecisions:\n- ${data.key_decisions_so_far.join("\n- ")}`;
+              recapText += `\n\n**Decisions**\n- ${data.key_decisions_so_far.join("\n- ")}`;
             }
             if (data.who_said_what && data.who_said_what.length) {
-              recapText += `\n\nWho said what:\n- ${data.who_said_what.join("\n- ")}`;
+              recapText += `\n\n**Who said what**\n- ${data.who_said_what.join("\n- ")}`;
             }
             updateData = { recap: recapText, meeting_id: data.meeting_id || targetId, powered_by: data.powered_by };
           }

@@ -51,11 +51,9 @@ async def get_meeting_detail(
     """Full meeting detail including transcript, decisions, action items."""
     from fastapi import HTTPException
     
+    from ..core.database import ensure_meeting_record
     supabase = get_supabase_admin()
-    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
-
-    if not meeting:
-        raise HTTPException(status_code=404, detail="Meeting not found")
+    meeting = ensure_meeting_record(supabase, meeting_id, user["org_id"], user["user_id"])
 
     target_id = meeting["id"]
 

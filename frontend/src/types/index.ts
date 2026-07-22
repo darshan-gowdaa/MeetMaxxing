@@ -24,6 +24,7 @@ export interface Meeting {
   email_result?: { sent: boolean; message_id?: string; error?: string };
   scheduling_result?: { status: string; event_id?: string; html_link?: string; error?: string };
   status?: string;
+  max_participants?: number;
 }
 
 // ─── Memory ───────────────────────────────────────────────────────────────────

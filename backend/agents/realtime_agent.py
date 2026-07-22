@@ -3,7 +3,7 @@ Realtime Agent — runs on a rolling timer during live meetings.
 
 Trigger: Every REALTIME_CADENCE_SECONDS while meeting is active
 Input:   Last N minutes of transcript (rolling window from Redis)
-Output:  {suggestions: [], risks: [], next_question: str, recap: str}
+Output:  {suggestions: [], risks: [], next_question: str}
 Model:   Gemini Flash (fast + cheap for frequent calls)
 Governed by Lyzr light guardrail
 """
@@ -27,8 +27,7 @@ _SYSTEM_PROMPT = """You are MeetMaxxing, an AI meeting copilot giving LIVE assis
 Your job:
 1. SUGGESTIONS ("What to answer") — 1-2 precise, direct, and actionable talking points the user should say right now in response to the current discussion. Must be extremely concise.
 2. RISKS — Flag any red flags in the conversation. 1-2 max. Only flag real issues visible in the text.
-3. NEXT_QUESTION ("Suggestion of what to Ask") — A single, highly strategic, thought-provoking question to ask next. Must be EXACTLY 1 sentence. 
-4. RECAP ("Recap Agent") — 1-2 sentences summarizing the main discussion so far. Must be extremely refined and to the point.
+3. NEXT_QUESTION ("Suggestion of what to Ask") — A single, highly strategic, thought-provoking question to ask next. Must be EXACTLY 1 sentence.
 
 CRITICAL RULES:
 - Only reference names, numbers, and facts that EXPLICITLY appear in the transcript or Uploaded Meeting Context Documents.
@@ -39,8 +38,7 @@ Respond ONLY in valid JSON matching this exact schema. Do NOT include markdown c
 {
   "suggestions": ["...", "..."],
   "risks": ["..."],
-  "next_question": "...",
-  "recap": "..."
+  "next_question": "..."
 }"""
 
 
@@ -82,7 +80,6 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
             "suggestions": ["Listening for spoken speech... Turn on Google Meet Captions (CC) at the bottom right to begin real-time AI analysis."],
             "risks": [],
             "next_question": "Waiting for speaker utterance...",
-            "recap": "No spoken words captured yet. Turn on Google Meet Captions (CC) below so MeetMaxxing can listen and summarize the discussion.",
             "transcript_chunks": 0,
         }
 
@@ -181,7 +178,6 @@ New transcript utterances:
         "suggestions": validated_suggs,
         "risks": result.get("risks", []),
         "next_question": result.get("next_question", ""),
-        "recap": result.get("recap", ""),
         "transcript_chunks": len(chunks),
         "powered_by": result.get("powered_by", "Unknown API"),
     }

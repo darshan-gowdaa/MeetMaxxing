@@ -41,12 +41,12 @@ class MemoryTableQuery:
         return self
 
     def eq(self, column: str, value: any):
-        self._filters.append((column, value))
+        self._filters.append((column, value, 'eq'))
         return self
 
     def like(self, column: str, pattern: str):
         val = pattern.replace("%", "")
-        self._filters.append((column, val))
+        self._filters.append((column, val, 'like'))
         return self
 
     def order(self, column: str, desc: bool = False):
@@ -91,7 +91,15 @@ class MemoryTableQuery:
         if self._action == "update":
             updated_rows = []
             for row in table_rows:
-                match = all(row.get(col) == val for col, val in self._filters)
+                match = True
+                for col, val, op in self._filters:
+                    row_val = row.get(col)
+                    if op == 'eq' and row_val != val:
+                        match = False
+                        break
+                    elif op == 'like' and (not row_val or val not in str(row_val)):
+                        match = False
+                        break
                 if match:
                     row.update(self._action_data)
                     updated_rows.append(row)
@@ -101,7 +109,15 @@ class MemoryTableQuery:
             kept_rows = []
             deleted_rows = []
             for row in table_rows:
-                match = all(row.get(col) == val for col, val in self._filters)
+                match = True
+                for col, val, op in self._filters:
+                    row_val = row.get(col)
+                    if op == 'eq' and row_val != val:
+                        match = False
+                        break
+                    elif op == 'like' and (not row_val or val not in str(row_val)):
+                        match = False
+                        break
                 if match:
                     deleted_rows.append(row)
                 else:
@@ -112,7 +128,17 @@ class MemoryTableQuery:
         # SELECT action
         results = []
         for row in table_rows:
-            match = all(row.get(col) == val for col, val in self._filters)
+            match = True
+            for col, val, op in self._filters:
+                row_val = row.get(col)
+                if op == 'eq':
+                    if row_val != val:
+                        match = False
+                        break
+                elif op == 'like':
+                    if not row_val or val not in str(row_val):
+                        match = False
+                        break
             if match:
                 # Add relationship mock if querying action items with meetings(...)
                 if self.table_name == "action_items" and "meetings" not in row:
@@ -172,34 +198,81 @@ def get_supabase_admin() -> Client | MemorySupabaseClient:
 
 def get_meeting_record(supabase, meeting_id: str, org_id: str = None) -> dict | None:
     """Helper to fetch a meeting by UUID or google_meet_link/title."""
-    is_uuid = is_valid_uuid(meeting_id)
+    if not meeting_id:
+        return None
 
-    query = supabase.table("meetings").select("*")
-    if is_uuid:
-        query = query.eq("id", meeting_id)
-    else:
-        query = query.eq("google_meet_link", meeting_id)
-        
-    if org_id:
-        query = query.eq("org_id", org_id)
+    is_uuid = is_valid_uuid(meeting_id)
+    clean_id = meeting_id.replace("https://meet.google.com/", "").strip("/")
 
     try:
-        res = query.single().execute()
+        query = supabase.table("meetings").select("*")
+        if is_uuid:
+            query = query.eq("id", meeting_id)
+        else:
+            query = query.like("title", f"%{clean_id}%")
+            
+        if org_id:
+            query = query.eq("org_id", org_id)
+
+        res = query.order("created_at", desc=True).execute()
         if res.data:
-            return res.data
+            return res.data[0]
     except Exception:
         pass
 
-    # Fallback for non-UUIDs: try checking title like "%meeting_id%"
+    # Fallback for non-UUIDs
     if not is_uuid:
         try:
-            res = supabase.table("meetings").select("*").like("title", f"%{meeting_id}%")
+            query = supabase.table("meetings").select("*").like("title", f"%{clean_id}%")
             if org_id:
-                res = res.eq("org_id", org_id)
-            res = res.execute()
+                query = query.eq("org_id", org_id)
+            res = query.order("created_at", desc=True).execute()
             if res.data:
                 return res.data[0]
         except Exception:
             pass
 
     return None
+
+
+def ensure_meeting_record(supabase, meeting_id: str, org_id: str = "default_org", user_id: str = "default_user", title: str = "") -> dict:
+    """Ensure a meeting record exists in Supabase, auto-creating if missing."""
+    record = get_meeting_record(supabase, meeting_id, org_id)
+    if record:
+        return record
+        
+    is_uuid = is_valid_uuid(meeting_id)
+    m_id = meeting_id if is_uuid else str(uuid.uuid4())
+    clean_code = meeting_id.replace("https://meet.google.com/", "").strip("/") if not is_uuid else ""
+    
+    from .utils import generate_meeting_title
+    final_title = generate_meeting_title(title, clean_code)
+    
+    insert_data = {
+        "id": m_id,
+        "org_id": org_id,
+        "user_id": user_id,
+        "title": final_title,
+        "attendees": [],
+        "start_at": datetime.now(timezone.utc).isoformat(),
+        "status": "active",
+    }
+    if clean_code:
+        insert_data["google_meet_link"] = clean_code
+        
+    try:
+        res = supabase.table("meetings").insert(insert_data).execute()
+        if res.data:
+            return res.data[0]
+    except Exception as e:
+        if "google_meet_link" in str(e):
+            insert_data.pop("google_meet_link", None)
+            try:
+                res = supabase.table("meetings").insert(insert_data).execute()
+                if res.data:
+                    return res.data[0]
+            except Exception:
+                pass
+                
+    return {"id": m_id, "title": final_title, "status": "active", "attendees": [], "org_id": org_id}
+

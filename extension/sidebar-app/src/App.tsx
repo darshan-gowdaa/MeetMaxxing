@@ -13,7 +13,7 @@ export default function App() {
     elapsedTime, triggerAction, clearTranscript
   } = useCopilot();
 
-  const [activeTab, setActiveTab] = useState<"live" | "transcript" | "rag">(() => {
+  const [activeTab, setActiveTab] = useState<"live" | "transcript" | "rag" | "recap">(() => {
     return (localStorage.getItem("meetmaxxing_activeTab") as any) || "live";
   });
   
@@ -59,14 +59,17 @@ export default function App() {
           <div id="active-state" className="state-container">
             
             <div className="flex bg-zinc-900/60 p-1.5 rounded-full border border-zinc-800/50 shrink-0 sticky top-0 z-10 backdrop-blur-xl mb-3 shadow-sm">
-              <button onClick={() => setActiveTab("live")} className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all duration-300 ${activeTab === "live" ? "bg-blue-600/90 text-white shadow-md shadow-blue-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
-                <i className="ri-sparkling-fill mr-1.5"></i>Copilot
+              <button onClick={() => setActiveTab("live")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "live" ? "bg-blue-600/90 text-white shadow-md shadow-blue-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+                <i className="ri-sparkling-fill mr-1"></i>Copilot
               </button>
-              <button onClick={() => setActiveTab("rag")} className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all duration-300 ${activeTab === "rag" ? "bg-cyan-600/90 text-white shadow-md shadow-cyan-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
-                <i className="ri-robot-2-fill mr-1.5"></i>IntelliAgent
+              <button onClick={() => setActiveTab("rag")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "rag" ? "bg-cyan-600/90 text-white shadow-md shadow-cyan-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+                <i className="ri-robot-2-fill mr-1"></i>Chat
               </button>
-              <button onClick={() => setActiveTab("transcript")} className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all duration-300 ${activeTab === "transcript" ? "bg-indigo-600/90 text-white shadow-md shadow-indigo-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
-                <i className="ri-chat-voice-fill mr-1.5"></i>Transcript
+              <button onClick={() => setActiveTab("recap")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "recap" ? "bg-emerald-600/90 text-white shadow-md shadow-emerald-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+                <i className="ri-article-fill mr-1"></i>Recap
+              </button>
+              <button onClick={() => setActiveTab("transcript")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "transcript" ? "bg-indigo-600/90 text-white shadow-md shadow-indigo-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+                <i className="ri-chat-voice-fill mr-1"></i>Feed
               </button>
             </div>
 
@@ -84,11 +87,22 @@ export default function App() {
                 
                 <SuggestionAgent suggestions={suggestions} isProcessing={isProcessing} />
                 <NextQuestionAgent nextQuestion={nextQuestion} isProcessing={isProcessing} onSendToIntelliAgent={(q) => { setActiveTab("rag"); setPendingQuery(q); }} />
-                <RecapAgent recap={recap} isProcessing={isProcessing} />
             </div>
 
             <div className={activeTab === "rag" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
               <ContextAgent meetingId={meetingId} pendingQuery={pendingQuery} clearPendingQuery={() => setPendingQuery("")} />
+            </div>
+            
+            <div className={activeTab === "recap" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>
+              <button 
+                  onClick={handleGenerateInsights} 
+                  disabled={isProcessing} 
+                  className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative"
+                >
+                  {hasNewContext && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
+                  {isProcessing ? <div className="md3-loading-indicator md3-loading-indicator-sm text-white mx-auto"></div> : <><i className="ri-sparkling-fill text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>}
+              </button>
+              <RecapAgent recap={recap} isProcessing={isProcessing} />
             </div>
 
             <div className={activeTab === "transcript" ? "flex flex-col flex-1 min-h-0" : "hidden"}>

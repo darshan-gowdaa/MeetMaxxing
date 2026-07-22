@@ -43,33 +43,16 @@ async def ingest_chunk(raw_chunk: dict, on_ai_chunk_ready=None) -> dict:
         chunk["source"] = "dom"
         # Save immediately to prevent race condition with end_meeting
         await append_transcript_chunk(chunk["meeting_id"], chunk)
-
-        # Run transcription agent in background
-        import asyncio
-        async def background_transcribe():
-            try:
-                result = await dispatch(AgentTrigger.TRANSCRIPT_CHUNK, {
-                    "meeting_id": chunk["meeting_id"],
-                    "raw_text": chunk["text"],
-                    "speaker": chunk["speaker"],
-                    "timestamp_ms": chunk["timestamp_ms"]
-                })
-                if result and result.get("text"):
-                    ai_chunk = dict(chunk)
-                    ai_chunk["text"] = result["text"]
-                    ai_chunk["speaker"] = result.get("speaker", chunk["speaker"])
-                    ai_chunk["source"] = "audio"
-                    ai_chunk["id"] = str(uuid.uuid4())
-                    await append_transcript_chunk(ai_chunk["meeting_id"], ai_chunk)
-                    if on_ai_chunk_ready:
-                        if asyncio.iscoroutinefunction(on_ai_chunk_ready):
-                            await on_ai_chunk_ready(ai_chunk)
-                        else:
-                            on_ai_chunk_ready(ai_chunk)
-            except Exception as e:
-                print(f"[Transcript Service] Transcription background agent failed: {e}")
-                
-        asyncio.create_task(background_transcribe())
+        
+        # We no longer run LLM transcription per chunk. Raw dom chunk is broadcasted for instant CC.
+        # Structured transcription happens globally at the end of the meeting to save LLM tokens and avoid hallucinated JSON in UI.
+        
+        if on_ai_chunk_ready:
+            import asyncio
+            if asyncio.iscoroutinefunction(on_ai_chunk_ready):
+                await on_ai_chunk_ready(chunk)
+            else:
+                on_ai_chunk_ready(chunk)
 
     return chunk
 

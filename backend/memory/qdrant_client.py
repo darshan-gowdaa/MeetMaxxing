@@ -90,6 +90,8 @@ async def ensure_collection() -> None:
 
 async def upsert_memories(points: list[MemoryPoint]) -> None:
     """Batch upsert memory points into Qdrant."""
+    if not points:
+        return
     await ensure_collection()
     client = await get_qdrant()
     

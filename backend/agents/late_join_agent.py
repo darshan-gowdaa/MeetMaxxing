@@ -2,7 +2,7 @@ import json
 import time
 from typing import Dict, Any
 
-from ..core.redis_client import get_transcript_window
+from ..core.redis_client import get_full_transcript
 from ..core.llm_fallback import generate_content_with_fallback
 
 _SYSTEM_PROMPT = """You are MeetMaxxing's Late-Join Agent. The user just asked for an executive recap of the meeting so far.
@@ -40,7 +40,7 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict
         print(f"[Late Join Agent] Returning cached recap for {meeting_id}")
         return _last_recaps[meeting_id]
         
-    chunks = await get_transcript_window(meeting_id, last_n=1000) # Get all recent chunks
+    chunks = await get_full_transcript(meeting_id)
     
     if not chunks:
         return {

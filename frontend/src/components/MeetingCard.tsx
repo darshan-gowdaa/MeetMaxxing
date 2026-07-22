@@ -104,7 +104,7 @@ export default function MeetingCard({
 
       {/* Card body — clickable to navigate */}
       <Link
-        href={`/meetings/${meeting.google_meet_link || meeting.id}`}
+        href={`/meetings/${meeting.id}`}
         className="flex flex-col gap-3 p-5 flex-1 relative z-10 h-full"
       >
         {/* Date chip */}
@@ -155,7 +155,18 @@ export default function MeetingCard({
         <div className="pt-3 border-t border-border flex items-center justify-between mt-auto">
           <div className="flex items-center gap-1.5 text-[11.5px] text-text-muted font-medium">
             <RiGroupLine className="w-3.5 h-3.5" />
-            {meeting.attendees?.length || (meeting.transcript_data ? new Set(meeting.transcript_data.map(t => t.speaker)).size : 0) || 1} participants
+            {(() => {
+              if (meeting.max_participants && meeting.max_participants > 0) {
+                return meeting.max_participants;
+              }
+              const set = new Set<string>(meeting.attendees || []);
+              if (meeting.transcript_data && Array.isArray(meeting.transcript_data)) {
+                meeting.transcript_data.forEach((t) => {
+                  if (t.speaker && t.speaker !== "Unknown" && t.speaker !== "System") set.add(t.speaker);
+                });
+              }
+              return Math.max(set.size, 1);
+            })()} participants
           </div>
           <div className="w-7 h-7 rounded-full bg-surface2 group-hover:bg-primary-container flex items-center justify-center spring-colors">
             <RiArrowRightLine className="w-3.5 h-3.5 text-text-muted group-hover:text-primary spring-colors" />

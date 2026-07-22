@@ -171,11 +171,11 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <p className="text-[14px] text-text-muted font-medium animate-pulse tracking-wide">
-              AI is processing this meeting transcript
+            <p className="text-[14px] text-text-muted font-medium tracking-wide">
+              {errorMsg ? "Failed to load meeting" : "AI is processing this meeting transcript"}
             </p>
             {errorMsg && (
-              <p className="text-[11px] text-text-muted/40 max-w-xs text-center">{errorMsg}</p>
+              <p className="text-[11px] text-risk max-w-xs text-center">{errorMsg}</p>
             )}
           </div>
           <div className="flex items-center gap-3 mt-4">
@@ -275,22 +275,33 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Attendees */}
-          {meeting.attendees && meeting.attendees.length > 0 && (
-            <div className="relative z-10 flex flex-wrap items-center gap-2 pt-5 mt-5 border-t border-border">
-              <div className="flex items-center gap-1.5 text-[12px] text-text-muted font-medium">
-                <Users className="w-4 h-4 text-primary" />
-                <span className="text-text font-semibold">Participants:</span>
-              </div>
-              {meeting.attendees.map((a) => (
-                <span key={a} className="flex items-center gap-1.5 text-[11.5px] font-medium text-text bg-surface2 border border-border rounded-full px-3 py-1">
-                  <span className="w-4 h-4 rounded-full bg-primary-container text-[8px] font-bold text-on-primary-container flex items-center justify-center">
-                    {a.charAt(0).toUpperCase()}
+          {(() => {
+            const set = new Set<string>(meeting.attendees || []);
+            if (meeting.transcript_data && Array.isArray(meeting.transcript_data)) {
+              meeting.transcript_data.forEach((t) => {
+                if (t.speaker && t.speaker !== "Unknown" && t.speaker !== "System") set.add(t.speaker);
+              });
+            }
+            const participantsList = Array.from(set);
+            if (participantsList.length === 0) return null;
+
+            return (
+              <div className="relative z-10 flex flex-wrap items-center gap-2 pt-5 mt-5 border-t border-border">
+                <div className="flex items-center gap-1.5 text-[12px] text-text-muted font-medium">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span className="text-text font-semibold">Participants ({participantsList.length}):</span>
+                </div>
+                {participantsList.map((a) => (
+                  <span key={a} className="flex items-center gap-1.5 text-[11.5px] font-medium text-text bg-surface2 border border-border rounded-full px-3 py-1">
+                    <span className="w-4 h-4 rounded-full bg-primary-container text-[8px] font-bold text-on-primary-container flex items-center justify-center">
+                      {a.charAt(0).toUpperCase()}
+                    </span>
+                    {a}
                   </span>
-                  {a}
-                </span>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {/* ── Executive Summary ─────────────────────────────────────────── */}

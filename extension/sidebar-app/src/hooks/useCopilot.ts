@@ -43,7 +43,9 @@ export function useCopilot() {
     if (data.error) setErrorMessage(data.error);
     else setErrorMessage("");
     if (data.suggestions && Array.isArray(data.suggestions)) setSuggestions(data.suggestions);
-    if (data.next_question) setNextQuestion(data.next_question);
+    if (data.next_question) {
+      setNextQuestion(Array.isArray(data.next_question) ? data.next_question.join(" ") : String(data.next_question));
+    }
     if (data.recap) setRecap(data.recap);
   };
 
@@ -58,13 +60,21 @@ export function useCopilot() {
       let updated;
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
-        if (last.speaker === speaker && (now - (last.timestamp || 0) < 4500)) {
-          if (text === last.text) return prev;
-          if (text.startsWith(last.text) || last.text.startsWith(text) || text.includes(last.text)) {
-            updated = [...prev];
-            updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now, source: chunk.source || last.source };
-            if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
-            return updated;
+        if (last.speaker === speaker) {
+          if (text === last.text) {
+             updated = [...prev];
+             updated[updated.length - 1] = { ...last, timestamp: now };
+             if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
+             return updated;
+          }
+          // We allow merging continuations up to 15 seconds to prevent unbounded bubble merging if they just keep talking
+          if (now - (last.timestamp || 0) < 60000) {
+            if (text.startsWith(last.text) || last.text.startsWith(text) || text.includes(last.text)) {
+              updated = [...prev];
+              updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now, source: chunk.source || last.source };
+              if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
+              return updated;
+            }
           }
         }
       }

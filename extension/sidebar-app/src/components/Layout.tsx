@@ -2,22 +2,22 @@ import { RiAlertLine as ShieldAlert } from "@remixicon/react";
 
 export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) {
   return (
-    <header className="header">
-      <div className="header-left">
-        <div className="logo">
-          <span className="logo-icon"><i className="ri-sparkling-2-fill"></i></span>
+    <header className="flex items-center justify-between px-3 py-2.5 bg-zinc-900/80 backdrop-blur-3xl border-b border-zinc-800/80 shrink-0 shadow-sm z-10 w-full box-border">
+      <div className="flex items-center gap-2 shrink truncate">
+        <div className="flex items-center gap-1.5 font-black text-[15px] tracking-tight bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent truncate">
+          <span className="text-blue-500 flex items-center justify-center text-lg shrink-0"><i className="ri-sparkling-2-fill"></i></span>
           <span>MeetMaxxing</span>
         </div>
       </div>
-      <div className="header-right">
-        <div id="status-badge" className={`badge ${meetingId && !isEnded ? 'badge-live' : 'badge-idle'}`}>
-          <span className="badge-dot"></span>
-          <span className="badge-label">{meetingId && !isEnded ? 'Live' : 'Idle'}</span>
+      <div className="flex items-center gap-2 shrink-0">
+        <div id="status-badge" className={`flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-extrabold tracking-[0.1em] uppercase transition-colors shrink-0 ${meetingId && !isEnded ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'bg-zinc-800/60 text-zinc-400 border border-zinc-700/60'}`}>
+          <span className={`w-2 h-2 rounded-full ${meetingId && !isEnded ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-500'}`}></span>
+          <span>{meetingId && !isEnded ? 'Live' : 'Idle'}</span>
         </div>
-        <div id="timer" className="timer">{elapsedTime}</div>
+        <div id="timer" className="text-xs font-mono font-bold tracking-wide text-zinc-200 bg-zinc-800/60 px-2 py-1 rounded-full border border-zinc-700/50 shadow-inner shrink-0">{elapsedTime}</div>
         {meetingId && !isEnded && (
           <button
-            className="md3-btn md3-btn-danger !px-2.5 !py-1 !text-[11px] !rounded-full !font-bold shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-2.5 py-1 text-[11px] font-bold rounded-full cursor-pointer transition-colors whitespace-nowrap bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 shrink-0"
             title="End Meeting & Process Summary"
             onClick={() => triggerAction("REQUEST_END_MEETING")}
           >
