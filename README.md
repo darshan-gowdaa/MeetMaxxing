@@ -444,7 +444,7 @@ MeetMaxxing/
 ## Clone Repository
 
 ```bash
-git clone https://github.com/<username>/MeetMaxxing.git
+git clone https://github.com/darshan-gowdaa/MeetMaxxing.git
 ```
 
 ```bash
