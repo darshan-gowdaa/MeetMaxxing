@@ -46,6 +46,15 @@ async def end_meeting(
     5. Persist summary + memory to Qdrant
     6. Run Scheduler Agent if follow-up needed
     """
+    # Immediately mark as processing so UI shows correct state
+    try:
+        supabase = get_supabase_admin()
+        rec = get_meeting_record(supabase, meeting_id, user["org_id"])
+        if rec and rec.get("id"):
+            supabase.table("meetings").update({"status": "processing"}).eq("id", rec["id"]).execute()
+    except Exception:
+        pass
+
     background_tasks.add_task(
         _run_end_pipeline,
         meeting_id=meeting_id,
@@ -73,6 +82,34 @@ async def get_meeting(
     return meeting
 
 
+@router.post("/{meeting_id}/reprocess")
+async def reprocess_meeting(
+    meeting_id: str,
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(get_current_user),
+):
+    """Re-trigger the summary pipeline for a stuck/failed meeting."""
+    supabase = get_supabase_admin()
+    rec = get_meeting_record(supabase, meeting_id, user["org_id"])
+    if not rec:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    target_id = rec.get("id") or meeting_id
+    supabase.table("meetings").update({"status": "processing"}).eq("id", target_id).execute()
+
+    background_tasks.add_task(
+        _run_end_pipeline,
+        meeting_id=target_id,
+        title=rec.get("title", ""),
+        attendees=rec.get("attendees") or [],
+        max_participants=len(rec.get("attendees") or []) or 1,
+        calendar_token=None,
+        org_id=user["org_id"],
+        user_id=user["user_id"],
+    )
+    return {"status": "reprocessing", "meeting_id": target_id}
+
+
 async def _run_end_pipeline(
     meeting_id: str,
     title: str,
@@ -92,6 +129,13 @@ async def _run_end_pipeline(
         meeting_row = ensure_meeting_record(supabase, meeting_id, org_id, user_id, title)
         target_id = meeting_row.get("id") or meeting_id
         google_code = meeting_row.get("google_meet_link") or (meeting_id if not is_valid_uuid(meeting_id) else None)
+
+        # Mark as processing immediately
+        if target_id and is_valid_uuid(target_id):
+            try:
+                supabase.table("meetings").update({"status": "processing"}).eq("id", target_id).execute()
+            except Exception:
+                pass
 
         # get transcript
         utterances = await get_full_transcript(meeting_id)

@@ -134,7 +134,7 @@ export default function MeetingCard({
           <p className="text-[12.5px] text-text-muted leading-relaxed line-clamp-3 flex-1 mt-1">
             {meeting.summary}
           </p>
-        ) : meeting.status === "active" ? (
+        ) : meeting.status === "active" || meeting.status === "processing" ? (
           <div className="flex-1 flex flex-col items-start justify-center gap-2 mt-1">
             <div className="flex items-center gap-1.5 ml-0.5">
               <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
@@ -142,7 +142,7 @@ export default function MeetingCard({
               <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></div>
             </div>
             <p className="text-[11.5px] text-text-muted font-medium animate-pulse">
-              AI is processing transcript…
+              {meeting.status === "processing" ? "AI is generating executive summary…" : "AI is processing transcript…"}
             </p>
           </div>
         ) : (
