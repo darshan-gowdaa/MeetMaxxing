@@ -2,7 +2,7 @@
 Dashboard endpoints — meeting list, summaries, action items.
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from ..core.auth import get_current_user
 from ..core.database import get_supabase_admin, get_meeting_record
 
@@ -48,12 +48,12 @@ async def get_meeting_detail(
     meeting_id: str,
     user: dict = Depends(get_current_user),
 ):
-    """Full meeting detail including transcript, decisions, action items."""
-    from fastapi import HTTPException
-    
-    from ..core.database import ensure_meeting_record
+    """Full meeting detail including transcript, decisions, and action items."""
     supabase = get_supabase_admin()
-    meeting = ensure_meeting_record(supabase, meeting_id, user["org_id"], user["user_id"])
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
 
     target_id = meeting["id"]
 
