@@ -39,7 +39,7 @@ async def get_qdrant() -> AsyncQdrantClient:
 
 
 async def ensure_collection() -> None:
-    """Create collection + payload indexes if they don't exist."""
+    """Create collection + payload indexes, updating indexes on existing collections."""
     client = await get_qdrant()
     collection_name = settings.QDRANT_COLLECTION
 
@@ -47,7 +47,7 @@ async def ensure_collection() -> None:
     names = [c.name for c in existing.collections]
 
     if collection_name not in names:
-        # Recreate collection to enable named vectors & sparse vectors for hybrid search
+        # Create collection with named dense + sparse vectors for hybrid search
         await client.create_collection(
             collection_name=collection_name,
             vectors_config={
@@ -64,28 +64,29 @@ async def ensure_collection() -> None:
             ),
         )
 
-        # Create payload indexes for fast metadata filtering
-        indexed_fields = [
-            ("org_id", qmodels.PayloadSchemaType.KEYWORD),
-            ("user_id", qmodels.PayloadSchemaType.KEYWORD),
-            ("meeting_id", qmodels.PayloadSchemaType.KEYWORD),
-            ("memory_type", qmodels.PayloadSchemaType.KEYWORD),
-            ("meeting_date", qmodels.PayloadSchemaType.KEYWORD),
-            ("speaker_id", qmodels.PayloadSchemaType.KEYWORD),
-            ("priority", qmodels.PayloadSchemaType.INTEGER),
-        ]
-        import warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            for field_name, schema_type in indexed_fields:
-                try:
-                    await client.create_payload_index(
-                        collection_name=collection_name,
-                        field_name=field_name,
-                        field_schema=schema_type,
-                    )
-                except Exception:
-                    pass
+    # Always (re-)apply payload indexes — idempotent for matching types,
+    # needed to migrate existing collections to updated index types (e.g. DATETIME).
+    indexed_fields = [
+        ("org_id", qmodels.PayloadSchemaType.KEYWORD),
+        ("user_id", qmodels.PayloadSchemaType.KEYWORD),
+        ("meeting_id", qmodels.PayloadSchemaType.KEYWORD),
+        ("memory_type", qmodels.PayloadSchemaType.KEYWORD),
+        ("meeting_date", qmodels.PayloadSchemaType.DATETIME),  # DATETIME enables range (gte/lte) queries
+        ("speaker_id", qmodels.PayloadSchemaType.KEYWORD),
+        ("priority", qmodels.PayloadSchemaType.INTEGER),
+    ]
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        for field_name, schema_type in indexed_fields:
+            try:
+                await client.create_payload_index(
+                    collection_name=collection_name,
+                    field_name=field_name,
+                    field_schema=schema_type,
+                )
+            except Exception:
+                pass
 
 
 async def upsert_memories(points: list[MemoryPoint]) -> None:

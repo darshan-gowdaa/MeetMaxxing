@@ -278,7 +278,7 @@ async def _run_end_pipeline(
                         org_id=org_id,
                         user_id=user_id,
                         meeting_id=meeting_id,
-                        memory_type=MemoryType.TRANSCRIPT,
+                        memory_type=MemoryType.TRANSCRIPT_CHUNK,
                         meeting_date=today,
                         speaker_name=chunk.get("speaker_name", ""),
                         timestamp_ms=chunk.get("timestamp_ms", 0),

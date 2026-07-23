@@ -60,25 +60,30 @@ def _build_context_block(results) -> tuple[str, list[dict]]:
 def _rerank_results(results):
     """
     Reranks results based on score and memory type priority.
-    Prioritizes DECISION > ACTION_ITEM > TRANSCRIPT_CHUNK.
+    Prioritizes DECISION > ACTION_ITEM > TRANSCRIPT_CHUNK / TRANSCRIPT.
     """
     priority_weights = {
         MemoryType.DECISION: 1.5,
         MemoryType.ACTION_ITEM: 1.3,
         MemoryType.TRANSCRIPT_CHUNK: 1.0,
-        MemoryType.KEY_TOPIC: 1.2
+        MemoryType.TRANSCRIPT: 1.0,
+        MemoryType.KEY_TOPIC: 1.2,
     }
     
     # Keep all results, RRF scores can be very low but rank is what matters
     filtered = [r for r in results if r.score > 0.0]
     
     for r in filtered:
-        weight = priority_weights.get(r.memory_type, 1.0)
-        # We attach a dynamic attribute just for sorting
+        # r.memory_type is a raw string from Qdrant payload — normalize to enum for lookup
+        try:
+            mem_type = MemoryType(r.memory_type)
+        except (ValueError, KeyError):
+            mem_type = None
+        weight = priority_weights.get(mem_type, 1.0)
         r._rerank_score = r.score * weight
         
     filtered.sort(key=lambda x: x._rerank_score, reverse=True)
-    return filtered[:6] # Take top 6 after reranking
+    return filtered[:6]  # Take top 6 after reranking
 
 
 async def run_memory_agent(
