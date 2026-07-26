@@ -231,6 +231,10 @@ Combined with Google ADK and A2A communication, Lyzr helps transform independent
 
 ---
 
+https://github.com/user-attachments/assets/3301195d-8f63-4bd2-9837-3aeba2a5bc40
+
+---
+
 # Why This Architecture?
 
 Traditional AI meeting assistants often rely on a **single prompt** to perform transcription, summarization, memory retrieval, scheduling, and follow-up generation.
