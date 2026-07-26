@@ -231,11 +231,77 @@ Combined with Google ADK and A2A communication, Lyzr helps transform independent
 
 ---
 
+# Application Showcase
+
+## Chrome Extension
+
+<p align="center">
+<img width="1907" height="967" alt="Screenshot 2026-07-22 200031" src="https://github.com/user-attachments/assets/fd85b5a6-64b8-4a35-9437-4d2385e167fe" />
+</p>
+
+The Chrome Extension serves as the primary user interface, enabling real-time interaction with AI agents directly within Google Meet.
+
+---
+
+## Live AI Assistance
+
+<p align="center">
+<img src="assets/realtime.png" width="900">
+</p>
+
+Receive contextual suggestions, insights, and assistance while the meeting is still ongoing.
+
+---
+
+## Meeting Summary
+
+<p align="center">
+<img src="assets/summary.png" width="900">
+</p>
+
+Automatically generate concise summaries, discussion highlights, and actionable takeaways.
+
+---
+
+## Semantic Memory
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/0367f135-dd47-4039-ac7e-1482c94622a1" width="900">
+</p>
+
+Retrieve information from previous meetings using semantic similarity instead of keyword matching.
+
+---
+
+## AI Follow-up Emails
+
+<p align="center">
+<img src="assets/email.png" width="900">
+</p>
+
+Generate polished follow-up emails with meeting highlights and assigned action items.
+
+---
+
+## Smart Scheduling
+
 <p align="center">
   <img src="https://github.com/user-attachments/assets/cf480236-2acc-4fa7-9d07-164bb609bb21"
        width="700"
        alt="MeetMaxxing Demo">
 </p>
+
+Convert action items into reminders and calendar events with minimal user effort.
+
+---
+
+## Dashboard
+
+<p align="center">
+<img src="assets/dashboard.png" width="900">
+</p>
+
+Access previous meetings, semantic memory, analytics, and meeting history from a centralized dashboard.
 
 ---
 
