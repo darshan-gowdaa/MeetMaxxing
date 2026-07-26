@@ -231,7 +231,9 @@ Combined with Google ADK and A2A communication, Lyzr helps transform independent
 
 ---
 
-https://github.com/user-attachments/assets/3301195d-8f63-4bd2-9837-3aeba2a5bc40
+<video width="700" autoplay loop muted playsinline>
+    <source src="https://github.com/user-attachments/assets/3301195d-8f63-4bd2-9837-3aeba2a5bc40" type="video/mp4">
+  </video>
 
 ---
 
