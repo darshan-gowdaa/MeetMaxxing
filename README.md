@@ -169,10 +169,7 @@ One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to
 Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
 
 <p align="center">
-  <img width="600" height="600" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
-
-  <img width="600" height="500" alt="ChatGPT Image Jul 26, 2026, 04_11_21 PM" src="https://github.com/user-attachments/assets/4ae48491-d583-4adf-a1d9-495180be6560" />
-
+  <img width="600" height="500" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
 </p>
 
 This architecture allows:
