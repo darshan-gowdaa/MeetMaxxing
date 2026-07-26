@@ -231,7 +231,11 @@ Combined with Google ADK and A2A communication, Lyzr helps transform independent
 
 ---
 
-<img width="1920" height="1080" alt="calender" src="https://github.com/user-attachments/assets/cf480236-2acc-4fa7-9d07-164bb609bb21" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/cf480236-2acc-4fa7-9d07-164bb609bb21"
+       width="700"
+       alt="MeetMaxxing Demo">
+</p>
 
 ---
 
