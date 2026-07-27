@@ -15,12 +15,22 @@ def _get_client() -> genai.Client:
 
 
 async def _fallback_vector(text: str) -> list[float]:
-    # Generate deterministic pseudo-random embedding vector from hash of text
-    h = hashlib.sha256(text.encode('utf-8')).digest()
-    vals = [(b / 255.0) * 2 - 1 for b in h]
-    while len(vals) < settings.EMBEDDING_DIM:
-        vals.extend(vals[:settings.EMBEDDING_DIM - len(vals)])
-    return vals[:settings.EMBEDDING_DIM]
+    import collections
+    import hashlib
+    import math
+    words = text.lower().split()
+    freq = collections.Counter(words)
+    vals = [0.0] * settings.EMBEDDING_DIM
+    for w, count in freq.items():
+        idx = int(hashlib.md5(w.encode('utf-8')).hexdigest(), 16) % settings.EMBEDDING_DIM
+        vals[idx] += count
+    
+    norm = math.sqrt(sum(v*v for v in vals))
+    if norm > 0:
+        vals = [v/norm for v in vals]
+    else:
+        vals = [0.0] * settings.EMBEDDING_DIM
+    return vals
 
 # Simple in-memory LRU cache for embeddings
 @lru_cache(maxsize=500)

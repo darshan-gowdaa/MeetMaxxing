@@ -364,7 +364,7 @@ async def _run_end_pipeline(
                 supabase.table("meetings").update(
                     {
                         "status": "completed",
-                        "summary": f"A pipeline error occurred: {str(e)[:200]}"
+                        "summary": "An error occurred while generating the meeting summary. Please try again later."
                     }
                 ).eq("id", local_target).execute()
         except Exception as inner_e:

@@ -73,8 +73,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       }
     };
     
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    setTimeout(() => setLoading(true), 0);
+    setLoading(true);
     poll();
     
     return () => clearTimeout(timeoutId);

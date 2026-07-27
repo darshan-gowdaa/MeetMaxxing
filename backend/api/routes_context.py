@@ -71,7 +71,7 @@ async def upload_context(
         await upsert_memories(points)
         return {"status": "success", "message": f"Successfully uploaded {file.filename} and processed {len(points)} chunks."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to upload and process document context. Please try again.")
 
 class ContextChatRequest(BaseModel):
     meeting_id: str
@@ -109,7 +109,7 @@ async def chat_context(
             )
             return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Memory Agent"), "sources": res.get("sources", [])}
     except Exception as e:
-        return {"answer": f"Error generating answer: {str(e)}"}
+        return {"answer": "An error occurred while generating the answer. Please try again."}
 
 class ContextClearRequest(BaseModel):
     meeting_id: str
@@ -136,7 +136,7 @@ async def clear_context(
         )
         return {"status": "success", "message": "Uploaded context cleared successfully."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to clear uploaded context. Please try again.")
 
 @router.get("/files")
 async def list_all_files(
@@ -175,7 +175,7 @@ async def list_all_files(
             
         return {"files": file_list}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to list files. Please try again.")
 
 @router.get("/files/{meeting_id}")
 async def list_files(
@@ -209,7 +209,7 @@ async def list_files(
         file_list = [{"filename": k, "chunks": v} for k, v in files.items()]
         return {"files": file_list}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to list files for meeting. Please try again.")
 
 class ContextClearFileRequest(BaseModel):
     meeting_id: str
@@ -238,7 +238,7 @@ async def clear_file(
         )
         return {"status": "success", "message": f"File {req.filename} cleared."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to clear file. Please try again.")
 
 class ContextRenameFileRequest(BaseModel):
     meeting_id: str
@@ -269,7 +269,7 @@ async def rename_file(
         )
         return {"status": "success", "message": f"File renamed to {req.new_filename}."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to rename file. Please try again.")
 
 class ContextFileContentRequest(BaseModel):
     meeting_id: str
@@ -303,4 +303,4 @@ async def get_file_content(
         content = "\n\n".join([pt.payload.get("text", "") for pt in points])
         return {"content": content}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve file content. Please try again.")

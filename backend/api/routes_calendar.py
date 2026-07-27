@@ -139,7 +139,7 @@ async def calendar_callback(code: str, state: str = ""):
             "token_preview": {"has_refresh": bool(tokens.get("refresh_token"))},
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Calendar auth failed: {e}")
+        raise HTTPException(status_code=400, detail="Calendar auth failed. Please try again or check your credentials.")
 
 
 # ── POST /calendar/webhook ────────────────────────────────────────────────────
