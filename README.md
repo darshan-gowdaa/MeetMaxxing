@@ -1,6 +1,5 @@
 <div align="center">
-
-# MeetMaxxing
+  <img width="721" height="148" alt="LOGO" src="https://github.com/user-attachments/assets/42c010bd-f5ca-407a-a162-6ac5e5fb7aad" />
 
 ### *A Production-Inspired Multi-Agent AI Meeting Copilot powered by Google ADK, Lyzr, Agent-to-Agent (A2A) Communication & Qdrant.*
 
@@ -236,7 +235,8 @@ Combined with Google ADK and A2A communication, Lyzr helps transform independent
 ## Chrome Extension
 
 <p align="center">
-<img width="1907" height="967" alt="Screenshot 2026-07-22 200031" src="https://github.com/user-attachments/assets/fd85b5a6-64b8-4a35-9437-4d2385e167fe" />
+<img width="1019" height="631" alt="image" src="https://github.com/user-attachments/assets/a5dd1603-9cfe-484b-befd-8edb2a487e86" />
+
 </p>
 
 The Chrome Extension serves as the primary user interface, enabling real-time interaction with AI agents directly within Google Meet.
