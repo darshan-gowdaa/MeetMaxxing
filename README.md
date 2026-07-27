@@ -33,7 +33,6 @@ Built with modern AI engineering practices to provide a scalable, modular, and c
 ![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20Memory-DC244C?style=for-the-badge)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)
 
 </div>
@@ -322,7 +321,6 @@ flowchart TD
 | **Client** | Chrome Extension | Google Meet integration |
 | **Database** | Supabase | Relational data and auth |
 | **Cache** | Redis | State management and caching |
-| **Infrastructure**| Docker, Docker Compose | Containerization and orchestration |
 | **Observability** | Langfuse, OpenTelemetry, Jaeger | Monitoring and tracing |
 
 ---
@@ -336,7 +334,6 @@ MeetMaxxing/
 │
 ├── backend/                       # Python FastAPI Backend
 │   ├── main.py                    # Entry point for backend services
-│   ├── provision_lyzr_agents.py   # Agent initialization script
 │   │
 │   ├── agents/                    # AI Agents logic (Google ADK)
 │   │   ├── docs_qa_agent.py       
@@ -392,7 +389,6 @@ MeetMaxxing/
 │           └── supabase.ts        
 │
 ├── supabase/                      # Database migrations and configuration
-├── docker-compose.yml             # Local infrastructure orchestration
 └── qdrant_data/                   # Vector store persistent data (ignored in git)
 ```
 
@@ -413,21 +409,16 @@ MeetMaxxing/
    cd MeetMaxxing
    ```
 
-2. **Install Root Dependencies**
+2. **Install All Dependencies**
+   (This will automatically install frontend packages and setup the backend using `uv`)
    ```bash
    npm install
    ```
 
-3. **Install Backend Dependencies**
+3. **Start All Services**
+   From the root directory, you can start all servers (with friendly error messages):
    ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-
-4. **Start All Services**
-   From the root directory, you can start the necessary services:
-   ```bash
-   npm restart
+   npm start
    ```
 
 ### Load Chrome Extension

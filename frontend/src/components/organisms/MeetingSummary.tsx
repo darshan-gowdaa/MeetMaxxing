@@ -1,13 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import { RiSparklingLine as Sparkles } from "@remixicon/react";
 import type { Meeting } from "@/types";
+import { endMeeting, reprocessMeeting } from "@/lib/api";
 
 interface MeetingSummaryProps {
   meeting: Meeting;
 }
 
 export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
+  const [isForcing, setIsForcing] = useState(false);
+
+  const handleForceAction = async () => {
+    if (isForcing) return;
+    setIsForcing(true);
+    try {
+      if (meeting.status === "active") {
+        await endMeeting(meeting.id, "dev_token");
+      } else {
+        await reprocessMeeting(meeting.id, "dev_token");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsForcing(false);
+    }
+  };
+
   return (
     <div className="bg-surface-container rounded-[24px] border border-border p-6 flex flex-col gap-4">
       <div className="flex items-center gap-2.5">
@@ -30,8 +50,15 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
             <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
           </div>
           <p className="text-[13px] text-text-muted font-medium animate-pulse tracking-wide">
-            AI is processing executive summary...
+            {meeting.status === "active" ? "Meeting is currently active..." : "AI is processing executive summary..."}
           </p>
+          <button 
+            onClick={handleForceAction}
+            disabled={isForcing}
+            className="mt-2 text-[12px] text-primary hover:underline disabled:opacity-50"
+          >
+            {isForcing ? "Processing..." : meeting.status === "active" ? "Force End & Generate Summary" : "Taking too long? Retry Summary"}
+          </button>
         </div>
       ) : (
         <div className="bg-risk-container/10 border border-risk/30 rounded-xl p-4 my-2">

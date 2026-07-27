@@ -51,10 +51,13 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let isMounted = true;
     
     const poll = async () => {
       try {
         const data = await fetchMeeting(id, "dev_token");
+        if (!isMounted) return;
+        
         setMeeting(data);
         setActionItems(data.action_items || []);
         setErrorMsg("");
@@ -66,17 +69,21 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           timeoutId = setTimeout(poll, 3000);
         }
       } catch (err: unknown) {
+        if (!isMounted) return;
         setMeeting(null);
         setErrorMsg((err as Error).message || "Failed to fetch meeting from backend");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     
     setLoading(true);
     poll();
     
-    return () => clearTimeout(timeoutId);
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [id]);
 
   const toggleItemStatus = async (itemId: string) => {

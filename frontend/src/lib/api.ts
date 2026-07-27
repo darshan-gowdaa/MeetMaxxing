@@ -82,3 +82,31 @@ export async function updateMeeting(id: string, updates: Record<string, string>,
   return safeParse(text);
 }
 
+export async function endMeeting(id: string, token: string) {
+  const res = await fetch(`${BACKEND_URL}/meeting/${id}/end`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) throw new Error("Failed to end meeting");
+  const text = await res.text();
+  return safeParse(text);
+}
+
+export async function reprocessMeeting(id: string, token: string) {
+  const res = await fetch(`${BACKEND_URL}/meeting/${id}/reprocess`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) throw new Error("Failed to reprocess meeting");
+  const text = await res.text();
+  return safeParse(text);
+}
+

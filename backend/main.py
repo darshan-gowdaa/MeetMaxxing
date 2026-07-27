@@ -95,9 +95,7 @@ app.add_middleware(
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
