@@ -1,4 +1,5 @@
 <div align="center">
+  <img width="721" height="148" alt="LOGO" src="https://github.com/user-attachments/assets/42c010bd-f5ca-407a-a162-6ac5e5fb7aad" />
   <h1>
     MeetMaxxing
   </h1>
@@ -143,7 +144,7 @@ One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to
 Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
 
 <p align="center">
-  <img width="600" height="600" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
+  <img width="600" height="500" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
 </p>
 
 This architecture allows:
@@ -189,6 +190,81 @@ It enables:
 - Scalable AI execution
 
 Combined with Google ADK and A2A communication, Lyzr helps transform independent AI agents into a cohesive collaborative system.
+
+---
+
+# Application Showcase
+
+## Chrome Extension
+
+<p align="center">
+<img width="1019" height="631" alt="image" src="https://github.com/user-attachments/assets/a5dd1603-9cfe-484b-befd-8edb2a487e86" />
+
+</p>
+
+The Chrome Extension serves as the primary user interface, enabling real-time interaction with AI agents directly within Google Meet.
+
+---
+
+## Live AI Assistance
+
+<p align="center">
+<img src="assets/realtime.png" width="900">
+</p>
+
+Receive contextual suggestions, insights, and assistance while the meeting is still ongoing.
+
+---
+
+## Meeting Summary
+
+<p align="center">
+<img src="assets/summary.png" width="900">
+</p>
+
+Automatically generate concise summaries, discussion highlights, and actionable takeaways.
+
+---
+
+## Semantic Memory
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/0367f135-dd47-4039-ac7e-1482c94622a1" width="900">
+</p>
+
+Retrieve information from previous meetings using semantic similarity instead of keyword matching.
+
+---
+
+## AI Follow-up Emails
+
+<p align="center">
+<img src="assets/email.png" width="900">
+</p>
+
+Generate polished follow-up emails with meeting highlights and assigned action items.
+
+---
+
+## Smart Scheduling
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/cf480236-2acc-4fa7-9d07-164bb609bb21"
+       width="700"
+       alt="MeetMaxxing Demo">
+</p>
+
+Convert action items into reminders and calendar events with minimal user effort.
+
+---
+
+## Dashboard
+
+<p align="center">
+<img src="assets/dashboard.png" width="900">
+</p>
+
+Access previous meetings, semantic memory, analytics, and meeting history from a centralized dashboard.
 
 ---
 
