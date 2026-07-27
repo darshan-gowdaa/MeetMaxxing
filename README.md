@@ -46,115 +46,6 @@ Built around **Google ADK**, **Lyzr**, **Agent-to-Agent (A2A) communication**, a
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f9e0.png" /> Why MeetMaxxing?
-
-Unlike conventional AI meeting assistants that rely on a single large language model prompt, MeetMaxxing adopts a **collaborative multi-agent design**.
-
-Each AI agent focuses on a specialized responsibility — from live assistance and meeting summarization to semantic memory retrieval, email drafting, scheduling, and document-based question answering.
-
-| Built With | Purpose |
-| :--- | :--- |
-| Google ADK | Specialized AI agents |
-| A2A Communication | Seamless agent collaboration |
-| Qdrant | Persistent semantic memory |
-| Lyzr | Intelligent workflow orchestration |
-
----
-
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png" /> Core Features
-
-| Feature | Description |
-| :--- | :--- |
-| 🤖 Multi-Agent Intelligence | Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM. |
-| ⚡ Real-Time Assistance | Contextual suggestions, meeting insights, and intelligent support while the meeting is still in progress. |
-| 🧠 Semantic Memory | Store and retrieve meeting knowledge using vector embeddings powered by Qdrant. |
-| 📝 Smart Meeting Summaries | Automatically generate concise summaries, key discussion points, and actionable takeaways. |
-| ✉️ AI Follow-ups | Generate professional follow-up emails containing meeting highlights and action items. |
-| 📅 Intelligent Scheduling | Create reminders and follow-up meetings directly from extracted action items. |
-| 📄 Document Question Answering | Upload supporting documents and let AI agents answer questions using meeting context. |
-| ⏱️ Late Join Recaps | Users joining late receive an instant AI-generated summary of everything discussed so far. |
-
----
-
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f310.png" /> AI Agent Ecosystem
-
-MeetMaxxing follows a **collaborative multi-agent architecture** where each agent has a clearly defined responsibility. Instead of overloading a single model with every task, specialized agents work together to deliver a smarter and more scalable meeting experience.
-
-| Agent | Responsibility |
-| :--- | :--- |
-| Transcription Agent 🎙️ | Processes meeting transcripts and streams conversation data to the system. |
-| Realtime Agent ⚡ | Generates contextual suggestions and live assistance during meetings. |
-| Summary Agent 📝 | Produces concise meeting summaries, key points, and action items. |
-| Memory Agent 🧠 | Stores semantic embeddings inside Qdrant and retrieves historical meeting knowledge. |
-| Email Agent ✉️ | Drafts follow-up emails using meeting context. |
-| Scheduler Agent 📅 | Converts action items into calendar events and reminders. |
-| Docs QA Agent 📄 | Answers user questions using uploaded documents combined with meeting context. |
-| Late Join Agent ⏱️ | Instantly summarizes previous discussion for participants joining mid-meeting. |
-| Orchestrator Agent 🎭 | Coordinates communication between agents and routes tasks intelligently. |
-
----
-
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/26a1.png" /> Google ADK in Action
-
-Google ADK forms the backbone of MeetMaxxing's intelligent agent ecosystem.
-
-Rather than building one large AI workflow, MeetMaxxing uses Google ADK to create **specialized agents**, each equipped with its own reasoning capabilities and dedicated tools.
-
-| Benefit | Result |
-| :--- | :--- |
-| Independent task execution | Agents run without blocking each other |
-| Tool-specific reasoning | Each agent reasons only about its own domain |
-| Scalability | New agents added without touching existing ones |
-| Maintainability | Isolated logic, easier debugging |
-| Collaborative decision making | Agents combine outputs for richer answers |
-
----
-
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f91d.png" /> Agent-to-Agent (A2A) Communication
-
-One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to-Agent (A2A) communication**.
-
-Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
-
-<p align="center">
-  <img width="600" height="500" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
-</p>
-
-| Benefit | Description |
-| :--- | :--- |
-| 🔄 Parallel execution | Specialized tasks run concurrently |
-| 🧱 Separation of responsibilities | Each agent owns one job |
-| 🔌 Extensibility | New agents plug in easily |
-| 📡 Efficient sharing | Context flows directly between agents |
-| 🏭 Production-inspired orchestration | Mirrors real-world multi-agent systems |
-
----
-
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f9e0.png" /> Persistent Memory with Qdrant
-
-MeetMaxxing doesn't forget previous meetings. Meeting conversations are transformed into **vector embeddings** and stored inside **Qdrant**, enabling semantic search across historical discussions.
-
-<div align="center">
-
-```mermaid
-%%{init: {'flowchart': {'useMaxWidth': false, 'nodeSpacing': 35, 'rankSpacing': 35} } }%%
-flowchart TD
-    A[Meeting Transcript] --> B[Text Embeddings]
-    B --> C[(Qdrant Vector Database)]
-    C --> D[Semantic Retrieval]
-    D --> E[Relevant Context]
-    E --> F[AI Response]
-```
-
-</div>
-
-This enables users to ask contextual questions like:
-> *"What decisions were made regarding our authentication module last week?"*
-
-Instead of keyword matching, Qdrant retrieves semantically similar discussions, allowing AI agents to respond with meaningful context.
-
----
-
 ## Application Showcase
 
 > **Design Language:** MeetMaxxing follows **Material 3 (M3)** from end to end, matching **Google Meet's native design language**—same elevation, motion, spacing, and color system—so it feels like a built-in feature rather than a browser extension. Designed for professionals, educators, students, founders, and teams who never want to miss important context.
@@ -335,7 +226,7 @@ Actionable discussion points and key decisions.
 <table style="border:none; border-collapse:collapse;">
 <tr>
 <td align="center" width="50%" style="border:none; padding:8px;">
-<img width="100%" src="https://github.com/user-attachments/assets/d8121239-8c49-4ef6-88ac-6bf30df77504" alt="Mail Agent"/>
+ <img width="100%" alt="Mail Agent" src="https://github.com/user-attachments/assets/9901db12-b9f1-4566-bacb-3feaa8bbd0a0" />
 
 **Mail Agent**
 
@@ -368,6 +259,115 @@ Fully searchable transcript archive for every meeting.
 </table>
 
 Together, the dashboard extends MeetMaxxing beyond live meetings by organizing meeting history, searchable knowledge, AI-generated summaries, transcripts, emails, calendar events, and semantic memory into a single Material 3 workspace.
+
+---
+
+## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f9e0.png" /> Why MeetMaxxing?
+
+Unlike conventional AI meeting assistants that rely on a single large language model prompt, MeetMaxxing adopts a **collaborative multi-agent design**.
+
+Each AI agent focuses on a specialized responsibility — from live assistance and meeting summarization to semantic memory retrieval, email drafting, scheduling, and document-based question answering.
+
+| Built With | Purpose |
+| :--- | :--- |
+| Google ADK | Specialized AI agents |
+| A2A Communication | Seamless agent collaboration |
+| Qdrant | Persistent semantic memory |
+| Lyzr | Intelligent workflow orchestration |
+
+---
+
+## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png" /> Core Features
+
+| Feature | Description |
+| :--- | :--- |
+| 🤖 Multi-Agent Intelligence | Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM. |
+| ⚡ Real-Time Assistance | Contextual suggestions, meeting insights, and intelligent support while the meeting is still in progress. |
+| 🧠 Semantic Memory | Store and retrieve meeting knowledge using vector embeddings powered by Qdrant. |
+| 📝 Smart Meeting Summaries | Automatically generate concise summaries, key discussion points, and actionable takeaways. |
+| ✉️ AI Follow-ups | Generate professional follow-up emails containing meeting highlights and action items. |
+| 📅 Intelligent Scheduling | Create reminders and follow-up meetings directly from extracted action items. |
+| 📄 Document Question Answering | Upload supporting documents and let AI agents answer questions using meeting context. |
+| ⏱️ Late Join Recaps | Users joining late receive an instant AI-generated summary of everything discussed so far. |
+
+---
+
+## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f310.png" /> AI Agent Ecosystem
+
+MeetMaxxing follows a **collaborative multi-agent architecture** where each agent has a clearly defined responsibility. Instead of overloading a single model with every task, specialized agents work together to deliver a smarter and more scalable meeting experience.
+
+| Agent | Responsibility |
+| :--- | :--- |
+| Transcription Agent 🎙️ | Processes meeting transcripts and streams conversation data to the system. |
+| Realtime Agent ⚡ | Generates contextual suggestions and live assistance during meetings. |
+| Summary Agent 📝 | Produces concise meeting summaries, key points, and action items. |
+| Memory Agent 🧠 | Stores semantic embeddings inside Qdrant and retrieves historical meeting knowledge. |
+| Email Agent ✉️ | Drafts follow-up emails using meeting context. |
+| Scheduler Agent 📅 | Converts action items into calendar events and reminders. |
+| Docs QA Agent 📄 | Answers user questions using uploaded documents combined with meeting context. |
+| Late Join Agent ⏱️ | Instantly summarizes previous discussion for participants joining mid-meeting. |
+| Orchestrator Agent 🎭 | Coordinates communication between agents and routes tasks intelligently. |
+
+---
+
+## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/26a1.png" /> Google ADK in Action
+
+Google ADK forms the backbone of MeetMaxxing's intelligent agent ecosystem.
+
+Rather than building one large AI workflow, MeetMaxxing uses Google ADK to create **specialized agents**, each equipped with its own reasoning capabilities and dedicated tools.
+
+| Benefit | Result |
+| :--- | :--- |
+| Independent task execution | Agents run without blocking each other |
+| Tool-specific reasoning | Each agent reasons only about its own domain |
+| Scalability | New agents added without touching existing ones |
+| Maintainability | Isolated logic, easier debugging |
+| Collaborative decision making | Agents combine outputs for richer answers |
+
+---
+
+## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f91d.png" /> Agent-to-Agent (A2A) Communication
+
+One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to-Agent (A2A) communication**.
+
+Instead of executing tasks sequentially within a single workflow, specialized agents exchange context and collaborate to solve complex meeting scenarios.
+
+<p align="center">
+  <img width="600" height="500" alt="MeetMaxxing AI Agent Ecosystem" src="https://github.com/user-attachments/assets/17e5f068-7a1b-490f-aa6b-5c01cbe55226" />
+</p>
+
+| Benefit | Description |
+| :--- | :--- |
+| 🔄 Parallel execution | Specialized tasks run concurrently |
+| 🧱 Separation of responsibilities | Each agent owns one job |
+| 🔌 Extensibility | New agents plug in easily |
+| 📡 Efficient sharing | Context flows directly between agents |
+| 🏭 Production-inspired orchestration | Mirrors real-world multi-agent systems |
+
+---
+
+## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f9e0.png" /> Persistent Memory with Qdrant
+
+MeetMaxxing doesn't forget previous meetings. Meeting conversations are transformed into **vector embeddings** and stored inside **Qdrant**, enabling semantic search across historical discussions.
+
+<div align="center">
+
+```mermaid
+%%{init: {'flowchart': {'useMaxWidth': false, 'nodeSpacing': 35, 'rankSpacing': 35} } }%%
+flowchart TD
+    A[Meeting Transcript] --> B[Text Embeddings]
+    B --> C[(Qdrant Vector Database)]
+    C --> D[Semantic Retrieval]
+    D --> E[Relevant Context]
+    E --> F[AI Response]
+```
+
+</div>
+
+This enables users to ask contextual questions like:
+> *"What decisions were made regarding our authentication module last week?"*
+
+Instead of keyword matching, Qdrant retrieves semantically similar discussions, allowing AI agents to respond with meaningful context.
 
 ---
 
