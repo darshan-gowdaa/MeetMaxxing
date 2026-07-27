@@ -37,23 +37,15 @@ export default function DashboardHero({ loading, meetingsCount, totalMinutes, fo
         {/* tiny stats boxes */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex flex-col items-center justify-center w-24 h-20 rounded-[20px] bg-surface2 border border-border">
-            {loading ? (
-              <div className="w-8 h-8 rounded-md md3-skeleton mb-1" />
-            ) : (
-              <span className="text-2xl font-bold text-text">
-                <AnimatedNumber value={meetingsCount} />
-              </span>
-            )}
+            <span className="text-2xl font-bold text-text">
+              {loading ? <span className="text-text-muted">—</span> : <AnimatedNumber value={meetingsCount} />}
+            </span>
             <span className="text-[10px] text-text-muted font-medium mt-1">Meetings</span>
           </div>
           <div className="flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border">
-            {loading ? (
-              <div className="w-12 h-8 rounded-md md3-skeleton mb-1" />
-            ) : (
-              <span className="text-xl font-bold text-text">
-                <AnimatedNumber value={totalMinutes} formatFn={formatTime} />
-              </span>
-            )}
+            <span className="text-xl font-bold text-text">
+              {loading ? <span className="text-text-muted">—</span> : <AnimatedNumber value={totalMinutes} formatFn={formatTime} />}
+            </span>
             <span className="text-[10px] text-text-muted font-medium mt-1">Recorded</span>
           </div>
           <div className="relative flex flex-col items-center justify-center w-24 h-20 rounded-[20px] bg-primary-container/20 border border-primary/20 overflow-hidden group">

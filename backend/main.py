@@ -89,7 +89,7 @@ app.add_middleware(
         "http://127.0.0.1:3001",
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -107,6 +107,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.middleware("http")
 async def secure_headers_middleware(request: Request, call_next):
+    # Skip on OPTIONS preflight — let CORS middleware handle it
+    if request.method == "OPTIONS":
+        return await call_next(request)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

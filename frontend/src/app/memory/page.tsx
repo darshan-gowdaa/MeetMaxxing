@@ -216,8 +216,8 @@ export default function MemoryPage() {
                     className={`h-full ${conf.bar} transition-all duration-700`}
                     style={{
                       width:
-                        result.confidence === "high" ? "85%" :
-                        result.confidence === "medium" ? "55%" : "25%",
+                        result.confidence === "high" ? "100%" :
+                        result.confidence === "medium" ? "60%" : "25%",
                     }}
                   />
                 </div>

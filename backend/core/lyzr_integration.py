@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Optional
 import lyzr
 from .config import settings
 
@@ -34,42 +34,21 @@ def get_lyzr_agent(name: str) -> lyzr.Agent:
     raise ValueError(f"Agent '{name}' not found in Lyzr Studio")
 
 async def _llm_direct_fallback(prompt: str) -> tuple[str, str]:
-    from google import genai
-    from .config import settings
-    
-    if settings.GEMINI_API_KEY and not settings.GEMINI_API_KEY.startswith("your-"):
-        try:
-            client = genai.Client(api_key=settings.GEMINI_API_KEY)
-            response = client.models.generate_content(
-                model=settings.GEMINI_FLASH_MODEL or "gemini-2.5-flash",
-                contents=prompt,
-            )
-            if response.text:
-                return response.text.strip(), "Gemini 2.5 Flash"
-        except Exception as gemini_err:
-            print(f"[LLM Fallback] Gemini error: {gemini_err}")
-            
-    groq_key = getattr(settings, "GROQ_API_KEY", "")
-    if groq_key and groq_key.strip():
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=30.0) as http_client:
-                res = await http_client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {groq_key.strip()}"},
-                    json={
-                        "model": "llama-3.3-70b-versatile",
-                        "messages": [{"role": "user", "content": prompt}]
-                    }
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    text = data["choices"][0]["message"]["content"]
-                    return text.strip(), "Groq Llama-3.3 70B"
-        except Exception as groq_err:
-            print(f"[LLM Fallback] Groq error: {groq_err}")
+    """Route through the full LLM fallback chain: Gemini → Groq → OpenRouter → Perplexity."""
+    try:
+        from .llm_fallback import generate_content_with_fallback
+        text, provider = await generate_content_with_fallback(
+            prompt,
+            response_format_json=True,
+            max_tokens=4096,
+            bypass_cache=True,
+        )
+        if text and text.strip():
+            return text.strip(), provider
+    except Exception as e:
+        print(f"[Lyzr Integration] Full fallback chain failed: {e}")
 
-    raise RuntimeError("All LLM providers (Lyzr, Gemini, Groq) failed or unconfigured.")
+    raise RuntimeError("All LLM providers (Lyzr, Gemini, Groq, OpenRouter, Perplexity) failed or unconfigured.")
 
 
 async def run_lyzr_agent(name: str, prompt: str, session_id: Optional[str] = None, local_tools: Optional[list] = None, knowledge_bases: Optional[list] = None) -> tuple[str, str]:

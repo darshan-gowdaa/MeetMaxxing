@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { 
   RiFolderOpenFill, RiSearchLine, RiCloseLine,
-  RiCheckLine, RiArrowDropDownLine, RiFileLine
+  RiCheckLine, RiArrowDropDownLine, RiFileLine,
+  RiCheckboxCircleFill, RiErrorWarningFill
 } from "@remixicon/react";
 
 import DeleteDialog from "@/components/organisms/DeleteDialog";
@@ -37,11 +38,18 @@ export default function ContextManagerPage() {
   
   const [editTarget, setEditTarget] = useState<ContextFile | null>(null);
   const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState("");
   
   const [showUpload, setShowUpload] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
   
   const [viewTarget, setViewTarget] = useState<ContextFile | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -107,11 +115,19 @@ export default function ContextManagerPage() {
           body: JSON.stringify({ meeting_id: file.meeting_id, filename: file.filename })
         })
       );
-      await Promise.all(promises);
+      const results = await Promise.all(promises);
+      const failed = results.filter(r => !r.ok);
       
       const toDelete = new Set(selectedFiles.map(f => `${f.meeting_id}-${f.filename}`));
       setFiles(prev => prev.filter(f => !toDelete.has(`${f.meeting_id}-${f.filename}`)));
+      
+      if (failed.length > 0) {
+        showToast(`${failed.length} file(s) could not be deleted`, "error");
+      } else {
+        showToast(`Deleted ${selectedFiles.length} file(s)`);
+      }
     } catch (e) {
+      showToast("Delete failed", "error");
       console.error(e);
     }
   };
@@ -130,8 +146,12 @@ export default function ContextManagerPage() {
       });
       if (res.ok) {
         setFiles(prev => prev.filter(f => !(f.meeting_id === deleteTarget.meeting_id && f.filename === deleteTarget.filename)));
+        showToast(`Deleted "${deleteTarget.filename}"`);
+      } else {
+        showToast("Failed to delete file", "error");
       }
     } catch (e) {
+      showToast("Delete failed", "error");
       console.error(e);
     } finally {
       setDeleteBusy(false);
@@ -142,6 +162,7 @@ export default function ContextManagerPage() {
   const handleEdit = async (newFilename: string) => {
     if (!editTarget) return;
     setEditBusy(true);
+    setEditError("");
     
     // append extension if missing to match original
     let finalName = newFilename;
@@ -164,17 +185,23 @@ export default function ContextManagerPage() {
         })
       });
       if (res.ok) {
-        setFiles(prev => prev.map(f => 
-          (f.meeting_id === editTarget.meeting_id && f.filename === editTarget.filename) 
-            ? { ...f, filename: finalName } 
-            : f
-        ));
+        // Reload from server to confirm rename persisted
+        await load();
+        setEditTarget(null);
+        showToast(`Renamed to "${finalName}"`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        const msg = errData?.detail || `Rename failed (${res.status})`;
+        setEditError(msg);
+        showToast(msg, "error");
       }
     } catch (e) {
+      const msg = "Network error during rename";
+      setEditError(msg);
+      showToast(msg, "error");
       console.error(e);
     } finally {
       setEditBusy(false);
-      setEditTarget(null);
     }
   };
 
@@ -192,13 +219,20 @@ export default function ContextManagerPage() {
         });
       });
       
-      await Promise.all(uploadPromises);
+      const results = await Promise.all(uploadPromises);
+      const failed = results.filter(r => !r.ok);
       await load();
+      if (failed.length > 0) {
+        showToast(`${failed.length} file(s) failed to upload`, "error");
+      } else {
+        showToast(`${files.length} file(s) uploaded successfully`);
+        setShowUpload(false);
+      }
     } catch (e) {
+      showToast("Upload failed", "error");
       console.error(e);
     } finally {
       setUploadBusy(false);
-      setShowUpload(false);
     }
   };
 
@@ -370,8 +404,9 @@ export default function ContextManagerPage() {
           initialTitle={editTarget.filename.replace(/\.[^/.]+$/, "")}
           itemName="File"
           onSave={handleEdit}
-          onCancel={() => setEditTarget(null)}
+          onCancel={() => { setEditTarget(null); setEditError(""); }}
           busy={editBusy}
+          error={editError}
         />
       )}
 
@@ -381,6 +416,20 @@ export default function ContextManagerPage() {
           onCancel={() => setShowUpload(false)}
           busy={uploadBusy}
         />
+      )}
+
+      {/* Toast notifications */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl border text-[13px] font-semibold animate-fade-scale ${
+          toast.type === "success"
+            ? "bg-success-container border-success/30 text-success"
+            : "bg-risk-container border-risk/30 text-risk"
+        }`}>
+          {toast.type === "success"
+            ? <RiCheckboxCircleFill className="w-4 h-4 shrink-0" />
+            : <RiErrorWarningFill className="w-4 h-4 shrink-0" />}
+          {toast.msg}
+        </div>
       )}
     </div>
   );

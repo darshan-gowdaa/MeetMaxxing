@@ -83,7 +83,7 @@ def _rerank_results(results):
         r._rerank_score = r.score * weight
         
     filtered.sort(key=lambda x: x._rerank_score, reverse=True)
-    return filtered[:6]  # Take top 6 after reranking
+    return filtered[:20]  # Top 20 after reranking for richer LLM context
 
 
 async def run_memory_agent(
@@ -93,9 +93,8 @@ async def run_memory_agent(
     filters: dict | None = None,
 ) -> dict:
     """
-    Answer a natural-language question about past meetings using Qdrant retrieval.
-    
-    filters: optional dict with keys: speaker_id, topic, memory_type, date_from, date_to
+    Answer a natural-language question about past meetings using Qdrant retrieval
+    + Supabase meeting summaries for full cross-meeting context.
     """
     filters = filters or {}
 
@@ -121,16 +120,47 @@ async def run_memory_agent(
     # Embed the question with RETRIEVAL_QUERY task type
     query_vec = await embed_query(question)
 
-    # Search across all memory types unless filtered. Get 12 to allow reranking.
+    # Search Qdrant — fetch 40 to allow strong reranking
     raw_results = await search_memories(
         query_vector=query_vec,
         memory_filter=mem_filter,
-        limit=12,
+        limit=40,
     )
-    
     results = _rerank_results(raw_results)
 
-    if not results:
+    # ── Fetch all meeting summaries from Supabase for richer context ──────────
+    meetings_context = ""
+    try:
+        from ..core.database import get_supabase_admin
+        supabase = get_supabase_admin()
+        meetings_res = (
+            supabase.table("meetings")
+            .select("id, title, start_at, summary, decisions, attendees, status")
+            .eq("org_id", org_id)
+            .eq("status", "completed")
+            .order("start_at", desc=True)
+            .limit(50)
+            .execute()
+        )
+        meetings_list = meetings_res.data or []
+        if meetings_list:
+            lines = []
+            for m in meetings_list:
+                date_str = (m.get("start_at") or "")[:10]
+                title = m.get("title") or "Untitled Meeting"
+                summary = m.get("summary") or ""
+                decisions = m.get("decisions") or []
+                attendees = ", ".join(m.get("attendees") or [])
+                dec_text = "; ".join([d.get("text", "") for d in decisions if d.get("text")]) if decisions else ""
+                line = f"[Meeting: {title} | Date: {date_str} | Attendees: {attendees}]\nSummary: {summary}"
+                if dec_text:
+                    line += f"\nDecisions: {dec_text}"
+                lines.append(line)
+            meetings_context = "\n\n".join(lines)
+    except Exception as e:
+        logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
+
+    if not results and not meetings_context:
         return {
             "answer": "I couldn't find relevant information in your past meetings.",
             "confidence": "low",
@@ -139,14 +169,23 @@ async def run_memory_agent(
 
     context_block, sources = _build_context_block(results)
 
+    # Build combined prompt with both Qdrant chunks AND DB summaries
+    db_section = f"""
+
+--- ALL PAST MEETING SUMMARIES (from database) ---
+{meetings_context}
+--- END OF MEETING SUMMARIES ---
+""" if meetings_context else ""
+
     prompt = f"""{_SYSTEM_PROMPT}
 
 Question: {question}
 
-Retrieved context from past meetings:
-{context_block}
-
-Answer the question conversationally based solely on the context above. 
+Retrieved semantic context from past meetings (most relevant chunks):
+{context_block if context_block else "(No semantic matches found)"}
+{db_section}
+Answer the question conversationally based solely on the context above.
+If the answer is clearly present in the meeting summaries above, use that.
 You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {{
   "answer": "Your conversational answer here. Do not include [Context N]. Format numbers in Indian style (e.g. ₹50,000).",
@@ -161,7 +200,6 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
         from ..core.utils import parse_json_clean
         result = parse_json_clean(raw)
         if not result:
-            # If LLM ignored JSON rules and returned plain text (e.g. "I don't know")
             result = {
                 "answer": raw.strip(),
                 "confidence": "low",
@@ -198,7 +236,7 @@ You MUST format your response as a valid JSON object. Ensure all quotes inside s
         "answer": final_answer,
         "confidence": result.get("confidence", "low"),
         "sources": cited_sources,
-        "total_retrieved": len(results),
+        "total_retrieved": len(results) + len(meetings_context.splitlines() if meetings_context else []),
         "powered_by": powered_by,
         "guardrail_score": guardrail_res.score,
         "guardrail_valid": guardrail_res.valid,

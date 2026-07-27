@@ -247,7 +247,10 @@ async def _run_end_pipeline(
 
         # save action items
         if target_id:
+            _valid_priorities = {"high", "medium", "low"}
             for ai in (final_summary.get("action_items") or []):
+                raw_priority = (ai.get("priority") or "medium").strip().lower()
+                priority = raw_priority if raw_priority in _valid_priorities else "medium"
                 supabase.table("action_items").insert(
                     {
                         "id": str(uuid.uuid4()),
@@ -255,7 +258,7 @@ async def _run_end_pipeline(
                         "org_id": org_id,
                         "description": ai.get("text", ""),
                         "owner_name": ai.get("owner", "Unassigned"),
-                        "priority": ai.get("priority", "medium"),
+                        "priority": priority,
                         "due_date": ai.get("due_date"),
                         "status": "open",
                     }

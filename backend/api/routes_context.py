@@ -248,26 +248,42 @@ class ContextRenameFileRequest(BaseModel):
 @router.post("/rename_file")
 async def rename_file(
     req: ContextRenameFileRequest,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(get_current_user),
 ):
     from ..memory.qdrant_client import get_qdrant
     from ..core.config import settings
     from qdrant_client.http import models as qmodels
     try:
         client = await get_qdrant()
+        # Scroll to get all matching point IDs first
+        scroll_filter = qmodels.Filter(
+            must=[
+                qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
+                qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)),
+                qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
+                qmodels.FieldCondition(key="speaker_name", match=qmodels.MatchValue(value=req.old_filename)),
+            ]
+        )
+        results = await client.scroll(
+            collection_name=settings.QDRANT_COLLECTION,
+            scroll_filter=scroll_filter,
+            limit=10000,
+            with_payload=False,
+            with_vectors=False,
+        )
+        point_ids = [pt.id for pt in results[0]]
+        if not point_ids:
+            raise HTTPException(status_code=404, detail=f"No points found for file '{req.old_filename}'")
+        # Update by explicit IDs for reliability
         await client.set_payload(
             collection_name=settings.QDRANT_COLLECTION,
             payload={"speaker_name": req.new_filename},
-            points_selector=qmodels.Filter(
-                must=[
-                    qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                    qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)),
-                    qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
-                    qmodels.FieldCondition(key="speaker_name", match=qmodels.MatchValue(value=req.old_filename)),
-                ]
-            )
+            points=point_ids,
+            wait=True,
         )
-        return {"status": "success", "message": f"File renamed to {req.new_filename}."}
+        return {"status": "success", "message": f"File renamed to {req.new_filename}.", "updated": len(point_ids)}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to rename file. Please try again.")
 

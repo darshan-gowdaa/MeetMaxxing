@@ -61,13 +61,23 @@ async def get_meeting_detail(
         supabase.table("action_items")
         .select("*")
         .eq("meeting_id", target_id)
-        .order("priority", desc=True)
         .execute()
+    )
+
+    # Sort by priority (high → medium → low) then status (open → in_progress → done)
+    _priority_order = {"high": 0, "medium": 1, "low": 2}
+    _status_order = {"open": 0, "in_progress": 1, "done": 2}
+    sorted_actions = sorted(
+        actions.data or [],
+        key=lambda a: (
+            _status_order.get(a.get("status", "open"), 9),
+            _priority_order.get((a.get("priority") or "medium").lower(), 9),
+        )
     )
 
     return {
         **meeting,
-        "action_items": actions.data or [],
+        "action_items": sorted_actions,
     }
 
 
@@ -96,10 +106,19 @@ async def update_action_item(
     updates: dict,
     user: dict = Depends(get_current_user),
 ):
-    """Update action item status (open → in_progress → done)."""
+    """Update action item fields (status, priority, due_date, owner_name)."""
     supabase = get_supabase_admin()
-    allowed = {"status", "due_date", "owner_name"}
+    allowed = {"status", "due_date", "owner_name", "priority"}
     safe_updates = {k: v for k, v in updates.items() if k in allowed}
+    # Normalize priority to lowercase
+    if "priority" in safe_updates:
+        safe_updates["priority"] = (safe_updates["priority"] or "medium").lower()
+    # Validate status transitions
+    valid_statuses = {"open", "in_progress", "done"}
+    if "status" in safe_updates and safe_updates["status"] not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+    if not safe_updates:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
     result = (
         supabase.table("action_items")
         .update(safe_updates)

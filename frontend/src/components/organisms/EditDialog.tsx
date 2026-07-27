@@ -11,12 +11,14 @@ export default function EditDialog({
   onSave,
   onCancel,
   busy,
+  error,
 }: {
   initialTitle: string;
   itemName?: string;
   onSave: (title: string) => void;
   onCancel: () => void;
   busy: boolean;
+  error?: string;
 }) {
   const [title, setTitle] = useState(initialTitle || "");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,10 +58,16 @@ export default function EditDialog({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && title.trim()) onSave(title.trim()); }}
-          className="w-full h-12 bg-surface2 border border-border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors mb-4"
+          className={`w-full h-12 bg-surface2 border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none spring-colors mb-1 ${
+            error ? "border-risk focus:border-risk" : "border-border focus:border-primary"
+          }`}
           placeholder={`${itemName} title…`}
           maxLength={120}
         />
+        {error && (
+          <p className="text-[11.5px] text-risk font-medium px-1 mb-3">{error}</p>
+        )}
+        {!error && <div className="mb-3" />}
         <div className="flex gap-3">
           <button
             onClick={onCancel}

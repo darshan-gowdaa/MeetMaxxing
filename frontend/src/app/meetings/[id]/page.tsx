@@ -5,7 +5,6 @@ import Link from "next/link";
 import { fetchMeeting, updateActionItem } from "@/lib/api";
 import { MeetingSkeleton } from "@/components/templates/skeletons";
 import {
-  RiArrowLeftLine as ArrowLeft,
   RiRefreshLine as RefreshCw,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
@@ -97,6 +96,17 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       await updateActionItem(itemId, { status: next }, "dev_token");
     } catch {
       setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, status: item.status } : a)));
+    }
+  };
+
+  const changePriority = async (itemId: string, priority: string) => {
+    const item = actionItems.find((a) => a.id === itemId);
+    if (!item) return;
+    setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, priority } : a)));
+    try {
+      await updateActionItem(itemId, { priority }, "dev_token");
+    } catch {
+      setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, priority: item.priority } : a)));
     }
   };
 
@@ -197,14 +207,6 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     <div className="min-h-screen bg-bg text-text font-sans pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 flex flex-col gap-5">
 
-        {/* button to go back */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2 px-4 py-2 text-[14px] font-medium text-text hover:text-primary bg-surface-container hover:bg-surface2 border border-border rounded-full w-fit mb-2 spring shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4 text-text-muted group-hover:text-primary group-hover:-translate-x-1 spring" />
-          All Meetings
-        </Link>
 
         {/* big header card thing */}
         <MeetingHeader 
@@ -222,7 +224,11 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         <MeetingDecisions decisions={meeting.decisions} />
 
         {/* things people need to do */}
-        <MeetingActionItems actionItems={actionItems} toggleItemStatus={toggleItemStatus} />
+        <MeetingActionItems
+          actionItems={actionItems}
+          toggleItemStatus={toggleItemStatus}
+          onPriorityChange={changePriority}
+        />
 
         {/* transcript section is huge */}
         <MeetingTranscript transcriptData={meeting.transcript_data} />
