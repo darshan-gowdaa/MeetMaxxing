@@ -54,6 +54,7 @@ export async function updateActionItem(id: string, updates: Record<string, strin
     },
     body: JSON.stringify(updates),
   });
+  if (!res.ok) throw new Error(`Failed to update action item: ${res.status}`);
   const text = await res.text();
   return safeParse(text);
 }
@@ -80,3 +81,4 @@ export async function updateMeeting(id: string, updates: Record<string, string>,
   const text = await res.text();
   return safeParse(text);
 }
+

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { queryMemory } from "@/lib/api";
 import type { Meeting, MemoryResult } from "@/types";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import {
   RiBrainLine,
   RiSearchLine,
@@ -297,3 +297,4 @@ export default function MemoryPage() {
     </div>
   );
 }
+

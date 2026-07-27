@@ -33,10 +33,8 @@ class MemoryRedis:
         if not isinstance(items, list):
             return []
         if end == -1:
-            return items[start:] if start < 0 else items[start:]
-        elif start < 0 and end == -1:
             return items[start:]
-        return items[start : end + 1] if end >= 0 else items[start:]
+        return items[start : end + 1]
 
     async def expire(self, key: str, ttl: int) -> bool:
         return True

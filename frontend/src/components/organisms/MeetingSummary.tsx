@@ -1,0 +1,49 @@
+"use client";
+
+import { RiSparklingLine as Sparkles } from "@remixicon/react";
+import type { Meeting } from "@/types";
+
+interface MeetingSummaryProps {
+  meeting: Meeting;
+}
+
+export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
+  return (
+    <div className="bg-surface-container rounded-[24px] border border-border p-6 flex flex-col gap-4">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-[12px] bg-tertiary-container flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-tertiary" />
+        </div>
+        <h2 className="text-[14px] font-bold text-text tracking-tight uppercase text-tertiary">
+          Executive Summary
+        </h2>
+      </div>
+      {meeting.summary ? (
+        <p className="text-[13.5px] text-text leading-[1.75] whitespace-pre-wrap">
+          {meeting.summary}
+        </p>
+      ) : meeting.status === "active" || meeting.status === "processing" ? (
+        <div className="flex flex-col items-center justify-center py-6 gap-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
+            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
+            <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
+          </div>
+          <p className="text-[13px] text-text-muted font-medium animate-pulse tracking-wide">
+            AI is processing executive summary...
+          </p>
+        </div>
+      ) : (
+        <div className="bg-risk-container/10 border border-risk/30 rounded-xl p-4 my-2">
+          <p className="text-[13.5px] text-risk/90 italic leading-relaxed">
+            {meeting.status === "no_transcript"
+              ? "No transcript was captured during this meeting, so no summary could be generated."
+              : meeting.status === "error" || meeting.status === "failed" 
+              ? "An error occurred during summarization. The meeting might have been too short or the AI service was unavailable."
+              : "Executive summary is not available for this meeting. It may not have contained enough conversational data."}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

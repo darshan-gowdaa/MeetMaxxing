@@ -16,8 +16,6 @@ def generate_meeting_title(title: str, meet_code: str) -> str:
     
     if clean_code and (not final_title or final_title in ["Google Meet", "Untitled Meeting", "Google Meet Session"]):
         final_title = f"Meet - {clean_code}"
-    elif clean_code and not final_title.startswith("Meet - "):
-        final_title = f"Meet - {clean_code}"
         
     if not final_title:
         final_title = "Meet - Live Session"

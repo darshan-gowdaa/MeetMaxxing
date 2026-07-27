@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { RiEditLine, RiCheckLine } from "@remixicon/react";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export default function EditDialog({
   initialTitle,
@@ -26,10 +26,17 @@ export default function EditDialog({
   useEffect(() => {
     // eslint-disable-next-line
     setMounted(true);
-    inputRef.current?.focus();
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = "unset"; };
   }, []);
+
+  // Focus input after portal renders (can't focus before mounted)
+  useEffect(() => {
+    if (mounted) {
+      const id = setTimeout(() => inputRef.current?.focus(), 0);
+      return () => clearTimeout(id);
+    }
+  }, [mounted]);
 
   if (!mounted) return null;
 
@@ -74,3 +81,4 @@ export default function EditDialog({
     document.body
   );
 }
+

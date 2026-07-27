@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { RiUploadCloud2Line, RiCloseLine, RiFileTextLine, RiFilePdfLine, RiFileWordLine } from "@remixicon/react";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export default function UploadDialog({
   onUpload,
@@ -27,26 +27,10 @@ export default function UploadDialog({
 
   if (!mounted) return null;
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
+  const handleDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(e.type === "dragenter" || e.type === "dragover"); };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const newFiles = Array.from(e.dataTransfer.files).filter(f => 
-        f.name.endsWith('.pdf') || f.name.endsWith('.docx') || f.name.endsWith('.txt')
-      );
-      setFiles(prev => [...prev, ...newFiles]);
-    }
+    e.preventDefault(); e.stopPropagation(); setDragActive(false);
+    if (e.dataTransfer.files) setFiles(p => [...p, ...Array.from(e.dataTransfer.files).filter(f => f.name.match(/\.(pdf|docx|txt)$/i))]);
   };
 
   const getFileIcon = (filename: string) => {
@@ -159,3 +143,4 @@ export default function UploadDialog({
     document.body
   );
 }
+

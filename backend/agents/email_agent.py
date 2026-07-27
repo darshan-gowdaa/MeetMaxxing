@@ -91,7 +91,12 @@ async def run_email_agent(meeting_id: str, summary_output: dict) -> dict:
     """
     logger.info(f"[Email Agent] Starting follow-up email draft for meeting {meeting_id}")
     summary = summary_output.get("summary", "")
-    action_items = summary_output.get("action_items", [])
+    raw_action_items = summary_output.get("action_items", [])
+    # action_items may be dicts {text, owner, priority} or plain strings
+    action_items = [
+        item.get("text", str(item)) if isinstance(item, dict) else str(item)
+        for item in raw_action_items
+    ]
     
     # Draft email
     email_body = await draft_followup_email(

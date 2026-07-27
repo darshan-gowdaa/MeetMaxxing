@@ -1,14 +1,28 @@
 <div align="center">
+  <h1>
+    MeetMaxxing
+  </h1>
+  <h3>A Production-Inspired Multi-Agent AI Meeting Copilot</h3>
 
-# MeetMaxxing
+  <p>
+    Transforming online meetings into intelligent, collaborative experiences through modular AI agents, semantic memory, and real-time assistance.
+    <br />
+    <br />
+    <strong>
+    Powered by Google ADK, Lyzr, Agent-to-Agent (A2A) Communication & Qdrant.
+    </strong>
+  </p>
+</div>
 
-### *A Production-Inspired Multi-Agent AI Meeting Copilot powered by Google ADK, Lyzr, Agent-to-Agent (A2A) Communication & Qdrant.*
+---
 
-<p align="center">
-Transforming online meetings into intelligent, collaborative experiences through modular AI agents, semantic memory, and real-time assistance.
-</p>
+<div align="center">
+Built with modern AI engineering practices to provide a scalable, modular, and collaborative meeting experience.
+</div>
 
-<br>
+---
+
+<div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
@@ -21,15 +35,11 @@ Transforming online meetings into intelligent, collaborative experiences through
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)
 
-<br>
-
-⭐ Star this repository if you like the project!
-
 </div>
 
----
+<br />
 
-# Project Vision
+# 🚀 Project Vision
 
 Modern meetings generate valuable discussions, decisions, and action items—but much of that information is quickly forgotten or scattered across notes, emails, and calendars.
 
@@ -39,9 +49,14 @@ Built around **Google ADK**, **Lyzr**, **Agent-to-Agent (A2A) communication**, a
 
 Rather than being just another meeting summarizer, MeetMaxxing showcases how multiple AI agents can work together to provide a scalable, modular, and production-inspired meeting experience.
 
+## 🎯 Key Objectives
+- **Multi-Agent Intelligence**: Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM.
+- **Real-Time Assistance**: Receive contextual suggestions, meeting insights, and intelligent support while the meeting is in progress.
+- **Persistent Semantic Memory**: Store and retrieve meeting knowledge using vector embeddings powered by Qdrant.
+
 ---
 
-# Why MeetMaxxing?
+# 🧠 Why MeetMaxxing?
 
 Unlike conventional AI meeting assistants that rely on a single large language model prompt, MeetMaxxing adopts a **collaborative multi-agent design**.
 
@@ -54,84 +69,44 @@ This modular architecture makes the system more scalable, maintainable, and capa
 - **Qdrant** for persistent semantic memory
 - **Lyzr** for intelligent workflow orchestration
 
-# Core Features
+---
+
+# ✨ Core Features
 
 MeetMaxxing transforms traditional online meetings into intelligent, AI-assisted collaborative experiences through a modular multi-agent architecture.
 
-<table>
-<tr>
-<td width="50%">
-
-### Multi-Agent Intelligence
+### 🤖 Multi-Agent Intelligence
 Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM.
 
-</td>
-
-<td width="50%">
-
-### Real-Time Assistance
+### ⚡ Real-Time Assistance
 Receive contextual suggestions, meeting insights, and intelligent support while the meeting is still in progress.
 
-</td>
-</tr>
-
-<tr>
-<td>
-
-### Semantic Memory
+### 🧠 Semantic Memory
 Store and retrieve meeting knowledge using vector embeddings powered by Qdrant for context-aware conversations.
 
-</td>
-
-<td>
-
-### Smart Meeting Summaries
+### 📝 Smart Meeting Summaries
 Automatically generate concise summaries, key discussion points, and actionable takeaways after every meeting.
 
-</td>
-</tr>
-
-<tr>
-<td>
-
-### AI Follow-ups
+### ✉️ AI Follow-ups
 Generate professional follow-up emails containing meeting highlights and action items.
 
-</td>
-
-<td>
-
-### Intelligent Scheduling
+### 📅 Intelligent Scheduling
 Create reminders and follow-up meetings directly from extracted action items.
 
-</td>
-</tr>
-
-<tr>
-<td>
-
-### Document Question Answering
+### 📄 Document Question Answering
 Upload supporting documents and allow AI agents to answer questions using meeting context.
 
-</td>
-
-<td>
-
-### Late Join Recaps
+### ⏱️ Late Join Recaps
 Users joining late receive an instant AI-generated summary of everything discussed so far.
-
-</td>
-</tr>
-</table>
 
 ---
 
-# AI Agent Ecosystem
+# 🌐 AI Agent Ecosystem
 
 MeetMaxxing follows a **collaborative multi-agent architecture** where each agent has a clearly defined responsibility. Instead of overloading a single model with every task, specialized agents work together to deliver a smarter and more scalable meeting experience.
 
 | Agent | Responsibility |
-|---------|---------------|
+| :--- | :--- |
 | **Transcription Agent** | Processes meeting transcripts and streams conversation data to the system. |
 | **Realtime Agent** | Generates contextual suggestions and live assistance during meetings. |
 | **Summary Agent** | Produces concise meeting summaries, key points, and action items. |
@@ -144,14 +119,13 @@ MeetMaxxing follows a **collaborative multi-agent architecture** where each agen
 
 ---
 
-# Google ADK in Action
+# ⚡ Google ADK in Action
 
 Google ADK forms the backbone of MeetMaxxing's intelligent agent ecosystem.
 
 Rather than building one large AI workflow, MeetMaxxing uses Google ADK to create **specialized agents**, each equipped with its own reasoning capabilities and dedicated tools.
 
 This modular design enables:
-
 - Independent task execution
 - Tool-specific reasoning
 - Better scalability
@@ -162,7 +136,7 @@ Every major meeting capability—from summarization and semantic retrieval to sc
 
 ---
 
-# Agent-to-Agent (A2A) Communication
+# 🤝 Agent-to-Agent (A2A) Communication
 
 One of the core objectives of MeetMaxxing is to demonstrate effective **Agent-to-Agent (A2A) communication**.
 
@@ -173,7 +147,6 @@ Instead of executing tasks sequentially within a single workflow, specialized ag
 </p>
 
 This architecture allows:
-
 - Parallel execution of specialized tasks
 - Better separation of responsibilities
 - Easier extensibility for future agents
@@ -182,45 +155,33 @@ This architecture allows:
 
 ---
 
-# Persistent Memory with Qdrant
+# 🧠 Persistent Memory with Qdrant
 
 MeetMaxxing doesn't forget previous meetings.
 
 Instead, meeting conversations are transformed into **vector embeddings** and stored inside **Qdrant**, enabling semantic search across historical discussions.
 
-```text
-Meeting Transcript
-        │
-        ▼
-Text Embeddings
-        │
-        ▼
-Qdrant Vector Database
-        │
-        ▼
-Semantic Retrieval
-        │
-        ▼
-Relevant Context
-        │
-        ▼
-AI Response
+```mermaid
+flowchart TD
+    A[Meeting Transcript] --> B[Text Embeddings]
+    B --> C[(Qdrant Vector Database)]
+    C --> D[Semantic Retrieval]
+    D --> E[Relevant Context]
+    E --> F[AI Response]
 ```
 
 This enables users to ask contextual questions like:
-
 > *"What decisions were made regarding our authentication module last week?"*
 
 Instead of keyword matching, Qdrant retrieves semantically similar discussions, allowing AI agents to respond with meaningful context.
 
 ---
 
-# Lyzr-Powered Workflow Orchestration
+# ⚙️ Lyzr-Powered Workflow Orchestration
 
 Lyzr strengthens MeetMaxxing's orchestration layer by coordinating complex AI workflows across multiple specialized agents.
 
 It enables:
-
 - Intelligent workflow management
 - Agent coordination
 - Dynamic task routing
@@ -231,16 +192,13 @@ Combined with Google ADK and A2A communication, Lyzr helps transform independent
 
 ---
 
-# Why This Architecture?
+# 🏗️ Why This Architecture?
 
 Traditional AI meeting assistants often rely on a **single prompt** to perform transcription, summarization, memory retrieval, scheduling, and follow-up generation.
 
-MeetMaxxing takes a different approach.
-
-Instead of asking one model to do everything, responsibilities are distributed across specialized agents that collaborate through A2A communication.
+MeetMaxxing takes a different approach. Instead of asking one model to do everything, responsibilities are distributed across specialized agents that collaborate through A2A communication.
 
 This architecture offers several advantages:
-
 - ✅ Modular and maintainable
 - ✅ Easier to extend with new agents
 - ✅ Better scalability
@@ -248,338 +206,165 @@ This architecture offers several advantages:
 - ✅ Persistent semantic memory
 - ✅ Production-inspired system design
 
-The result is an AI meeting copilot that is not only intelligent, but also demonstrates modern AI engineering practices suitable for real-world applications.
 The result is an AI meeting copilot that doesn't simply answer questions—it coordinates multiple intelligent agents to understand, remember, and act on meeting information in real time.
 
 ---
 
-# End-to-End Workflow
+# 🔄 End-to-End Workflow
 
 Every interaction inside MeetMaxxing follows an intelligent event-driven workflow.
 
-```text
-                Join Google Meet
-                       │
-                       ▼
-          Chrome Extension captures events
-                       │
-                       ▼
-              FastAPI Backend Services
-                       │
-                       ▼
-              Orchestrator Agent
-                       │
-       ┌───────────────┼────────────────┐
-       ▼               ▼                ▼
-Realtime Agent   Summary Agent   Memory Agent
-       │               │                │
-       └───────────────┼────────────────┘
-                       ▼
-         Email / Scheduler / Docs QA
-                       │
-                       ▼
-            Qdrant Semantic Memory
-                       │
-                       ▼
-             AI Response to the User
+```mermaid
+flowchart TD
+    A[Join Google Meet] --> B[Chrome Extension Captures Events]
+    B --> C[FastAPI Backend Services]
+    C --> D{Orchestrator Agent}
+    
+    D --> E[Realtime Agent]
+    D --> F[Summary Agent]
+    D --> G[Memory Agent]
+    
+    F --> H[Email Agent]
+    F --> I[Scheduler Agent]
+    D --> J[Docs QA Agent]
+    
+    E & G & H & I & J --> K[(Qdrant Semantic Memory)]
+    K --> L[AI Response to the User]
 ```
 
 ---
 
-# Technology Stack
+# 🛠️ Technology Stack
 
-| Category | Technologies |
-|-----------|--------------|
-| AI Framework | Google ADK, Lyzr |
-| Agent Communication | Agent-to-Agent (A2A), gRPC |
-| Vector Memory | Qdrant |
-| Backend | FastAPI, Python |
-| Frontend | Next.js, TypeScript, Chrome Extension |
-| Database | Supabase |
-| Cache | Redis |
-| Infrastructure | Docker, Docker Compose |
-| Observability | Langfuse, OpenTelemetry, Jaeger |
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **AI Framework** | Google ADK, Lyzr | Core agent logic and orchestration |
+| **Communication** | A2A, gRPC | Inter-agent messaging and RPC |
+| **Memory** | Qdrant | Vector embeddings and semantic search |
+| **Backend** | FastAPI, Python | High-performance API services |
+| **Frontend** | Next.js, TypeScript | Dashboard and user interface |
+| **Client** | Chrome Extension | Google Meet integration |
+| **Database** | Supabase | Relational data and auth |
+| **Cache** | Redis | State management and caching |
+| **Infrastructure**| Docker, Docker Compose | Containerization and orchestration |
+| **Observability** | Langfuse, OpenTelemetry, Jaeger | Monitoring and tracing |
 
 ---
 
-# Repository Structure
+# 📁 Repository Structure
+
+The codebase is organized into modular services to enforce separation of concerns:
 
 ```bash
 MeetMaxxing/
 │
-├── .gemini_rules/
-│   ├── material3-expressive-meet-extension.md
-│   └── material3-expressive-meet-extension.skill
+├── backend/                       # Python FastAPI Backend
+│   ├── main.py                    # Entry point for backend services
+│   ├── provision_lyzr_agents.py   # Agent initialization script
+│   │
+│   ├── agents/                    # AI Agents logic (Google ADK)
+│   │   ├── docs_qa_agent.py       
+│   │   ├── email_agent.py         
+│   │   ├── orchestrator.py        # Central agent router
+│   │   └── summary_agent.py       
+│   │
+│   ├── api/                       # REST API routes
+│   │   ├── routes_calendar.py     
+│   │   ├── routes_meeting.py      
+│   │   └── routes_memory.py       
+│   │
+│   ├── core/                      # Core configuration and integrations
+│   │   ├── lyzr_integration.py    
+│   │   └── redis_client.py        
+│   │
+│   ├── grpc_bus/                  # gRPC communication layer (A2A)
+│   │   └── grpc_server.py         
+│   │
+│   ├── memory/                    # Vector memory logic (Qdrant)
+│   │   └── qdrant_client.py       
+│   │
+│   └── services/                  # Third-party integrations
+│       ├── calendar_service.py    
+│       └── gmail_service.py       
 │
-├── backend/
-│   ├── .env.example
-│   ├── Dockerfile
-│   ├── main.py
-│   ├── provision_lyzr_agents.py
-│   ├── requirements.txt
-│   ├── supabase_migrations.sql
-│   ├── test_suite.py
+├── extension/                     # Chrome Extension
+│   ├── background.js              # Service worker
+│   ├── content.js                 # Content script injected into Meet
+│   ├── manifest.json              # Extension manifest
 │   │
-│   ├── agents/
-│   │   ├── __init__.py
-│   │   ├── docs_qa_agent.py
-│   │   ├── email_agent.py
-│   │   ├── late_join_agent.py
-│   │   ├── memory_agent.py
-│   │   ├── orchestrator.py
-│   │   ├── realtime_agent.py
-│   │   ├── scheduler_agent.py
-│   │   ├── summary_agent.py
-│   │   └── transcription_agent.py
-│   │
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── routes_calendar.py
-│   │   ├── routes_context.py
-│   │   ├── routes_dashboard.py
-│   │   ├── routes_meeting.py
-│   │   ├── routes_memory.py
-│   │   ├── routes_transcript.py
-│   │   └── test_pipeline.py
-│   │
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   ├── llm_fallback.py
-│   │   ├── lyzr_integration.py
-│   │   ├── rate_limiter.py
-│   │   ├── redis_client.py
-│   │   └── utils.py
-│   │
-│   ├── grpc_bus/
-│   │   ├── __init__.py
-│   │   ├── grpc_bus.proto
-│   │   ├── grpc_bus_pb2.py
-│   │   ├── grpc_bus_pb2_grpc.py
-│   │   └── grpc_server.py
-│   │
-│   ├── memory/
-│   │   ├── __init__.py
-│   │   ├── embeddings.py
-│   │   ├── qdrant_client.py
-│   │   └── schemas.py
-│   │
-│   ├── scripts/
-│   │   └── reindex.py
-│   │
-│   └── services/
-│       ├── __init__.py
-│       ├── calendar_service.py
-│       ├── gmail_service.py
-│       ├── guardrails.py
-│       └── transcript.py
-│
-├── docker/
-│   └── kong/
-│       └── kong.yml
-│
-├── docs/
-│   ├── Architectural Flow Diagram/
-│   │   └── Architectural Flow Diagram.png
-│   └── Product Requirement Document/
-│       └── Product Requirement Document.pdf
-│
-├── extension/
-│   ├── background.js
-│   ├── config.js
-│   ├── content.js
-│   ├── manifest.json
-│   ├── offscreen.html
-│   ├── offscreen.js
-│   │
-│   ├── assets/
-│   │   └── icons/
-│   │       ├── icon16.png
-│   │       ├── icon48.png
-│   │       └── icon128.png
-│   │
-│   ├── styles/
-│   │   └── sidepanel.css
-│   │
-│   └── sidebar-app/
-│       ├── .gitignore
-│       ├── .oxlintrc.json
-│       ├── index.html
-│       ├── package-lock.json
-│       ├── package.json
-│       ├── rewrite.mjs
-│       ├── tsconfig.app.json
-│       ├── tsconfig.json
-│       ├── tsconfig.node.json
-│       ├── vite.config.ts
-│       │
-│       ├── public/
-│       │   ├── favicon.svg
-│       │   └── icons.svg
-│       │
+│   └── sidebar-app/               # React Sidebar App UI (Vite)
 │       └── src/
-│           ├── App.css
-│           ├── App.tsx
-│           ├── index.css
-│           ├── main.tsx
-│           ├── sidepanel.css
-│           ├── types.ts
-│           │
-│           ├── assets/
-│           │   ├── hero.png
-│           │   ├── react.svg
-│           │   └── vite.svg
-│           │
-│           ├── components/
-│           │   ├── Agents.tsx
-│           │   ├── ContextAgent.tsx
-│           │   ├── ContextAgent.tsx.bak
-│           │   ├── Layout.tsx
-│           │   └── States.tsx
-│           │
-│           ├── hooks/
-│           │   └── useCopilot.ts
-│           │
-│           └── lib/
-│               └── utils.ts
+│           ├── App.tsx            # Main sidebar view
+│           └── components/        # Sidebar UI Components
+│               ├── Agents.tsx     
+│               └── ContextAgent.tsx
 │
-├── frontend/
-│   ├── .env.local.example
-│   ├── .gitignore
-│   ├── eslint.config.mjs
-│   ├── next.config.ts
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── postcss.config.mjs
-│   ├── tsconfig.json
-│   │
-│   ├── public/
-│   │   ├── file.svg
-│   │   ├── globe.svg
-│   │   ├── next.svg
-│   │   ├── vercel.svg
-│   │   └── window.svg
-│   │
+├── frontend/                      # Next.js Web Dashboard
 │   └── src/
-│       ├── app/
-│       │   ├── favicon.ico
-│       │   ├── globals.css
-│       │   ├── layout.tsx
-│       │   ├── page.tsx
-│       │   ├── template.tsx
-│       │   ├── context/
-│       │   │   └── page.tsx
-│       │   ├── meetings/
-│       │   │   └── [id]/
-│       │   │       └── page.tsx
-│       │   └── memory/
-│       │       └── page.tsx
+│       ├── app/                   # Next.js App Router
+│       │   ├── layout.tsx         # Root Layout Wrapper
+│       │   ├── page.tsx           # Dashboard Home
+│       │   ├── meetings/          # Meeting Details Route
+│       │   └── memory/            # Semantic Search Route
 │       │
-│       ├── components/
-│       │   ├── ActionButtons.tsx
-│       │   ├── AnimatedNumber.tsx
-│       │   ├── ContextCard.tsx
-│       │   ├── ContextManager.tsx
-│       │   ├── DeleteDialog.tsx
-│       │   ├── EditDialog.tsx
-│       │   ├── Md3Loading.tsx
-│       │   ├── MeetingCard.tsx
-│       │   ├── SelectableGrid.tsx
-│       │   ├── Topbar.tsx
-│       │   ├── UploadDialog.tsx
-│       │   ├── ViewContentDialog.tsx
-│       │   └── skeletons/
-│       │       ├── CardSkeleton.tsx
-│       │       ├── GridSkeleton.tsx
-│       │       ├── MeetingSkeleton.tsx
-│       │       ├── MemorySkeleton.tsx
-│       │       └── index.ts
+│       ├── components/            # UI Components
+│       │   ├── ContextCard.tsx    
+│       │   ├── MeetingCard.tsx    
+│       │   └── skeletons/         # Loading States
 │       │
-│       ├── lib/
-│       │   ├── api.ts
-│       │   └── supabase.ts
-│       │
-│       ├── scripts/
-│       │   └── apply_colors.py
-│       │
-│       └── types/
-│           ├── index.ts
-│           └── mdwc.d.ts
+│       └── lib/                   # API clients and utilities
+│           └── supabase.ts        
 │
-├── supabase/
-│   └── .temp/
-│       ├── gotrue-version
-│       ├── linked-project.json
-│       ├── pooler-url
-│       ├── postgres-version
-│       ├── project-ref
-│       ├── rest-version
-│       ├── storage-migration
-│       └── storage-version
-│
-├── .gitignore
-├── docker-compose.yml
-├── package.json
-├── package-lock.json
-└── README.md
+├── supabase/                      # Database migrations and configuration
+├── docker-compose.yml             # Local infrastructure orchestration
+└── qdrant_data/                   # Vector store persistent data (ignored in git)
 ```
 
 ---
 
-# Getting Started
+## 🚀 Getting Started
 
-## Clone Repository
+### Prerequisites
+- **Node.js**: v18 or higher
+- **Python**: v3.10+
+- **Docker**: For running Qdrant, Redis, etc.
 
-```bash
-git clone https://github.com/darshan-gowdaa/MeetMaxxing.git
-```
+### Installation
 
-```bash
-cd MeetMaxxing
-```
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/darshan-gowdaa/MeetMaxxing.git
+   cd MeetMaxxing
+   ```
 
----
+2. **Install Root Dependencies**
+   ```bash
+   npm install
+   ```
 
-## Install Backend Dependencies
+3. **Install Backend Dependencies**
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   ```
 
-```bash
-npm install
-```
+4. **Start All Services**
+   From the root directory, you can start the necessary services:
+   ```bash
+   npm restart
+   ```
 
-```bash
-cd backend
-```
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
----
----
-
-## Start all services with 
-
-```bash
-npm restart
-```
-
----
-
-## Load Chrome Extension
+### Load Chrome Extension
 
 1. Open Chrome
 2. Go to `chrome://extensions`
 3. Enable **Developer Mode**
 4. Click **Load unpacked**
-5. Select the `extension` folder
+5. Select the `extension` folder.
 
 ---
 
-# Roadmap
+# 🗺️ Roadmap
 
 - [ ] Smarter AI meeting coaching
 - [ ] Voice interaction
@@ -592,72 +377,36 @@ npm restart
 
 ---
 
-# Meet the Team
+# 👥 Meet the Team
 
-<div>
-
+<div align="center">
 <table>
 <tr>
-
 <td align="center" width="33%">
-
-<a href="https://github.com/darshan-gowdaa">
-
-<b>@darshan-gowdaa</b>
-
-</a>
-
-<br>
-
+<a href="https://github.com/darshan-gowdaa"><b>@darshan-gowdaa</b></a><br>
 Darshan Gowda
-
 </td>
-
 <td align="center" width="33%">
-
-<a href="https://github.com/kanikapitaliya">
-
-<b>@kanikapitaliya</b>
-
-</a>
-
-<br>
-
+<a href="https://github.com/kanikapitaliya"><b>@kanikapitaliya</b></a><br>
 Kanika Pitaliya
-
 </td>
-
 <td align="center" width="33%">
-
-<a href="https://github.com/yar123yar">
-
-<b>@yar123yar</b>
-
-</a>
-
-<br>
-
+<a href="https://github.com/yar123yar"><b>@yar123yar</b></a><br>
 Yarthem Muivah
-
 </td>
-
 </tr>
 </table>
-
 </div>
 
 ---
 
-# Support
+# 🌟 Support
 
 If you found MeetMaxxing interesting, consider giving the repository a ⭐.
-
 It helps others discover the project and motivates us to continue improving it.
 
 ---
 
-<p align="center">
-
-Built using **Google ADK**, **Lyzr**, **A2A**, **Qdrant**, and modern AI engineering practices.
-
-</p>
+<div align="center">
+Built using <strong>Google ADK</strong>, <strong>Lyzr</strong>, <strong>A2A</strong>, <strong>Qdrant</strong>, and modern AI engineering practices.
+</div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCopilot } from "./hooks/useCopilot";
 import { Header, Footer, ErrorBanner } from "./components/Layout";
 import { IdleState, EndedState } from "./components/States";
@@ -20,6 +20,29 @@ export default function App() {
   const [pendingQuery, setPendingQuery] = useState("");
 
   const [lastInsightsCount, setLastInsightsCount] = useState(0);
+
+  // Cycling label for generate button during processing
+  const INSIGHT_LABELS = [
+    "Analyzing context…",
+    "Synthesizing insights…",
+    "Crafting answers…",
+    "Reading transcript…",
+    "Generating insights…",
+  ];
+  const [insightLabelIdx, setInsightLabelIdx] = useState(0);
+  const insightIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isProcessing) {
+      setInsightLabelIdx(0);
+      insightIntervalRef.current = setInterval(() => {
+        setInsightLabelIdx(prev => (prev + 1) % INSIGHT_LABELS.length);
+      }, 1100);
+    } else {
+      if (insightIntervalRef.current) clearInterval(insightIntervalRef.current);
+    }
+    return () => { if (insightIntervalRef.current) clearInterval(insightIntervalRef.current); };
+  }, [isProcessing]);
 
   useEffect(() => {
     localStorage.setItem("meetmaxxing_activeTab", activeTab);
@@ -79,10 +102,17 @@ export default function App() {
                 <button 
                   onClick={handleGenerateInsights} 
                   disabled={isProcessing} 
-                  className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative"
+                  className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative overflow-hidden"
                 >
-                  {hasNewContext && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
-                  {isProcessing ? <div className="md3-loading-indicator md3-loading-indicator-sm text-white mx-auto"></div> : <><i className="ri-sparkling-fill text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>}
+                  {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
+                  {isProcessing ? (
+                    <span className="flex items-center gap-2">
+                      <div className="md3-loading-indicator md3-loading-indicator-sm text-white"></div>
+                      <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
+                    </span>
+                  ) : (
+                    <><i className="ri-sparkling-line text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>
+                  )}
                 </button>
                 
                 <SuggestionAgent suggestions={suggestions} isProcessing={isProcessing} />
@@ -94,14 +124,21 @@ export default function App() {
             </div>
             
             <div className={activeTab === "recap" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>
-              <button 
-                  onClick={handleGenerateInsights} 
-                  disabled={isProcessing} 
-                  className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative"
-                >
-                  {hasNewContext && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
-                  {isProcessing ? <div className="md3-loading-indicator md3-loading-indicator-sm text-white mx-auto"></div> : <><i className="ri-sparkling-fill text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>}
-              </button>
+                <button 
+                    onClick={handleGenerateInsights} 
+                    disabled={isProcessing} 
+                    className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative overflow-hidden"
+                  >
+                    {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
+                    {isProcessing ? (
+                    <span className="flex items-center gap-2">
+                      <div className="md3-loading-indicator md3-loading-indicator-sm text-white"></div>
+                      <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
+                    </span>
+                    ) : (
+                      <><i className="ri-sparkling-line text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>
+                    )}
+                  </button>
               <RecapAgent recap={recap} isProcessing={isProcessing} />
             </div>
 

@@ -49,7 +49,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     elif trigger == AgentTrigger.SEND_EMAIL:
         agent_name = "email"
         grpc_payload = dict(payload)
-        grpc_payload["summary"] = payload
+        grpc_payload["summary"] = payload.get("summary", {})
 
     elif trigger == AgentTrigger.SCHEDULE_FOLLOWUP:
         agent_name = "scheduler"
@@ -79,7 +79,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 case AgentTrigger.TRANSCRIPT_CHUNK: agent_name = "transcription"
                 case AgentTrigger.SEND_EMAIL: 
                     agent_name = "email"
-                    grpc_payload["summary"] = payload
+                    grpc_payload["summary"] = grpc_payload.get("summary", {})
 
                 case _: raise ValueError(f"Unknown trigger fallback: {trigger}")
 

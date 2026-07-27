@@ -11,6 +11,8 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   
   const [showFileDropdown, setShowFileDropdown] = useState(false);
   const [fileSearch, setFileSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownBtnRef = useRef<HTMLButtonElement>(null);
   
   const [query, setQuery] = useState("");
   const [chatHistory, setChatHistory] = useState<{role: "user" | "agent", content: string, sources?: any[]}[]>([]);
@@ -42,6 +44,23 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
       if (clearPendingQuery) clearPendingQuery();
     }
   }, [pendingQuery, clearPendingQuery]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showFileDropdown) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        dropdownBtnRef.current && !dropdownBtnRef.current.contains(target)
+      ) {
+        setShowFileDropdown(false);
+        setFileSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showFileDropdown]);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -190,8 +209,9 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
         {/* Top App Bar */}
         <div className="px-3 py-2 flex items-center justify-between border-b border-zinc-700/50 bg-[#1E1F22] shrink-0 z-10">
           <div className="relative flex-1 max-w-[200px]">
-            <button 
-              onClick={() => setShowFileDropdown(!showFileDropdown)}
+            <button
+              ref={dropdownBtnRef}
+              onClick={() => { setShowFileDropdown(v => !v); if (!showFileDropdown) setFileSearch(""); }}
               className="w-full bg-zinc-800/50 hover:bg-zinc-800 text-[12px] font-medium text-zinc-300 rounded-full px-3 py-1.5 outline-none flex items-center gap-2 transition-colors border border-zinc-700/80 active:border-zinc-500"
             >
               <i className="ri-folder-open-line text-zinc-400 text-[14px]"></i>
@@ -203,12 +223,12 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               <i className={`ri-arrow-down-s-line text-zinc-400 transition-transform duration-300 ${showFileDropdown ? "rotate-180" : ""}`}></i>
             </button>
             {showFileDropdown && (
-              <div className="absolute left-0 top-full mt-1 w-[260px] bg-[#282A2D] border border-zinc-700 rounded-2xl shadow-xl z-30 flex flex-col overflow-hidden origin-top animate-fade-in duration-200">
+              <div ref={dropdownRef} className="absolute left-0 top-full mt-1 w-[260px] bg-[#282A2D] border border-zinc-700 rounded-2xl shadow-xl z-30 flex flex-col overflow-hidden origin-top animate-fade-in duration-200">
                 <div className="p-2 border-b border-zinc-700">
                   <div className="relative">
                     <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[12px]"></i>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Search context..."
                       value={fileSearch}
                       onChange={e => setFileSearch(e.target.value)}
@@ -218,10 +238,15 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                   </div>
                 </div>
                 <div className="max-h-[200px] overflow-y-auto custom-scrollbar flex flex-col p-1.5 gap-0.5">
-                  <label className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors ${selectedTargetFiles.length === 0 ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'}`}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedTargetFiles.length === 0} 
+                  {/* All Meeting Context — only active when nothing selected */}
+                  <label
+                    className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors ${
+                      selectedTargetFiles.length === 0 ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTargetFiles.length === 0}
                       onChange={() => setSelectedTargetFiles([])}
                       className="rounded-[4px] border-zinc-600 bg-[#1E1F22] text-zinc-400 focus:ring-zinc-500/50 w-3.5 h-3.5"
                     />
@@ -231,11 +256,13 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                   {availableFiles.filter(f => f.filename.toLowerCase().includes(fileSearch.toLowerCase())).map(f => {
                     const isSelected = selectedTargetFiles.includes(f.filename);
                     return (
-                      <label 
+                      <label
                         key={f.filename}
-                        className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors truncate ${isSelected ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'}`}
+                        className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors truncate ${
+                          isSelected ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'
+                        }`}
                       >
-                        <input 
+                        <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={(e) => {
@@ -247,12 +274,24 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                           }}
                           className="rounded-[4px] border-zinc-600 bg-[#1E1F22] text-zinc-400 focus:ring-zinc-500/50 w-3.5 h-3.5"
                         />
-                        <i className="ri-file-text-line text-[14px] opacity-70"></i> 
+                        <i className="ri-file-text-line text-[14px] opacity-70"></i>
                         <span className="truncate">{f.filename}</span>
                       </label>
                     );
                   })}
+                  {availableFiles.length === 0 && (
+                    <p className="text-[11px] text-zinc-500 italic text-center py-3 px-2">No context files uploaded.</p>
+                  )}
                 </div>
+                {selectedTargetFiles.length > 0 && (
+                  <div className="px-3 py-2 border-t border-zinc-700/60 flex items-center justify-between">
+                    <span className="text-[11px] text-zinc-400">{selectedTargetFiles.length} file{selectedTargetFiles.length > 1 ? 's' : ''} selected</span>
+                    <button
+                      onClick={() => setSelectedTargetFiles([])}
+                      className="text-[11px] text-zinc-400 hover:text-zinc-200 underline transition-colors"
+                    >Clear</button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -278,10 +317,13 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
         {/* Chat Feed */}
         <div ref={feedRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 p-3 min-h-0 relative scroll-smooth bg-[#1E1F22]">
           {chatHistory.length === 0 && (
-             <div className="flex flex-col items-center justify-center h-full opacity-60 animate-fade-in duration-500">
-               <h4 className="text-zinc-200 font-medium text-[15px] mb-1">How can I help?</h4>
-               <p className="text-[12px] text-zinc-400 text-center px-4 max-w-[240px] leading-relaxed">
-                 Ask questions about the meeting or explore the selected context files.
+             <div className="flex flex-col items-center justify-center h-full opacity-70 animate-fade-in duration-500">
+               <div className="w-10 h-10 rounded-full bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center mb-3 shadow-inner">
+                 <i className="ri-sparkling-line text-xl text-[#A8C7FA]"></i>
+               </div>
+               <h4 className="text-zinc-200 font-semibold text-[14px] mb-1">How can I help?</h4>
+               <p className="text-[11.5px] text-zinc-400 text-center px-4 max-w-[220px] leading-relaxed">
+                 Ask questions about the meeting or explore selected context files.
                </p>
              </div>
           )}

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from "next";
 import "./globals.css";
-import Topbar from "@/components/Topbar";
+import Topbar from "@/components/molecules/Topbar";
 
 
 
@@ -37,3 +37,4 @@ export default function RootLayout({
     </html>
   );
 }
+

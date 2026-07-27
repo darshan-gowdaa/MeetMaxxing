@@ -48,3 +48,4 @@ export interface MemoryResult {
   guardrail_valid?: boolean;
   guardrail_score?: number;
 }
+

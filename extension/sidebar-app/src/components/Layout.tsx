@@ -2,9 +2,9 @@ import { RiAlertLine as ShieldAlert } from "@remixicon/react";
 
 export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) {
   return (
-    <header className="flex items-center justify-between px-3 py-2.5 bg-zinc-900/80 backdrop-blur-3xl border-b border-zinc-800/80 shrink-0 shadow-sm z-10 w-full box-border">
+    <header className="flex items-center justify-between px-4 py-3 mx-3 mt-3 mb-1 bg-zinc-900/80 backdrop-blur-3xl border border-zinc-800/80 shrink-0 shadow-lg z-10 rounded-[24px] box-border transition-all">
       <div className="flex items-center gap-2 shrink truncate">
-        <div className="flex items-center gap-1.5 font-black text-[15px] tracking-tight bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent truncate">
+        <div className="flex items-center gap-1.5 font-black text-[17px] tracking-tight bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent truncate">
           <span className="text-blue-500 flex items-center justify-center text-lg shrink-0"><i className="ri-sparkling-2-fill"></i></span>
           <span>MeetMaxxing</span>
         </div>
@@ -32,12 +32,12 @@ export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) 
 export function Footer({ meetingId, isEnded }: any) {
   if (!meetingId || isEnded) return null;
   return (
-    <footer className="p-4 border-t border-zinc-800/50 bg-zinc-900/60 backdrop-blur-2xl flex justify-center shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.2)]">
+    <footer className="p-3 mx-3 mb-3 mt-1 border border-zinc-800/50 bg-zinc-900/60 backdrop-blur-2xl flex justify-center shrink-0 shadow-xl rounded-[28px] transition-all">
       <a 
         href="http://localhost:3000" 
         target="_blank" 
         rel="noreferrer" 
-        className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-300 text-[13px] font-bold tracking-wide transition-all hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400 no-underline group"
+        className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-300 text-[13px] font-bold tracking-wide transition-all hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400 no-underline group active:scale-[0.97]"
       >
         <i className="ri-layout-masonry-fill text-lg group-hover:scale-110 transition-transform"></i> 
         <span>Open Intelligence Dashboard</span>

@@ -12,20 +12,22 @@ from ..core.llm_fallback import generate_content_with_fallback
 
 router = APIRouter(prefix="/context", tags=["context"])
 
-def extract_text_from_file(file: UploadFile) -> str:
+async def extract_text_from_file(file: UploadFile) -> str:
     content = ""
-    if file.filename.endswith(".pdf"):
+    filename = file.filename or ""
+    if filename.endswith(".pdf"):
         pdf_reader = PyPDF2.PdfReader(file.file)
         for page in pdf_reader.pages:
             text = page.extract_text()
             if text:
                 content += text + "\n"
-    elif file.filename.endswith(".docx"):
+    elif filename.endswith(".docx"):
         doc = docx.Document(file.file)
         for para in doc.paragraphs:
             content += para.text + "\n"
-    elif file.filename.endswith(".txt"):
-        content = file.file.read().decode("utf-8")
+    elif filename.endswith(".txt"):
+        raw = await file.read()
+        content = raw.decode("utf-8")
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type")
     return content
@@ -37,7 +39,7 @@ async def upload_context(
     user: dict = Depends(get_current_user)
 ):
     try:
-        text = extract_text_from_file(file)
+        text = await extract_text_from_file(file)
         if not text.strip():
             raise HTTPException(status_code=400, detail="File is empty")
         

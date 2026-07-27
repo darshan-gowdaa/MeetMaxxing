@@ -405,53 +405,6 @@ function startCaptionObserver() {
   scanCaptions();
 }
 
-function showConsentUI(onAccept) {
-  if (document.getElementById('meetmaxxing-consent-ui')) return;
-  const overlay = document.createElement('div');
-  overlay.id = 'meetmaxxing-consent-ui';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);z-index:999999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:white;';
-  
-  const box = document.createElement('div');
-  box.style.cssText = 'background:#1a1a24;padding:24px;border-radius:12px;max-width:400px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.5);border:1px solid #7c6dfa;';
-  
-  const title = document.createElement('h2');
-  title.innerText = 'Meeting Recording Consent';
-  title.style.cssText = 'margin:0 0 16px 0;font-size:20px;color:#7c6dfa;';
-  
-  const desc = document.createElement('p');
-  desc.innerText = 'MeetMaxxing needs your explicit consent to record and transcribe this meeting. Do you agree?';
-  desc.style.cssText = 'margin:0 0 24px 0;font-size:14px;line-height:1.5;color:#e8e8f0;';
-  
-  const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:12px;justify-content:center;';
-  
-  const acceptBtn = document.createElement('button');
-  acceptBtn.innerText = 'I Consent';
-  acceptBtn.style.cssText = 'padding:10px 20px;border-radius:6px;border:none;background:linear-gradient(135deg,#7c6dfa,#a78bfa);color:white;font-weight:bold;cursor:pointer;flex:1;';
-  
-  const declineBtn = document.createElement('button');
-  declineBtn.innerText = 'Decline';
-  declineBtn.style.cssText = 'padding:10px 20px;border-radius:6px;border:1px solid #e8e8f0;background:transparent;color:#e8e8f0;font-weight:bold;cursor:pointer;flex:1;';
-  
-  acceptBtn.onclick = () => {
-    overlay.remove();
-    onAccept();
-  };
-  
-  declineBtn.onclick = () => {
-    overlay.remove();
-    console.log("[MeetMaxxing] Consent denied.");
-  };
-  
-  btnRow.appendChild(declineBtn);
-  btnRow.appendChild(acceptBtn);
-  box.appendChild(title);
-  box.appendChild(desc);
-  box.appendChild(btnRow);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-}
-
 // ─── Meeting lifecycle ─────────────────────────────────────────────────────────
 let consentGiven = false;
 
@@ -462,33 +415,35 @@ function showConsentUI(onAccept) {
   overlay.id = "meetmaxxing-consent-overlay";
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(19, 19, 20, 0.85); backdrop-filter: blur(8px);
+    background: rgba(19, 19, 20, 0.85); backdrop-filter: blur(12px);
     z-index: 999999; display: flex; align-items: center; justify-content: center;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', 'Google Sans', system-ui, sans-serif;
   `;
 
   const modal = document.createElement("div");
   modal.style.cssText = `
     background: #1e1f20; border: 1px solid rgba(227, 227, 227, 0.12);
-    border-radius: 24px; padding: 32px; width: 100%; max-width: 440px;
+    border-radius: 32px; padding: 40px; width: 100%; max-width: 440px;
     box-shadow: 0 24px 48px rgba(0,0,0,0.4); text-align: center;
     color: #e3e3e3; animation: mm-slide-up 0.3s cubic-bezier(0, 0, 0.2, 1);
   `;
 
   modal.innerHTML = `
     <style>
-      @keyframes mm-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-      .mm-btn { padding: 12px 24px; border-radius: 99px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; }
-      .mm-btn-primary { background: #a8c7fa; color: #0842a0; }
-      .mm-btn-primary:hover { background: #d3e3fd; transform: translateY(-1px); }
+      @keyframes mm-slide-up { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      .mm-btn { padding: 14px 28px; border-radius: 99px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+      .mm-btn-primary { background: #a8c7fa; color: #0842a0; flex: 1; }
+      .mm-btn-primary:hover { background: #d3e3fd; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(168, 199, 250, 0.2); }
+      .mm-btn-primary:active { transform: scale(0.97); }
       .mm-btn-secondary { background: transparent; color: #a8c7fa; border: 1px solid rgba(168, 199, 250, 0.3); }
-      .mm-btn-secondary:hover { background: rgba(168, 199, 250, 0.08); }
+      .mm-btn-secondary:hover { background: rgba(168, 199, 250, 0.08); transform: translateY(-1px); }
+      .mm-btn-secondary:active { transform: scale(0.97); }
     </style>
-    <div style="width: 56px; height: 56px; background: #0842a0; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a8c7fa" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <div style="width: 72px; height: 72px; background: #0842a0; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 8px 24px rgba(8, 66, 160, 0.3);">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="#a8c7fa"><path d="M11 2L11.5 5.51869C11.8906 8.26786 14.1039 10.3708 16.8687 10.6382L20.5 10.9893L16.8687 11.3404C14.1039 11.6078 11.8906 13.7107 11.5 16.4599L11 19.9786L10.5 16.4599C10.1094 13.7107 7.8961 11.6078 5.13134 11.3404L1.5 10.9893L5.13134 10.6382C7.8961 10.3708 10.1094 8.26786 10.5 5.51869L11 2ZM18.5 14L18.675 15.2285C18.8117 16.1907 19.5863 16.9278 20.554 17.0215L22 17.1614L20.554 17.3013C19.5863 17.3949 18.8117 18.132 18.675 19.0943L18.5 20.3228L18.325 19.0943C18.1883 18.132 17.4137 17.3949 16.446 17.3013L15 17.1614L16.446 17.0215C17.4137 16.9278 18.1883 16.1907 18.325 15.2285L18.5 14Z"></path></svg>
     </div>
-    <h2 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px;">MeetMaxxing AI Copilot</h2>
-    <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #c4c7c5;">
+    <h2 style="margin: 0 0 12px; font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -0.5px;">MeetMaxxing AI</h2>
+    <p style="margin: 0 0 32px; font-size: 15px; line-height: 1.6; color: #c4c7c5;">
       To provide meeting intelligence and memory, this extension requires your consent to transcribe captions during this call.
     </p>
     <div style="display: flex; gap: 12px; justify-content: center;">

@@ -177,7 +177,7 @@ async def validate_memory_output(answer: str, sources: list[dict]) -> GuardrailR
 Score from 0.0 (completely hallucinated) to 1.0 (fully grounded).
 Return JSON: {"score": 0.9, "issues": ["..."]}'''
 
-        context_text = "\\n".join(
+        context_text = "\n".join(
             [f"Context {i}: {s.get('excerpt', '')}" for i, s in enumerate(sources)]
         )
 

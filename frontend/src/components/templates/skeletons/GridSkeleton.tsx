@@ -19,3 +19,4 @@ export function GridSkeleton({ count = 6 }: { count?: number }) {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { RiCheckLine as Check, RiAlertLine as AlertTriangle } from "@remixicon/react";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export type BtnState = "idle" | "loading" | "success" | "error";
 
@@ -54,3 +54,4 @@ export function ActionButton({
     </button>
   );
 }
+

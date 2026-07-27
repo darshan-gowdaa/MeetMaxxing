@@ -220,18 +220,6 @@ def get_meeting_record(supabase, meeting_id: str, org_id: str = None) -> dict | 
     except Exception:
         pass
 
-    # Fallback for non-UUIDs
-    if not is_uuid:
-        try:
-            query = supabase.table("meetings").select("*").like("title", f"%{clean_id}%")
-            if org_id:
-                query = query.eq("org_id", org_id)
-            res = query.order("created_at", desc=True).execute()
-            if res.data:
-                return res.data[0]
-        except Exception:
-            pass
-
     return None
 
 

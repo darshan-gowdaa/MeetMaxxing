@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { format, isToday, isYesterday } from "date-fns";
 import { RiCheckLine, RiCloseLine, RiDeleteBinLine } from "@remixicon/react";
-import { GridSkeleton } from "./skeletons";
+import { GridSkeleton } from "../templates/skeletons";
 
 import DeleteDialog from "./DeleteDialog";
 
@@ -22,6 +22,7 @@ interface SelectableGridProps<T> {
   renderHeader?: (args: {
     selectionMode: boolean;
     setManualSelectionMode: (val: boolean) => void;
+    activeGroup?: string;
   }) => React.ReactNode;
   onDelete: (selectedItems: T[]) => Promise<void> | void;
   emptyState?: React.ReactNode;
@@ -51,6 +52,7 @@ export function SelectableGrid<T>({
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string>("");
   
   const [manualSelectionMode, setManualSelectionMode] = useState(() => {
     if (typeof sessionStorage !== "undefined" && storeKey) {
@@ -60,6 +62,24 @@ export function SelectableGrid<T>({
   });
 
   const selectionMode = manualSelectionMode || selectedKeys.size > 0;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let maxVisible = null;
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            maxVisible = entry.target.getAttribute("data-group");
+          }
+        });
+        if (maxVisible) setActiveGroup(maxVisible);
+      },
+      { rootMargin: "-124px 0px -60% 0px" }
+    );
+    const elements = document.querySelectorAll(".group-section");
+    elements.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, [items]);
 
   // Persist state
   useEffect(() => {
@@ -72,47 +92,26 @@ export function SelectableGrid<T>({
   // Clear selection if items change and selected items no longer exist
   useEffect(() => {
     const validKeys = new Set(items.map(getKey));
-    setSelectedKeys((prev) => {
-      const next = new Set<string>();
-      for (const k of prev) {
-        if (validKeys.has(k)) next.add(k);
-      }
-      return next.size === prev.size ? prev : next;
-    });
+    setTimeout(() => {
+      setSelectedKeys((prev) => {
+        const next = new Set<string>();
+        for (const k of prev) {
+          if (validKeys.has(k)) next.add(k);
+        }
+        return next.size === prev.size ? prev : next;
+      });
+    }, 0);
   }, [items, getKey]);
 
   const groups = useMemo(() => {
-    const today: T[] = [];
-    const yesterday: T[] = [];
-    const older: Record<string, T[]> = {};
-    const order: string[] = [];
-
-    const sortedItems = [...items].sort((a, b) => getDate(b).getTime() - getDate(a).getTime());
-
-    sortedItems.forEach((m) => {
-      const d = getDate(m);
-      if (isToday(d)) {
-        today.push(m);
-      } else if (isYesterday(d)) {
-        yesterday.push(m);
-      } else {
-        const dateStr = format(d, "MMMM d, yyyy");
-        if (!older[dateStr]) {
-          older[dateStr] = [];
-          order.push(dateStr);
-        }
-        older[dateStr].push(m);
-      }
+    const map = new Map<string, T[]>();
+    [...items].sort((a, b) => getDate(b).getTime() - getDate(a).getTime()).forEach((item) => {
+      const d = getDate(item);
+      const k = isToday(d) ? "Today" : isYesterday(d) ? "Yesterday" : format(d, "MMMM d, yyyy");
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(item);
     });
-
-    const result = [];
-    if (today.length) result.push({ title: "Today", items: today });
-    if (yesterday.length) result.push({ title: "Yesterday", items: yesterday });
-    order.forEach((dateStr) => {
-      result.push({ title: dateStr, items: older[dateStr] });
-    });
-
-    return result;
+    return Array.from(map.entries()).map(([title, items]) => ({ title, items }));
   }, [items, getDate]);
 
   const toggleItem = (key: string) => {
@@ -167,21 +166,20 @@ export function SelectableGrid<T>({
     return <>{emptyState}</>;
   }
 
-  let globalIdx = 0;
-
   return (
     <div className="relative pb-24">
       
       {/* Sticky Header with Overlay Action Bar */}
-      <div className="sticky top-16 z-40 bg-bg/95 backdrop-blur-md pt-2 pb-4 -mx-2 px-2">
-        <div className="relative min-h-[48px]">
+      <div className="sticky top-[76px] z-40 pt-1 pb-4">
+        <div className="absolute inset-x-0 bottom-4 top-1 bg-surface2/70 backdrop-blur-xl rounded-[20px] border border-border/40 shadow-sm z-[-1]" />
+        <div className="relative min-h-[48px] px-4 py-2 grid items-center">
           {/* Default Header */}
-          <div className={`transition-all duration-300 ${selectionMode ? 'opacity-0 scale-95 pointer-events-none absolute inset-0' : 'opacity-100 scale-100'}`}>
-             {renderHeader?.({ selectionMode, setManualSelectionMode })}
+          <div className={`col-start-1 row-start-1 transition-all duration-300 ${selectionMode ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
+             {renderHeader?.({ selectionMode, setManualSelectionMode, activeGroup })}
           </div>
           
           {/* Contextual Action Bar */}
-          <div className={`absolute inset-0 flex items-center justify-between transition-all duration-300 bg-surface-highest/95 backdrop-blur-xl border border-border rounded-full shadow-md px-2 py-1 ${selectionMode ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
+          <div className={`col-start-1 row-start-1 flex items-center justify-between transition-all duration-300 bg-surface-highest/95 backdrop-blur-xl border border-border rounded-full shadow-md px-2 py-1 ${selectionMode ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
             <div className="flex items-center gap-3">
               <button 
                 onClick={clearSelection}
@@ -225,7 +223,7 @@ export function SelectableGrid<T>({
             const someSelected = groupKeys.some((k) => selectedKeys.has(k));
 
             return (
-              <div key={group.title} className="flex flex-col gap-4">
+              <div key={group.title} className="flex flex-col gap-4 group-section" data-group={group.title}>
                 <div className="flex items-center gap-3 group/header cursor-pointer w-fit" onClick={() => toggleGroup(group.items)}>
                   <div 
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
@@ -244,7 +242,6 @@ export function SelectableGrid<T>({
                   {group.items.map((item) => {
                     const key = getKey(item);
                     const isSelected = selectedKeys.has(key);
-                    const currentIdx = globalIdx++;
                     
                     return (
                       <div 
@@ -291,3 +288,4 @@ export function SelectableGrid<T>({
     </div>
   );
 }
+

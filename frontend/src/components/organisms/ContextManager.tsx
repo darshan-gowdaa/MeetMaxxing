@@ -15,6 +15,7 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   
   const [query, setQuery] = useState("");
   const [chatHistory, setChatHistory] = useState<{role: "user" | "agent", content: string}[]>([]);
@@ -28,61 +29,33 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
 
   const handleUpload = async () => {
     if (!file) return;
-    setUploading(true);
-    setUploadSuccess(false);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("meeting_id", meetingId);
-
+    setUploading(true); setUploadSuccess(false); setUploadError("");
+    const body = new FormData();
+    body.append("file", file); body.append("meeting_id", meetingId);
     try {
-      const res = await fetch(`${BACKEND_URL}/context/upload`, {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer dev_token"
-        },
-        body: formData
-      });
-      if (res.ok) {
-        setUploadSuccess(true);
-        setFile(null);
-      } else {
-        console.error("Upload failed");
-      }
-    } catch {
-      console.error("Upload failed");
-    } finally {
-      setUploading(false);
-    }
+      const res = await fetch(`${BACKEND_URL}/context/upload`, { method: "POST", headers: { Authorization: "Bearer dev_token" }, body });
+      if (res.ok) { setUploadSuccess(true); setFile(null); }
+      else setUploadError((await res.json().catch(()=>({}))).detail || `Error (${res.status})`);
+    } catch { setUploadError("Network error"); }
+    finally { setUploading(false); }
   };
 
   const handleChat = async () => {
     if (!query.trim()) return;
-    const userMsg = query;
+    const q = query;
     setQuery("");
-    setChatHistory(prev => [...prev, { role: "user", content: userMsg }]);
+    setChatHistory(p => [...p, { role: "user", content: q }]);
     setLoadingChat(true);
-
     try {
-      const res = await fetch(`${BACKEND_URL}/context/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer dev_token"
-        },
-        body: JSON.stringify({ meeting_id: meetingId, query: userMsg })
-      });
+      const res = await fetch(`${BACKEND_URL}/context/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer dev_token" }, body: JSON.stringify({ meeting_id: meetingId, query: q }) });
+      let answer = "Request failed.";
       if (res.ok) {
         const data = await res.json();
-        setChatHistory(prev => [...prev, { role: "agent", content: data.answer }]);
-      } else {
-        setChatHistory(prev => [...prev, { role: "agent", content: "Sorry, I couldn't process your request." }]);
+        answer = data.answer;
       }
-    } catch {
-      setChatHistory(prev => [...prev, { role: "agent", content: "Network error." }]);
-    } finally {
-      setLoadingChat(false);
-    }
+      setChatHistory(p => [...p, { role: "agent", content: answer }]);
+    } catch { setChatHistory(p => [...p, { role: "agent", content: "Network error." }]); }
+    finally { setLoadingChat(false); }
   };
 
   return (
@@ -119,20 +92,25 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
           <button
             onClick={handleUpload}
             disabled={!file || uploading}
-            className="flex items-center justify-center gap-2 h-10 w-full rounded-full bg-primary text-on-primary font-bold text-[13px] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+            className="relative flex flex-col items-center justify-center gap-1.5 h-20 w-full rounded-[20px] bg-surface2 border border-border text-text font-bold text-[13px] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface3 transition-all active:scale-[0.98]"
           >
             {uploading ? (
-              <span className="animate-pulse">Uploading & Indexing...</span>
+              <span className="animate-pulse text-text-muted">Uploading & Indexing...</span>
             ) : uploadSuccess ? (
               <>
-                <CheckDouble className="w-4 h-4" /> Indexed Successfully
+                <CheckDouble className="w-6 h-6 text-success" /> 
+                <span className="text-success">Indexed Successfully</span>
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4" /> Upload to Qdrant
+                <Upload className="w-6 h-6 text-text-muted" /> 
+                <span>Upload to Qdrant</span>
               </>
             )}
           </button>
+          {uploadError && (
+            <p className="text-[12px] text-risk font-medium text-center">{uploadError}</p>
+          )}
         </div>
 
         {/* Chat Section */}
@@ -189,3 +167,4 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
     </div>
   );
 }
+

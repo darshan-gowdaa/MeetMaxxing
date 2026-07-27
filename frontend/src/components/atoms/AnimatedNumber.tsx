@@ -32,3 +32,4 @@ export default function AnimatedNumber({ value, formatFn }: { value: number, for
 
   return <>{formatFn ? formatFn(displayValue) : displayValue}</>;
 }
+

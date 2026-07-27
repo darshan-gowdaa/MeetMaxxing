@@ -205,7 +205,6 @@ async def _run_end_pipeline(
         final_summary = guardrail_result.cleaned_output
 
         # save to db
-        from datetime import datetime, timezone
         today = datetime.now(timezone.utc).date().isoformat()
 
         if target_id:
@@ -354,8 +353,7 @@ async def _run_end_pipeline(
                 }
             ).eq("id", target_id or meeting_id).execute()
         except Exception as e:
-            import logging
-            logging.warning(f"Could not persist email results: {e}")
+            logger.warning(f"Could not persist email results: {e}")
 
     except Exception as e:
         logger.error(f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True)

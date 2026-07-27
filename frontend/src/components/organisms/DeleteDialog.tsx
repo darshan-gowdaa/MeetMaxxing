@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { RiDeleteBinLine } from "@remixicon/react";
-import { Md3LoadingIndicator } from "@/components/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export default function DeleteDialog({
   title,
@@ -69,3 +69,4 @@ export default function DeleteDialog({
     document.body
   );
 }
+
