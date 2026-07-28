@@ -1,6 +1,6 @@
 <div align="center">
-  <img width="721" height="148" alt="LOGO" src="https://github.com/user-attachments/assets/42c010bd-f5ca-407a-a162-6ac5e5fb7aad" />
-  <h3>A Production-Inspired Multi-Agent AI Meeting Copilot</h3>
+  <img width="768" height="168" alt="image" src="https://github.com/user-attachments/assets/7ce4da8a-15f2-4012-84b5-719283cd1322" />
+  <h3>A Multi-Agent AI Meeting Copilot</h3>
   <p>Transforming online meetings into intelligent, collaborative experiences through modular AI agents, semantic memory, and real-time assistance.</p>
   <p><b>Powered by Google ADK, Lyzr, Agent-to-Agent (A2A) Communication & Qdrant.</b></p>
 
@@ -240,14 +240,20 @@ Traditional AI meeting assistants rely on a **single prompt** to perform transcr
 
 MeetMaxxing doesn't forget previous meetings. Conversations are transformed into **vector embeddings** and stored inside **Qdrant**, enabling semantic search across historical discussions.
 
-| Step | Stage |
-| :--- | :--- |
-| 1 | Meeting Transcript |
-| 2 | Text Embeddings |
-| 3 | Qdrant Vector Database |
-| 4 | Semantic Retrieval |
-| 5 | Relevant Context |
-| 6 | AI Response |
+<div align="center">
+
+```mermaid
+%%{init: {'flowchart': {'useMaxWidth': false, 'nodeSpacing': 35, 'rankSpacing': 35} } }%%
+flowchart TD
+    A[Meeting Transcript] --> B[Text Embeddings]
+    B --> C[(Qdrant Vector Database)]
+    C --> D[Semantic Retrieval]
+    D --> E[Relevant Context]
+    E --> F[AI Response]
+```
+
+</div>
+
 
 This lets users ask contextual questions like *"What decisions were made regarding our authentication module last week?"* — instead of keyword matching, Qdrant retrieves semantically similar discussions so agents respond with meaningful context.
 
@@ -257,18 +263,28 @@ This lets users ask contextual questions like *"What decisions were made regardi
 
 Every interaction inside MeetMaxxing follows an intelligent event-driven workflow:
 
-| Step | Stage | Detail |
-| :--- | :--- | :--- |
-| 1 | Join Google Meet | User joins a meeting |
-| 2 | Chrome Extension Captures Events | Extension listens to meeting activity |
-| 3 | FastAPI Backend Services | Events forwarded to backend |
-| 4 | Orchestrator Agent | Routes tasks to the right agent(s) |
-| 5a | Realtime Agent | Live in-meeting suggestions |
-| 5b | Summary Agent | Feeds Email Agent and Scheduler Agent |
-| 5c | Memory Agent | Semantic storage/retrieval |
-| 5d | Docs QA Agent | Document-based answers |
-| 6 | Qdrant Semantic Memory | All agent outputs converge here |
-| 7 | AI Response to User | Final response delivered |
+<div align="center">
+
+```mermaid
+%%{init: {'flowchart': {'useMaxWidth': false, 'nodeSpacing': 30, 'rankSpacing': 40} } }%%
+flowchart TD
+    A[Join Google Meet] --> B[Chrome Extension Captures Events]
+    B --> C[FastAPI Backend Services]
+    C --> D{Orchestrator Agent}
+
+    D --> E[Realtime Agent]
+    D --> F[Summary Agent]
+    D --> G[Memory Agent]
+
+    F --> H[Email Agent]
+    F --> I[Scheduler Agent]
+    D --> J[Docs QA Agent]
+
+    E & G & H & I & J --> K[(Qdrant Semantic Memory)]
+    K --> L[AI Response to User]
+```
+
+</div>
 
 ---
 
