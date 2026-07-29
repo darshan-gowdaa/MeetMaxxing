@@ -10,6 +10,7 @@ import {
   RiFolderOpenLine,
   RiArrowLeftLine,
   RiCalendarEventLine,
+  RiInformationLine,
 } from "@remixicon/react";
 
 const NAV_TABS = [
@@ -34,6 +35,13 @@ const NAV_TABS = [
     icon: () => RiBrainLine,
     href: "/memory",
     match: (p: string) => p.startsWith("/memory"),
+  },
+  {
+    id: "about",
+    label: () => "About",
+    icon: () => RiInformationLine,
+    href: "/about",
+    match: (p: string) => p.startsWith("/about"),
   },
 ];
 
