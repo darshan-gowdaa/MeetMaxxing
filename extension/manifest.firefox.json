@@ -6,7 +6,10 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "meetmaxxing@hidevs.xyz",
-      "strict_min_version": "109.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   },
   "icons": {
@@ -18,19 +21,17 @@
     "activeTab",
     "tabs",
     "storage",
-    "webRequest"
-  ],
-  "host_permissions": [
+    "webRequest",
     "https://meet.google.com/*",
     "https://meetmaxxing-api.onrender.com/*"
   ],
   "background": {
-    "scripts": ["browser-polyfill.js", "background.firefox.js"]
+    "scripts": ["background.firefox.js"]
   },
   "content_scripts": [
     {
       "matches": ["https://meet.google.com/*"],
-      "js": ["browser-polyfill.js", "config.js", "content.js"],
+      "js": ["config.js", "content.js"],
       "css": ["styles/injected-panel.css"],
       "run_at": "document_end"
     }
