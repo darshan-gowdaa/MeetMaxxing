@@ -9,9 +9,9 @@
  */
 
 const MEETMAXXING_CONFIG = {
-  BASE_URL_BACKEND: "http://localhost:8000",
-  BASE_URL_WEB: "http://localhost:3000",
-  WS_URL: "ws://localhost:8000",
+  BASE_URL_BACKEND: "https://meetmaxxing-api.onrender.com",
+  BASE_URL_WEB: "https://meetmaxxing.vercel.app",
+  WS_URL: "wss://meetmaxxing-api.onrender.com",
 };
 
 let ws = null;
@@ -23,7 +23,6 @@ let activeAuthToken = '';
 // Init auth token
 chrome.storage.local.get(["authToken"], (r) => {
   if (r.authToken) activeAuthToken = r.authToken;
-  else 
 });
 
 // Configure side panel to open on action icon click by default across all tabs

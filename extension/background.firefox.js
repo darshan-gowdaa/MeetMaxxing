@@ -17,7 +17,6 @@ let activeAuthToken = '';
 // Init auth token
 browser.storage.local.get(["authToken"], (r) => {
   if (r.authToken) activeAuthToken = r.authToken;
-  else 
 });
 
 // Send toggle message to content script on browser action click
