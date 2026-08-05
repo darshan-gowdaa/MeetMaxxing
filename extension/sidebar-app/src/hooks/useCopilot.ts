@@ -89,7 +89,8 @@ export function useCopilot() {
 
   useEffect(() => {
     if (ext && ext.storage?.local) {
-      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime"], (res: any) => {
+      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime", "authToken"], (res: any) => {
+        if (res.authToken) setAuthToken(res.authToken);
         if (res.currentMeetingId) setMeetingId(res.currentMeetingId);
         if (res.currentMeetingTitle) setMeetingTitle(res.currentMeetingTitle);
         if (res.transcript && Array.isArray(res.transcript)) setTranscriptLines(res.transcript);
@@ -130,6 +131,7 @@ export function useCopilot() {
           }
         }
         if (changes.meetingStartTime?.newValue) setMeetingStartTime(changes.meetingStartTime.newValue);
+        if (changes.authToken?.newValue) setAuthToken(changes.authToken.newValue);
       }
     };
 

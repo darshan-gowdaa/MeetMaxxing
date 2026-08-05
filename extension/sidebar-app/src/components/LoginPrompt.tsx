@@ -1,6 +1,5 @@
 import { RiChromeFill, RiArrowRightSLine, RiKey2Line } from "@remixicon/react";
 import { useState } from "react";
-import { MEETMAXXING_CONFIG } from "../../../config.js";
 
 declare const chrome: any;
 declare const browser: any;
@@ -10,7 +9,8 @@ export function LoginPrompt() {
   const [tokenInput, setTokenInput] = useState("");
 
   const handleOpenAuth = () => {
-    window.open(`${MEETMAXXING_CONFIG.BASE_URL_WEB}/extension-auth`, "_blank");
+    const webUrl = (window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app";
+    window.open(`${webUrl}/extension-auth`, "_blank");
   };
 
   const handleSaveToken = () => {

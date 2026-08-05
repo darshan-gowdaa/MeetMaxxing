@@ -70,7 +70,11 @@ export default function App() {
     <>
       <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} />
       
-      {!meetingId ? (
+      {!authToken ? (
+        <main>
+          <LoginPrompt />
+        </main>
+      ) : !meetingId ? (
         <main>
           <IdleState />
         </main>
