@@ -6,6 +6,7 @@ import { fetchMeeting, updateActionItem } from "@/lib/api";
 import { MeetingSkeleton } from "@/components/templates/skeletons";
 import {
   RiRefreshLine as RefreshCw,
+  RiArrowLeftLine as ArrowLeft,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
 import MeetingTranscript from "@/components/organisms/MeetingTranscript";

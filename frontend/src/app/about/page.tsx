@@ -174,16 +174,15 @@ const CountUp = ({ to }: { to: number }) => {
     
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        let frame: number;
         const animate = (timestamp: number) => {
           if (!startTime) startTime = timestamp;
           const progress = Math.min((timestamp - startTime) / duration, 1);
           const easeOutQuint = 1 - Math.pow(1 - progress, 5);
           setCount(Math.floor(easeOutQuint * to));
           
-          if (progress < 1) frame = requestAnimationFrame(animate);
+          if (progress < 1) requestAnimationFrame(animate);
         };
-        frame = requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
         observer.unobserve(el);
       }
     }, { threshold: 0.1 });
