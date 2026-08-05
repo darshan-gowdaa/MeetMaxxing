@@ -82,6 +82,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         settings.FRONTEND_URL,
+        "https://meetmaxxing.vercel.app",
+        "moz-extension://*",
         "chrome-extension://*",  # Allow Chrome extension
         "http://localhost:3000",
         "http://localhost:3001",
