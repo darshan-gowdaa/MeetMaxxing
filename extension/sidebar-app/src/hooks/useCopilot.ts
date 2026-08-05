@@ -156,11 +156,11 @@ export function useCopilot() {
     try {
       if (actionType === "GENERATE_INSIGHTS") {
         const [realtimeRes, recapRes] = await Promise.all([
-          fetch(`http://localhost:8000/ingest/realtime/${meetingId}?force=true`, { 
+          fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/ingest/realtime/${meetingId}?force=true`, { 
             method: "POST",
             headers: { "Authorization": "Bearer " } 
           }),
-          fetch(`http://localhost:8000/ingest/late-recap/${meetingId}?force=true`, { 
+          fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/ingest/late-recap/${meetingId}?force=true`, { 
             method: "GET",
             headers: { "Authorization": "Bearer " } 
           })
@@ -189,7 +189,7 @@ export function useCopilot() {
       } else {
         const isRecap = actionType === "REQUEST_RECAP";
         const endpoint = isRecap ? `/ingest/late-recap/${meetingId}?force=true` : `/ingest/realtime/${meetingId}?force=true`;
-        const response = await fetch(`http://localhost:8000${endpoint}`, { 
+        const response = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}${endpoint}`, { 
           method: isRecap ? "GET" : "POST",
           headers: { "Authorization": "Bearer " } 
         });

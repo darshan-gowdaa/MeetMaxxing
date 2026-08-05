@@ -23,7 +23,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
 
   const fetchFiles = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/context/files`, {
+      const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/files`, {
         headers: { "Authorization": "Bearer " }
       });
       if (res.ok) {
@@ -110,7 +110,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
       formData.append("file", file);
       formData.append("meeting_id", meetingId);
       try {
-        const res = await fetch(`http://localhost:8000/context/upload`, {
+        const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/upload`, {
           method: "POST",
           headers: { "Authorization": "Bearer " },
           body: formData
@@ -154,7 +154,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
         target_file: selectedTargetFiles.length > 0 ? selectedTargetFiles : null
       };
       
-      const res = await fetch(`http://localhost:8000/context/chat`, {
+      const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " },
         body: JSON.stringify(reqBody),
@@ -197,7 +197,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   const handleChat = () => submitQuery(query);
 
   const handleSettingsClick = () => {
-    window.open("http://localhost:3000/context", "_blank");
+    window.open(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"}/context`, "_blank");
   };
 
   return (
@@ -351,7 +351,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                       <div className="flex flex-wrap gap-1.5 mt-1 pt-2 border-t border-zinc-700/60">
                         <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mr-1 flex items-center">Sources</span>
                     {Array.from(new Set(msg.sources.map((s:any) => s.speaker_name))).map((sourceName: any, idx: number) => (
-                          <a key={idx} href={`http://localhost:3000/context?view=${encodeURIComponent(sourceName || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={sourceName || "Context Document"}>
+                          <a key={idx} href={`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"}/context?view=${encodeURIComponent(sourceName || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={sourceName || "Context Document"}>
                              <i className="ri-file-text-line"></i> {sourceName ? (sourceName.length > 18 ? sourceName.substring(0, 18) + '...' : sourceName) : "Document"}
                           </a>
                         ))}
