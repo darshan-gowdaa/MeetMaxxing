@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import type { TranscriptChunk, CopilotUpdate } from "../types";
 
 declare const chrome: any;
+declare const browser: any;
+const ext = typeof browser !== 'undefined' ? browser : (typeof chrome !== 'undefined' ? chrome : null);
 
 export function useCopilot() {
   const [meetingId, setMeetingId] = useState<string>("");
@@ -64,7 +66,7 @@ export function useCopilot() {
           if (text === last.text) {
              updated = [...prev];
              updated[updated.length - 1] = { ...last, timestamp: now };
-             if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
+             if (ext && ext.storage?.local) ext.storage.local.set({ transcript: updated });
              return updated;
           }
           // We allow merging continuations up to 15 seconds to prevent unbounded bubble merging if they just keep talking
@@ -72,21 +74,21 @@ export function useCopilot() {
             if (text.startsWith(last.text) || last.text.startsWith(text) || text.includes(last.text)) {
               updated = [...prev];
               updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now, source: chunk.source || last.source };
-              if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
+              if (ext && ext.storage?.local) ext.storage.local.set({ transcript: updated });
               return updated;
             }
           }
         }
       }
       updated = [...prev, { speaker, text, timestamp: now, source: chunk.source }];
-      if (typeof chrome !== "undefined" && chrome.storage?.local) chrome.storage.local.set({ transcript: updated });
+      if (ext && ext.storage?.local) ext.storage.local.set({ transcript: updated });
       return updated;
     });
   };
 
   useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime"], (res: any) => {
+    if (ext && ext.storage?.local) {
+      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime"], (res: any) => {
         if (res.currentMeetingId) setMeetingId(res.currentMeetingId);
         if (res.currentMeetingTitle) setMeetingTitle(res.currentMeetingTitle);
         if (res.transcript && Array.isArray(res.transcript)) setTranscriptLines(res.transcript);
@@ -130,19 +132,19 @@ export function useCopilot() {
       }
     };
 
-    if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) chrome.runtime.onMessage.addListener(messageListener);
-    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) chrome.storage.onChanged.addListener(storageListener);
+    if (ext && ext.runtime?.onMessage) ext.runtime.onMessage.addListener(messageListener);
+    if (ext && ext.storage?.onChanged) ext.storage.onChanged.addListener(storageListener);
 
     return () => {
-      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) chrome.runtime.onMessage.removeListener(messageListener);
-      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) chrome.storage.onChanged.removeListener(storageListener);
+      if (ext && ext.runtime?.onMessage) ext.runtime.onMessage.removeListener(messageListener);
+      if (ext && ext.storage?.onChanged) ext.storage.onChanged.removeListener(storageListener);
     };
   }, []);
 
   const triggerAction = async (actionType: string) => {
     setActiveRequests(prev => prev + 1);
     setErrorMessage("");
-    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) chrome.runtime.sendMessage({ type: actionType, meetingId }, () => void chrome.runtime?.lastError);
+    if (ext && ext.runtime?.sendMessage) ext.runtime.sendMessage({ type: actionType, meetingId }, () => void ext.runtime?.lastError);
     if (!meetingId) {
       setActiveRequests(prev => Math.max(0, prev - 1));
       return;
@@ -222,8 +224,8 @@ export function useCopilot() {
 
   const clearTranscript = () => {
     setTranscriptLines([]);
-    if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.set({ transcript: [] });
+    if (ext && ext.storage?.local) {
+      ext.storage.local.set({ transcript: [] });
     }
   };
 

@@ -716,3 +716,109 @@ let lastUrl = location.href;
 new MutationObserver(() => {
   if (location.href !== lastUrl) { lastUrl = location.href; detectMeetingState(); }
 }).observe(document, { subtree: true, childList: true });
+
+// ─── Firefox DOM Panel Injection ─────────────────────────────────────────────
+// Injects a collapsible side panel into Google Meet DOM for Firefox (and Chrome fallback)
+// Firefox has no sidePanel API so we inject our own.
+
+const IS_FIREFOX = typeof InstallTrigger !== 'undefined' || navigator.userAgent.includes('Firefox');
+
+function injectMeetMaxxingPanel() {
+  // Check if already injected
+  if (document.getElementById('mm-panel-root')) return;
+  
+  const BACKEND_URL = (typeof MEETMAXXING_CONFIG !== 'undefined') 
+    ? MEETMAXXING_CONFIG.BASE_URL_BACKEND 
+    : 'https://meetmaxxing-api.onrender.com';
+
+  // Load panel HTML (the sidebar-app dist)
+  // For Firefox MV2, web_accessible_resources allows loading dist/index.html in iframe
+  const panelSrc = (typeof browser !== 'undefined' ? browser : chrome).runtime.getURL('dist/index.html');
+
+  // Create container
+  const panel = document.createElement('div');
+  panel.id = 'mm-panel-root';
+  panel.className = 'mm-panel';
+  
+  // Toggle tab button
+  const toggleTab = document.createElement('button');
+  toggleTab.className = 'mm-toggle-tab';
+  toggleTab.id = 'mm-toggle-btn';
+  toggleTab.setAttribute('aria-label', 'Toggle MeetMaxxing Panel');
+  toggleTab.innerHTML = `
+    <span class="mm-toggle-icon">◀</span>
+    <span class="mm-brand-label">M</span>
+  `;
+  
+  // Iframe for sidebar app
+  const iframe = document.createElement('iframe');
+  iframe.id = 'mm-sidebar-iframe';
+  iframe.className = 'mm-panel-content';
+  iframe.src = panelSrc;
+  iframe.setAttribute('allow', 'microphone');
+  iframe.style.cssText = 'width:100%;height:100%;border:none;background:transparent;';
+  
+  panel.appendChild(toggleTab);
+  panel.appendChild(iframe);
+  document.body.appendChild(panel);
+  
+  // Toggle logic
+  let isCollapsed = localStorage.getItem('mm_panel_collapsed') === 'true';
+  
+  function applyState() {
+    if (isCollapsed) {
+      panel.classList.add('mm-collapsed');
+      toggleTab.querySelector('.mm-toggle-icon').textContent = '▶';
+    } else {
+      panel.classList.remove('mm-collapsed');
+      toggleTab.querySelector('.mm-toggle-icon').textContent = '◀';
+    }
+    localStorage.setItem('mm_panel_collapsed', String(isCollapsed));
+  }
+  
+  toggleTab.addEventListener('click', () => {
+    isCollapsed = !isCollapsed;
+    applyState();
+  });
+  
+  applyState();
+  
+  // Listen for toggle from background (browser action click)
+  const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
+  runtimeAPI.runtime.onMessage.addListener((msg) => {
+    if (msg.type === 'TOGGLE_PANEL' || msg.type === 'TOGGLE_PANEL_OPEN') {
+      if (msg.type === 'TOGGLE_PANEL_OPEN') {
+        isCollapsed = false;
+      } else {
+        isCollapsed = !isCollapsed;
+      }
+      applyState();
+    }
+  });
+}
+
+// Inject panel when on Google Meet call page (has /room path)
+function tryInjectPanel() {
+  // Only inject if we're in an active meeting (URL has the meeting code)
+  const onMeetCall = window.location.pathname.length > 1 && !window.location.pathname.startsWith('/landing');
+  if (onMeetCall && !document.getElementById('mm-panel-root')) {
+    injectMeetMaxxingPanel();
+  }
+}
+
+// Observe URL changes (Meet is a SPA)
+let mmLastUrl = location.href;
+const urlObserver = new MutationObserver(() => {
+  if (location.href !== mmLastUrl) {
+    mmLastUrl = location.href;
+    setTimeout(tryInjectPanel, 1000);
+  }
+});
+urlObserver.observe(document.body, { subtree: true, childList: true });
+
+// Initial inject attempt
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(tryInjectPanel, 2000));
+} else {
+  setTimeout(tryInjectPanel, 2000);
+}
