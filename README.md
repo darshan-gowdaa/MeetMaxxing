@@ -549,13 +549,21 @@ MeetMaxxing/
    npm start
    ```
 
-### Load Chrome Extension
+### Load Chrome Extension (Development)
 
 1. Open Chrome
 2. Go to `chrome://extensions`
 3. Enable **Developer Mode**
 4. Click **Load unpacked**
 5. Select the `extension` folder
+
+### Load Firefox Extension (.zip)
+
+1. Open Firefox
+2. Go to `about:debugging`
+3. Click **This Firefox** on the left
+4. Click **Load Temporary Add-on...**
+5. Select the `meetmaxxing-firefox.zip` file located in the root directory
 
 ---
 
