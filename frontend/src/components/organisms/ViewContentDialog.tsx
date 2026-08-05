@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getAuthToken } from "@/lib/api";
 import { createPortal } from "react-dom";
 import { RiCloseLine, RiFileTextLine } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
@@ -29,11 +30,12 @@ export default function ViewContentDialog({
     // Fetch content
     const fetchContent = async () => {
       try {
+        const token = await getAuthToken();
         const res = await fetch(`${BACKEND_URL}/context/file_content`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": Bearer 
+            "Authorization": `Bearer ${token}` 
           },
           body: JSON.stringify({ meeting_id: meetingId, filename })
         });

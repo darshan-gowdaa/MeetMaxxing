@@ -147,8 +147,9 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${fmt(start)}/${fmt(end)}${add}`;
     };
     try {
+      const token = await getAuthToken();
       const res = await fetch(`${BACKEND_URL}/calendar/add-url?meeting_id=${id}`, {
-        headers: { Authorization: Bearer  },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = JSON.parse(await res.text());

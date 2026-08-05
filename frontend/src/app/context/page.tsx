@@ -55,8 +55,9 @@ export default function ContextManagerPage() {
   const load = async () => {
     setLoading(true);
     try {
+      const token = await getAuthToken();
       const res = await fetch(`${BACKEND_URL}/context/files`, {
-        headers: { "Authorization": Bearer  }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
@@ -106,12 +107,13 @@ export default function ContextManagerPage() {
   // Handlers
   const handleMultiDelete = async (selectedFiles: ContextFile[]) => {
     try {
+      const token = await getAuthToken();
       const promises = selectedFiles.map(file => 
         fetch(`${BACKEND_URL}/context/clear_file`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": Bearer 
+            "Authorization": `Bearer ${token}` 
           },
           body: JSON.stringify({ meeting_id: file.meeting_id, filename: file.filename })
         })
@@ -137,11 +139,12 @@ export default function ContextManagerPage() {
     if (!deleteTarget) return;
     setDeleteBusy(true);
     try {
+      const token = await getAuthToken();
       const res = await fetch(`${BACKEND_URL}/context/clear_file`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": Bearer 
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ meeting_id: deleteTarget.meeting_id, filename: deleteTarget.filename })
       });
@@ -173,11 +176,12 @@ export default function ContextManagerPage() {
     }
 
     try {
+      const token = await getAuthToken();
       const res = await fetch(`${BACKEND_URL}/context/rename_file`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": Bearer 
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ 
           meeting_id: editTarget.meeting_id, 
@@ -209,13 +213,14 @@ export default function ContextManagerPage() {
   const handleUpload = async (files: File[]) => {
     setUploadBusy(true);
     try {
+      const token = await getAuthToken();
       const uploadPromises = files.map(file => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("meeting_id", "global");
         return fetch(`${BACKEND_URL}/context/upload`, {
           method: "POST",
-          headers: { "Authorization": Bearer  },
+          headers: { "Authorization": `Bearer ${token}` },
           body: formData
         });
       });

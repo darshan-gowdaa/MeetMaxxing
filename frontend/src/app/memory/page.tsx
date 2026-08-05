@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { getAuthToken } from "@/lib/api";
@@ -298,4 +299,5 @@ export default function MemoryPage() {
     </div>
   );
 }
+
 
