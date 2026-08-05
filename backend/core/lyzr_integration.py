@@ -4,7 +4,7 @@ import lyzr
 from .config import settings
 
 _studio: Optional[lyzr.Studio] = None
-_agent_cache: Dict[str, lyzr.Agent] = {}
+_agent_cache: dict[str, lyzr.Agent] = {}
 
 def get_studio() -> lyzr.Studio:
     global _studio
