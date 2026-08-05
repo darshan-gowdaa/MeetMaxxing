@@ -28,4 +28,3 @@ supabase>=2.31.0
 tiktoken>=0.13.0
 uvicorn>=0.51.0
 websockets>=15.0.1
-lyzr-guardrails
