@@ -7,6 +7,7 @@ const ext = typeof browser !== 'undefined' ? browser : (typeof chrome !== 'undef
 
 export function useCopilot() {
   const [meetingId, setMeetingId] = useState<string>("");
+  const [authToken, setAuthToken] = useState<string>("");
   const [meetingTitle, setMeetingTitle] = useState<string>("Google Meet Session");
   const [isEnded, setIsEnded] = useState<boolean>(false);
   const [transcriptLines, setTranscriptLines] = useState<TranscriptChunk[]>([]);
@@ -155,11 +156,11 @@ export function useCopilot() {
         const [realtimeRes, recapRes] = await Promise.all([
           fetch(`http://localhost:8000/ingest/realtime/${meetingId}?force=true`, { 
             method: "POST",
-            headers: { "Authorization": "Bearer dev_token" } 
+            headers: { "Authorization": "Bearer " } 
           }),
           fetch(`http://localhost:8000/ingest/late-recap/${meetingId}?force=true`, { 
             method: "GET",
-            headers: { "Authorization": "Bearer dev_token" } 
+            headers: { "Authorization": "Bearer " } 
           })
         ]);
         const realtimeData = await realtimeRes.json();
@@ -188,7 +189,7 @@ export function useCopilot() {
         const endpoint = isRecap ? `/ingest/late-recap/${meetingId}?force=true` : `/ingest/realtime/${meetingId}?force=true`;
         const response = await fetch(`http://localhost:8000${endpoint}`, { 
           method: isRecap ? "GET" : "POST",
-          headers: { "Authorization": "Bearer dev_token" } 
+          headers: { "Authorization": "Bearer " } 
         });
         const data = await response.json();
         if (isRecap) {
@@ -229,7 +230,7 @@ export function useCopilot() {
     }
   };
 
-  return {
+  return { authToken,
     meetingId, meetingTitle, isEnded, transcriptLines, suggestions, nextQuestion, recap,
     errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction, clearTranscript
   };

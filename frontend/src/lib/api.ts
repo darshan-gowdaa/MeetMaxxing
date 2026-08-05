@@ -1,5 +1,12 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
+import { supabase } from "./supabase";
+
+async function getToken() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? "";
+}
+
 function safeParse(text: string) {
   if (!text || !text.trim()) return {};
   try {
@@ -10,7 +17,8 @@ function safeParse(text: string) {
   }
 }
 
-export async function fetchMeetings(token: string) {
+export async function fetchMeetings() {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/dashboard/meetings`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
@@ -20,7 +28,8 @@ export async function fetchMeetings(token: string) {
   return safeParse(text);
 }
 
-export async function fetchMeeting(id: string, token: string) {
+export async function fetchMeeting(id: string) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
@@ -30,7 +39,8 @@ export async function fetchMeeting(id: string, token: string) {
   return safeParse(text);
 }
 
-export async function queryMemory(question: string, token: string, filters?: Record<string, string>) {
+export async function queryMemory(question: string, filters?: Record<string, string>) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/memory/query`, {
     method: "POST",
     headers: {
@@ -45,7 +55,8 @@ export async function queryMemory(question: string, token: string, filters?: Rec
   return safeParse(text);
 }
 
-export async function updateActionItem(id: string, updates: Record<string, string>, token: string) {
+export async function updateActionItem(id: string, updates: Record<string, string>) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/dashboard/action-items/${id}`, {
     method: "PATCH",
     headers: {
@@ -59,7 +70,8 @@ export async function updateActionItem(id: string, updates: Record<string, strin
   return safeParse(text);
 }
 
-export async function deleteMeeting(id: string, token: string) {
+export async function deleteMeeting(id: string) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
@@ -68,7 +80,8 @@ export async function deleteMeeting(id: string, token: string) {
   return true;
 }
 
-export async function updateMeeting(id: string, updates: Record<string, string>, token: string) {
+export async function updateMeeting(id: string, updates: Record<string, string>) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
     method: "PATCH",
     headers: {
@@ -82,7 +95,8 @@ export async function updateMeeting(id: string, updates: Record<string, string>,
   return safeParse(text);
 }
 
-export async function endMeeting(id: string, token: string) {
+export async function endMeeting(id: string) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/meeting/${id}/end`, {
     method: "POST",
     headers: {
@@ -96,7 +110,8 @@ export async function endMeeting(id: string, token: string) {
   return safeParse(text);
 }
 
-export async function reprocessMeeting(id: string, token: string) {
+export async function reprocessMeeting(id: string) {
+  const token = await getToken();
   const res = await fetch(`${BACKEND_URL}/meeting/${id}/reprocess`, {
     method: "POST",
     headers: {
@@ -109,4 +124,4 @@ export async function reprocessMeeting(id: string, token: string) {
   const text = await res.text();
   return safeParse(text);
 }
-
+export async function getAuthToken() { return getToken(); }

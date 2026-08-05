@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuthToken } from "@/lib/api";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { queryMemory } from "@/lib/api";
@@ -40,7 +41,7 @@ export default function MemoryPage() {
 
   useEffect(() => {
     import("@/lib/api").then(({ fetchMeetings }) => {
-      fetchMeetings("dev_token")
+      fetchMeetings()
         .then((data) => {
           const list: Meeting[] = Array.isArray(data) ? data : data.meetings || [];
           if (list.length > 0) {
@@ -67,7 +68,7 @@ export default function MemoryPage() {
     setResult(null);
 
     try {
-      const data = await queryMemory(q, "dev_token");
+      const data = await queryMemory(q);
       setResult(data);
     } catch (err: unknown) {
       const error = err as Error;

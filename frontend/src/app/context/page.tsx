@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuthToken } from "@/lib/api";
 import { useState, useEffect, useMemo } from "react";
 import { 
   RiFolderOpenFill, RiSearchLine, RiCloseLine,
@@ -55,7 +56,7 @@ export default function ContextManagerPage() {
     setLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/context/files`, {
-        headers: { "Authorization": "Bearer dev_token" }
+        headers: { "Authorization": Bearer  }
       });
       if (res.ok) {
         const data = await res.json();
@@ -110,7 +111,7 @@ export default function ContextManagerPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer dev_token"
+            "Authorization": Bearer 
           },
           body: JSON.stringify({ meeting_id: file.meeting_id, filename: file.filename })
         })
@@ -140,7 +141,7 @@ export default function ContextManagerPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer dev_token"
+          "Authorization": Bearer 
         },
         body: JSON.stringify({ meeting_id: deleteTarget.meeting_id, filename: deleteTarget.filename })
       });
@@ -176,7 +177,7 @@ export default function ContextManagerPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer dev_token"
+          "Authorization": Bearer 
         },
         body: JSON.stringify({ 
           meeting_id: editTarget.meeting_id, 
@@ -214,7 +215,7 @@ export default function ContextManagerPage() {
         formData.append("meeting_id", "global");
         return fetch(`${BACKEND_URL}/context/upload`, {
           method: "POST",
-          headers: { "Authorization": "Bearer dev_token" },
+          headers: { "Authorization": Bearer  },
           body: formData
         });
       });

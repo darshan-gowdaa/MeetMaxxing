@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuthToken } from "@/lib/api";
 import { useState, useRef, useEffect } from "react";
 import { 
   RiUploadCloud2Line as Upload, 
@@ -33,7 +34,7 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
     const body = new FormData();
     body.append("file", file); body.append("meeting_id", meetingId);
     try {
-      const res = await fetch(`${BACKEND_URL}/context/upload`, { method: "POST", headers: { Authorization: "Bearer dev_token" }, body });
+      const res = await fetch(`${BACKEND_URL}/context/upload`, { method: "POST", headers: { Authorization: Bearer  }, body });
       if (res.ok) { setUploadSuccess(true); setFile(null); }
       else setUploadError((await res.json().catch(()=>({}))).detail || `Error (${res.status})`);
     } catch { setUploadError("Network error"); }
@@ -47,7 +48,7 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
     setChatHistory(p => [...p, { role: "user", content: q }]);
     setLoadingChat(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/context/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer dev_token" }, body: JSON.stringify({ meeting_id: meetingId, query: q }) });
+      const res = await fetch(`${BACKEND_URL}/context/chat`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: Bearer  }, body: JSON.stringify({ meeting_id: meetingId, query: q }) });
       let answer = "Request failed.";
       if (res.ok) {
         const data = await res.json();

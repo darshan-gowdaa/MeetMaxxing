@@ -2,8 +2,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/molecules/Topbar";
-
-
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
   title: "MeetMaxxing — AI Meeting Copilot",
@@ -31,10 +30,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-bg text-text">
-        <Topbar />
-        {children}
+        <AuthProvider>
+          <Topbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
 }
-

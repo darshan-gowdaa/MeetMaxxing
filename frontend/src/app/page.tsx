@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   const load = () => {
     setLoading(true);
-    fetchMeetings("dev_token")
+    fetchMeetings()
       .then((data) => {
         const list: Meeting[] = Array.isArray(data) ? data : data.meetings || [];
         setMeetings(list);
@@ -70,7 +70,7 @@ export default function Dashboard() {
   // this deletes multiple things at once!! very dangerous
   const handleMultiDelete = async (selectedMeetings: Meeting[]) => {
     try {
-      await Promise.all(selectedMeetings.map(m => deleteMeeting(m.id, "dev_token")));
+      await Promise.all(selectedMeetings.map(m => deleteMeeting(m.id)));
       setMeetings(prev => prev.filter(m => !selectedMeetings.some(s => s.id === m.id)));
     } catch (e) {
       console.error(e);
@@ -82,7 +82,7 @@ export default function Dashboard() {
     if (!deleteTarget) return;
     setDeleteBusy(true);
     try {
-      await deleteMeeting(deleteTarget.id, "dev_token");
+      await deleteMeeting(deleteTarget.id);
       setMeetings((prev) => prev.filter((m) => m.id !== deleteTarget.id));
     } catch {
       // optimistic UI rollback not needed here — just close dialog
@@ -97,7 +97,7 @@ export default function Dashboard() {
     if (!editTarget) return;
     setEditBusy(true);
     try {
-      await updateMeeting(editTarget.id, { title }, "dev_token");
+      await updateMeeting(editTarget.id, { title });
       setMeetings((prev) =>
         prev.map((m) => (m.id === editTarget.id ? { ...m, title } : m))
       );

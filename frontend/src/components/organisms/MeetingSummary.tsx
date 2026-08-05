@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuthToken } from "@/lib/api";
 import { useState } from "react";
 import { RiSparklingLine as Sparkles } from "@remixicon/react";
 import type { Meeting } from "@/types";
@@ -17,9 +18,9 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
     setIsForcing(true);
     try {
       if (meeting.status === "active") {
-        await endMeeting(meeting.id, "dev_token");
+        await endMeeting(meeting.id);
       } else {
-        await reprocessMeeting(meeting.id, "dev_token");
+        await reprocessMeeting(meeting.id);
       }
     } catch (err) {
       console.error(err);

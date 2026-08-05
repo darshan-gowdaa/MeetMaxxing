@@ -33,7 +33,7 @@ export default function ViewContentDialog({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer dev_token"
+            "Authorization": Bearer 
           },
           body: JSON.stringify({ meeting_id: meetingId, filename })
         });

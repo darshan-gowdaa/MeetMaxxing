@@ -11,7 +11,10 @@ import {
   RiArrowLeftLine,
   RiCalendarEventLine,
   RiInformationLine,
+  RiLogoutBoxRLine,
 } from "@remixicon/react";
+import { useAuth } from "@/lib/auth-context";
+import Image from "next/image";
 
 const NAV_TABS = [
   {
@@ -48,6 +51,9 @@ const NAV_TABS = [
 export default function Topbar() {
   const pathname = usePathname();
   const isMeetingDetail = pathname.startsWith("/meetings/");
+  const { user, signOut } = useAuth();
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const initial = user?.email?.[0].toUpperCase() || "U";
 
   return (
     <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-[#1a1c20]/95 backdrop-blur-2xl border border-white/[0.08] rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
@@ -109,7 +115,6 @@ export default function Topbar() {
                 className="relative flex items-center gap-1.5 px-3.5 sm:px-4 h-9 rounded-full text-[13px] font-semibold z-10 transition-colors duration-150 active:scale-[0.96] select-none"
                 style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.45)" }}
               >
-                {/* Sliding bubble — always rendered when active so layoutId tracks it */}
                 {isActive && (
                   <motion.span
                     layoutId="nav-bubble"
@@ -149,6 +154,30 @@ export default function Topbar() {
             );
           })}
         </nav>
+
+        {/* Right side: User Profile */}
+        <div className="flex items-center gap-3">
+          {user && (
+            <>
+              <div className="hidden sm:flex items-center gap-2 max-w-[150px]">
+                <div className="w-8 h-8 rounded-full bg-white/[0.1] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
+                  {avatarUrl ? (
+                    <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
+                  ) : (
+                    <span className="text-sm font-semibold">{initial}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={signOut}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.1] hover:border-white/[0.15] transition-colors"
+                title="Sign out"
+              >
+                <RiLogoutBoxRLine className="w-4 h-4 text-white/70 hover:text-white" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

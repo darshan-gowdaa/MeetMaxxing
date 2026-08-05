@@ -24,7 +24,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   const fetchFiles = async () => {
     try {
       const res = await fetch(`http://localhost:8000/context/files`, {
-        headers: { "Authorization": "Bearer dev_token" }
+        headers: { "Authorization": "Bearer " }
       });
       if (res.ok) {
         const data = await res.json();
@@ -112,7 +112,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
       try {
         const res = await fetch(`http://localhost:8000/context/upload`, {
           method: "POST",
-          headers: { "Authorization": "Bearer dev_token" },
+          headers: { "Authorization": "Bearer " },
           body: formData
         });
         if (res.ok) {
@@ -156,7 +156,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
       
       const res = await fetch(`http://localhost:8000/context/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer dev_token" },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " },
         body: JSON.stringify(reqBody),
         signal: abortControllerRef.current.signal
       });

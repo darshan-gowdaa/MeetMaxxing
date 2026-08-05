@@ -12,19 +12,18 @@ async def get_current_user(
 ) -> dict:
     """
     Validate Supabase JWT token and return user payload.
-    In development mode, falls back to a mock user if token is missing/invalid.
     """
     if credentials is None:
-        return {"user_id": "11111111-1111-4111-8111-111111111111", "org_id": "22222222-2222-4222-8222-222222222222", "email": "dev@meetmaxxing.ai"}
+        raise HTTPException(status_code=401, detail="Authentication required")
     
     token = credentials.credentials
-    if token in ["mock_token", "dev_token", "dev"]:
-        return {"user_id": "11111111-1111-4111-8111-111111111111", "org_id": "22222222-2222-4222-8222-222222222222", "email": "dev@meetmaxxing.ai"}
     
     try:
+        # Supabase JWTs are signed with the JWT secret, not the anon key
+        jwt_secret = settings.SUPABASE_JWT_SECRET or settings.SUPABASE_ANON_KEY
         payload = jwt.decode(
             token,
-            settings.SUPABASE_ANON_KEY,
+            jwt_secret,
             algorithms=["HS256"],
             options={"verify_aud": False},
         )
@@ -34,7 +33,7 @@ async def get_current_user(
             raise HTTPException(status_code=401, detail="Invalid token")
         return {"user_id": user_id, "org_id": org_id, "email": payload.get("email")}
     except (JWTError, Exception) as e:
-        return {"user_id": "11111111-1111-4111-8111-111111111111", "org_id": "22222222-2222-4222-8222-222222222222", "email": "dev@meetmaxxing.ai"}
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 # Convenience type alias for route dependencies

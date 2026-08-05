@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuthToken } from "@/lib/api";
 import { useState, useEffect, use, useCallback } from "react";
 import Link from "next/link";
 import { fetchMeeting, updateActionItem } from "@/lib/api";
@@ -33,7 +34,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
   const loadMeeting = useCallback(() => {
     setLoading(true);
-    fetchMeeting(id, "dev_token")
+    fetchMeeting(id)
       .then((data: Meeting) => {
         setMeeting(data);
         setActionItems(data.action_items || []);
@@ -55,7 +56,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     
     const poll = async () => {
       try {
-        const data = await fetchMeeting(id, "dev_token");
+        const data = await fetchMeeting(id);
         if (!isMounted) return;
         
         setMeeting(data);
@@ -94,7 +95,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       item.status === "in_progress" ? "done" : "open";
     setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, status: next } : a)));
     try {
-      await updateActionItem(itemId, { status: next }, "dev_token");
+      await updateActionItem(itemId, { status: next });
     } catch {
       setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, status: item.status } : a)));
     }
@@ -105,7 +106,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     if (!item) return;
     setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, priority } : a)));
     try {
-      await updateActionItem(itemId, { priority }, "dev_token");
+      await updateActionItem(itemId, { priority });
     } catch {
       setActionItems((prev) => prev.map((a) => (a.id === itemId ? { ...a, priority: item.priority } : a)));
     }
@@ -147,7 +148,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     };
     try {
       const res = await fetch(`${BACKEND_URL}/calendar/add-url?meeting_id=${id}`, {
-        headers: { Authorization: "Bearer dev_token" },
+        headers: { Authorization: Bearer  },
       });
       if (res.ok) {
         const data = JSON.parse(await res.text());

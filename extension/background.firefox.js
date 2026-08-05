@@ -12,12 +12,12 @@ let ws = null;
 let activeMeetingId = null;
 let activeMeetTabId = null;
 let activeMeetingMaxParticipants = 1;
-let activeAuthToken = "dev_token";
+let activeAuthToken = '';
 
 // Init auth token
 browser.storage.local.get(["authToken"], (r) => {
   if (r.authToken) activeAuthToken = r.authToken;
-  else browser.storage.local.set({ authToken: "dev_token" });
+  else 
 });
 
 // Send toggle message to content script on browser action click

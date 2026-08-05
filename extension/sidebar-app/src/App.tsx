@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { useCopilot } from "./hooks/useCopilot";
 import { Header, Footer, ErrorBanner } from "./components/Layout";
 import { IdleState, EndedState } from "./components/States";
+import { LoginPrompt } from "./components/LoginPrompt";
 import { LiveTranscript, SuggestionAgent, NextQuestionAgent, RecapAgent } from "./components/Agents";
 import { ContextAgent } from "./components/ContextAgent";
 import "./sidepanel.css";
 
 export default function App() {
   const {
-    meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
+    authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
     nextQuestion, recap, errorMessage, isProcessing, poweredBy,
     elapsedTime, triggerAction, clearTranscript
   } = useCopilot();
