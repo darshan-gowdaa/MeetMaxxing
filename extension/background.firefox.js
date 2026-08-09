@@ -143,8 +143,9 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "ENSURE_SIDE_PANEL_OPEN") {
-    if (activeMeetTabId) {
-      browser.tabs.sendMessage(activeMeetTabId, { type: "TOGGLE_PANEL_OPEN" }).catch(() => {});
+    const tabId = sender?.tab?.id || activeMeetTabId;
+    if (tabId) {
+      browser.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }).catch(() => {});
     }
     return false;
   }

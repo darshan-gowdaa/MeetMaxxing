@@ -3,7 +3,7 @@ import { useState } from "react";
 
 declare const chrome: any;
 declare const browser: any;
-const ext = typeof browser !== 'undefined' ? browser : (typeof chrome !== 'undefined' ? chrome : null);
+const ext = typeof chrome !== 'undefined' ? chrome : (typeof browser !== 'undefined' ? browser : null);
 
 export function LoginPrompt() {
   const [tokenInput, setTokenInput] = useState("");
