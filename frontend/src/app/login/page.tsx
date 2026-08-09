@@ -56,7 +56,7 @@ export default function LoginPage() {
       if (error) setError(error.message);
       else router.push(next);
     } else if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -64,6 +64,7 @@ export default function LoginPage() {
         }
       });
       if (error) setError(error.message);
+      else if (data?.session) router.push(next);
       else setSuccess("Check your email for the confirmation link!");
     } else if (mode === "forgot") {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {

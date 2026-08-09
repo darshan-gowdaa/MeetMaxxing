@@ -3,7 +3,12 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-
 import { supabase } from "./supabase";
 
 async function getToken() {
-  const { data: { session } } = await supabase.auth.getSession();
+  let { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    await new Promise(r => setTimeout(r, 500));
+    const res = await supabase.auth.getSession();
+    session = res.data.session;
+  }
   return session?.access_token ?? "";
 }
 

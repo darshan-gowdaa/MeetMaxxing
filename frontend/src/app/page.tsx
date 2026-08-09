@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { fetchMeetings, deleteMeeting, updateMeeting } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 import {
   RiVideoChatLine,
@@ -35,6 +36,8 @@ export default function Dashboard() {
   const [editTarget, setEditTarget] = useState<Meeting | null>(null);
   const [editBusy, setEditBusy] = useState(false);
 
+  const { session, loading: authLoading } = useAuth();
+
   const load = () => {
     setLoading(true);
     fetchMeetings()
@@ -47,9 +50,11 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line
+    if (authLoading) return;
+    if (!session) return;
     load();
-  }, []);
+    // eslint-disable-next-line
+  }, [authLoading, session]);
 
   // this filters and sorts the stuff. pls dont break this
   const filtered = useMemo(() => {

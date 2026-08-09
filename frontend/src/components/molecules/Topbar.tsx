@@ -102,60 +102,58 @@ export default function Topbar() {
         </AnimatePresence>
 
         {/* Nav pills */}
-        {user && (
-          <nav className="flex items-center bg-white/[0.04] rounded-full p-1 border border-white/[0.06]">
-            {NAV_TABS.map((tab) => {
-              const isActive = tab.match(pathname);
-              const label = tab.label(isMeetingDetail);
-              const IconComponent = tab.icon(isMeetingDetail);
+        <nav className="flex items-center bg-white/[0.04] rounded-full p-1 border border-white/[0.06]">
+          {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
+            const isActive = tab.match(pathname);
+            const label = tab.label(isMeetingDetail);
+            const IconComponent = tab.icon(isMeetingDetail);
 
-              return (
-                <Link
-                  key={tab.id}
-                  href={tab.href}
-                  className="relative flex items-center gap-1.5 px-3.5 sm:px-4 h-9 rounded-full text-[13px] font-semibold z-10 transition-colors duration-150 active:scale-[0.96] select-none"
-                  style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.45)" }}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="nav-bubble"
-                      className="absolute inset-0 rounded-full"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(74,158,255,0.28) 0%, rgba(30,100,220,0.18) 100%)",
-                        boxShadow: "inset 0 0 0 1px rgba(74,158,255,0.25)",
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 38,
-                        mass: 0.8,
-                      }}
-                    />
-                  )}
-                  <IconComponent
-                    className="w-[15px] h-[15px] shrink-0 relative z-10"
+            return (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                className="relative flex items-center gap-1.5 px-3.5 sm:px-4 h-9 rounded-full text-[13px] font-semibold z-10 transition-colors duration-150 active:scale-[0.96] select-none"
+                style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.45)" }}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="nav-bubble"
+                    className="absolute inset-0 rounded-full"
                     style={{
-                      color: isActive ? "#7bbfff" : "rgba(255,255,255,0.4)",
+                      background:
+                        "linear-gradient(135deg, rgba(74,158,255,0.28) 0%, rgba(30,100,220,0.18) 100%)",
+                      boxShadow: "inset 0 0 0 1px rgba(74,158,255,0.25)",
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 38,
+                      mass: 0.8,
                     }}
                   />
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.span
-                      key={label}
-                      className="hidden sm:inline relative z-10 leading-none"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.12, ease: "easeOut" }}
-                    >
-                      {label}
-                    </motion.span>
-                  </AnimatePresence>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+                )}
+                <IconComponent
+                  className="w-[15px] h-[15px] shrink-0 relative z-10"
+                  style={{
+                    color: isActive ? "#7bbfff" : "rgba(255,255,255,0.4)",
+                  }}
+                />
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={label}
+                    className="hidden sm:inline relative z-10 leading-none"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.12, ease: "easeOut" }}
+                  >
+                    {label}
+                  </motion.span>
+                </AnimatePresence>
+              </Link>
+            );
+          })}
+        </nav>
 
         {/* Right side: User Profile or Login */}
         <div className="flex items-center gap-3">

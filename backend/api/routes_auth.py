@@ -58,20 +58,28 @@ async def provision_user(user: dict = Depends(get_current_user)):
     """
     from ..core.database import get_supabase_admin
     
-    # org_id already set — nothing to do
-    if user.get("org_id") and user["org_id"] != user["user_id"]:
-        return {"org_id": user["org_id"], "provisioned": False}
-    
     supabase_admin = get_supabase_admin()
     org_id = user["user_id"]  # personal org = user_id for solo accounts
     
+    # 1. Update app_metadata if needed
+    if not user.get("org_id") or user["org_id"] == user["user_id"]:
+        try:
+            supabase_admin.auth.admin.update_user_by_id(
+                user["user_id"],
+                {"app_metadata": {"org_id": org_id}},
+            )
+        except Exception:
+            pass
+            
+    # 2. Ensure public.users record exists (required for foreign keys)
     try:
-        supabase_admin.auth.admin.update_user_by_id(
-            user["user_id"],
-            {"app_metadata": {"org_id": org_id}},
-        )
-    except Exception:
-        # Non-critical — org_id already falls back to user_id in get_current_user
-        pass
+        supabase_admin.table("users").upsert({
+            "id": user["user_id"],
+            "org_id": org_id,
+            "email": user.get("email", ""),
+        }, on_conflict="id").execute()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to provision public.users record: {e}")
     
     return {"org_id": org_id, "provisioned": True}
