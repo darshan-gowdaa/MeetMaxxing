@@ -6,45 +6,52 @@
   height: 100vh;
   background: #09090b;
   border-left: 1px solid #27272a;
-  transition: width 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
   z-index: 2147483647;
   display: flex;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
 }
 
 .mm-panel.mm-collapsed {
-  width: 40px;
+  transform: translateX(100%);
+  box-shadow: none;
 }
 
 .mm-toggle-tab {
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 40px;
-  height: 100%;
-  background: #09090b;
-  border: none;
-  border-right: 1px solid #27272a;
+  height: 72px;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-right: none;
+  border-radius: 24px 0 0 24px;
   color: #a1a1aa;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding-top: 16px;
-  gap: 16px;
-  transition: all 0.2s;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: -4px 0 16px rgba(0,0,0,0.4);
+  overflow: visible;
+  padding: 0;
 }
 
 .mm-toggle-tab:hover {
-  background: #18181b;
+  background: #27272a;
   color: #fafafa;
+  width: 48px;
+  left: -24px;
 }
 
 .mm-toggle-icon {
-  font-size: 14px;
-}
-
-.mm-brand-label {
-  font-weight: bold;
-  font-size: 16px;
-  color: #3b82f6;
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .mm-panel-content {
@@ -64,13 +71,13 @@
 html.mm-panel-open body {
   width: calc(100vw - 380px) !important;
   transform: translateZ(0) !important;
-  transition: width 0.3s ease !important;
+  transition: width 0.4s cubic-bezier(0.2, 0, 0, 1) !important;
   overflow-x: hidden !important;
 }
 
 html.mm-panel-collapsed body {
-  width: calc(100vw - 40px) !important;
+  width: 100vw !important;
   transform: translateZ(0) !important;
-  transition: width 0.3s ease !important;
+  transition: width 0.4s cubic-bezier(0.2, 0, 0, 1) !important;
   overflow-x: hidden !important;
 }

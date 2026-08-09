@@ -746,8 +746,9 @@ function injectMeetMaxxingPanel() {
   toggleTab.id = 'mm-toggle-btn';
   toggleTab.setAttribute('aria-label', 'Toggle MeetMaxxing Panel');
   toggleTab.innerHTML = `
-    <span class="mm-toggle-icon">◀</span>
-    <span class="mm-brand-label">M</span>
+    <svg class="mm-toggle-icon" viewBox="0 0 24 24">
+      <path id="mm-toggle-path" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+    </svg>
   `;
   
   // Iframe for sidebar app
@@ -766,14 +767,15 @@ function injectMeetMaxxingPanel() {
   let isCollapsed = localStorage.getItem('mm_panel_collapsed') === 'true';
   
   function applyState() {
+    const pathEl = toggleTab.querySelector('#mm-toggle-path');
     if (isCollapsed) {
       panel.classList.add('mm-collapsed');
-      toggleTab.querySelector('.mm-toggle-icon').textContent = '▶';
+      if (pathEl) pathEl.setAttribute('d', 'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z'); // chevron_left
       document.documentElement.classList.remove('mm-panel-open');
       document.documentElement.classList.add('mm-panel-collapsed');
     } else {
       panel.classList.remove('mm-collapsed');
-      toggleTab.querySelector('.mm-toggle-icon').textContent = '◀';
+      if (pathEl) pathEl.setAttribute('d', 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'); // chevron_right
       document.documentElement.classList.remove('mm-panel-collapsed');
       document.documentElement.classList.add('mm-panel-open');
     }
