@@ -117,31 +117,6 @@ def _format_full_transcript(utterances: list[dict]) -> str:
         lines.append(f"[{mins:02d}:{secs:02d}] {speaker}: {text}")
     return "\n".join(lines) if lines else "No transcript available."
 
-def _chunk_transcript(lines: list[str], max_length: int = 15000) -> list[str]:
-    chunks = []
-    current_chunk = []
-    current_length = 0
-    for line in lines:
-        if current_length + len(line) > max_length and current_chunk:
-            chunks.append("\n".join(current_chunk))
-            current_chunk = []
-            current_length = 0
-        current_chunk.append(line)
-        current_length += len(line)
-    if current_chunk:
-        chunks.append("\n".join(current_chunk))
-    return chunks
-
-async def _summarize_chunk(chunk_text: str, title: str, attendee_str: str) -> str:
-    prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\n\nTranscript Segment:\n{chunk_text}\n\nExtract the structured meeting intelligence as per instructions."
-    from ..core.llm_fallback import generate_content_with_fallback
-    raw, _ = await generate_content_with_fallback(
-        prompt,
-        response_format_json=True,
-        max_tokens=4096,
-        bypass_cache=True,
-    )
-    return raw
 
 async def run_summary_agent(
     meeting_id: str,

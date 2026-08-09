@@ -26,13 +26,5 @@ export function Md3LoadingIndicator({
   );
 }
 
-/** MD3 Expressive skeleton placeholder */
-export function Md3Skeleton({
-  className = "",
-}: {
-  className?: string;
-}) {
-  return <div className={`md3-skeleton ${className}`} aria-hidden="true" />;
-}
 
 

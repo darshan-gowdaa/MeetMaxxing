@@ -9,9 +9,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createBrowserClient(supabaseUrl || "", supabaseAnonKey || "");
 
-export async function getUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
+
 
 
