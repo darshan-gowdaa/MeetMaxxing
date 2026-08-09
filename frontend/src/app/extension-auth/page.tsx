@@ -10,6 +10,7 @@ export default function ExtensionAuthPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [connected, setConnected] = useState(false);
 
   // Redirect to login if not authenticated after session loads
   useEffect(() => {
@@ -17,6 +18,21 @@ export default function ExtensionAuthPage() {
       router.replace("/login");
     }
   }, [loading, session, router]);
+
+  useEffect(() => {
+    if (session?.access_token) {
+      // Auto-send token to the extension content script (auth-capture.js)
+      window.postMessage({ type: "MEETMAXXING_AUTH_TOKEN", token: session.access_token }, "*");
+    }
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.source === window && e.data?.type === "MEETMAXXING_AUTH_SUCCESS") {
+        setConnected(true);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [session]);
 
   const handleCopy = () => {
     if (session?.access_token) {
@@ -34,40 +50,50 @@ export default function ExtensionAuthPage() {
         </div>
         
         <h1 className="text-2xl font-bold text-white mb-2">Connect Extension</h1>
-        <p className="text-white/60 mb-8 text-sm">
-          Copy this authentication token and paste it into the MeetMaxxing Chrome extension.
-        </p>
-
-        {session ? (
+        
+        {connected ? (
           <div className="space-y-4">
-            <div className="bg-black/40 border border-white/10 rounded-xl p-4 overflow-hidden relative group">
-              <p className="text-white/40 font-mono text-xs break-all text-left">
-                {session.access_token}
-              </p>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+             <div className="text-green-400 font-medium mb-4">Successfully connected to MeetMaxxing extension!</div>
+             <p className="text-white/60 text-sm">You can now close this tab and return to your meeting.</p>
+          </div>
+        ) : (
+          <>
+            <p className="text-white/60 mb-8 text-sm">
+              Connecting... If it doesn't auto-connect, copy this authentication token and paste it into the MeetMaxxing Chrome extension.
+            </p>
+
+            {session ? (
+              <div className="space-y-4">
+                <div className="bg-black/40 border border-white/10 rounded-xl p-4 overflow-hidden relative group">
+                  <p className="text-white/40 font-mono text-xs break-all text-left">
+                    {session.access_token}
+                  </p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={handleCopy}
+                      className="bg-[#4a9eff] text-white text-sm font-semibold py-1.5 px-4 rounded-full flex items-center gap-2"
+                    >
+                      {copied ? <RiCheckLine className="w-4 h-4" /> : <RiFileCopyLine className="w-4 h-4" />}
+                      {copied ? "Copied!" : "Copy Token"}
+                    </button>
+                  </div>
+                </div>
                 <button
                   onClick={handleCopy}
-                  className="bg-[#4a9eff] text-white text-sm font-semibold py-1.5 px-4 rounded-full flex items-center gap-2"
+                  className="w-full h-12 bg-white text-black font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-colors"
                 >
-                  {copied ? <RiCheckLine className="w-4 h-4" /> : <RiFileCopyLine className="w-4 h-4" />}
-                  {copied ? "Copied!" : "Copy Token"}
+                  {copied ? <RiCheckLine className="w-5 h-5" /> : <RiFileCopyLine className="w-5 h-5" />}
+                  {copied ? "Copied to clipboard" : "Copy Token"}
                 </button>
               </div>
-            </div>
-            <button
-              onClick={handleCopy}
-              className="w-full h-12 bg-white text-black font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-colors"
-            >
-              {copied ? <RiCheckLine className="w-5 h-5" /> : <RiFileCopyLine className="w-5 h-5" />}
-              {copied ? "Copied to clipboard" : "Copy Token"}
-            </button>
-          </div>
-        ) : loading ? (
-          <div className="flex flex-col items-center gap-3 text-white/50">
-            <RiLoader4Line className="w-6 h-6 animate-spin" />
-            <span className="text-sm">Loading session…</span>
-          </div>
-        ) : null}
+            ) : loading ? (
+              <div className="flex flex-col items-center gap-3 text-white/50">
+                <RiLoader4Line className="w-6 h-6 animate-spin" />
+                <span className="text-sm">Loading session…</span>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   );

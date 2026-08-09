@@ -1,24 +1,10 @@
-import { RiChromeFill, RiArrowRightSLine, RiKey2Line } from "@remixicon/react";
-import { useState } from "react";
+import { RiChromeFill, RiArrowRightSLine } from "@remixicon/react";
 
-declare const chrome: any;
-declare const browser: any;
-const ext = typeof chrome !== 'undefined' ? chrome : (typeof browser !== 'undefined' ? browser : null);
 
 export function LoginPrompt() {
-  const [tokenInput, setTokenInput] = useState("");
-
   const handleOpenAuth = () => {
     const webUrl = (window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app";
     window.open(`${webUrl}/extension-auth`, "_blank");
-  };
-
-  const handleSaveToken = () => {
-    if (tokenInput.trim()) {
-      ext.storage.local.set({ authToken: tokenInput.trim() }, () => {
-        window.location.reload();
-      });
-    }
   };
 
   return (
@@ -37,30 +23,12 @@ export function LoginPrompt() {
           onClick={handleOpenAuth}
           className="w-full py-3 px-4 bg-[#4a9eff] hover:bg-[#3a7bd5] text-white font-semibold rounded-xl flex items-center justify-between transition-colors shadow-lg shadow-[#4a9eff]/20"
         >
-          <span>Get Auth Token</span>
+          <span>Connect Account</span>
           <RiArrowRightSLine className="w-5 h-5" />
         </button>
-        
-        <div className="relative mt-6 pt-4 border-t border-white/10 text-left w-full">
-          <label className="block text-xs font-medium text-white/50 mb-2">Paste Token Here</label>
-          <div className="relative flex items-center">
-            <RiKey2Line className="absolute left-3 w-4 h-4 text-white/40" />
-            <input
-              type="password"
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              placeholder="eyJhbGciOi..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#4a9eff]/50 transition-colors"
-            />
-          </div>
-          <button
-            onClick={handleSaveToken}
-            disabled={!tokenInput.trim()}
-            className="w-full mt-2 py-2 bg-white/10 hover:bg-white/15 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            Connect Extension
-          </button>
-        </div>
+        <p className="text-xs text-white/40 mt-4 text-center">
+          A new tab will open. Close it after connecting.
+        </p>
       </div>
     </div>
   );

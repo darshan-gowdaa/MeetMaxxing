@@ -155,9 +155,9 @@ export default function Topbar() {
           })}
         </nav>
 
-        {/* Right side: User Profile */}
+        {/* Right side: User Profile or Login */}
         <div className="flex items-center gap-3">
-          {user && (
+          {user ? (
             <>
               <div className="hidden sm:flex items-center gap-2 max-w-[150px]">
                 <div className="w-8 h-8 rounded-full bg-white/[0.1] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
@@ -176,6 +176,13 @@ export default function Topbar() {
                 <RiLogoutBoxRLine className="w-4 h-4 text-white/70 hover:text-white" />
               </button>
             </>
+          ) : (
+            <Link
+              href="/login"
+              className="h-8 px-4 flex items-center justify-center rounded-full bg-[#4a9eff] hover:bg-[#3a7bd5] text-white text-[13px] font-semibold transition-colors shadow-sm"
+            >
+              Sign In
+            </Link>
           )}
         </div>
       </div>
