@@ -33,6 +33,62 @@ chrome.storage.local.get(["authToken"], (r) => {
   if (r.authToken) activeAuthToken = r.authToken;
 });
 
+// Listen for token updates from auth-capture.js or refreshes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.authToken?.newValue) {
+    activeAuthToken = changes.authToken.newValue;
+    console.log("[MeetMaxxing] Auth token updated");
+  }
+});
+
+// Refresh Supabase access token using stored refresh token
+async function refreshAuthToken() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["authRefreshToken"], async (r) => {
+      if (!r.authRefreshToken) { resolve(false); return; }
+      try {
+        const SUPABASE_URL = "https://gcslaozkazuhdqctefpn.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_vgpAoeKLmTotYUKQwVBKng_O0rqqE5i";
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+          body: JSON.stringify({ refresh_token: r.authRefreshToken }),
+        });
+        if (!res.ok) { resolve(false); return; }
+        const data = await res.json();
+        if (data.access_token) {
+          activeAuthToken = data.access_token;
+          const updates = { authToken: data.access_token };
+          if (data.refresh_token) updates.authRefreshToken = data.refresh_token;
+          chrome.storage.local.set(updates);
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  });
+}
+
+// Proactively refresh token every 45 minutes (tokens expire after 1 hour)
+setInterval(() => refreshAuthToken(), 45 * 60 * 1000);
+
+// Fetch with automatic 401 retry after token refresh
+async function authFetch(url, options = {}) {
+  const headers = { ...options.headers, Authorization: `Bearer ${activeAuthToken}` };
+  let res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    const refreshed = await refreshAuthToken();
+    if (refreshed) {
+      headers.Authorization = `Bearer ${activeAuthToken}`;
+      res = await fetch(url, { ...options, headers });
+    }
+  }
+  return res;
+}
+
 // Configure side panel to open on action icon click by default across all tabs
 chrome.action.onClicked.addListener((tab) => {
   if (tab.id) {

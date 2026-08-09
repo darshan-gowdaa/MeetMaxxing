@@ -50,6 +50,7 @@ from .api.routes_memory import router as memory_router
 from .api.routes_calendar import router as calendar_router
 from .api.routes_dashboard import router as dashboard_router
 from .api.routes_context import router as context_router
+from .api.routes_auth import router as auth_router
 
 
 import threading
@@ -120,6 +121,7 @@ async def secure_headers_middleware(request: Request, call_next):
 
 # FastAPIInstrumentor.instrument_app(app)
 # Register all routers
+app.include_router(auth_router)
 app.include_router(transcript_router)
 app.include_router(meeting_router)
 app.include_router(memory_router)

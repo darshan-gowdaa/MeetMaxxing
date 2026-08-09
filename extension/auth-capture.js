@@ -4,15 +4,22 @@ window.addEventListener("message", (event) => {
   if (event.source !== window || !event.data) return;
 
   if (event.data.type === "MEETMAXXING_AUTH_TOKEN" && event.data.token) {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ authToken: event.data.token }, () => {
-        // Send a message back to the page so it knows it succeeded
-        window.postMessage({ type: "MEETMAXXING_AUTH_SUCCESS" }, "*");
-      });
-    } else if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
-      browser.storage.local.set({ authToken: event.data.token }).then(() => {
-        window.postMessage({ type: "MEETMAXXING_AUTH_SUCCESS" }, "*");
-      }).catch(e => console.error(e));
+    const storage = (typeof chrome !== 'undefined' && chrome.storage?.local) 
+      ? chrome.storage.local 
+      : (typeof browser !== 'undefined' && browser.storage?.local ? browser.storage.local : null);
+    
+    if (!storage) return;
+    
+    const data = { authToken: event.data.token };
+    // also store refresh token if provided (for background.js to use)
+    if (event.data.refreshToken) data.authRefreshToken = event.data.refreshToken;
+    
+    const onSet = () => window.postMessage({ type: "MEETMAXXING_AUTH_SUCCESS" }, "*");
+    
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      chrome.storage.local.set(data, onSet);
+    } else {
+      browser.storage.local.set(data).then(onSet).catch(e => console.error(e));
     }
   }
 });

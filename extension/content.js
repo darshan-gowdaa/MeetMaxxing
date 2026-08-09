@@ -503,7 +503,11 @@ function injectVisibilityButton() {
   const eyeCloseSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10.94 6.088c.348-.057.708-.088 1.06-.088 5.392 0 9.878 3.88 10.819 9-.263 1.43-.876 2.733-1.723 3.84l-1.446-1.445a9.006 9.006 0 0 0 1.15-2.395A9.005 9.005 0 0 0 12 5c-.476 0-.94.037-1.393.107l.333 1.011zm9.645 15.427-1.414 1.414-3.791-3.79a11.196 11.196 0 0 1-3.38.261c-5.392 0-9.878-3.88-10.819-9a10.966 10.966 0 0 1 2.37-4.47l-2.228-2.228 1.414-1.414 17.848 17.848zM4.654 7.483A9.013 9.013 0 0 0 3.223 12a9.005 9.005 0 0 0 8.777 7c.803 0 1.58-.105 2.316-.304L12.52 16.9a5 5 0 0 1-5.421-5.42L4.654 7.483zM14 12a2 2 0 0 1-2 2l-1.748-1.748c.046-.732.616-1.302 1.348-1.348L14 12.001zM11.95 7a5 5 0 0 1 4.95 4.95l-1.921-1.921A3.003 3.003 0 0 0 11.95 7z"></path></svg>`;
 
   if (!hideCaptionsStyle) toggleHideCaptions();
-  btn.innerHTML = eyeCloseSvg;
+  const parser = new DOMParser();
+  const openIcon = parser.parseFromString(eyeOpenSvg, "image/svg+xml").documentElement;
+  const closeIcon = parser.parseFromString(eyeCloseSvg, "image/svg+xml").documentElement;
+
+  btn.replaceChildren(closeIcon.cloneNode(true));
   btn.title = "Captions Hidden (MeetMaxxing)";
   btn.style.background = "#ea4335";
   btn.style.color = "#fff";
@@ -518,12 +522,12 @@ function injectVisibilityButton() {
   btn.onclick = () => {
     toggleHideCaptions();
     if (hideCaptionsStyle) {
-      btn.innerHTML = eyeCloseSvg;
+      btn.replaceChildren(closeIcon.cloneNode(true));
       btn.style.background = "#ea4335";
       btn.style.color = "#fff";
       btn.title = "Captions Hidden (MeetMaxxing)";
     } else {
-      btn.innerHTML = eyeOpenSvg;
+      btn.replaceChildren(openIcon.cloneNode(true));
       btn.style.background = "#3c4043";
       btn.style.color = "#e8eaed";
       btn.title = "Captions Visible (MeetMaxxing)";

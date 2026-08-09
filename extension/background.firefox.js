@@ -23,9 +23,59 @@ let activeMeetingMaxParticipants = 1;
 let activeAuthToken = '';
 
 // Init auth token
-browser.storage.local.get(["authToken"], (r) => {
+browser.storage.local.get(["authToken"]).then((r) => {
   if (r.authToken) activeAuthToken = r.authToken;
 });
+
+// Listen for token updates from auth-capture.js or refreshes
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.authToken?.newValue) {
+    activeAuthToken = changes.authToken.newValue;
+  }
+});
+
+// Refresh Supabase access token using stored refresh token
+async function refreshAuthToken() {
+  const r = await browser.storage.local.get(["authRefreshToken"]);
+  if (!r.authRefreshToken) return false;
+  try {
+    const SUPABASE_URL = "https://gcslaozkazuhdqctefpn.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_vgpAoeKLmTotYUKQwVBKng_O0rqqE5i";
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+      body: JSON.stringify({ refresh_token: r.authRefreshToken }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data.access_token) {
+      activeAuthToken = data.access_token;
+      const updates = { authToken: data.access_token };
+      if (data.refresh_token) updates.authRefreshToken = data.refresh_token;
+      await browser.storage.local.set(updates);
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+// Proactively refresh token every 45 minutes
+setInterval(() => refreshAuthToken(), 45 * 60 * 1000);
+
+// Fetch with automatic 401 retry after token refresh
+async function authFetch(url, options = {}) {
+  const headers = { ...options.headers, Authorization: `Bearer ${activeAuthToken}` };
+  let res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    const refreshed = await refreshAuthToken();
+    if (refreshed) {
+      headers.Authorization = `Bearer ${activeAuthToken}`;
+      res = await fetch(url, { ...options, headers });
+    }
+  }
+  return res;
+}
+
 
 // Send toggle message to content script on browser action click
 browser.browserAction.onClicked.addListener((tab) => {
