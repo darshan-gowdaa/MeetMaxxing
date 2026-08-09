@@ -26,7 +26,7 @@ export function LoginPrompt() {
         <h2 className="text-lg font-bold mb-1">Welcome</h2>
         <p className="text-xs text-white/50 mb-6 leading-relaxed">
           Sign in to activate your AI meeting copilot.
-          A new tab will open — close it once connected.
+          The extension connects automatically — no copy-paste needed.
         </p>
 
         <div className="w-full space-y-2.5">
