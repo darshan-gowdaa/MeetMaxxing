@@ -119,7 +119,10 @@ export default function ContextManagerPage() {
         })
       );
       const results = await Promise.allSettled(promises);
-      const successfulFiles = selectedFiles.filter((_, i) => results[i].status === "fulfilled" && (results[i] as any).value?.ok);
+      const successfulFiles = selectedFiles.filter((_, i) => {
+        const res = results[i];
+        return res.status === "fulfilled" && res.value?.ok;
+      });
       const failedCount = selectedFiles.length - successfulFiles.length;
       
       const toDelete = new Set(successfulFiles.map(f => `${f.meeting_id}-${f.filename}`));

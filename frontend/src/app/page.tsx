@@ -85,8 +85,8 @@ export default function Dashboard() {
     try {
       await deleteMeeting(deleteTarget.id);
       setMeetings((prev) => prev.filter((m) => m.id !== deleteTarget.id));
-    } catch (e: any) {
-      setError(e.message || "Failed to delete meeting");
+    } catch (e: unknown) {
+      setError((e as Error).message || "Failed to delete meeting");
     } finally {
       setDeleteBusy(false);
       setDeleteTarget(null);
@@ -102,8 +102,8 @@ export default function Dashboard() {
       setMeetings((prev) =>
         prev.map((m) => (m.id === editTarget.id ? { ...m, title } : m))
       );
-    } catch (e: any) {
-      setError(e.message || "Failed to update meeting");
+    } catch (e: unknown) {
+      setError((e as Error).message || "Failed to update meeting");
     } finally {
       setEditBusy(false);
       setEditTarget(null);

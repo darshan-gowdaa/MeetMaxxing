@@ -7,7 +7,7 @@ async function getToken() {
   return session?.access_token ?? "";
 }
 
-function safeParse(text: string, fallback: any = null) {
+function safeParse(text: string, fallback: unknown = null) {
   if (!text || !text.trim()) return fallback;
   try {
     return JSON.parse(text);
