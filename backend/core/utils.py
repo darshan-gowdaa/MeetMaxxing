@@ -1,6 +1,7 @@
 import json
 import uuid
 
+
 def is_valid_uuid(val: str) -> bool:
     """Check if a string is a valid UUID."""
     try:
@@ -29,8 +30,7 @@ def parse_json_clean(raw: str) -> dict:
         cleaned = cleaned[7:]
     elif cleaned.startswith("```"):
         cleaned = cleaned[3:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
+    cleaned = cleaned.removesuffix("```")
     cleaned = cleaned.strip()
     start = cleaned.find("{")
     end = cleaned.rfind("}")

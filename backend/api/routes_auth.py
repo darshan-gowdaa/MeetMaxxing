@@ -2,8 +2,9 @@
 Auth endpoints — user provisioning, token refresh, session info.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
 from ..core.auth import get_current_user
 from ..core.config import settings
 

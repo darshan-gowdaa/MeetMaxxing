@@ -3,15 +3,16 @@ WebSocket + REST endpoint for live transcript ingestion from Chrome extension.
 Handles both text chunks and base64 audio chunks (transcribed via Gemini multimodal).
 """
 
-import asyncio
 import base64
 import json
 import uuid
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
+
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+
+from ..agents.orchestrator import AgentTrigger, dispatch
 from ..core.auth import get_current_user
-from ..services.transcript import ingest_chunk, create_meeting_record
-from ..agents.orchestrator import dispatch, AgentTrigger
+from ..services.transcript import create_meeting_record, ingest_chunk
 
 router = APIRouter(prefix="/ingest", tags=["transcript"])
 
@@ -108,9 +109,10 @@ async def ingest_audio_chunk(
     Receive a base64-encoded audio chunk from the Chrome extension tab capture.
     Transcribe using Gemini multimodal, store transcript, return copilot update.
     """
-    from ..core.config import settings
     from google import genai
     from google.genai import types as genai_types
+
+    from ..core.config import settings
 
     transcript_text = ""
     try:

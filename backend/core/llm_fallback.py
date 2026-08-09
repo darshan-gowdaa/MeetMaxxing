@@ -1,12 +1,14 @@
-import httpx
-import json
 import asyncio
-from typing import Optional, Any
+import json
+from typing import Any
+
+import httpx
+
 from .config import settings
 from .rate_limiter import rate_limiter
 
 # Global client for connection pooling
-_http_client: Optional[httpx.AsyncClient] = None
+_http_client: httpx.AsyncClient | None = None
 
 def get_http_client() -> httpx.AsyncClient:
     global _http_client

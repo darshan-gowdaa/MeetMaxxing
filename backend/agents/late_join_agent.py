@@ -1,9 +1,8 @@
-import json
 import time
-from typing import Dict, Any
+from typing import Any
 
-from ..core.redis_client import get_full_transcript
 from ..core.llm_fallback import generate_content_with_fallback
+from ..core.redis_client import get_full_transcript
 
 _SYSTEM_PROMPT = """You are MeetMaxxing's Late-Join Agent. The user just asked for an executive recap of the meeting so far.
 Analyze the transcript and provide a highly refined, concise summary covering:
@@ -19,8 +18,8 @@ Keep it extremely brief and professional. Do NOT output unnecessary details. Ret
   "who_said_what": ["Speaker A: ...", "Speaker B: ..."]
 }"""
 
-_last_recaps: Dict[str, Dict[str, Any]] = {}
-_last_recap_times: Dict[str, float] = {}
+_last_recaps: dict[str, dict[str, Any]] = {}
+_last_recap_times: dict[str, float] = {}
 
 def _format_transcript(chunks: list[dict]) -> str:
     if not chunks:
@@ -32,7 +31,7 @@ def _format_transcript(chunks: list[dict]) -> str:
         lines.append(f"{speaker}: {text}")
     return "\n".join(lines)
 
-async def generate_late_join_recap(meeting_id: str, force: bool = False) -> Dict[str, Any]:
+async def generate_late_join_recap(meeting_id: str, force: bool = False) -> dict[str, Any]:
     now = time.time()
     
     # Cache recap for 2 minutes to avoid spamming the LLM

@@ -8,7 +8,6 @@ Tests:
 5. Smart Calendar Reminder & Follow-up Scheduling via Calendar API + Gmail API
 """
 
-import asyncio
 import sys
 import unittest
 from pathlib import Path
@@ -18,16 +17,16 @@ if __package__ is None or __package__ == "":
     if _parent_dir not in sys.path:
         sys.path.insert(0, _parent_dir)
 
-from backend.core.database import get_supabase_admin
-from backend.services.transcript import ingest_chunk, create_meeting_record
-from backend.agents.realtime_agent import run_realtime_agent
 from backend.agents.late_join_agent import generate_late_join_recap
-from backend.agents.summary_agent import run_summary_agent
 from backend.agents.memory_agent import run_memory_agent
+from backend.agents.realtime_agent import run_realtime_agent
 from backend.agents.scheduler_agent import run_scheduler_agent
+from backend.agents.summary_agent import run_summary_agent
+from backend.core.database import get_supabase_admin
+from backend.memory.qdrant_client import ensure_collection
+from backend.memory.schemas import MemoryType
 from backend.services.guardrails import validate_summary_output
-from backend.memory.qdrant_client import ensure_collection, search_memories
-from backend.memory.schemas import MemoryFilter, MemoryType
+from backend.services.transcript import create_meeting_record, ingest_chunk
 
 
 class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
@@ -120,10 +119,11 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         """Test Case 4: Grounded cross-meeting natural language query using Qdrant + Gemini."""
         print("\n--- Running Test Case 4: Cross-Meeting Memory Context & Q&A ---")
         # Upsert some test memories
-        from backend.memory.qdrant_client import upsert_memories
-        from backend.memory.embeddings import embed_text
-        from backend.memory.schemas import MemoryPoint
         import uuid
+
+        from backend.memory.embeddings import embed_text
+        from backend.memory.qdrant_client import upsert_memories
+        from backend.memory.schemas import MemoryPoint
 
         text_data = "Rahul confirmed in the last meeting that pricing will be $49/user/month with a 14-day free trial."
         vec = await embed_text(text_data)

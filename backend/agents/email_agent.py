@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, Any, List
 
 from ..core.lyzr_integration import run_lyzr_agent
 
@@ -21,9 +20,9 @@ Do NOT use markdown code blocks. Just return the raw text.
 
 async def draft_followup_email(
     meeting_title: str,
-    attendees: List[str],
+    attendees: list[str],
     summary: str,
-    action_items: List[str]
+    action_items: list[str]
 ) -> str:
     """
     Uses the LLM fallback pipeline to draft a professional follow-up email.

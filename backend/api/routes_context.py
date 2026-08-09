@@ -1,14 +1,15 @@
-import uuid
 import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
-from pydantic import BaseModel
-import PyPDF2
+import uuid
+
 import docx
+import PyPDF2
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
+
 from ..core.auth import get_current_user
-from ..memory.embeddings import embed_query, embed_text
-from ..memory.qdrant_client import upsert_memories, search_memories
-from ..memory.schemas import MemoryPoint, MemoryFilter, MemoryType
-from ..core.llm_fallback import generate_content_with_fallback
+from ..memory.embeddings import embed_text
+from ..memory.qdrant_client import upsert_memories
+from ..memory.schemas import MemoryPoint, MemoryType
 
 router = APIRouter(prefix="/context", tags=["context"])
 
@@ -70,7 +71,7 @@ async def upload_context(
             
         await upsert_memories(points)
         return {"status": "success", "message": f"Successfully uploaded {file.filename} and processed {len(points)} chunks."}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to upload and process document context. Please try again.")
 
 class ContextChatRequest(BaseModel):
@@ -108,7 +109,7 @@ async def chat_context(
                 }
             )
             return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Memory Agent"), "sources": res.get("sources", [])}
-    except Exception as e:
+    except Exception:
         return {"answer": "An error occurred while generating the answer. Please try again."}
 
 class ContextClearRequest(BaseModel):
@@ -119,9 +120,10 @@ async def clear_context(
     req: ContextClearRequest,
     user: dict = Depends(get_current_user)
 ):
-    from ..memory.qdrant_client import get_qdrant
-    from ..core.config import settings
     from qdrant_client.http import models as qmodels
+
+    from ..core.config import settings
+    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         await client.delete(
@@ -135,16 +137,17 @@ async def clear_context(
             )
         )
         return {"status": "success", "message": "Uploaded context cleared successfully."}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to clear uploaded context. Please try again.")
 
 @router.get("/files")
 async def list_all_files(
     user: dict = Depends(get_current_user)
 ):
-    from ..memory.qdrant_client import get_qdrant
-    from ..core.config import settings
     from qdrant_client.http import models as qmodels
+
+    from ..core.config import settings
+    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         results = await client.scroll(
@@ -174,7 +177,7 @@ async def list_all_files(
             file_list.append({"filename": fname, "meeting_id": mid, "date": date, "chunks": v})
             
         return {"files": file_list}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to list files. Please try again.")
 
 @router.get("/files/{meeting_id}")
@@ -182,9 +185,10 @@ async def list_files(
     meeting_id: str,
     user: dict = Depends(get_current_user)
 ):
-    from ..memory.qdrant_client import get_qdrant
-    from ..core.config import settings
     from qdrant_client.http import models as qmodels
+
+    from ..core.config import settings
+    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         results = await client.scroll(
@@ -208,7 +212,7 @@ async def list_files(
             
         file_list = [{"filename": k, "chunks": v} for k, v in files.items()]
         return {"files": file_list}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to list files for meeting. Please try again.")
 
 class ContextClearFileRequest(BaseModel):
@@ -220,9 +224,10 @@ async def clear_file(
     req: ContextClearFileRequest,
     user: dict = Depends(get_current_user)
 ):
-    from ..memory.qdrant_client import get_qdrant
-    from ..core.config import settings
     from qdrant_client.http import models as qmodels
+
+    from ..core.config import settings
+    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         await client.delete(
@@ -237,7 +242,7 @@ async def clear_file(
             )
         )
         return {"status": "success", "message": f"File {req.filename} cleared."}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to clear file. Please try again.")
 
 class ContextRenameFileRequest(BaseModel):
@@ -250,9 +255,10 @@ async def rename_file(
     req: ContextRenameFileRequest,
     user: dict = Depends(get_current_user),
 ):
-    from ..memory.qdrant_client import get_qdrant
-    from ..core.config import settings
     from qdrant_client.http import models as qmodels
+
+    from ..core.config import settings
+    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         # Scroll to get all matching point IDs first
@@ -284,7 +290,7 @@ async def rename_file(
         return {"status": "success", "message": f"File renamed to {req.new_filename}.", "updated": len(point_ids)}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to rename file. Please try again.")
 
 class ContextFileContentRequest(BaseModel):
@@ -296,9 +302,10 @@ async def get_file_content(
     req: ContextFileContentRequest,
     user: dict = Depends(get_current_user)
 ):
-    from ..memory.qdrant_client import get_qdrant
-    from ..core.config import settings
     from qdrant_client.http import models as qmodels
+
+    from ..core.config import settings
+    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         results = await client.scroll(
@@ -318,5 +325,5 @@ async def get_file_content(
         points = results[0]
         content = "\n\n".join([pt.payload.get("text", "") for pt in points])
         return {"content": content}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to retrieve file content. Please try again.")

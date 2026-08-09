@@ -1,9 +1,11 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from .config import settings
 from .utils import is_valid_uuid
+
 try:
-    from supabase import create_client, Client
+    from supabase import Client, create_client
 except Exception:
     Client = object
     def create_client(*args, **kwargs):
@@ -84,7 +86,7 @@ class MemoryTableQuery:
                 if "id" not in row:
                     row["id"] = str(uuid.uuid4())
                 if "created_at" not in row:
-                    row["created_at"] = datetime.now(timezone.utc).isoformat()
+                    row["created_at"] = datetime.now(UTC).isoformat()
                 table_rows.insert(0, row)
             return MockResponse(data=rows_to_insert)
 
@@ -94,10 +96,7 @@ class MemoryTableQuery:
                 match = True
                 for col, val, op in self._filters:
                     row_val = row.get(col)
-                    if op == 'eq' and row_val != val:
-                        match = False
-                        break
-                    elif op == 'like' and (not row_val or val not in str(row_val)):
+                    if op == 'eq' and row_val != val or op == 'like' and (not row_val or val not in str(row_val)):
                         match = False
                         break
                 if match:
@@ -112,10 +111,7 @@ class MemoryTableQuery:
                 match = True
                 for col, val, op in self._filters:
                     row_val = row.get(col)
-                    if op == 'eq' and row_val != val:
-                        match = False
-                        break
-                    elif op == 'like' and (not row_val or val not in str(row_val)):
+                    if op == 'eq' and row_val != val or op == 'like' and (not row_val or val not in str(row_val)):
                         match = False
                         break
                 if match:
@@ -242,7 +238,7 @@ def ensure_meeting_record(supabase, meeting_id: str, org_id: str = "default_org"
         "user_id": user_id,
         "title": final_title,
         "attendees": [],
-        "start_at": datetime.now(timezone.utc).isoformat(),
+        "start_at": datetime.now(UTC).isoformat(),
         "status": "active",
     }
     if clean_code:

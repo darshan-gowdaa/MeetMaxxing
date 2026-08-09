@@ -1,8 +1,8 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+
 from .config import settings
-from .database import get_supabase
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -32,7 +32,7 @@ async def get_current_user(
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
         return {"user_id": user_id, "org_id": org_id, "email": payload.get("email")}
-    except (JWTError, Exception) as e:
+    except (JWTError, Exception):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 

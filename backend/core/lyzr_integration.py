@@ -1,9 +1,10 @@
 import asyncio
-from typing import Optional
+
 import lyzr
+
 from .config import settings
 
-_studio: Optional[lyzr.Studio] = None
+_studio: lyzr.Studio | None = None
 _agent_cache: dict[str, lyzr.Agent] = {}
 
 def get_studio() -> lyzr.Studio:
@@ -51,7 +52,7 @@ async def _llm_direct_fallback(prompt: str) -> tuple[str, str]:
     raise RuntimeError("All LLM providers (Lyzr, Gemini, Groq, OpenRouter, Perplexity) failed or unconfigured.")
 
 
-async def run_lyzr_agent(name: str, prompt: str, session_id: Optional[str] = None, local_tools: Optional[list] = None, knowledge_bases: Optional[list] = None) -> tuple[str, str]:
+async def run_lyzr_agent(name: str, prompt: str, session_id: str | None = None, local_tools: list | None = None, knowledge_bases: list | None = None) -> tuple[str, str]:
     """
     Fetches the agent from Lyzr Studio by name and executes it via Lyzr SDK.
     If Lyzr Studio fails, falls back seamlessly to Gemini Flash / Groq.

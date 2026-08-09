@@ -2,23 +2,25 @@
 Meeting management endpoints — end meeting, trigger post-processing pipeline.
 """
 
-import uuid
-from datetime import datetime, timezone
 import logging
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+import uuid
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 logger = logging.getLogger(__name__)
 from pydantic import BaseModel
+
+from ..agents.orchestrator import AgentTrigger, dispatch
 from ..core.auth import get_current_user
-from ..core.database import get_supabase_admin, get_meeting_record
+from ..core.database import get_meeting_record, get_supabase_admin
 from ..core.redis_client import get_full_transcript
-from ..services.transcript import persist_transcript_to_db
-from ..services.guardrails import validate_summary_output
-from ..agents.orchestrator import dispatch, AgentTrigger
+from ..core.utils import generate_meeting_title, is_valid_uuid
+from ..memory.embeddings import chunk_transcript, embed_batch
 from ..memory.qdrant_client import upsert_memories
-from ..memory.embeddings import embed_batch, chunk_transcript
 from ..memory.schemas import MemoryPoint, MemoryType
-from ..core.utils import is_valid_uuid, generate_meeting_title
+from ..services.guardrails import validate_summary_output
+from ..services.transcript import persist_transcript_to_db
 
 router = APIRouter(prefix="/meeting", tags=["meeting"])
 
@@ -205,7 +207,7 @@ async def _run_end_pipeline(
         final_summary = guardrail_result.cleaned_output
 
         # save to db
-        today = datetime.now(timezone.utc).date().isoformat()
+        today = datetime.now(UTC).date().isoformat()
 
         if target_id:
             final_sum_text = final_summary.get("summary") or final_summary.get("executive_summary") or final_summary.get("recap") or ""

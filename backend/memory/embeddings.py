@@ -1,8 +1,10 @@
-from google import genai
-from google.genai import types as genai_types
-from ..core.config import settings
 import hashlib
 from functools import lru_cache
+
+from google import genai
+from google.genai import types as genai_types
+
+from ..core.config import settings
 
 _client: genai.Client | None = None
 
@@ -16,7 +18,6 @@ def _get_client() -> genai.Client:
 
 async def _fallback_vector(text: str) -> list[float]:
     import collections
-    import hashlib
     import math
     words = text.lower().split()
     freq = collections.Counter(words)

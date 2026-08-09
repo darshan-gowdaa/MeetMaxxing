@@ -1,11 +1,10 @@
 import asyncio
 import hashlib
-import json
-import time
-import random
 import logging
-from dataclasses import dataclass, field
-from typing import Dict, Optional, Any
+import random
+import time
+from dataclasses import dataclass
+from typing import Any
 
 from .config import settings
 
@@ -77,11 +76,11 @@ class IntelligentRateLimiter:
         self.fill_rate = self.rpm / 60.0
         
         # Track per-provider limits (e.g., "gemini", "openrouter", "groq", "perplexity")
-        self.buckets: Dict[str, TokenBucket] = {}
-        self.health: Dict[str, ProviderHealth] = {}
+        self.buckets: dict[str, TokenBucket] = {}
+        self.health: dict[str, ProviderHealth] = {}
         
         # Semantic Response Cache
-        self.cache: Dict[str, CacheEntry] = {}
+        self.cache: dict[str, CacheEntry] = {}
         
         self._cache_lock = asyncio.Lock()
         
@@ -133,10 +132,10 @@ class IntelligentRateLimiter:
         return not self._get_health(provider).can_attempt()
 
     def _generate_cache_key(self, prompt: str, model: str, temperature: float) -> str:
-        data = f"{prompt}:{model}:{temperature}".encode('utf-8')
+        data = f"{prompt}:{model}:{temperature}".encode()
         return hashlib.sha256(data).hexdigest()
 
-    async def get_cached_response(self, prompt: str, model: str, temperature: float) -> Optional[Any]:
+    async def get_cached_response(self, prompt: str, model: str, temperature: float) -> Any | None:
         key = self._generate_cache_key(prompt, model, temperature)
         async with self._cache_lock:
             if key in self.cache:

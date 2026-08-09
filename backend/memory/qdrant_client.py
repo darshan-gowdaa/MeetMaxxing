@@ -7,13 +7,15 @@ Collection: meetmaxxing_memories
   for fast metadata filtering without relying solely on vector similarity
 """
 
-import uuid
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
-from qdrant_client import AsyncQdrantClient, models as qmodels
+from qdrant_client import AsyncQdrantClient
+from qdrant_client import models as qmodels
+
 from ..core.config import settings
-from .schemas import MemoryPoint, MemoryFilter, MemoryResult
+from .schemas import MemoryFilter, MemoryPoint, MemoryResult
 
 _client: AsyncQdrantClient | None = None
 

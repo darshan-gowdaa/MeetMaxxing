@@ -2,14 +2,11 @@
 Docs QA Agent — answers questions about uploaded documents with rich markdown formatting.
 """
 
-import json
 import logging
-from google import genai
-from google.genai import types as genai_types
-from ..core.config import settings
-from ..memory.qdrant_client import search_memories
+
 from ..memory.embeddings import embed_query
-from ..memory.schemas import MemoryFilter, MemoryType
+from ..memory.qdrant_client import search_memories
+from ..memory.schemas import MemoryFilter
 
 logger = logging.getLogger(__name__)
 

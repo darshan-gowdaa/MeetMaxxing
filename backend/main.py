@@ -2,11 +2,11 @@
 MeetMaxxing FastAPI application entry point.
 """
 
-from contextlib import asynccontextmanager
 import sys
+import warnings
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis
@@ -23,12 +23,6 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
 
 # Setup OpenTelemetry
 # resource = Resource.create(attributes={"service.name": "meetmaxxing-api"})
@@ -42,19 +36,19 @@ if __package__ is None or __package__ == "":
         sys.path.insert(0, _parent_dir)
     __package__ = "backend"
 
-from .core.config import settings
-from .memory.qdrant_client import ensure_collection
-from .api.routes_transcript import router as transcript_router
+import threading
+
+from .api.routes_auth import router as auth_router
+from .api.routes_calendar import router as calendar_router
+from .api.routes_context import router as context_router
+from .api.routes_dashboard import router as dashboard_router
 from .api.routes_meeting import router as meeting_router
 from .api.routes_memory import router as memory_router
-from .api.routes_calendar import router as calendar_router
-from .api.routes_dashboard import router as dashboard_router
-from .api.routes_context import router as context_router
-from .api.routes_auth import router as auth_router
-
-
-import threading
+from .api.routes_transcript import router as transcript_router
+from .core.config import settings
 from .grpc_bus.grpc_server import serve as grpc_serve
+from .memory.qdrant_client import ensure_collection
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -99,6 +93,7 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from loguru import logger
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {exc}", exc_info=True)
@@ -138,9 +133,10 @@ async def health():
 @app.get("/api/diagnostics")
 async def diagnostics():
     """Verify ADK (Google GenAI SDK), Lyzr Guardrails, and Qdrant memory status."""
-    import google.genai as genai
     import lyzr
-    from .memory.qdrant_client import get_qdrant, ensure_collection
+    from google import genai
+
+    from .memory.qdrant_client import ensure_collection, get_qdrant
     
     # 1. ADK / GenAI check
     adk_configured = bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY not in ["your-gemini-api-key", "mock-key", ""])

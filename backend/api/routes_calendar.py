@@ -3,12 +3,14 @@ Google Calendar OAuth flow + direct-link endpoints.
 """
 
 import urllib.parse
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Request
+
 from ..core.auth import get_current_user
-from ..core.database import get_supabase_admin, get_meeting_record
-from ..services.calendar_service import get_calendar_auth_url, exchange_calendar_code
 from ..core.config import settings
+from ..core.database import get_meeting_record, get_supabase_admin
+from ..services.calendar_service import exchange_calendar_code, get_calendar_auth_url
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
 
@@ -26,7 +28,7 @@ def _build_gcal_url(
     Anyone can open this link and click Save — zero OAuth required.
     """
     if start_dt is None:
-        start_dt = datetime.now(timezone.utc) + timedelta(days=1)
+        start_dt = datetime.now(UTC) + timedelta(days=1)
         start_dt = start_dt.replace(hour=10, minute=0, second=0, microsecond=0)
 
     end_dt = start_dt + timedelta(minutes=duration_minutes)
@@ -138,7 +140,7 @@ async def calendar_callback(code: str, state: str = ""):
             "message": "Google Calendar connected successfully",
             "token_preview": {"has_refresh": bool(tokens.get("refresh_token"))},
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Calendar auth failed. Please try again or check your credentials.")
 
 

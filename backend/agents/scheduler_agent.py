@@ -9,13 +9,13 @@ Governed by Lyzr structured flow — confirms payload before API call
 """
 
 import json
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 from ..core.config import settings
-from ..services.calendar_service import create_calendar_event
 from ..core.lyzr_integration import run_lyzr_agent
 from ..core.utils import parse_json_clean
+from ..services.calendar_service import create_calendar_event
 
 logger = logging.getLogger(__name__)
 
@@ -142,4 +142,4 @@ Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for the `start_date
         }
     except Exception as e:
         logger.error(f"[Scheduler Agent] Failed to create calendar event: {e}")
-        return {"scheduled": False, "reason": f"Calendar API error: {str(e)}"}
+        return {"scheduled": False, "reason": f"Calendar API error: {e!s}"}

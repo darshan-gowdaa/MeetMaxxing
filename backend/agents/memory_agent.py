@@ -8,13 +8,10 @@ Output:  {answer, sources: [{meeting_id, date, excerpt, speaker}]}
 Governed by Lyzr guardrail — answer must cite sources
 """
 
-import json
 import logging
-from google import genai
-from google.genai import types as genai_types
-from ..core.config import settings
-from ..memory.qdrant_client import search_memories
+
 from ..memory.embeddings import embed_query
+from ..memory.qdrant_client import search_memories
 from ..memory.schemas import MemoryFilter, MemoryType
 
 logger = logging.getLogger(__name__)

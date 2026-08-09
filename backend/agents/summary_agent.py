@@ -8,10 +8,8 @@ Model:   Gemini Flash (via fallback)
 Governed by Lyzr full guardrail + eval (groundedness check)
 """
 
-import json
 import logging
-from typing import List, Dict, Any
-from ..core.config import settings
+
 from ..core.redis_client import get_full_transcript
 from ..core.utils import parse_json_clean
 
@@ -119,7 +117,7 @@ def _format_full_transcript(utterances: list[dict]) -> str:
         lines.append(f"[{mins:02d}:{secs:02d}] {speaker}: {text}")
     return "\n".join(lines) if lines else "No transcript available."
 
-def _chunk_transcript(lines: List[str], max_length: int = 15000) -> List[str]:
+def _chunk_transcript(lines: list[str], max_length: int = 15000) -> list[str]:
     chunks = []
     current_chunk = []
     current_length = 0

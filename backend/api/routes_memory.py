@@ -4,8 +4,9 @@ Cross-meeting memory query endpoint.
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from ..core.auth import get_current_user
+
 from ..agents.memory_agent import run_memory_agent
+from ..core.auth import get_current_user
 
 router = APIRouter(prefix="/memory", tags=["memory"])
 

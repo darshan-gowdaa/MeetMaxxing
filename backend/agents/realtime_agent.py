@@ -8,11 +8,8 @@ Model:   Gemini Flash (fast + cheap for frequent calls)
 Governed by Lyzr light guardrail
 """
 
-import json
 import time
-import hashlib
-from google import genai
-from google.genai import types as genai_types
+
 from ..core.config import settings
 from ..core.redis_client import get_transcript_window
 from ..core.utils import parse_json_clean
@@ -121,9 +118,9 @@ Meeting context:
     # Fetch uploaded context documents if any
     uploaded_context = ""
     try:
+        from ..memory.embeddings import embed_query
         from ..memory.qdrant_client import search_memories
         from ..memory.schemas import MemoryFilter, MemoryType
-        from ..memory.embeddings import embed_query
         q_vec = await embed_query("meeting context overview")
         mem_filter = MemoryFilter(
             org_id="22222222-2222-4222-8222-222222222222", # dev org id fallback
@@ -147,7 +144,7 @@ New transcript utterances:
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
-        print(f"[MeetMaxxing LLM Pipeline] Generating real-time insights with Fallback LLM...")
+        print("[MeetMaxxing LLM Pipeline] Generating real-time insights with Fallback LLM...")
         raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
         result = parse_json_clean(raw or "{}")
         result["powered_by"] = powered_by

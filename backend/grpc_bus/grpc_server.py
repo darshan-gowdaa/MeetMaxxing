@@ -5,18 +5,17 @@ Handles async task dispatch over gRPC.
 import json
 import logging
 from concurrent import futures
-import grpc
-from . import grpc_bus_pb2
-from . import grpc_bus_pb2_grpc
 
+import grpc
+
+from ..agents.email_agent import run_email_agent
+from ..agents.late_join_agent import run_late_join_agent
 from ..agents.memory_agent import run_memory_agent
+from ..agents.realtime_agent import run_realtime_agent
 from ..agents.scheduler_agent import run_scheduler_agent
 from ..agents.summary_agent import run_summary_agent
-from ..agents.realtime_agent import run_realtime_agent
-from ..agents.email_agent import run_email_agent
-
-from ..agents.late_join_agent import run_late_join_agent
 from ..agents.transcription_agent import process_transcript_chunk
+from . import grpc_bus_pb2, grpc_bus_pb2_grpc
 
 logger = logging.getLogger(__name__)
 

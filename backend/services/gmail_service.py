@@ -4,12 +4,14 @@ Handles OAuth2 token management and email sending for smart calendar reminders a
 """
 
 import base64
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from google.oauth2.credentials import Credentials
+from email.mime.text import MIMEText
+
 from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
 from ..core.config import settings
 
 

@@ -3,8 +3,9 @@ Dashboard endpoints — meeting list, summaries, action items.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+
 from ..core.auth import get_current_user
-from ..core.database import get_supabase_admin, get_meeting_record
+from ..core.database import get_meeting_record, get_supabase_admin
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 

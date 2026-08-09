@@ -4,11 +4,11 @@ into a consistent speaker-tagged, timestamped format.
 """
 
 import uuid
-from datetime import datetime, timezone
-from ..core.redis_client import append_transcript_chunk
+from datetime import UTC, datetime
+
 from ..core.database import get_supabase_admin
-from ..agents.orchestrator import dispatch, AgentTrigger
-from ..core.utils import is_valid_uuid, generate_meeting_title
+from ..core.redis_client import append_transcript_chunk
+from ..core.utils import generate_meeting_title, is_valid_uuid
 
 
 def normalize_chunk(raw: dict) -> dict:
@@ -32,7 +32,7 @@ def normalize_chunk(raw: dict) -> dict:
         "timestamp_ms": int(raw.get("timestamp_ms", 0)),
         "meeting_id": raw.get("meeting_id", ""),
         "platform": raw.get("platform", "google_meet"),
-        "ingested_at": datetime.now(timezone.utc).isoformat(),
+        "ingested_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -69,7 +69,7 @@ async def persist_transcript_to_db(meeting_id: str, utterances: list[dict]) -> N
     supabase.table("meetings").update(
         {
             "transcript_data": utterances,
-            "end_at": datetime.now(timezone.utc).isoformat(),
+            "end_at": datetime.now(UTC).isoformat(),
         }
     ).eq("id", meeting_id).execute()
 
@@ -96,7 +96,7 @@ async def create_meeting_record(
         "user_id": user_id,
         "title": final_title,
         "attendees": attendees,
-        "start_at": datetime.now(timezone.utc).isoformat(),
+        "start_at": datetime.now(UTC).isoformat(),
         "status": "active",
     }
     if clean_code:

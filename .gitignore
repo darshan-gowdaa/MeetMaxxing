@@ -63,3 +63,4 @@ backend/qdrant_data/
 scripts/
 *.zip!extension/dist/
 .vercel
+.env*

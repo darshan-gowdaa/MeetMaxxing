@@ -3,12 +3,10 @@ ADK Orchestrator — routes triggers to appropriate sub-agents via gRPC Task Bus
 Acts as the root agent managing all specialist agents using the A2A stub.
 """
 
-from enum import Enum
 import json
-import grpc.aio
 import logging
-from ..grpc_bus import grpc_bus_pb2
-from ..grpc_bus import grpc_bus_pb2_grpc
+from enum import Enum
+
 from ..core.utils import parse_json_clean
 
 logger = logging.getLogger(__name__)
