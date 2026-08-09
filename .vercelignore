@@ -1,0 +1,8 @@
+.venv
+qdrant_data
+node_modules
+supabase
+docs
+extension
+meetmaxxing-firefox.zip
+scripts

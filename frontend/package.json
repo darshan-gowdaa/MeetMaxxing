@@ -13,6 +13,7 @@
     "@remixicon/react": "^4.9.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "@vercel/analytics": "^2.0.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.42.2",
     "next": "^15.0.3",
