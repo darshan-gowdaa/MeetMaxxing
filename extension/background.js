@@ -26,8 +26,11 @@ chrome.storage.local.get(["authToken"], (r) => {
 });
 
 // Configure side panel to open on action icon click by default across all tabs
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
-chrome.sidePanel.setOptions({ path: "dist/index.html", enabled: true }).catch(() => {});
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.id) {
+    chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_PANEL" }).catch(() => {});
+  }
+});
 
 // Enable side panel on Google Meet room tabs (but don't force open)
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
@@ -38,7 +41,7 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url?.includes("meet.google.com")) {
-    chrome.sidePanel.setOptions({ tabId, path: "dist/index.html", enabled: true }).catch(() => {});
+    // We no longer use native sidePanel
   }
   if (changeInfo.url && activeMeetTabId === tabId && !changeInfo.url.includes("meet.google.com")) {
     handleMeetingEnd(tabId);
@@ -165,7 +168,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Enable side panel on meeting start
     const tabId = sender?.tab?.id || activeMeetTabId;
     if (tabId) {
-      chrome.sidePanel.setOptions({ tabId, path: "dist/index.html", enabled: true }).catch(() => {});
+      chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }).catch(() => {});
     }
 
     chrome.storage.local.get(["meetCodeMap"], (res) => {
@@ -222,12 +225,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "ENSURE_SIDE_PANEL_OPEN") {
     const tabId = sender?.tab?.id || activeMeetTabId;
     if (tabId) {
-      chrome.sidePanel.setOptions({ tabId, path: "dist/index.html", enabled: true }).catch(() => {});
-      try {
-        if (sender?.tab?.windowId) {
-          chrome.sidePanel.open({ windowId: sender.tab.windowId }).catch(() => {});
-        }
-      } catch (e) {}
+      chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }).catch(() => {});
     }
     return false;
   }

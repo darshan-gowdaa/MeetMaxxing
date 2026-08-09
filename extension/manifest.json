@@ -12,7 +12,6 @@
     "activeTab",
     "tabs",
     "storage",
-    "sidePanel",
     "identity",
     "offscreen",
     "tabCapture"
@@ -34,6 +33,7 @@
     {
       "matches": ["https://meet.google.com/*"],
       "js": ["config.js", "content.js"],
+      "css": ["styles/injected-panel.css"],
       "run_at": "document_end"
     },
     {
@@ -45,9 +45,7 @@
       "run_at": "document_idle"
     }
   ],
-  "side_panel": {
-    "default_path": "dist/index.html"
-  },
+
   "action": {
     "default_title": "MeetMaxxing Side Panel"
   },

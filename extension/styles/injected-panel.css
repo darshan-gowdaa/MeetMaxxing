@@ -1,9 +1,9 @@
 .mm-panel {
   position: fixed;
   right: 0;
-  top: 60px;
+  top: 0;
   width: 380px;
-  height: calc(100vh - 60px);
+  height: 100vh;
   background: #09090b;
   border-left: 1px solid #27272a;
   transition: width 0.3s ease;
@@ -54,4 +54,23 @@
   border: none;
   background: transparent;
   overflow: hidden;
+}
+
+/* 
+  Responsive embedded layout 
+  By transforming the body, we create a containing block for all Google Meet fixed elements.
+  We then squish the body so it leaves space for our side panel without covering the UI.
+*/
+html.mm-panel-open body {
+  width: calc(100vw - 380px) !important;
+  transform: translateZ(0) !important;
+  transition: width 0.3s ease !important;
+  overflow-x: hidden !important;
+}
+
+html.mm-panel-collapsed body {
+  width: calc(100vw - 40px) !important;
+  transform: translateZ(0) !important;
+  transition: width 0.3s ease !important;
+  overflow-x: hidden !important;
 }

@@ -760,7 +760,7 @@ function injectMeetMaxxingPanel() {
   
   panel.appendChild(toggleTab);
   panel.appendChild(iframe);
-  document.body.appendChild(panel);
+  document.documentElement.appendChild(panel);
   
   // Toggle logic
   let isCollapsed = localStorage.getItem('mm_panel_collapsed') === 'true';
@@ -769,9 +769,13 @@ function injectMeetMaxxingPanel() {
     if (isCollapsed) {
       panel.classList.add('mm-collapsed');
       toggleTab.querySelector('.mm-toggle-icon').textContent = '▶';
+      document.documentElement.classList.remove('mm-panel-open');
+      document.documentElement.classList.add('mm-panel-collapsed');
     } else {
       panel.classList.remove('mm-collapsed');
       toggleTab.querySelector('.mm-toggle-icon').textContent = '◀';
+      document.documentElement.classList.remove('mm-panel-collapsed');
+      document.documentElement.classList.add('mm-panel-open');
     }
     localStorage.setItem('mm_panel_collapsed', String(isCollapsed));
   }
