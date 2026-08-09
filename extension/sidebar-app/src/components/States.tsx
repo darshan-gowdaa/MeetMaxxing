@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getWebUrl } from "../config";
 
 const openedMeetingIds = new Set<string>();
 
@@ -27,7 +28,7 @@ export function IdleState() {
         </div>
       </div>
       <div className="w-full mt-3">
-        <a href={(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"} target="_blank" rel="noreferrer" className="md3-btn md3-btn-secondary w-full no-underline !py-3 !px-4 !text-[13px] active:scale-[0.97]">
+        <a href={getWebUrl()} target="_blank" rel="noreferrer" className="md3-btn md3-btn-secondary w-full no-underline !py-3 !px-4 !text-[13px] active:scale-[0.97]">
           <i className="ri-layout-masonry-line"></i> Open Dashboard
         </a>
       </div>
@@ -41,7 +42,7 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string, mee
   const openDashboard = () => {
     if (!meetingId || openedMeetingIds.has(meetingId)) return;
     openedMeetingIds.add(meetingId);
-    window.open(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"}/meetings/${meetingId}`, "_blank");
+    window.open(`${getWebUrl()}/meetings/${meetingId}`, "_blank");
   };
 
   const handleOpenClick = (e: React.MouseEvent) => {
@@ -87,7 +88,7 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string, mee
 
       <div className="flex flex-col items-center gap-4 w-full max-w-[260px] mt-4">
         <a
-          href={`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"}/meetings/${meetingId}`}
+          href={`${getWebUrl()}/meetings/${meetingId}`}
           target="_blank"
           rel="noreferrer"
           onClick={handleOpenClick}

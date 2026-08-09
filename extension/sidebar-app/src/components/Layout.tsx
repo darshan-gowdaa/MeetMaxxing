@@ -1,4 +1,5 @@
 import { RiAlertLine as ShieldAlert } from "@remixicon/react";
+import { getWebUrl } from "../config";
 
 export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) {
   return (
@@ -34,7 +35,7 @@ export function Footer({ meetingId, isEnded }: any) {
   return (
     <footer className="p-3 mx-3 mb-3 mt-1 border border-zinc-800/50 bg-zinc-900/60 backdrop-blur-2xl flex justify-center shrink-0 shadow-xl rounded-[28px] transition-all">
       <a 
-        href={(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"} 
+        href={getWebUrl()} 
         target="_blank" 
         rel="noreferrer" 
         className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-300 text-[13px] font-bold tracking-wide transition-all hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400 no-underline group active:scale-[0.97]"

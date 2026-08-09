@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import { getWebUrl } from "../config";
 
 export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { meetingId: string, pendingQuery?: string, clearPendingQuery?: () => void }) {
   const [uploading, setUploading] = useState(false);
@@ -197,7 +198,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   const handleChat = () => submitQuery(query);
 
   const handleSettingsClick = () => {
-    window.open(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"}/context`, "_blank");
+    window.open(`${getWebUrl()}/context`, "_blank");
   };
 
   return (
@@ -351,7 +352,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                       <div className="flex flex-wrap gap-1.5 mt-1 pt-2 border-t border-zinc-700/60">
                         <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mr-1 flex items-center">Sources</span>
                     {Array.from(new Set(msg.sources.map((s:any) => s.speaker_name))).map((sourceName: any, idx: number) => (
-                          <a key={idx} href={`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app"}/context?view=${encodeURIComponent(sourceName || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={sourceName || "Context Document"}>
+                          <a key={idx} href={`${getWebUrl()}/context?view=${encodeURIComponent(sourceName || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={sourceName || "Context Document"}>
                              <i className="ri-file-text-line"></i> {sourceName ? (sourceName.length > 18 ? sourceName.substring(0, 18) + '...' : sourceName) : "Document"}
                           </a>
                         ))}

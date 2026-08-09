@@ -1,10 +1,10 @@
 import { RiChromeFill, RiArrowRightSLine } from "@remixicon/react";
+import { getWebUrl } from "../config";
 
 
 export function LoginPrompt() {
   const handleOpenAuth = () => {
-    const webUrl = (window as any).MEETMAXXING_CONFIG?.BASE_URL_WEB || "https://meetmaxxing.vercel.app";
-    window.open(`${webUrl}/extension-auth`, "_blank");
+    window.open(`${getWebUrl()}/extension-auth`, "_blank");
   };
 
   return (
