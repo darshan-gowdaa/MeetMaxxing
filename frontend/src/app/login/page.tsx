@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { RiGoogleFill, RiMailLine, RiLockPasswordLine, RiSparkling2Fill } from "@remixicon/react";
 
@@ -16,12 +17,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [origin, setOrigin] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
 
-  const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') || '/' : '/';
+  let next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') || '/' : '/';
+  if (!next.startsWith("/") || next.startsWith("//")) next = "/";
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -47,13 +50,13 @@ export default function LoginPage() {
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
-      else window.location.href = next;
+      else router.push(next);
     } else if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
-          emailRedirectTo: `${origin}/auth/callback`
+          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`
         }
       });
       if (error) setError(error.message);

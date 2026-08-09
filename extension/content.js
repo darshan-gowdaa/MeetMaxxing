@@ -191,8 +191,8 @@ function extractUnrepeatedText(speaker, newText) {
   if (recentSentText.includes(newText)) return "";
   
   // Suffix-prefix word overlap to handle mid-sentence flushes and corrections
-  const oldWords = recentSentText.split(/\\s+/);
-  const newWords = newText.split(/\\s+/);
+  const oldWords = recentSentText.split(/\s+/);
+  const newWords = newText.split(/\s+/);
   
   let maxOverlap = 0;
   const minLen = Math.min(oldWords.length, newWords.length);
@@ -725,7 +725,7 @@ new MutationObserver(() => {
 // Injects a collapsible side panel into Google Meet DOM for Firefox (and Chrome fallback)
 // Firefox has no sidePanel API so we inject our own.
 
-const IS_FIREFOX = typeof InstallTrigger !== 'undefined' || navigator.userAgent.includes('Firefox');
+const IS_FIREFOX = navigator.userAgent.includes('Firefox');
 
 function injectMeetMaxxingPanel() {
   // Check if already injected

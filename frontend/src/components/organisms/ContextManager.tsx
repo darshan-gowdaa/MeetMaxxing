@@ -84,7 +84,10 @@ export function ContextManager({ meetingId }: { meetingId: string }) {
                 type="file" 
                 className="hidden" 
                 accept=".pdf,.docx,.txt"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  setFile(e.target.files?.[0] || null);
+                  setUploadSuccess(false);
+                }}
               />
               <FileText className="w-6 h-6 text-text-muted mb-2" />
               <span className="text-[12px] font-medium text-text">

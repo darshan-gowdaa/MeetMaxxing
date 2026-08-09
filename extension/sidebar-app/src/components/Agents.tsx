@@ -13,7 +13,7 @@ function PulsePlaceholder({ lines = 3, color = "zinc" }: { lines?: number; color
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className={`h-2.5 rounded-full bg-${color}-700/40 ${widths[i % widths.length]}`}
+          className={`h-2.5 rounded-full ${color === 'blue' ? 'bg-blue-700/40' : color === 'emerald' ? 'bg-emerald-700/40' : 'bg-zinc-700/40'} ${widths[i % widths.length]}`}
           style={{ animationDelay: `${i * 120}ms` }}
         />
       ))}
@@ -128,10 +128,8 @@ export function LiveTranscript({ transcriptLines, onClear }: { transcriptLines: 
                   {line.timestamp && line.timestamp > 0 && (
                     <span className="text-[8px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 font-mono border border-zinc-700/50">
                       {(() => {
-                        const h = Math.floor(line.timestamp / 3600000);
-                        const m = Math.floor((line.timestamp % 3600000) / 60000);
-                        const s = Math.floor((line.timestamp % 60000) / 1000);
-                        return `${h > 0 ? String(h).padStart(2, "0") + ":" : ""}${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+                        const d = new Date(line.timestamp || 0);
+                        return d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
                       })()}
                     </span>
                   )}
@@ -177,7 +175,9 @@ export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: st
               className="p-4 rounded-[28px] bg-zinc-800/60 border border-zinc-700/50 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/20 hover:border-blue-500/40 text-[13px] text-zinc-200 transition-all duration-300 group"
             >
               <div className="flex justify-between items-start gap-3">
-                <span className="leading-relaxed cursor-pointer active:opacity-70" onClick={() => copyToClipboard(sug, () => { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); })}>{sug}</span>
+                <div className="leading-relaxed cursor-pointer active:opacity-70 markdown-body prose prose-invert prose-sm max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0 whitespace-pre-wrap" onClick={() => copyToClipboard(sug, () => { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); })}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{sug}</ReactMarkdown>
+                </div>
                 <button
                   onClick={() => copyToClipboard(sug, () => { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); })}
                   className="w-7 h-7 flex items-center justify-center rounded-xl bg-zinc-700/50 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 active:scale-95 transition-all shrink-0"

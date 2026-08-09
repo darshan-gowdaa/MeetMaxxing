@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import { getWebUrl } from "../config";
 
-export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { meetingId: string, pendingQuery?: string, clearPendingQuery?: () => void }) {
+export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQuery }: { meetingId: string, authToken?: string, pendingQuery?: string, clearPendingQuery?: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,7 +25,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
   const fetchFiles = async () => {
     try {
       const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/files`, {
-        headers: { "Authorization": "Bearer " }
+        headers: { "Authorization": `Bearer ${authToken}` }
       });
       if (res.ok) {
         const data = await res.json();
@@ -113,7 +113,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
       try {
         const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/upload`, {
           method: "POST",
-          headers: { "Authorization": "Bearer " },
+          headers: { "Authorization": `Bearer ${authToken}` },
           body: formData
         });
         if (res.ok) {
@@ -157,7 +157,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
       
       const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
         body: JSON.stringify(reqBody),
         signal: abortControllerRef.current.signal
       });
@@ -254,11 +254,11 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                     <i className="ri-database-2-line text-[14px]"></i> All Meeting Context
                   </label>
                   <div className="h-[1px] bg-zinc-700 my-1 mx-3"></div>
-                  {availableFiles.filter(f => f.filename.toLowerCase().includes(fileSearch.toLowerCase())).map(f => {
+                  {availableFiles.filter(f => f.filename.toLowerCase().includes(fileSearch.toLowerCase())).map((f, idx) => {
                     const isSelected = selectedTargetFiles.includes(f.filename);
                     return (
                       <label
-                        key={f.filename}
+                        key={`${f.filename}-${idx}`}
                         className={`flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-xl cursor-pointer transition-colors truncate ${
                           isSelected ? 'bg-[#3A3F45] text-zinc-100' : 'text-zinc-300 hover:bg-[#32363B]'
                         }`}
@@ -351,7 +351,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
                     {msg.sources && msg.sources.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1 pt-2 border-t border-zinc-700/60">
                         <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mr-1 flex items-center">Sources</span>
-                    {Array.from(new Set(msg.sources.map((s:any) => s.speaker_name))).map((sourceName: any, idx: number) => (
+                    {Array.from(new Set(msg.sources.map((s:any) => s.filename || s.doc_name || s.title || s.speaker_name || "Document"))).map((sourceName: any, idx: number) => (
                           <a key={idx} href={`${getWebUrl()}/context?view=${encodeURIComponent(sourceName || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={sourceName || "Context Document"}>
                              <i className="ri-file-text-line"></i> {sourceName ? (sourceName.length > 18 ? sourceName.substring(0, 18) + '...' : sourceName) : "Document"}
                           </a>
@@ -417,7 +417,7 @@ export function ContextAgent({ meetingId, pendingQuery, clearPendingQuery }: { m
               value={query} 
               onChange={e => {
                 setQuery(e.target.value);
-                e.target.style.height = 'auto';
+                if (inputRef.current) inputRef.current.style.height = 'auto';
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }} 
               onKeyDown={e => {

@@ -70,8 +70,9 @@ export default function Dashboard() {
   // this deletes multiple things at once!! very dangerous
   const handleMultiDelete = async (selectedMeetings: Meeting[]) => {
     try {
-      await Promise.all(selectedMeetings.map(m => deleteMeeting(m.id)));
-      setMeetings(prev => prev.filter(m => !selectedMeetings.some(s => s.id === m.id)));
+      const results = await Promise.allSettled(selectedMeetings.map(m => deleteMeeting(m.id)));
+      const succeededIds = selectedMeetings.filter((_, i) => results[i].status === 'fulfilled').map(m => m.id);
+      setMeetings(prev => prev.filter(m => !succeededIds.includes(m.id)));
     } catch (e) {
       console.error(e);
     }
@@ -84,8 +85,8 @@ export default function Dashboard() {
     try {
       await deleteMeeting(deleteTarget.id);
       setMeetings((prev) => prev.filter((m) => m.id !== deleteTarget.id));
-    } catch {
-      // optimistic UI rollback not needed here — just close dialog
+    } catch (e: any) {
+      setError(e.message || "Failed to delete meeting");
     } finally {
       setDeleteBusy(false);
       setDeleteTarget(null);
@@ -101,17 +102,21 @@ export default function Dashboard() {
       setMeetings((prev) =>
         prev.map((m) => (m.id === editTarget.id ? { ...m, title } : m))
       );
-    } catch {
-      // ignore — optimistic already applied to title
+    } catch (e: any) {
+      setError(e.message || "Failed to update meeting");
     } finally {
       setEditBusy(false);
       setEditTarget(null);
     }
   };
 
-  const totalMinutes = meetings.reduce((acc, m) => 
-    acc + (m.start_at && m.end_at ? (new Date(m.end_at).getTime() - new Date(m.start_at).getTime()) / 60000 : 0)
-  , 0);
+  const totalMinutes = meetings.reduce((acc, m) => {
+    if (!m.start_at || !m.end_at) return acc;
+    const start = new Date(m.start_at).getTime();
+    const end = new Date(m.end_at).getTime();
+    if (isNaN(start) || isNaN(end)) return acc;
+    return acc + (end - start) / 60000;
+  }, 0);
 
   const formatTime = (mins: number) => {
     const h = Math.floor(mins / 60), m = Math.floor(mins % 60);

@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { getWebUrl } from "../config";
 
-const openedMeetingIds = new Set<string>();
-
 export function IdleState() {
   return (
     <div id="idle-state" className="flex flex-col items-center justify-center flex-1 h-full w-full gap-5 text-center p-6 bg-zinc-900/60 rounded-[32px] border border-zinc-800/80 backdrop-blur-2xl shadow-xl box-border">
@@ -37,11 +35,11 @@ export function IdleState() {
 }
 
 export function EndedState({ meetingId, meetingTitle }: { meetingId: string, meetingTitle: string }) {
-  const [countdown, setCountdown] = useState(5);
+  const [opened, setOpened] = useState(false);
 
   const openDashboard = () => {
-    if (!meetingId || openedMeetingIds.has(meetingId)) return;
-    openedMeetingIds.add(meetingId);
+    if (!meetingId || opened) return;
+    setOpened(true);
     window.open(`${getWebUrl()}/meetings/${meetingId}`, "_blank");
   };
 
@@ -49,16 +47,6 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string, mee
     e.preventDefault();
     openDashboard();
   };
-
-  useEffect(() => {
-    if (openedMeetingIds.has(meetingId)) return;
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      openDashboard();
-    }
-  }, [countdown, meetingId]);
 
   return (
     <div id="ended-state" className="flex flex-col items-center justify-center flex-1 h-full w-full gap-6 p-8 text-center bg-zinc-900/60 rounded-[40px] border border-zinc-800/80 backdrop-blur-2xl shadow-2xl box-border">
@@ -98,7 +86,7 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string, mee
         </a>
         <div className="w-full h-[1px] bg-zinc-800/50 my-1"></div>
         <p id="meeting-title-hint" className="text-[12.5px] text-zinc-500 font-bold tracking-wide w-full truncate">
-          {countdown > 0 && !openedMeetingIds.has(meetingId) ? `Auto-opening in ${countdown}s...` : `Opened: ${meetingTitle}`}
+          {opened ? `Opened: ${meetingTitle}` : `Ended: ${meetingTitle}`}
         </p>
       </div>
     </div>

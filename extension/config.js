@@ -17,6 +17,12 @@ const MEETMAXXING_CONFIG = {
   BASE_URL_WEB: _isDevHost ? "http://localhost:3000" : "https://meetmaxxing.vercel.app",
   WS_URL: _isDevHost ? "ws://localhost:8000" : "wss://meetmaxxing-api.onrender.com",
 };
-window.MEETMAXXING_CONFIG = MEETMAXXING_CONFIG;
-window.MEETMIND_CONFIG = MEETMAXXING_CONFIG;
 const MEETMIND_CONFIG = MEETMAXXING_CONFIG;
+if (typeof globalThis !== 'undefined') {
+  globalThis.MEETMAXXING_CONFIG = MEETMAXXING_CONFIG;
+  globalThis.MEETMIND_CONFIG = MEETMAXXING_CONFIG;
+}
+if (typeof window !== 'undefined') {
+  window.MEETMAXXING_CONFIG = MEETMAXXING_CONFIG;
+  window.MEETMIND_CONFIG = MEETMAXXING_CONFIG;
+}

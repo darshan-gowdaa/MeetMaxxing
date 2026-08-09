@@ -72,8 +72,16 @@ async function refreshAuthToken() {
   });
 }
 
-// Proactively refresh token every 45 minutes (tokens expire after 1 hour)
-setInterval(() => refreshAuthToken(), 45 * 60 * 1000);
+// Refresh token every 45min using alarms (survives service worker sleep in MV3)
+if (chrome.alarms) {
+  chrome.alarms.create('refreshToken', { periodInMinutes: 45 });
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'refreshToken') refreshAuthToken();
+  });
+} else {
+  // Fallback for MV2 / Firefox
+  setInterval(() => refreshAuthToken(), 45 * 60 * 1000);
+}
 
 // Fetch with automatic 401 retry after token refresh
 async function authFetch(url, options = {}) {
@@ -90,11 +98,14 @@ async function authFetch(url, options = {}) {
 }
 
 // Configure side panel to open on action icon click by default across all tabs
-chrome.action.onClicked.addListener((tab) => {
-  if (tab.id) {
-    chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_PANEL" }).catch(() => {});
-  }
-});
+const _actionApi = chrome.action || chrome.browserAction;
+if (_actionApi && _actionApi.onClicked) {
+  _actionApi.onClicked.addListener((tab) => {
+    if (tab.id) {
+      chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_PANEL" }).catch(() => {});
+    }
+  });
+}
 
 // Enable side panel on Google Meet room tabs (but don't force open)
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
@@ -168,11 +179,15 @@ function connectWebSocket(meetingId) {
 
 // ─── Tab Audio Capture (all participants) ──────────────────────────────────────
 async function ensureOffscreenDocument() {
-  const existingContexts = await chrome.runtime.getContexts({
-    contextTypes: ["OFFSCREEN_DOCUMENT"],
-  });
-  if (existingContexts.length > 0) return;
+  // chrome.runtime.getContexts is MV3-only (Chrome 116+)
+  if (chrome.runtime.getContexts) {
+    const existingContexts = await chrome.runtime.getContexts({
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
+    });
+    if (existingContexts.length > 0) return;
+  }
 
+  if (!chrome.offscreen) return; // MV2 / Firefox — skip offscreen
   await chrome.offscreen.createDocument({
     url: "offscreen.html",
     reasons: ["USER_MEDIA"],
@@ -475,7 +490,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "GET_CONFIG") { sendResponse(MEETMAXXING_CONFIG); return false; }
   if (msg.type === "MEETING_STARTED") {
     activeMeetingId = msg.meetingId;
-    activeMeetTabId = sender.tab ? sender.tab.id : null;
+    activeMeetTabId = sender?.tab?.id ?? null;
     chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: msg.title });
     // Don't re-broadcast — background already sent MEETING_STARTED upstream
     sendResponse({ success: true }); return false;

@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  let next = searchParams.get("next") ?? "/";
+  if (!next.startsWith("/") || next.startsWith("//")) {
+    next = "/";
+  }
 
   if (code) {
     let supabaseResponse = NextResponse.redirect(`${origin}${next}`);
@@ -34,8 +37,12 @@ export async function GET(request: Request) {
       }
     );
 
-    await supabase.auth.exchangeCodeForSession(code);
-    return supabaseResponse;
+    try {
+      await supabase.auth.exchangeCodeForSession(code);
+      return supabaseResponse;
+    } catch (e) {
+      return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+    }
   }
 
   return NextResponse.redirect(`${origin}/login?error=Invalid+callback`);

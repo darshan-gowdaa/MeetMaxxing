@@ -7,7 +7,10 @@ export default function AnimatedNumber({ value, formatFn }: { value: number, for
 
   useEffect(() => {
     const end = value;
-    if (0 === end) return;
+    if (0 === end) {
+      setDisplayValue(0);
+      return;
+    }
     
     const duration = 1000;
     let startTime: number | null = null;

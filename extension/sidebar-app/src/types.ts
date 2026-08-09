@@ -9,7 +9,7 @@ export interface CopilotUpdate {
   meeting_id?: string;
   suggestions?: string[];
   risks?: string[];
-  next_question?: string;
+  next_question?: string | string[];
   recap?: string;
   error?: string;
   status?: string;

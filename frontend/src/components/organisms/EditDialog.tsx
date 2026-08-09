@@ -57,7 +57,7 @@ export default function EditDialog({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && title.trim()) onSave(title.trim()); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && title.trim()) { e.preventDefault(); onSave(title.trim()); } }}
           className={`w-full h-12 bg-surface2 border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none spring-colors mb-1 ${
             error ? "border-risk focus:border-risk" : "border-border focus:border-primary"
           }`}

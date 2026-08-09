@@ -51,7 +51,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   }, [id]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    const timeoutRef = { current: undefined as NodeJS.Timeout | undefined };
     let isMounted = true;
     
     const poll = async () => {
@@ -67,7 +67,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           setCalendarState("success");
 
         if (data.status === "active" || data.status === "processing") {
-          timeoutId = setTimeout(poll, 3000);
+          timeoutRef.current = setTimeout(poll, 3000);
         }
       } catch (err: unknown) {
         if (!isMounted) return;
@@ -83,7 +83,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [id]);
 
@@ -152,9 +152,11 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = JSON.parse(await res.text());
-        const url = data.gcal_url || data.html_link;
-        if (url) { window.open(url, "_blank"); setCalendarState("success"); return; }
+        try {
+          const data = await res.json();
+          const url = data.gcal_url || data.html_link;
+          if (url) { window.open(url, "_blank"); setCalendarState("success"); return; }
+        } catch {}
       }
     } catch { /* fall through */ }
     window.open(buildGcalUrl(), "_blank");
@@ -171,11 +173,17 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="min-h-screen bg-bg flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
-          </div>
+          {errorMsg ? (
+            <div className="w-16 h-16 rounded-full bg-risk-container flex items-center justify-center mb-2">
+              <span className="text-risk font-bold text-2xl">!</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
+              <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
+              <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
+            </div>
+          )}
           <div className="flex flex-col items-center gap-2">
             <p className="text-[14px] text-text-muted font-medium tracking-wide">
               {errorMsg ? "Failed to load meeting" : "AI is processing this meeting transcript"}

@@ -11,7 +11,7 @@ except Exception:
     def create_client(*args, **kwargs):
         raise RuntimeError("supabase module not installed")
 
-_client: any = None
+_client: Client | None = None
 _is_memory_supabase: bool | None = None
 
 # In-memory database fallback (empty, no demo data)

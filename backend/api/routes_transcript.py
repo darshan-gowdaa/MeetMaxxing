@@ -151,7 +151,7 @@ async def ingest_audio_chunk(
             except Exception as groq_err:
                 print(f"[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper exception: {groq_err}")
         if not transcript_text:
-            return {"status": "skipped", "reason": str(e), "copilot_update": None}
+            return {"status": "skipped", "reason": str(locals().get('e', 'Transcription failed')), "copilot_update": None}
 
     if not transcript_text:
         return {"status": "empty", "copilot_update": None}

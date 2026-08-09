@@ -44,10 +44,10 @@ export default function MeetingHeader({
           {/* date goes here */}
           <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-primary bg-primary-dim border border-primary/20 rounded-full px-3.5 py-1 w-fit">
             <Calendar className="w-3 h-3" />
-            {meeting.start_at ? (
+            {meeting.start_at && !isNaN(new Date(meeting.start_at).getTime()) ? (
               <span>
                 {format(new Date(meeting.start_at), "EEEE, MMMM d, yyyy • h:mm a")}
-                {meeting.end_at ? ` – ${format(new Date(meeting.end_at), "h:mm a")}` : ""}
+                {meeting.end_at && !isNaN(new Date(meeting.end_at).getTime()) ? ` – ${format(new Date(meeting.end_at), "h:mm a")}` : ""}
               </span>
             ) : (
               "Recent Google Meet Call"

@@ -13,7 +13,24 @@ import {
 } from "@remixicon/react";
 import { supabase } from "@/lib/supabase";
 
+import Link from "next/link";
+
 type ConnectState = "connecting" | "connected" | "timeout";
+
+// Shared background wrapper
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-[#1a1c20] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#4a9eff]/10 blur-[120px] rounded-full pointer-events-none" />
+    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#8eaaff]/10 blur-[120px] rounded-full pointer-events-none" />
+    <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl max-w-md w-full text-center relative z-10">
+      <div className="w-16 h-16 bg-[#4a9eff]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+        <RiChromeFill className="w-8 h-8 text-[#4a9eff]" />
+      </div>
+      <h1 className="text-2xl font-bold text-white mb-2">Connect Extension</h1>
+      {children}
+    </div>
+  </div>
+);
 
 export default function ExtensionAuthPage() {
   const { session, loading } = useAuth();
@@ -39,7 +56,7 @@ export default function ExtensionAuthPage() {
         token: session.access_token,
         refreshToken: session.refresh_token,
       },
-      "*"
+      window.location.origin
     );
 
     // Listen for confirmation from auth-capture.js
@@ -61,7 +78,7 @@ export default function ExtensionAuthPage() {
       window.removeEventListener("message", handleMessage);
       clearTimeout(fallbackTimer);
     };
-  }, [session]);
+  }, [session?.access_token, session?.refresh_token]);
 
   const handleCopy = () => {
     if (!session?.access_token) return;
@@ -78,21 +95,6 @@ export default function ExtensionAuthPage() {
       },
     });
   };
-
-  // Shared background wrapper
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-[#1a1c20] flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#4a9eff]/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#8eaaff]/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl max-w-md w-full text-center relative z-10">
-        <div className="w-16 h-16 bg-[#4a9eff]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <RiChromeFill className="w-8 h-8 text-[#4a9eff]" />
-        </div>
-        <h1 className="text-2xl font-bold text-white mb-2">Connect Extension</h1>
-        {children}
-      </div>
-    </div>
-  );
 
   // Loading session
   if (loading) return (
@@ -117,12 +119,12 @@ export default function ExtensionAuthPage() {
         <RiGoogleFill className="w-5 h-5 text-[#ea4335]" />
         Continue with Google
       </button>
-      <a
+      <Link
         href="/login?next=/extension-auth"
         className="block w-full h-12 border border-white/10 text-white font-semibold rounded-xl flex items-center justify-center hover:bg-white/5 transition-colors text-sm"
       >
         Sign in with Email
-      </a>
+      </Link>
     </Wrapper>
   );
 
@@ -170,7 +172,7 @@ export default function ExtensionAuthPage() {
             setConnectState("connecting");
             window.postMessage(
               { type: "MEETMAXXING_AUTH_TOKEN", token: session.access_token, refreshToken: session.refresh_token },
-              "*"
+              window.location.origin
             );
             setTimeout(() => setConnectState((p) => p === "connecting" ? "timeout" : p), 6000);
           }}

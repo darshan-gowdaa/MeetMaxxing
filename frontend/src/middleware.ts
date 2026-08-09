@@ -11,7 +11,8 @@ export async function middleware(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing Supabase environment variables");
+    console.error("Missing Supabase environment variables");
+    return NextResponse.redirect(new URL('/login?error=missing_env', request.url));
   }
 
   const supabase = createServerClient(
@@ -43,6 +44,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/login') || 
     request.nextUrl.pathname.startsWith('/auth/') || 
     request.nextUrl.pathname.startsWith('/extension-auth') ||
+    request.nextUrl.pathname.startsWith('/about') ||
+    request.nextUrl.pathname.startsWith('/signup') ||
     request.nextUrl.pathname.startsWith('/reset-password');
 
   if (!user && !isAuthRoute) {

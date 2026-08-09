@@ -14,7 +14,7 @@ window.addEventListener("message", (event) => {
     // also store refresh token if provided (for background.js to use)
     if (event.data.refreshToken) data.authRefreshToken = event.data.refreshToken;
     
-    const onSet = () => window.postMessage({ type: "MEETMAXXING_AUTH_SUCCESS" }, "*");
+    const onSet = () => window.postMessage({ type: "MEETMAXXING_AUTH_SUCCESS" }, window.location.origin);
     
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
       chrome.storage.local.set(data, onSet);

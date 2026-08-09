@@ -7,6 +7,10 @@ import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
+from loguru import logger
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis
@@ -88,10 +92,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
-
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
-from loguru import logger
 
 
 @app.exception_handler(Exception)

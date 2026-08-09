@@ -138,8 +138,9 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
             const isCycling = cyclingId === item.id;
 
             return (
-              <button
+              <div
                 key={item.id}
+                role="button"
                 onClick={() => toggleItemStatus(item.id)}
                 className={`group w-full text-left rounded-[16px] border p-4 spring flex items-start gap-3 hover:-translate-y-0.5 active:scale-[0.99] ${
                   isDone
@@ -198,7 +199,7 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
                   {pStyle.icon}
                   {pStyle.label}
                 </span>
-              </button>
+              </div>
             );
           })}
         </div>

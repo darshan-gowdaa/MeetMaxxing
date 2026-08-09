@@ -158,7 +158,9 @@ async def delete_meeting(
     """Delete a meeting and its associated records."""
     supabase = get_supabase_admin()
     meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
-    target_id = meeting["id"] if meeting else meeting_id
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    target_id = meeting["id"]
 
     # Delete associated action items first (if no cascade in DB)
     supabase.table("action_items").delete().eq("meeting_id", target_id).eq("org_id", user["org_id"]).execute()

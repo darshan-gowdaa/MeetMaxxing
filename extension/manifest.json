@@ -1,17 +1,8 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "MeetMaxxing — AI Meeting Copilot",
   "version": "1.0.1",
   "description": "Real-time AI suggestions, risk flags, and auto-summaries for Google Meet",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "meetmaxxing@hidevs.xyz",
-      "strict_min_version": "142.0",
-      "data_collection_permissions": {
-        "required": ["none"]
-      }
-    }
-  },
   "icons": {
     "16": "assets/icons/icon16.png",
     "48": "assets/icons/icon48.png",
@@ -22,11 +13,16 @@
     "tabs",
     "storage",
     "webRequest",
+    "tabCapture",
+    "alarms",
+    "offscreen"
+  ],
+  "host_permissions": [
     "https://meet.google.com/*",
     "https://meetmaxxing-api.onrender.com/*"
   ],
   "background": {
-    "scripts": ["background.firefox.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
@@ -44,7 +40,7 @@
       "run_at": "document_idle"
     }
   ],
-  "browser_action": {
+  "action": {
     "default_title": "MeetMaxxing",
     "default_icon": {
       "16": "assets/icons/icon16.png",
@@ -52,8 +48,14 @@
     }
   },
   "web_accessible_resources": [
-    "assets/*",
-    "styles/*",
-    "dist/*"
+    {
+      "resources": [
+        "assets/*",
+        "styles/*",
+        "dist/*",
+        "offscreen.html"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

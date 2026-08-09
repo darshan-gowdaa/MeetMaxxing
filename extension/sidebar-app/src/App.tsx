@@ -40,9 +40,17 @@ export default function App() {
         setInsightLabelIdx(prev => (prev + 1) % INSIGHT_LABELS.length);
       }, 1100);
     } else {
-      if (insightIntervalRef.current) clearInterval(insightIntervalRef.current);
+      if (insightIntervalRef.current) {
+        clearInterval(insightIntervalRef.current);
+        insightIntervalRef.current = null;
+      }
     }
-    return () => { if (insightIntervalRef.current) clearInterval(insightIntervalRef.current); };
+    return () => {
+      if (insightIntervalRef.current) {
+        clearInterval(insightIntervalRef.current);
+        insightIntervalRef.current = null;
+      }
+    };
   }, [isProcessing]);
 
   useEffect(() => {
@@ -54,15 +62,18 @@ export default function App() {
     setLastInsightsCount(transcriptLines.length);
   };
 
+  const handleGenerateInsightsRef = useRef(handleGenerateInsights);
+  useEffect(() => { handleGenerateInsightsRef.current = handleGenerateInsights; }, [handleGenerateInsights]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isProcessing && meetingId && !isEnded && activeTab === "live") {
-        handleGenerateInsights();
+        handleGenerateInsightsRef.current();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isProcessing, meetingId, isEnded, activeTab, transcriptLines.length]);
+  }, [isProcessing, meetingId, isEnded, activeTab]);
 
   const hasNewContext = transcriptLines.length > lastInsightsCount && !isProcessing;
 
@@ -125,7 +136,7 @@ export default function App() {
             </div>
 
             <div className={activeTab === "rag" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
-              <ContextAgent meetingId={meetingId} pendingQuery={pendingQuery} clearPendingQuery={() => setPendingQuery("")} />
+              <ContextAgent meetingId={meetingId} authToken={authToken} pendingQuery={pendingQuery} clearPendingQuery={() => setPendingQuery("")} />
             </div>
             
             <div className={activeTab === "recap" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>

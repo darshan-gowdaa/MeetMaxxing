@@ -172,6 +172,7 @@ const CountUp = ({ to }: { to: number }) => {
     let startTime: number;
     const duration = 1500;
     
+    let frameId: number;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         const animate = (timestamp: number) => {
@@ -180,15 +181,18 @@ const CountUp = ({ to }: { to: number }) => {
           const easeOutQuint = 1 - Math.pow(1 - progress, 5);
           setCount(Math.floor(easeOutQuint * to));
           
-          if (progress < 1) requestAnimationFrame(animate);
+          if (progress < 1) frameId = requestAnimationFrame(animate);
         };
-        requestAnimationFrame(animate);
+        frameId = requestAnimationFrame(animate);
         observer.unobserve(el);
       }
     }, { threshold: 0.1 });
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (frameId) cancelAnimationFrame(frameId);
+    };
   }, [to]);
 
   return <span ref={ref}>{count}</span>;
@@ -228,12 +232,12 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }}
               className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
             >
-              <Link href="https://github.com/darshan-gowdaa/MeetMaxxing" className="w-full sm:w-auto">
+              <a href="https://github.com/darshan-gowdaa/MeetMaxxing" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                 <div className="flex items-center justify-center gap-2 px-8 py-4 bg-[#a8c7fa] text-[#141518] rounded-full font-semibold hover:bg-white transition-colors">
                   <RiGithubFill size={20} />
                   <span>View on GitHub</span>
                 </div>
-              </Link>
+              </a>
               <Link href="#architecture" className="w-full sm:w-auto">
                 <div className="flex items-center justify-center gap-2 px-8 py-4 bg-[rgba(168,199,250,0.1)] text-[#a8c7fa] rounded-full font-semibold border border-[rgba(168,199,250,0.2)] hover:bg-[rgba(168,199,250,0.15)] transition-colors backdrop-blur-sm">
                   <span>Explore Ecosystem</span>

@@ -24,7 +24,8 @@ export function useCopilot() {
   useEffect(() => {
     const timer = setInterval(() => {
       if (!meetingId || isEnded) {
-        setElapsedTime("--:--");
+        // Skip state update if already idle to prevent re-renders
+        setElapsedTime((prev) => prev === "--:--" ? prev : "--:--");
         return;
       }
       const diff = Math.floor((Date.now() - meetingStartTime) / 1000);
@@ -146,8 +147,14 @@ export function useCopilot() {
 
   const triggerAction = async (actionType: string) => {
     setActiveRequests(prev => prev + 1);
-    setErrorMessage("");
-    if (ext && ext.runtime?.sendMessage) ext.runtime.sendMessage({ type: actionType, meetingId }, () => void ext.runtime?.lastError);
+    try {
+      if (ext && ext.runtime?.sendMessage) {
+        ext.runtime.sendMessage({ type: actionType, meetingId }, () => void ext.runtime?.lastError);
+      }
+    } catch (e) {
+      // Ignore sync message errors
+    }
+    
     if (!meetingId) {
       setActiveRequests(prev => Math.max(0, prev - 1));
       return;
@@ -172,18 +179,18 @@ export function useCopilot() {
         // Follow background.js formatting for recap
         let recapText = "";
         if (recapData.recap && recapData.recap.trim().length > 0) {
-          recapText = `Recap:\n${recapData.recap}`;
+          recapText = `**Recap**\n${recapData.recap}`;
         } else {
           recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
         }
         if (recapData.current_topic && recapData.current_topic !== "Unknown") {
-          recapText += `\n\nCurrent Topic:\n${recapData.current_topic}`;
+          recapText += `\n\n**Current Topic**\n${recapData.current_topic}`;
         }
         if (recapData.key_decisions_so_far && recapData.key_decisions_so_far.length) {
-          recapText += `\n\nDecisions:\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
+          recapText += `\n\n**Decisions**\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
         }
         if (recapData.who_said_what && recapData.who_said_what.length) {
-          recapText += `\n\nWho said what:\n- ${recapData.who_said_what.join("\n- ")}`;
+          recapText += `\n\n**Who said what**\n- ${recapData.who_said_what.join("\n- ")}`;
         }
         setRecap(recapText);
       } else {
@@ -197,18 +204,18 @@ export function useCopilot() {
         if (isRecap) {
           let recapText = "";
           if (data.recap && data.recap.trim().length > 0) {
-            recapText = `Recap:\n${data.recap}`;
+            recapText = `**Recap**\n${data.recap}`;
           } else {
             recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
           }
           if (data.current_topic && data.current_topic !== "Unknown") {
-            recapText += `\n\nCurrent Topic:\n${data.current_topic}`;
+            recapText += `\n\n**Current Topic**\n${data.current_topic}`;
           }
           if (data.key_decisions_so_far && data.key_decisions_so_far.length) {
-            recapText += `\n\nDecisions:\n- ${data.key_decisions_so_far.join("\n- ")}`;
+            recapText += `\n\n**Decisions**\n- ${data.key_decisions_so_far.join("\n- ")}`;
           }
           if (data.who_said_what && data.who_said_what.length) {
-            recapText += `\n\nWho said what:\n- ${data.who_said_what.join("\n- ")}`;
+            recapText += `\n\n**Who said what**\n- ${data.who_said_what.join("\n- ")}`;
           }
           setRecap(recapText);
         } else {

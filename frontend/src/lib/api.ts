@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 import { supabase } from "./supabase";
 
@@ -7,13 +7,13 @@ async function getToken() {
   return session?.access_token ?? "";
 }
 
-function safeParse(text: string) {
-  if (!text || !text.trim()) return {};
+function safeParse(text: string, fallback: any = null) {
+  if (!text || !text.trim()) return fallback;
   try {
     return JSON.parse(text);
   } catch (e) {
     console.error("JSON parse error for text:", text, e);
-    return {};
+    return fallback;
   }
 }
 
@@ -25,7 +25,7 @@ export async function fetchMeetings() {
   });
   if (!res.ok) throw new Error("Failed to fetch meetings");
   const text = await res.text();
-  return safeParse(text);
+  return safeParse(text, []);
 }
 
 export async function fetchMeeting(id: string) {
@@ -36,7 +36,7 @@ export async function fetchMeeting(id: string) {
   });
   if (!res.ok) throw new Error("Failed to fetch meeting");
   const text = await res.text();
-  return safeParse(text);
+  return safeParse(text, null);
 }
 
 export async function queryMemory(question: string, filters?: Record<string, string>) {

@@ -15,12 +15,12 @@
 let recorder = null;
 let audioStream = null;
 
-chrome.runtime.onMessage.addListener(async (msg) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.target !== "offscreen") return;
 
   if (msg.type === "START_CAPTURE") {
     const { streamId, meetingId } = msg;
-    await startCapture(streamId, meetingId);
+    startCapture(streamId, meetingId);
   }
 
   if (msg.type === "STOP_CAPTURE") {
@@ -54,11 +54,21 @@ async function startCapture(streamId, meetingId) {
       if (!event.data || event.data.size < 100) return;
 
       // Convert Blob → base64
-      const arrayBuffer = await event.data.arrayBuffer();
-      const uint8 = new Uint8Array(arrayBuffer);
-      let binary = "";
-      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
-      const base64 = btoa(binary);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result;
+        const base64 = dataUrl.split(',')[1];
+        
+        // Send to background.js
+        chrome.runtime.sendMessage({
+          type: "AUDIO_CHUNK",
+          meetingId,
+          base64,
+          mimeType,
+        }, () => { let _ = chrome.runtime.lastError; });
+      };
+      reader.readAsDataURL(event.data);
+      return;
 
       // Send to background.js
       chrome.runtime.sendMessage({

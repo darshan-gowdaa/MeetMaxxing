@@ -118,16 +118,17 @@ export default function ContextManagerPage() {
           body: JSON.stringify({ meeting_id: file.meeting_id, filename: file.filename })
         })
       );
-      const results = await Promise.all(promises);
-      const failed = results.filter(r => !r.ok);
+      const results = await Promise.allSettled(promises);
+      const successfulFiles = selectedFiles.filter((_, i) => results[i].status === "fulfilled" && (results[i] as any).value?.ok);
+      const failedCount = selectedFiles.length - successfulFiles.length;
       
-      const toDelete = new Set(selectedFiles.map(f => `${f.meeting_id}-${f.filename}`));
+      const toDelete = new Set(successfulFiles.map(f => `${f.meeting_id}-${f.filename}`));
       setFiles(prev => prev.filter(f => !toDelete.has(`${f.meeting_id}-${f.filename}`)));
       
-      if (failed.length > 0) {
-        showToast(`${failed.length} file(s) could not be deleted`, "error");
+      if (failedCount > 0) {
+        showToast(`${failedCount} file(s) could not be deleted`, "error");
       } else {
-        showToast(`Deleted ${selectedFiles.length} file(s)`);
+        showToast(`Deleted ${successfulFiles.length} file(s)`);
       }
     } catch (e) {
       showToast("Delete failed", "error");
@@ -170,7 +171,7 @@ export default function ContextManagerPage() {
     
     // append extension if missing to match original
     let finalName = newFilename;
-    const oldExt = editTarget.filename.split('.').pop();
+    const oldExt = editTarget.filename.includes('.') ? editTarget.filename.split('.').pop() : null;
     if (oldExt && !finalName.endsWith(`.${oldExt}`)) {
       finalName = `${finalName}.${oldExt}`;
     }
@@ -371,7 +372,7 @@ export default function ContextManagerPage() {
                     >
                       <ContextCard
                         file={f}
-                        index={0}
+                        index={filtered.indexOf(f)}
                         onView={setViewTarget}
                         onEdit={setEditTarget}
                         onDelete={setDeleteTarget}

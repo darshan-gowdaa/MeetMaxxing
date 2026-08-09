@@ -71,7 +71,8 @@ async def upload_context(
             
         await upsert_memories(points)
         return {"status": "success", "message": f"Successfully uploaded {file.filename} and processed {len(points)} chunks."}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to process context upload: {e}")
         raise HTTPException(status_code=500, detail="Failed to upload and process document context. Please try again.")
 
 class ContextChatRequest(BaseModel):
