@@ -21,13 +21,15 @@ export default function LoginPage() {
     setOrigin(window.location.origin);
   }, []);
 
+  const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') || '/' : '/';
+
   const handleGoogle = async () => {
     setLoading(true);
     setError("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (error) {
@@ -45,7 +47,7 @@ export default function LoginPage() {
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
-      else window.location.href = "/";
+      else window.location.href = next;
     } else if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ 
         email, 

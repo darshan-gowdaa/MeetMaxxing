@@ -158,11 +158,11 @@ export function useCopilot() {
         const [realtimeRes, recapRes] = await Promise.all([
           fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/ingest/realtime/${meetingId}?force=true`, { 
             method: "POST",
-            headers: { "Authorization": "Bearer " } 
+            headers: { "Authorization": `Bearer ${authToken}` } 
           }),
           fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/ingest/late-recap/${meetingId}?force=true`, { 
             method: "GET",
-            headers: { "Authorization": "Bearer " } 
+            headers: { "Authorization": `Bearer ${authToken}` } 
           })
         ]);
         const realtimeData = await realtimeRes.json();
@@ -191,7 +191,7 @@ export function useCopilot() {
         const endpoint = isRecap ? `/ingest/late-recap/${meetingId}?force=true` : `/ingest/realtime/${meetingId}?force=true`;
         const response = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}${endpoint}`, { 
           method: isRecap ? "GET" : "POST",
-          headers: { "Authorization": "Bearer " } 
+          headers: { "Authorization": `Bearer ${authToken}` } 
         });
         const data = await response.json();
         if (isRecap) {

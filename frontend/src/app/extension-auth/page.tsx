@@ -3,11 +3,20 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { RiFileCopyLine, RiCheckLine, RiChromeFill } from "@remixicon/react";
+import { useRouter } from "next/navigation";
+import { RiFileCopyLine, RiCheckLine, RiChromeFill, RiLoader4Line } from "@remixicon/react";
 
 export default function ExtensionAuthPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+
+  // Redirect to login if not authenticated after session loads
+  useEffect(() => {
+    if (!loading && !session) {
+      router.replace("/login");
+    }
+  }, [loading, session, router]);
 
   const handleCopy = () => {
     if (session?.access_token) {
@@ -53,9 +62,12 @@ export default function ExtensionAuthPage() {
               {copied ? "Copied to clipboard" : "Copy Token"}
             </button>
           </div>
-        ) : (
-          <div className="text-white/50">Loading session...</div>
-        )}
+        ) : loading ? (
+          <div className="flex flex-col items-center gap-3 text-white/50">
+            <RiLoader4Line className="w-6 h-6 animate-spin" />
+            <span className="text-sm">Loading session…</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );
