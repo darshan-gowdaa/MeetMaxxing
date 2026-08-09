@@ -1,8 +1,7 @@
-/* eslint-disable */
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   let next = searchParams.get("next") ?? "/";
@@ -11,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    let supabaseResponse = NextResponse.redirect(`${origin}${next}`);
+    const supabaseResponse = NextResponse.redirect(`${origin}${next}`);
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -26,7 +25,7 @@ export async function GET(request: Request) {
       {
         cookies: {
           getAll() {
-            return [];
+            return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) =>
@@ -40,7 +39,7 @@ export async function GET(request: Request) {
     try {
       await supabase.auth.exchangeCodeForSession(code);
       return supabaseResponse;
-    } catch (e) {
+    } catch {
       return NextResponse.redirect(`${origin}/login?error=auth_failed`);
     }
   }

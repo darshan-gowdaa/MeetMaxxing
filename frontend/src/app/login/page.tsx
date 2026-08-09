@@ -21,6 +21,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     setOrigin(window.location.origin);
+    const urlMode = new URLSearchParams(window.location.search).get('mode');
+    if (urlMode === 'signup' || urlMode === 'forgot') {
+      setMode(urlMode as Mode);
+    }
   }, []);
 
   let next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') || '/' : '/';
