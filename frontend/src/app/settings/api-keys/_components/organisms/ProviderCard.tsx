@@ -11,43 +11,47 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
   const isFree = provider.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(provider.id);
 
   return (
-    <div className="p-4 flex items-center justify-between gap-4 hover:bg-surface2/30 transition-colors group">
-      <div className="flex items-center gap-4 flex-1 overflow-hidden">
-        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center overflow-hidden border border-border/50 shrink-0 shadow-sm">
+    <div className="p-5 grid grid-cols-1 md:grid-cols-[240px_1fr_auto] items-center gap-6 hover:bg-surface-highest transition-colors group">
+      
+      {/* Column 1: Leading Avatar & Title */}
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center overflow-hidden border border-border/40 shrink-0 shadow-sm relative group-hover:scale-105 transition-transform duration-300">
           {(domain && !imgError) ? (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-6 h-6 rounded-sm" onError={() => setImgError(true)} />
+            <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-7 h-7 rounded-sm" onError={() => setImgError(true)} />
           ) : (
-            <div className="w-10 h-10 bg-primary/10 flex items-center justify-center text-primary"><RiPlugLine className="w-5 h-5" /></div>
+            <div className="w-full h-full bg-primary-container flex items-center justify-center text-primary"><RiPlugLine className="w-6 h-6" /></div>
           )}
         </div>
 
-        {/* Title & Free Tier */}
-        <div className="flex items-center gap-2 shrink-0">
-          <h3 className="font-medium text-[15px] text-text leading-none">{provider.name}</h3>
-          {isFree && (
-            <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20">Free Tier</span>
-          )}
-        </div>
-        
-        {/* Keys List (Middle aligned) */}
-        <div className="flex items-center gap-2 flex-wrap flex-1 ml-4 overflow-hidden">
-          {apiKeys.length === 0 ? (
-            <span className="text-[13px] text-text-muted">Not connected</span>
+        <div className="flex flex-col gap-1 min-w-0">
+          <h3 className="font-bold text-[16px] text-text tracking-tight truncate">{provider.name}</h3>
+          {isFree ? (
+            <span className="text-[12px] font-medium text-success-text">Free Tier</span>
           ) : (
-            apiKeys.map(key => (
-              <ApiKeyBadge key={key.id} apiKey={key} onCheck={onCheck} onDelete={onDelete} />
-            ))
+            <span className="text-[12px] text-text-muted capitalize">{provider.pricing}</span>
           )}
         </div>
       </div>
+      
+      {/* Column 2: Keys List */}
+      <div className="flex items-center gap-2.5 flex-wrap">
+        {apiKeys.length === 0 ? (
+          <span className="text-[14px] font-medium text-text-muted/70 italic px-2">No keys connected</span>
+        ) : (
+          apiKeys.map(key => (
+            <ApiKeyBadge key={key.id} apiKey={key} onCheck={onCheck} onDelete={onDelete} />
+          ))
+        )}
+      </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button onClick={onAdd} className="h-8 px-3 rounded-full bg-surface2 text-text text-[13px] font-medium hover:bg-surface3 transition-colors border border-border flex items-center gap-1 shadow-sm">
+      {/* Column 3: Trailing Actions */}
+      <div className="flex items-center justify-end gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+        <button onClick={onAdd} className="h-10 px-4 rounded-full bg-primary-container text-on-primary-container text-[14px] font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center gap-1.5 shadow-sm">
           <RiAddLine className="w-4 h-4" /> {apiKeys.length > 0 ? "Add" : "Connect"}
         </button>
-        <button onClick={onHelp} className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface2 hover:text-text transition-colors" title="Setup docs">
-          <RiQuestionLine className="w-4 h-4" />
+        <button onClick={onHelp} className="w-10 h-10 rounded-full flex items-center justify-center text-text hover:bg-surface3 transition-colors focus:ring-2 focus:ring-primary/20 outline-none" title="Setup docs">
+          <RiQuestionLine className="w-5 h-5 text-text-muted" />
         </button>
       </div>
     </div>
