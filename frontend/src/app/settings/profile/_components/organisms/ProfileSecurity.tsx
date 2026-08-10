@@ -2,26 +2,10 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
 
 export const ProfileSecurity = () => {
   const { session, signOut } = useAuth();
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const handleUpdatePassword = async () => {
-    if (!password) return;
-    setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    
-    if (error) {
-      alert(error.message);
-    } else {
-      setPassword("");
-      alert("Password updated successfully.");
-    }
-  };
 
   const handleDeleteAccount = async () => {
     if (!session?.access_token) return;
@@ -49,38 +33,18 @@ export const ProfileSecurity = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 rounded-3xl bg-surface-variant text-on-surface-variant shadow-sm">
-      <h2 className="text-xl font-bold">Security</h2>
-      
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium opacity-80">New Password</label>
-        <div className="flex gap-2">
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)}
-            className="flex-1 bg-surface text-on-surface px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="Enter new password"
-          />
-          <button 
-            onClick={handleUpdatePassword} 
-            disabled={loading || !password}
-            className="px-6 py-2 bg-primary text-on-primary rounded-xl font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            Update
-          </button>
-        </div>
+    <div className="flex flex-col gap-4 p-6 rounded-[24px] bg-risk-container border border-risk/20 text-on-risk-container shadow-sm">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-[15px] font-bold text-risk">Danger Zone</h3>
+        <p className="text-[13px] text-risk/80 font-medium">Permanently delete your account and all associated data. This action is irreversible.</p>
       </div>
-
-      <div className="pt-4 border-t border-outline/20">
-        <h3 className="text-lg font-bold text-error mb-2">Danger Zone</h3>
-        <p className="text-sm opacity-80 mb-4">Permanently delete your account and all associated data.</p>
+      <div className="mt-2">
         <button 
           onClick={handleDeleteAccount}
           disabled={loading}
-          className="px-6 py-2 bg-error text-on-error rounded-xl font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+          className="px-6 py-3 bg-risk text-on-risk rounded-xl text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80"
         >
-          Delete Account
+          {loading ? "Deleting..." : "Delete Account"}
         </button>
       </div>
     </div>

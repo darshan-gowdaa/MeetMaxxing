@@ -96,8 +96,38 @@ export default function ApiKeysPage() {
       {loading ? (
         <ProviderListSkeleton />
       ) : (
-        <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
-          {[...providers].sort((a, b) => {
+        <div className="flex flex-col gap-8">
+          {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-[15px] font-bold text-text px-2">Configured Providers</h2>
+              <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
+                {[...providers]
+                  .filter(p => keys.some(k => k.provider_id === p.id))
+                  .map((provider, idx, arr) => {
+                    const providerKeys = keys.filter(k => k.provider_id === provider.id);
+                    return (
+                      <div key={provider.id} className={idx !== arr.length - 1 ? "border-b border-border" : ""}>
+                        <ProviderCard 
+                          provider={provider} 
+                          apiKeys={providerKeys} 
+                          onAdd={() => setAddDialog(provider)}
+                          onCheck={handleCheckStatus}
+                          onDelete={handleDelete}
+                          onHelp={() => setHelpDrawer(provider)}
+                        />
+                      </div>
+                    );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            <h2 className="text-[15px] font-bold text-text px-2">Available Providers</h2>
+            <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
+              {[...providers]
+                .filter(p => !keys.some(k => k.provider_id === p.id))
+                .sort((a, b) => {
             const aFree = a.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(a.id);
             const bFree = b.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(b.id);
             if (aFree && !bFree) return -1;
@@ -116,8 +146,10 @@ export default function ApiKeysPage() {
                   onHelp={() => setHelpDrawer(provider)}
                 />
               </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
