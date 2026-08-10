@@ -86,33 +86,30 @@ async def chat_context(
     req: ContextChatRequest,
     user: dict = Depends(get_current_user)
 ):
+    from loguru import logger
     from ..agents.docs_qa_agent import run_docs_qa_agent
     from ..agents.memory_agent import run_memory_agent
+    
+    print(f"\n=== CHAT REQUEST ===\nQuery: {req.query}, Target: {req.target_file}\n")
     try:
         if req.target_file:
             res = await run_docs_qa_agent(
-                question=req.query,
-                org_id=user["org_id"],
-                user_id=user["user_id"],
-                filters={
-                    "meeting_id": req.meeting_id,
-                    "speaker_name": req.target_file,
-                }
+                question=req.query, org_id=user["org_id"], user_id=user["user_id"],
+                filters={"meeting_id": req.meeting_id, "speaker_name": req.target_file}
             )
+            print(f"Docs QA Response: {res}\n")
             return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Docs QA Agent"), "sources": res.get("sources", [])}
         else:
             res = await run_memory_agent(
-                question=req.query,
-                org_id=user["org_id"],
-                user_id=user["user_id"],
-                filters={
-                    "meeting_id": [req.meeting_id, "global"],
-                    "memory_type": "key_topic"
-                }
+                question=req.query, org_id=user["org_id"], user_id=user["user_id"],
+                filters={"meeting_id": [req.meeting_id, "global"], "memory_type": "key_topic"}
             )
+            print(f"Memory Agent Response: {res}\n")
             return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Memory Agent"), "sources": res.get("sources", [])}
-    except Exception:
-        return {"answer": "An error occurred while generating the answer. Please try again."}
+    except Exception as e:
+        logger.error(f"Error in chat_context: {e}", exc_info=True)
+        print(f"\n=== ERROR ===\n{e}\n")
+        return {"answer": f"An error occurred: {str(e)}"}
 
 class ContextClearRequest(BaseModel):
     meeting_id: str

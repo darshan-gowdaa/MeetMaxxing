@@ -64,10 +64,9 @@ async def embed_text(text: str) -> list[float]:
         vec = result.embeddings[0].values
         _set_in_cache(text, vec)
         return vec
-    except Exception:
-        vec = await _fallback_vector(text)
-        _set_in_cache(text, vec)
-        return vec
+    except Exception as e:
+        print(f"Embedding failed: {e}")
+        raise
 
 
 async def embed_query(text: str) -> list[float]:
@@ -86,8 +85,9 @@ async def embed_query(text: str) -> list[float]:
             ),
         )
         return result.embeddings[0].values
-    except Exception:
-        return await _fallback_vector(text)
+    except Exception as e:
+        print(f"Query embedding failed: {e}")
+        raise
 
 
 async def embed_batch(texts: list[str]) -> list[list[float]]:

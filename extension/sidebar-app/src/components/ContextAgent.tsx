@@ -155,14 +155,19 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
         target_file: selectedTargetFiles.length > 0 ? selectedTargetFiles : null
       };
       
-      const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/chat`, {
+      const reqUrl = `${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/chat`;
+      console.log("API Request:", reqUrl, reqBody);
+      const res = await fetch(reqUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
         body: JSON.stringify(reqBody),
         signal: abortControllerRef.current.signal
       });
+      console.log("API Response Status:", res.status);
+
       if (res.ok) {
         const data = await res.json();
+        console.log("API Response Data:", data);
         setChatHistory(prev => [...prev, { role: "agent", content: data.answer, sources: data.sources }]);
       } else {
         setChatHistory(prev => [...prev, { role: "agent", content: "Error processing request." }]);
