@@ -1,16 +1,6 @@
 // MeetMaxxing Extension Config
 // Detect environment: dev if unpacked extension, prod otherwise
 const isDevMode = () => {
-  if (typeof location !== 'undefined' && location.hostname === 'localhost') {
-    return true;
-  }
-  const isFirefox = typeof browser !== 'undefined' && browser.runtime && browser.runtime.getManifest;
-  if (isFirefox) {
-    return !browser.runtime.getManifest().update_url;
-  }
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
-    return !chrome.runtime.getManifest().update_url;
-  }
   return false;
 };
 
