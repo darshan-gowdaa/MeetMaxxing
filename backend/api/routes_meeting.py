@@ -346,7 +346,7 @@ async def _run_end_pipeline(
             "summary": final_summary.get("summary", ""),
             "action_items": [ai.get("text") for ai in (final_summary.get("action_items") or [])],
             "send_immediately": True,
-            "to_email": user.get("email") or user_id, 
+            "to_email": user_id, 
             "user_id": user_id
         })
 

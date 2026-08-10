@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from loguru import logger
 
 import docx
 import PyPDF2

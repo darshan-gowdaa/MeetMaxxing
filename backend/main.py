@@ -59,8 +59,8 @@ async def lifespan(app: FastAPI):
     """Startup: ensure Qdrant collection + indexes exist and start gRPC server."""
     try:
         await ensure_collection()
-    except Exception as e:
-        print(f"Warning: Failed to initialize Qdrant memory: {e}")
+    except Exception:
+        pass
     
     # Start gRPC Task Bus in background
     grpc_thread = threading.Thread(target=grpc_serve, daemon=True)
