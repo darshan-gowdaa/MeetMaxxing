@@ -121,8 +121,13 @@ app.include_router(transcript_router)
 app.include_router(meeting_router)
 app.include_router(memory_router)
 app.include_router(calendar_router)
+from .api.routes_api_keys import router as api_keys_router
+
+# ...
+
 app.include_router(dashboard_router)
 app.include_router(context_router)
+app.include_router(api_keys_router)
 
 
 @app.get("/health")

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,8 +53,6 @@ export default function Topbar() {
   const pathname = usePathname();
   const isMeetingDetail = pathname.startsWith("/meetings/");
   const { user, signOut } = useAuth();
-  const avatarUrl = user?.user_metadata?.avatar_url;
-  const initial = user?.email?.[0].toUpperCase() || "U";
 
   return (
     <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-[#1a1c20]/95 backdrop-blur-2xl border border-white/[0.08] rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
@@ -158,24 +157,7 @@ export default function Topbar() {
         {/* Right side: User Profile or Login */}
         <div className="flex items-center gap-3">
           {user ? (
-            <>
-              <div className="hidden sm:flex items-center gap-2 max-w-[150px]">
-                <div className="w-8 h-8 rounded-full bg-white/[0.1] border border-white/[0.1] overflow-hidden flex items-center justify-center shrink-0">
-                  {avatarUrl ? (
-                    <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
-                  ) : (
-                    <span className="text-sm font-semibold">{initial}</span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={signOut}
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.1] hover:border-white/[0.15] transition-colors"
-                title="Sign out"
-              >
-                <RiLogoutBoxRLine className="w-4 h-4 text-white/70 hover:text-white" />
-              </button>
-            </>
+            <ProfileDropdown user={user} signOut={signOut} />
           ) : (
             <Link
               href="/login"
@@ -189,3 +171,77 @@ export default function Topbar() {
     </header>
   );
 }
+
+function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metadata?: { name?: string; avatar_url?: string } }; signOut: () => void }) {
+  const [openState, setOpenState] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpenState(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const initial = user?.email?.[0].toUpperCase() || "U";
+  
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpenState(o => !o)}
+        className="w-8 h-8 rounded-full bg-surface2 hover:bg-surface3 border border-border flex items-center justify-center shrink-0 overflow-hidden spring-colors focus:outline-none"
+      >
+        {avatarUrl ? (
+          <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
+        ) : (
+          <span className="text-sm font-semibold">{initial}</span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {openState && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="absolute top-full right-0 mt-2 w-64 bg-surface-highest rounded-[20px] border border-border shadow-2xl overflow-hidden z-50 flex flex-col p-1.5"
+          >
+            <div className="px-3 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-surface2 flex flex-shrink-0 items-center justify-center overflow-hidden">
+                {avatarUrl ? <Image src={avatarUrl} alt="Avatar" width={40} height={40} /> : <span className="font-semibold text-lg">{initial}</span>}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold text-text truncate">{user.user_metadata?.name || "User"}</span>
+                <span className="text-[12px] text-text-muted truncate">{user.email}</span>
+              </div>
+            </div>
+            
+            <div className="h-px bg-border mx-2 my-1" />
+            
+            <Link onClick={() => setOpenState(false)} href="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
+              <RiInformationLine className="w-4 h-4 text-text-muted" /> Profile
+            </Link>
+            <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
+              <RiFolderOpenLine className="w-4 h-4 text-text-muted" /> Settings
+            </Link>
+            <Link onClick={() => setOpenState(false)} href="/settings/api-keys" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
+              <RiBrainLine className="w-4 h-4 text-text-muted" /> API Keys
+            </Link>
+            
+            <div className="h-px bg-border mx-2 my-1" />
+            
+            <button onClick={() => { setOpenState(false); signOut(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-risk hover:bg-risk-container/30 spring-colors">
+              <RiLogoutBoxRLine className="w-4 h-4" /> Sign out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+

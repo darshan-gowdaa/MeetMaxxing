@@ -110,7 +110,7 @@ async def chat_context(
     except Exception as e:
         logger.error(f"Error in chat_context: {e}", exc_info=True)
         print(f"\n=== ERROR ===\n{e}\n")
-        return {"answer": f"An error occurred: {str(e)}"}
+        return {"answer": f"An error occurred: {e!s}"}
 
 class ContextClearRequest(BaseModel):
     meeting_id: str

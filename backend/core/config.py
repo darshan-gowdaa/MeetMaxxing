@@ -55,6 +55,7 @@ class Settings(BaseSettings):
 
     # App
     APP_SECRET_KEY: str = "change-me-in-production"
+    KEK_SECRET: str = "0000000000000000000000000000000000000000000000000000000000000000" # 32-byte hex
     FRONTEND_URL: str = "https://meetmaxxing.vercel.app"
     BACKEND_URL: str = "https://meetmaxxing-api.onrender.com"
     ENVIRONMENT: str = "development"
