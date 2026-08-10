@@ -85,7 +85,7 @@ async def ingest_transcript_chunk(
     print(f"[MeetMaxxing REST Ingest] [AUDIO] {chunk.speaker}: \"{chunk.text}\"")
     result = await ingest_chunk(chunk.model_dump())
     # Broadcast to active WS connections if any exist
-    if chunk.meeting_id in _active_connections:
+    if chunk.meeting_id in _active_connections and result.get("text"):
         for ws in list(_active_connections[chunk.meeting_id]):
             try:
                 await ws.send_json({"type": "live_caption_chunk", "chunk": result})
@@ -176,7 +176,7 @@ async def ingest_audio_chunk(
             "platform": "google_meet",
         }
         clean_chunk = await ingest_chunk(chunk_data)
-        if req.meeting_id in _active_connections:
+        if req.meeting_id in _active_connections and clean_chunk.get("text"):
             for ws in list(_active_connections[req.meeting_id]):
                 try:
                     await ws.send_json({"type": "live_caption_chunk", "chunk": clean_chunk})
@@ -221,13 +221,6 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
                         pass
 
             clean_chunk = await ingest_chunk(raw, on_ai_chunk_ready=broadcast_ai_chunk)
-
-            # Broadcast live caption to all connected clients
-            for ws_conn in list(_active_connections.get(meeting_id, set())):
-                try:
-                    await ws_conn.send_json({"type": "live_caption_chunk", "chunk": clean_chunk})
-                except Exception:
-                    pass
 
             # Acknowledge receipt
             await websocket.send_json({"type": "ack", "chunk_id": str(uuid.uuid4())})

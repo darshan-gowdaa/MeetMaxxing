@@ -139,7 +139,7 @@ function handleMeetingEnd(tabId) {
 // ─── WebSocket ──────────────────────────────────────────────────────────────────
 function connectWebSocket(meetingId) {
   if (ws) { try { ws.close(); } catch (e) {} }
-  const wsUrl = `${MEETMAXXING_CONFIG.WS_URL}/ingest/ws/${meetingId}`;
+  const wsUrl = `${MEETMAXXING_CONFIG.WS_URL}/ingest/ws/${meetingId}?token=${activeAuthToken}`;
   try { ws = new WebSocket(wsUrl); } catch (e) { return; }
 
   ws.onopen = () => {
@@ -361,7 +361,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ success: true });
       } else if (id) {
         if (!ws) connectWebSocket(id);
-        fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/ingest/transcript`, {
+        authFetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/ingest/transcript`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
           body: JSON.stringify({ ...chunk, meeting_id: id }),

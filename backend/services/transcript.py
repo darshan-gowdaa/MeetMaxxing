@@ -28,7 +28,7 @@ def normalize_chunk(raw: dict) -> dict:
     return {
         "id": str(uuid.uuid4()),
         "speaker": raw.get("speaker", "Unknown Speaker").strip(),
-        "text": raw.get("text", "").strip(),
+        "text": (raw.get("text") or raw.get("utterance") or raw.get("raw_text") or "").strip(),
         "timestamp_ms": int(raw.get("timestamp_ms", 0)),
         "meeting_id": raw.get("meeting_id", ""),
         "platform": raw.get("platform", "google_meet"),
