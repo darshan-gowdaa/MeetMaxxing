@@ -134,9 +134,7 @@ const IGNORE_PHRASES = [
   "mic_none", "mic_off", "videocam_off", "volume_up", "volume_off", "closed_caption",
   "Captions (CC)", "Share screen", "Open queue", "Meeting details", "Audio device",
   "Speaker Array", "Communication", "Default - ", "Communications - ", "System Audio",
-  "Jump to the bottom", "arrow_downward", "format_size", "circle", "language",
-  "Default", "Tiny", "Small", "Medium", "Large", "Huge", "Jumbo",
-  "White", "Black", "Blue", "Green", "Red", "Yellow", "Cyan", "Magenta"
+  "Jump to the bottom", "arrow_downward", "format_size", "circle", "language"
 ];
 
 function isIgnorePhrase(text) {

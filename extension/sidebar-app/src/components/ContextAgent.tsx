@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-import { getWebUrl } from "../config";
+import { getWebUrl, getBaseUrlBackend } from "../config";
 
 export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQuery }: { meetingId: string, authToken?: string, pendingQuery?: string, clearPendingQuery?: () => void }) {
   const [uploading, setUploading] = useState(false);
@@ -24,7 +24,7 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
 
   const fetchFiles = async () => {
     try {
-      const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/files`, {
+      const res = await fetch(`${getBaseUrlBackend()}/context/files`, {
         headers: { "Authorization": `Bearer ${authToken}` }
       });
       if (res.ok) {
@@ -111,7 +111,7 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
       formData.append("file", file);
       formData.append("meeting_id", meetingId);
       try {
-        const res = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/upload`, {
+        const res = await fetch(`${getBaseUrlBackend()}/context/upload`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${authToken}` },
           body: formData
@@ -155,7 +155,7 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
         target_file: selectedTargetFiles.length > 0 ? selectedTargetFiles : null
       };
       
-      const reqUrl = `${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/context/chat`;
+      const reqUrl = `${getBaseUrlBackend()}/context/chat`;
       console.log("API Request:", reqUrl, reqBody);
       const res = await fetch(reqUrl, {
         method: "POST",
