@@ -56,7 +56,7 @@ export default function Topbar() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl rounded-full shadow-md">
+    <header className="sticky top-6 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl rounded-full shadow-md mb-6 transition-all duration-300">
       <div className="px-5 h-[64px] flex items-center justify-between gap-4">
 
         {/* Left: Logo or Back */}
@@ -211,14 +211,8 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
             
             <div className="h-px bg-border mx-2 my-1" />
             
-            <Link onClick={() => setOpenState(false)} href="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
-              <RiInformationLine className="w-4 h-4 text-text-muted" /> Profile
-            </Link>
             <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
               <RiFolderOpenLine className="w-4 h-4 text-text-muted" /> Settings
-            </Link>
-            <Link onClick={() => setOpenState(false)} href="/settings/api-keys" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
-              <RiBrainLine className="w-4 h-4 text-text-muted" /> API Keys
             </Link>
             
             <div className="h-px bg-border mx-2 my-1" />
