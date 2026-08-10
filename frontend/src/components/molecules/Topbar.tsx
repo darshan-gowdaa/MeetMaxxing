@@ -56,8 +56,8 @@ export default function Topbar() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl border border-border/50 rounded-full shadow-sm">
-      <div className="px-4 h-[64px] flex items-center justify-between gap-4">
+    <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl rounded-full shadow-md">
+      <div className="px-5 h-[64px] flex items-center justify-between gap-4">
 
         {/* Left: Logo or Back */}
         <AnimatePresence mode="wait" initial={false}>
@@ -75,7 +75,7 @@ export default function Topbar() {
                 className="group flex items-center gap-2 pl-2 pr-4 h-10 rounded-full text-[14px] font-medium text-text hover:bg-surface2 transition-colors duration-150"
               >
                 <span className="flex items-center justify-center w-7 h-7 rounded-full bg-surface3 group-hover:bg-surface-highest transition-colors">
-                  <RiArrowLeftLine className="w-4 h-4 text-text group-hover:-translate-x-0.5 transition-transform duration-150" />
+                  <RiArrowLeftLine className="w-4 h-4 text-text transition-transform duration-150" />
                 </span>
                 <span className="hidden sm:inline">Dashboard</span>
               </Link>
@@ -102,7 +102,7 @@ export default function Topbar() {
         </AnimatePresence>
 
         {/* Nav pills */}
-        <nav className="hidden md:flex items-center bg-surface2/50 rounded-full p-1.5 border border-border/30">
+        <nav className="hidden md:flex items-center bg-surface2/50 rounded-full p-1">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
             const label = tab.label(isMeetingDetail);
@@ -178,7 +178,7 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpenState(o => !o)}
-        className="flex items-center gap-1.5 p-1 pr-2.5 rounded-full bg-surface2 hover:bg-surface3 border border-border/50 shrink-0 transition-colors focus:outline-none"
+        className="flex items-center gap-1.5 p-1 pr-2.5 rounded-full bg-surface2 hover:bg-surface3 shrink-0 transition-colors focus:outline-none"
       >
         <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-surface-highest">
           {avatarUrl ? (

@@ -15,7 +15,7 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
       
       {/* Column 1: Leading Avatar & Title */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center overflow-hidden border border-border/40 shrink-0 shadow-sm relative group-hover:scale-105 transition-transform duration-300">
+        <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative transition-transform duration-300">
           {(domain && !imgError) ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-7 h-7 rounded-sm" onError={() => setImgError(true)} />
