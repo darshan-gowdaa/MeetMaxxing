@@ -174,24 +174,47 @@ export default function ApiKeysPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddDialog(null)} />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-surface rounded-[24px] shadow-2xl w-full max-w-md border border-border p-6">
-              <h2 className="text-xl font-bold mb-4">Add {addDialog.name} Key</h2>
+              <div className="flex items-center gap-3 mb-4">
+                {(() => {
+                  const domains: Record<string, string> = { openai: 'openai.com', anthropic: 'anthropic.com', google: 'gemini.google.com', mistral: 'mistral.ai', deepseek: 'deepseek.com', perplexity: 'perplexity.ai', groq: 'groq.com', openrouter: 'openrouter.ai' };
+                  const domain = domains[addDialog.id];
+                  return domain ? (
+                    <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt={addDialog.name} className="w-6 h-6 rounded-sm" />
+                  ) : (
+                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">{addDialog.name[0]}</div>
+                  );
+                })()}
+                <h2 className="text-xl font-bold">Add {addDialog.name} Key</h2>
+              </div>
               <p className="text-sm text-text-muted mb-4">
                 Need help finding this? <button onClick={() => setHelpDrawer(addDialog)} className="text-primary hover:underline">How do I get this?</button>
               </p>
               
               <form onSubmit={async (e) => {
                 e.preventDefault();
+                setSaving(true);
                 const fd = new FormData(e.currentTarget);
                 const key = fd.get("key") as string;
                 
-                const res = await fetch(`${API_URL}/api-keys`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                  body: JSON.stringify({ provider_id: addDialog.id, key, label: fd.get("label") })
-                });
-                if (res.ok) {
-                  fetchKeys();
-                  setAddDialog(null);
+                try {
+                  const res = await fetch(`${API_URL}/api-keys/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ provider_id: addDialog.id, key, label: fd.get("label") })
+                  });
+                  if (res.ok) {
+                    fetchKeys();
+                    setAddDialog(null);
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    setSnackbar({ message: data.detail || "Failed to add key. Please try again." });
+                    setTimeout(() => setSnackbar(null), 4000);
+                  }
+                } catch (error) {
+                  setSnackbar({ message: "Network error occurred." });
+                  setTimeout(() => setSnackbar(null), 4000);
+                } finally {
+                  setSaving(false);
                 }
               }} className="space-y-4">
                 <div className="bg-surface2 p-3 rounded-lg flex gap-2">
@@ -208,8 +231,10 @@ export default function ApiKeysPage() {
                 </div>
                 
                 <div className="flex justify-end gap-3 pt-4">
-                  <button type="button" onClick={() => setAddDialog(null)} className="px-5 py-2.5 rounded-full hover:bg-surface2 text-sm font-medium transition-colors">Cancel</button>
-                  <button type="submit" className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-sm font-medium hover:bg-primary/90 transition-colors">Save Key</button>
+                  <button type="button" onClick={() => setAddDialog(null)} disabled={saving} className="px-5 py-2.5 rounded-full hover:bg-surface2 text-[14px] font-medium transition-colors disabled:opacity-50">Cancel</button>
+                  <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-colors min-w-[100px] flex items-center justify-center disabled:opacity-80">
+                    {saving ? <div className="w-5 h-5 border-2 border-on-primary border-t-transparent rounded-full animate-spin" /> : "Save Key"}
+                  </button>
                 </div>
               </form>
             </motion.div>

@@ -160,14 +160,15 @@ async def add_key(data: dict, background_tasks: BackgroundTasks, user: dict = De
     provider_id, key = data.get("provider_id"), data.get("key")
     if not provider_id or not key: raise HTTPException(400, "Missing data")
         
-    enc_data = _encrypt_key(key)
-    enc_data.update({"user_id": user["id"], "provider_id": provider_id, "label": data.get("label", ""), "status": "unchecked"})
     try:
+        enc_data = _encrypt_key(key)
+        enc_data.update({"user_id": user["id"], "provider_id": provider_id, "label": data.get("label", ""), "status": "unchecked"})
         res = get_supabase_admin().table("user_api_keys").insert(enc_data).execute()
         key_record = res.data[0]
         background_tasks.add_task(async_status_check, key_record["id"], provider_id, key)
         return {"api_key": {k: v for k, v in key_record.items() if k not in ["key_ciphertext", "iv", "auth_tag", "wrapped_dek"]}}
-    except Exception as e: raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Internal Error: {str(e)}")
 
 @router.post("/{key_id}/check-status")
 async def check_status(key_id: str, user: dict = Depends(get_current_user)):
