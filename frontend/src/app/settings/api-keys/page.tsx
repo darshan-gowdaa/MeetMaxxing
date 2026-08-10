@@ -17,7 +17,8 @@ import {
   RiRobot2Line,
   RiQuestionLine,
   RiInformationLine,
-  RiArrowDownSLine
+  RiArrowDownSLine,
+  RiPlugLine
 } from "@remixicon/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -181,7 +182,7 @@ export default function ApiKeysPage() {
                   return domain ? (
                     <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt={addDialog.name} className="w-6 h-6 rounded-sm" />
                   ) : (
-                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">{addDialog.name[0]}</div>
+                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary"><RiPlugLine className="w-4 h-4" /></div>
                   );
                 })()}
                 <h2 className="text-xl font-bold">Add {addDialog.name} Key</h2>
@@ -374,7 +375,7 @@ function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: {
           {(domain && !imgError) ? (
             <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-6 h-6 rounded-sm" onError={() => setImgError(true)} />
           ) : (
-            <span className="font-bold text-base text-primary">{provider.name[0]}</span>
+            <div className="w-10 h-10 bg-primary/10 flex items-center justify-center text-primary"><RiPlugLine className="w-5 h-5" /></div>
           )}
         </div>
 

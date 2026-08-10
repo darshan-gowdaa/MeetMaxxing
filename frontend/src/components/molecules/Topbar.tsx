@@ -55,8 +55,8 @@ export default function Topbar() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-[#1a1c20]/95 backdrop-blur-2xl border border-white/[0.08] rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-      <div className="px-3 sm:px-5 h-[60px] flex items-center justify-between gap-4">
+    <header className="sticky top-4 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl border border-border/50 rounded-full shadow-sm">
+      <div className="px-4 h-[64px] flex items-center justify-between gap-4">
 
         {/* Left: Logo or Back */}
         <AnimatePresence mode="wait" initial={false}>
@@ -71,10 +71,10 @@ export default function Topbar() {
             >
               <Link
                 href="/"
-                className="group flex items-center gap-2 pl-1 pr-3 h-8 rounded-full text-[13px] font-semibold text-[#8eaaff]/80 hover:text-[#8eaaff] transition-colors duration-150"
+                className="group flex items-center gap-2 pl-2 pr-4 h-10 rounded-full text-[14px] font-medium text-text hover:bg-surface2 transition-colors duration-150"
               >
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/[0.06] group-hover:bg-white/[0.1] border border-white/[0.08] transition-colors">
-                  <RiArrowLeftLine className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-150" />
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-surface3 group-hover:bg-surface-highest transition-colors">
+                  <RiArrowLeftLine className="w-4 h-4 text-text group-hover:-translate-x-0.5 transition-transform duration-150" />
                 </span>
                 <span className="hidden sm:inline">Dashboard</span>
               </Link>
@@ -88,11 +88,11 @@ export default function Topbar() {
               transition={{ duration: 0.15, ease: "easeOut" }}
               className="flex-shrink-0"
             >
-              <Link href="/" className="flex items-center gap-2 group">
-                <span className="text-[#4a9eff] drop-shadow-[0_0_8px_rgba(74,158,255,0.5)]">
+              <Link href="/" className="flex items-center gap-2 group px-2">
+                <span className="text-primary bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center">
                   <RiSparkling2Fill className="w-5 h-5" />
                 </span>
-                <span className="font-black text-[16px] tracking-tight bg-gradient-to-r from-white via-[#a8c8ff] to-[#4a9eff] bg-clip-text text-transparent">
+                <span className="font-bold text-[17px] tracking-tight text-text">
                   MeetMaxxing
                 </span>
               </Link>
@@ -101,7 +101,7 @@ export default function Topbar() {
         </AnimatePresence>
 
         {/* Nav pills */}
-        <nav className="flex items-center bg-white/[0.04] rounded-full p-1 border border-white/[0.06]">
+        <nav className="hidden md:flex items-center bg-surface2/50 rounded-full p-1.5 border border-border/30">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
             const label = tab.label(isMeetingDetail);
@@ -111,36 +111,20 @@ export default function Topbar() {
               <Link
                 key={tab.id}
                 href={tab.href}
-                className="relative flex items-center gap-1.5 px-3.5 sm:px-4 h-9 rounded-full text-[13px] font-semibold z-10 transition-colors duration-150 active:scale-[0.96] select-none"
-                style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.45)" }}
+                className={`relative flex items-center gap-2 px-4 h-9 rounded-full text-[14px] font-medium z-10 transition-colors duration-200 select-none ${isActive ? 'text-on-primary-container' : 'text-text-muted hover:text-text hover:bg-surface3/50'}`}
               >
                 {isActive && (
                   <motion.span
                     layoutId="nav-bubble"
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(74,158,255,0.28) 0%, rgba(30,100,220,0.18) 100%)",
-                      boxShadow: "inset 0 0 0 1px rgba(74,158,255,0.25)",
-                    }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 38,
-                      mass: 0.8,
-                    }}
+                    className="absolute inset-0 rounded-full bg-primary-container"
+                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
                   />
                 )}
-                <IconComponent
-                  className="w-[15px] h-[15px] shrink-0 relative z-10"
-                  style={{
-                    color: isActive ? "#7bbfff" : "rgba(255,255,255,0.4)",
-                  }}
-                />
+                <IconComponent className="w-[18px] h-[18px] shrink-0 relative z-10" />
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={label}
-                    className="hidden sm:inline relative z-10 leading-none"
+                    className="relative z-10 leading-none"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
@@ -161,7 +145,7 @@ export default function Topbar() {
           ) : (
             <Link
               href="/login"
-              className="h-8 px-4 flex items-center justify-center rounded-full bg-[#4a9eff] hover:bg-[#3a7bd5] text-white text-[13px] font-semibold transition-colors shadow-sm"
+              className="h-10 px-6 flex items-center justify-center rounded-full bg-primary hover:bg-primary/90 text-on-primary text-[14px] font-medium transition-colors shadow-sm"
             >
               Sign In
             </Link>
