@@ -28,6 +28,7 @@ interface Provider {
   logo: string;
   docs_url: string;
   pattern: string;
+  pricing: string;
 }
 
 interface ApiKey {
@@ -321,8 +322,13 @@ function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: {
             <span className="font-bold text-sm text-primary">{provider.name[0]}</span>
           )}
         </div>
-        <div className="flex flex-col">
-          <h3 className="font-semibold text-sm text-text leading-tight">{provider.name}</h3>
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-sm text-text leading-tight">{provider.name}</h3>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${provider.pricing === 'Free Tier' ? 'bg-success/10 text-success border-success/20' : 'bg-surface3 text-text-muted border-border/50'}`}>
+              {provider.pricing === 'Free Tier' ? 'Free Tier' : 'Paid'}
+            </span>
+          </div>
           <button onClick={onHelp} className="text-[11px] text-text-muted hover:text-primary text-left flex items-center gap-1">Setup docs <RiExternalLinkLine className="w-3 h-3" /></button>
         </div>
       </div>

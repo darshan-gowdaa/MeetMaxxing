@@ -57,6 +57,7 @@ class ProviderAdapter:
     name: str = ""
     docs_url: str = ""
     pattern: str = ".*"
+    pricing: str = "Paid"
     
     async def validate(self, key: str) -> tuple[str, str]:
         """Returns (status, safe_error_message)"""
@@ -96,6 +97,7 @@ class AnthropicAdapter(HttpProviderAdapter):
 class GoogleAdapter(HttpProviderAdapter):
     id, name, docs_url, pattern = "google", "Google Gemini", "https://ai.google.dev/docs", "^AIza.*"
     check_url = "https://generativelanguage.googleapis.com/v1beta/models"
+    pricing = "Free Tier"
     async def validate(self, key: str):
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
@@ -107,10 +109,12 @@ class GoogleAdapter(HttpProviderAdapter):
 class OpenRouterAdapter(HttpProviderAdapter):
     id, name, docs_url, pattern = "openrouter", "OpenRouter", "https://openrouter.ai/docs", "^sk-or-v1-.*"
     check_url = "https://openrouter.ai/api/v1/auth/key"
+    pricing = "Free Tier"
 
 # Additional providers requested
 class GroqAdapter(HttpProviderAdapter):
     id, name, docs_url, pattern, check_url = "groq", "Groq", "https://console.groq.com/docs", "^gsk_.*", "https://api.groq.com/openai/v1/models"
+    pricing = "Free Tier"
 
 class PerplexityAdapter(ProviderAdapter):
     id, name, docs_url, pattern = "perplexity", "Perplexity", "https://docs.perplexity.ai", "^pplx-.*"
@@ -122,17 +126,15 @@ class PerplexityAdapter(ProviderAdapter):
                 return "invalid", "Unauthorized or invalid."
         except Exception: return "unavailable", "Network unavailable."
 
-class MistralAdapter(HttpProviderAdapter): id, name, docs_url, check_url = "mistral", "Mistral AI", "https://docs.mistral.ai", "https://api.mistral.ai/v1/models"
-class CohereAdapter(HttpProviderAdapter): id, name, docs_url, check_url = "cohere", "Cohere", "https://docs.cohere.com", "https://api.cohere.com/v1/models"
-class TogetherAdapter(HttpProviderAdapter): id, name, docs_url, check_url = "together", "Together AI", "https://docs.together.ai", "https://api.together.xyz/v1/models"
+class MistralAdapter(HttpProviderAdapter): 
+    id, name, docs_url, check_url = "mistral", "Mistral AI", "https://docs.mistral.ai", "https://api.mistral.ai/v1/models"
+    pricing = "Free Tier"
 class DeepSeekAdapter(HttpProviderAdapter): id, name, docs_url, check_url = "deepseek", "DeepSeek", "https://platform.deepseek.com", "https://api.deepseek.com/models"
-class AzureAdapter(ProviderAdapter): id, name, docs_url = "azure", "Azure OpenAI", "https://learn.microsoft.com/azure/ai-services/openai"
 class CustomAdapter(ProviderAdapter): id, name, docs_url = "custom", "Custom / OpenAI-compatible", ""
 
 REGISTRY: dict[str, ProviderAdapter] = {p.id: p() for p in [
     OpenAIAdapter, AnthropicAdapter, GoogleAdapter, OpenRouterAdapter, 
-    GroqAdapter, PerplexityAdapter, MistralAdapter, CohereAdapter, 
-    TogetherAdapter, DeepSeekAdapter, AzureAdapter, CustomAdapter
+    GroqAdapter, PerplexityAdapter, MistralAdapter, DeepSeekAdapter, CustomAdapter
 ]}
 
 async def async_status_check(key_id: str, provider_id: str, plaintext_key: str):
@@ -187,4 +189,4 @@ async def delete_key(key_id: str, user: dict = Depends(get_current_user)):
 
 @router.get("/providers")
 async def get_providers():
-    return {"providers": [{"id": p.id, "name": p.name, "docs_url": p.docs_url, "pattern": p.pattern} for p in REGISTRY.values()]}
+    return {"providers": [{"id": p.id, "name": p.name, "docs_url": p.docs_url, "pattern": p.pattern, "pricing": p.pricing} for p in REGISTRY.values()]}
