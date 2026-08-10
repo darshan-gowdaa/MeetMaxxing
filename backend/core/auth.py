@@ -19,26 +19,27 @@ async def get_current_user(
     token = credentials.credentials
     
     try:
-        # Supabase JWTs are typically signed with the JWT secret (HS256)
-        jwt_secret = settings.SUPABASE_JWT_SECRET or settings.SUPABASE_ANON_KEY
+        from .database import get_supabase
+        supabase = get_supabase()
         
-        # Debug the actual header
-        unverified_header = jwt.get_unverified_header(token)
-        print(f"[Auth] Token header: {unverified_header}")
-        
-        payload = jwt.decode(
-            token,
-            jwt_secret,
-            algorithms=["HS256", "RS256", "HS512"],
-            options={"verify_aud": False},
-        )
-        user_id: str = payload.get("sub")
-        org_id: str = payload.get("app_metadata", {}).get("org_id", user_id)
-        if not user_id:
-            print("[Auth] Missing user_id in payload")
+        # Verify the token and get the user securely via Supabase Auth
+        user_resp = supabase.auth.get_user(token)
+        if not user_resp or not user_resp.user:
+            print("[Auth] Supabase returned no user for token")
             raise HTTPException(status_code=401, detail="Invalid token")
-        return {"user_id": user_id, "org_id": org_id, "email": payload.get("email")}
-    except JWTError as e:
+            
+        user = user_resp.user
+        
+        # We can also decode locally to get app_metadata for org_id without signature check 
+        # (since we just securely verified the token is valid with Supabase)
+        try:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            org_id = payload.get("app_metadata", {}).get("org_id", user.id)
+        except Exception:
+            org_id = user.id
+            
+        return {"user_id": user.id, "org_id": org_id, "email": user.email}
+    except Exception as e:
         print(f"[Auth] JWT validation failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
