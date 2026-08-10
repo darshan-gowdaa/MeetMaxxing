@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Google / Gemini
     GEMINI_API_KEY: str = "your-gemini-api-key"
     GEMINI_FLASH_MODEL: str = "gemini-2.5-flash"
-    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
+    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
     EMBEDDING_DIM: int = 768
 
     # Fallback LLM API Keys

@@ -219,7 +219,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           }
         }
       }
-      updated.push({ speaker: chunk.speaker || "Speaker", text: (chunk.text || "").trim(), timestamp: now });
+      updated.push({ speaker: chunk.speaker || "Speaker", text: (chunk.text || "").trim(), timestamp: now, source: chunk.source });
       browser.storage.local.set({ transcript: updated });
     });
 

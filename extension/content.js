@@ -275,7 +275,7 @@ function flushUtterance(speaker) {
   const sent = safeSendMessage({
     type: "INGEST_CHUNK",
     meetingId: meetingId,
-    chunk: { speaker, text: diffText, timestamp_ms: now - meetingStartTime, platform: "google_meet", source: "dom" },
+    chunk: { speaker, text: diffText, timestamp: now, timestamp_ms: now - meetingStartTime, platform: "google_meet", source: "dom" },
   });
   if (sent) console.log(`[MeetMaxxing] ✓ Utterance → ${speaker}: "${diffText.slice(0, 80)}"`);
   else console.warn("[MeetMaxxing] Context invalidated — refresh this tab (F5).");

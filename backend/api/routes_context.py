@@ -17,6 +17,7 @@ router = APIRouter(prefix="/context", tags=["context"])
 async def extract_text_from_file(file: UploadFile) -> str:
     content = ""
     filename = file.filename or ""
+    await file.seek(0)
     if filename.endswith(".pdf"):
         pdf_reader = PyPDF2.PdfReader(file.file)
         for page in pdf_reader.pages:

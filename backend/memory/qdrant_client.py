@@ -18,10 +18,10 @@ from ..core.config import settings
 from .schemas import MemoryFilter, MemoryPoint, MemoryResult
 
 _client: AsyncQdrantClient | None = None
-
+_collection_ensured = False
 
 async def get_qdrant() -> AsyncQdrantClient:
-    global _client
+    global _client, _collection_ensured
     if _client is None:
         import warnings
         with warnings.catch_warnings():
@@ -37,6 +37,15 @@ async def get_qdrant() -> AsyncQdrantClient:
                     check_compatibility=False,
                 )
                 await _client.get_collections()
+                
+    if not _collection_ensured:
+        _collection_ensured = True
+        try:
+            await ensure_collection()
+        except Exception:
+            _collection_ensured = False
+            raise
+
     return _client
 
 

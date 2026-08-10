@@ -68,7 +68,6 @@ export function useCopilot() {
           if (text === last.text) {
              updated = [...prev];
              updated[updated.length - 1] = { ...last, timestamp: now };
-             if (ext && ext.storage?.local) ext.storage.local.set({ transcript: updated });
              return updated;
           }
           // We allow merging continuations up to 15 seconds to prevent unbounded bubble merging if they just keep talking
@@ -76,14 +75,12 @@ export function useCopilot() {
             if (text.startsWith(last.text) || last.text.startsWith(text) || text.includes(last.text)) {
               updated = [...prev];
               updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now, source: chunk.source || last.source };
-              if (ext && ext.storage?.local) ext.storage.local.set({ transcript: updated });
               return updated;
             }
           }
         }
       }
       updated = [...prev, { speaker, text, timestamp: now, source: chunk.source }];
-      if (ext && ext.storage?.local) ext.storage.local.set({ transcript: updated });
       return updated;
     });
   };
