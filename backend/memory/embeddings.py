@@ -41,7 +41,7 @@ def _set_in_cache(text: str, vector: list[float]):
         del _embed_cache[oldest]
 
 async def embed_text(text: str) -> list[float]:
-    """Embed a single text string using Gemini text-embedding-004."""
+    """Embed a single text string using Gemini gemini-embedding-001."""
     cached = _get_from_cache(text)
     if cached:
         return cached
