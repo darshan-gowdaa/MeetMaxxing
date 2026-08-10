@@ -297,6 +297,7 @@ export default function ApiKeysPage() {
 }
 
 function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: { provider: Provider, apiKeys: ApiKey[], onAdd: () => void, onCheck: (id: string) => void, onDelete: (id: string) => void, onHelp: () => void }) {
+  const [imgError, setImgError] = useState(false);
   const brandSlugs: Record<string, string> = {
     openai: 'openai',
     anthropic: 'anthropic',
@@ -305,60 +306,55 @@ function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: {
     deepseek: 'deepseek',
     cohere: 'cohere',
     azure: 'microsoftazure',
-    perplexity: 'perplexity',
-    groq: 'groq'
+    perplexity: 'perplexity'
   };
   const slug = brandSlugs[provider.id];
 
   return (
-    <div className="bg-surface border border-border rounded-[20px] p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-surface2 flex items-center justify-center overflow-hidden border border-border/50">
-            {slug ? (
-              <img src={`https://cdn.simpleicons.org/${slug}`} alt={provider.name} className="w-5 h-5" onError={(e) => { e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
-            ) : null}
-            <span className={`font-bold text-lg text-primary ${slug ? 'hidden' : ''}`}>{provider.name[0]}</span>
-          </div>
-          <h3 className="font-semibold text-text">{provider.name}</h3>
+    <div className="bg-surface border border-border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface2/50 transition-colors">
+      <div className="flex items-center gap-3 w-48 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-surface2 flex items-center justify-center overflow-hidden border border-border/50 shrink-0">
+          {(slug && !imgError) ? (
+            <img src={`https://cdn.simpleicons.org/${slug}`} alt={provider.name} className="w-4 h-4" onError={() => setImgError(true)} />
+          ) : (
+            <span className="font-bold text-sm text-primary">{provider.name[0]}</span>
+          )}
         </div>
-        <button onClick={onHelp} className="w-8 h-8 rounded-full hover:bg-surface2 flex items-center justify-center text-text-muted"><RiExternalLinkLine className="w-4 h-4" /></button>
+        <div className="flex flex-col">
+          <h3 className="font-semibold text-sm text-text leading-tight">{provider.name}</h3>
+          <button onClick={onHelp} className="text-[11px] text-text-muted hover:text-primary text-left flex items-center gap-1">Setup docs <RiExternalLinkLine className="w-3 h-3" /></button>
+        </div>
       </div>
 
-      {apiKeys.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 pt-2">
-          <span className="text-sm text-text-muted">Not connected</span>
-          <button onClick={onAdd} className="h-9 px-4 rounded-full bg-surface2 text-text text-[13px] font-medium hover:bg-surface3 transition-colors border border-border">Connect {provider.name}</button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {apiKeys.map(key => (
-            <div key={key.id} className="flex items-center justify-between bg-surface2/50 rounded-xl p-3 border border-border/50">
-              <div className="flex items-center gap-3">
-                <div className="relative flex h-3 w-3">
-                  {key.status === "unchecked" ? (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>
-                  ) : null}
-                  <span className={`relative inline-flex rounded-full h-3 w-3 ${key.status === "valid" ? "bg-success" : key.status === "invalid" ? "bg-risk" : "bg-warning"}`}></span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-mono text-text">••••{key.last4}</span>
-                  {key.label && <span className="text-[11px] text-text-muted">{key.label}</span>}
-                </div>
+      <div className="flex-1 flex flex-wrap items-center gap-2">
+        {apiKeys.length === 0 ? (
+          <span className="text-xs text-text-muted italic">No key connected</span>
+        ) : (
+          apiKeys.map(key => (
+            <div key={key.id} className="flex items-center gap-2 bg-surface2 rounded-lg px-2.5 py-1.5 border border-border/50 max-w-full">
+              <div className="relative flex h-2 w-2 shrink-0">
+                {key.status === "unchecked" && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${key.status === "valid" ? "bg-success" : key.status === "invalid" ? "bg-risk" : "bg-warning"}`}></span>
               </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => onCheck(key.id)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface3 text-text-muted" title="Check status">
-                  <RiRefreshLine className={`w-4 h-4 ${key.status === "unchecked" ? "animate-spin" : ""}`} />
+              <span className="text-xs font-mono text-text truncate">••••{key.last4}</span>
+              <div className="flex items-center gap-1 shrink-0 ml-1 border-l border-border/50 pl-1">
+                <button onClick={() => onCheck(key.id)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-surface3 text-text-muted" title="Check status">
+                  <RiRefreshLine className={`w-3 h-3 ${key.status === "unchecked" ? "animate-spin" : ""}`} />
                 </button>
-                <button onClick={() => onDelete(key.id)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-risk-container/30 text-risk" title="Delete">
-                  <RiDeleteBinLine className="w-4 h-4" />
+                <button onClick={() => onDelete(key.id)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-risk-container/30 text-risk" title="Delete">
+                  <RiDeleteBinLine className="w-3 h-3" />
                 </button>
               </div>
             </div>
-          ))}
-          <button onClick={onAdd} className="text-[12px] font-medium text-primary hover:underline mt-1 w-fit">Add another {provider.name} key</button>
-        </div>
-      )}
+          ))
+        )}
+      </div>
+
+      <div className="shrink-0">
+        <button onClick={onAdd} className="h-8 px-3 rounded-lg bg-surface2 text-text text-xs font-medium hover:bg-surface3 transition-colors border border-border whitespace-nowrap flex items-center gap-1">
+          <RiAddLine className="w-3.5 h-3.5" /> {apiKeys.length > 0 ? "Add another" : "Connect"}
+        </button>
+      </div>
     </div>
   );
 }
