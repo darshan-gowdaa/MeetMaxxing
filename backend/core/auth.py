@@ -19,12 +19,17 @@ async def get_current_user(
     token = credentials.credentials
     
     try:
-        # Supabase JWTs are signed with the JWT secret, not the anon key
+        # Supabase JWTs are typically signed with the JWT secret (HS256)
         jwt_secret = settings.SUPABASE_JWT_SECRET or settings.SUPABASE_ANON_KEY
+        
+        # Debug the actual header
+        unverified_header = jwt.get_unverified_header(token)
+        print(f"[Auth] Token header: {unverified_header}")
+        
         payload = jwt.decode(
             token,
             jwt_secret,
-            algorithms=["HS256"],
+            algorithms=["HS256", "RS256", "HS512"],
             options={"verify_aud": False},
         )
         user_id: str = payload.get("sub")
