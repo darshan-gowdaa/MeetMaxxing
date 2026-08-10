@@ -16,7 +16,7 @@ export default function GeneralPreferences() {
   const saveStyle = (v: string) => { setStyle(v); localStorage.setItem('pref-style', v); };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full max-w-3xl animate-in fade-in duration-300">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-black text-text tracking-tight">
           General Preferences
