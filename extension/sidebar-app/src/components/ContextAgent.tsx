@@ -27,6 +27,12 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
       const res = await fetch(`${getBaseUrlBackend()}/context/files`, {
         headers: { "Authorization": `Bearer ${authToken}` }
       });
+      // @ts-ignore
+      const ext = typeof chrome !== "undefined" ? chrome : (typeof browser !== "undefined" ? browser : null);
+      if (res.status === 401) {
+        if (ext && ext.storage?.local) ext.storage.local.remove(["authToken"]);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setAvailableFiles(data.files || []);
@@ -116,6 +122,15 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
           headers: { "Authorization": `Bearer ${authToken}` },
           body: formData
         });
+        // @ts-ignore
+        const ext = typeof chrome !== "undefined" ? chrome : (typeof browser !== "undefined" ? browser : null);
+        if (res.status === 401) {
+          if (ext && ext.storage?.local) ext.storage.local.remove(["authToken"]);
+          setUploadError("Session expired. Please log in again.");
+          anyFailed = true;
+          break;
+        }
+
         if (res.ok) {
           newlyUploaded.push(file.name);
         } else {
@@ -164,6 +179,14 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
         signal: abortControllerRef.current.signal
       });
       console.log("API Response Status:", res.status);
+
+      // @ts-ignore
+      const ext = typeof chrome !== "undefined" ? chrome : (typeof browser !== "undefined" ? browser : null);
+      if (res.status === 401) {
+        if (ext && ext.storage?.local) ext.storage.local.remove(["authToken"]);
+        setChatHistory(prev => [...prev, { role: "agent", content: "Session expired. Please log in again." }]);
+        return;
+      }
 
       if (res.ok) {
         const data = await res.json();

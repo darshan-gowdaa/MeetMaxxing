@@ -139,9 +139,37 @@ export function useCopilot() {
     if (ext && ext.runtime?.onMessage) ext.runtime.onMessage.addListener(messageListener);
     if (ext && ext.storage?.onChanged) ext.storage.onChanged.addListener(storageListener);
 
+    // Fallback: Poll storage because Chrome blocks onChanged/onMessage in web-accessible iframes
+    const pollInterval = setInterval(() => {
+      if (ext && ext.storage?.local) {
+        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken"], (res: any) => {
+          if (res.transcript && Array.isArray(res.transcript)) {
+            setTranscriptLines(prev => {
+              if (prev.length === res.transcript.length && JSON.stringify(prev) === JSON.stringify(res.transcript)) return prev;
+              return res.transcript;
+            });
+          }
+          if (res.copilot_state) {
+            setSuggestions(res.copilot_state.suggestions || []);
+            setNextQuestion(res.copilot_state.next_question || "");
+            setRecap(res.copilot_state.recap || "");
+            if (res.copilot_state.error_message) setErrorMessage(res.copilot_state.error_message);
+          }
+          if (res.currentMeetingId) {
+            setMeetingId(res.currentMeetingId);
+            setIsEnded(false);
+          }
+          if (res.authToken !== undefined) {
+            setAuthToken(res.authToken || "");
+          }
+        });
+      }
+    }, 1500);
+
     return () => {
       if (ext && ext.runtime?.onMessage) ext.runtime.onMessage.removeListener(messageListener);
       if (ext && ext.storage?.onChanged) ext.storage.onChanged.removeListener(storageListener);
+      clearInterval(pollInterval);
     };
   }, []);
 
