@@ -13,6 +13,7 @@ import {
   RiCalendarEventLine,
   RiInformationLine,
   RiLogoutBoxRLine,
+  RiArrowDownSLine,
 } from "@remixicon/react";
 import { useAuth } from "@/lib/auth-context";
 import Image from "next/image";
@@ -177,13 +178,16 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpenState(o => !o)}
-        className="w-8 h-8 rounded-full bg-surface2 hover:bg-surface3 border border-border flex items-center justify-center shrink-0 overflow-hidden spring-colors focus:outline-none"
+        className="flex items-center gap-1.5 p-1 pr-2.5 rounded-full bg-surface2 hover:bg-surface3 border border-border/50 shrink-0 transition-colors focus:outline-none"
       >
-        {avatarUrl ? (
-          <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
-        ) : (
-          <span className="text-sm font-semibold">{initial}</span>
-        )}
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-surface-highest">
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
+          ) : (
+            <span className="text-[13px] font-semibold">{initial}</span>
+          )}
+        </div>
+        <RiArrowDownSLine className="w-4 h-4 text-text-muted" />
       </button>
 
       <AnimatePresence>
