@@ -119,7 +119,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             from ..agents.email_agent import run_email_agent
             result = await run_email_agent(
                 meeting_id=meeting_id,
-                summary_output=grpc_payload.get("summary", {})
+                summary_output=grpc_payload
             )
 
         elif agent_name == "late_join":

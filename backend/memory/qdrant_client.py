@@ -84,6 +84,8 @@ async def ensure_collection() -> None:
         ("memory_type", qmodels.PayloadSchemaType.KEYWORD),
         ("meeting_date", qmodels.PayloadSchemaType.DATETIME),  # DATETIME enables range (gte/lte) queries
         ("speaker_id", qmodels.PayloadSchemaType.KEYWORD),
+        ("speaker_name", qmodels.PayloadSchemaType.KEYWORD),
+        ("topic", qmodels.PayloadSchemaType.KEYWORD),
         ("priority", qmodels.PayloadSchemaType.INTEGER),
     ]
     import warnings
