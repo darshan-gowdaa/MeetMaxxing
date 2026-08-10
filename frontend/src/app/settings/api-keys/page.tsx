@@ -14,7 +14,8 @@ import {
   RiKey2Line,
   RiFlashlightLine,
   RiSparklingLine,
-  RiRobot2Line
+  RiRobot2Line,
+  RiQuestionLine
 } from "@remixicon/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -140,19 +141,20 @@ export default function ApiKeysPage() {
       {loading ? (
         <div className="flex justify-center p-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {providers.map(provider => {
+        <div className="flex flex-col border border-border rounded-2xl overflow-hidden bg-surface shadow-sm">
+          {providers.map((provider, idx) => {
             const providerKeys = keys.filter(k => k.provider_id === provider.id);
             return (
-              <ProviderCard 
-                key={provider.id} 
-                provider={provider} 
-                apiKeys={providerKeys} 
-                onAdd={() => setAddDialog(provider)}
-                onCheck={handleCheckStatus}
-                onDelete={handleDelete}
-                onHelp={() => setHelpDrawer(provider)}
-              />
+              <div key={provider.id} className={idx !== providers.length - 1 ? "border-b border-border" : ""}>
+                <ProviderCard 
+                  provider={provider} 
+                  apiKeys={providerKeys} 
+                  onAdd={() => setAddDialog(provider)}
+                  onCheck={handleCheckStatus}
+                  onDelete={handleDelete}
+                  onHelp={() => setHelpDrawer(provider)}
+                />
+              </div>
             );
           })}
         </div>
@@ -300,68 +302,71 @@ export default function ApiKeysPage() {
 
 function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: { provider: Provider, apiKeys: ApiKey[], onAdd: () => void, onCheck: (id: string) => void, onDelete: (id: string) => void, onHelp: () => void }) {
   const [imgError, setImgError] = useState(false);
-  const brandSlugs: Record<string, string> = {
-    openai: 'openai',
-    anthropic: 'anthropic',
-    google: 'google',
-    mistral: 'mistral',
-    deepseek: 'deepseek',
-    cohere: 'cohere',
-    azure: 'microsoftazure',
-    perplexity: 'perplexity'
-  };
+  const brandSlugs: Record<string, string> = { openai: 'openai', anthropic: 'anthropic', google: 'google', mistral: 'mistral', deepseek: 'deepseek', cohere: 'cohere', azure: 'microsoftazure', perplexity: 'perplexity' };
   const slug = brandSlugs[provider.id];
 
+  // Fallback for pricing if backend is stale
+  const isFree = provider.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(provider.id);
+
   return (
-    <div className="bg-surface border border-border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface2/50 transition-colors">
-      <div className="flex items-center gap-3 w-48 shrink-0">
-        <div className="w-8 h-8 rounded-full bg-surface2 flex items-center justify-center overflow-hidden border border-border/50 shrink-0">
+    <div className="p-4 flex items-center justify-between gap-4 hover:bg-surface2/30 transition-colors group">
+      
+      {/* Leading & Body */}
+      <div className="flex items-center gap-4 flex-1 overflow-hidden">
+        {/* Leading Avatar */}
+        <div className="w-10 h-10 rounded-full bg-surface2 flex items-center justify-center overflow-hidden border border-border/50 shrink-0 shadow-sm">
           {(slug && !imgError) ? (
-            <img src={`https://cdn.simpleicons.org/${slug}`} alt={provider.name} className="w-4 h-4" onError={() => setImgError(true)} />
+            <img src={`https://cdn.simpleicons.org/${slug}`} alt={provider.name} className="w-5 h-5" onError={() => setImgError(true)} />
           ) : (
-            <span className="font-bold text-sm text-primary">{provider.name[0]}</span>
+            <span className="font-bold text-base text-primary">{provider.name[0]}</span>
           )}
         </div>
-        <div className="flex flex-col items-start gap-1">
+
+        {/* Body (Title & Keys Subtitle) */}
+        <div className="flex flex-col gap-1 overflow-hidden">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-sm text-text leading-tight">{provider.name}</h3>
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${provider.pricing === 'Free Tier' ? 'bg-success/10 text-success border-success/20' : 'bg-surface3 text-text-muted border-border/50'}`}>
-              {provider.pricing === 'Free Tier' ? 'Free Tier' : 'Paid'}
-            </span>
+            <h3 className="font-medium text-[15px] text-text leading-none">{provider.name}</h3>
+            {isFree && (
+              <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20">Free Tier</span>
+            )}
           </div>
-          <button onClick={onHelp} className="text-[11px] text-text-muted hover:text-primary text-left flex items-center gap-1">Setup docs <RiExternalLinkLine className="w-3 h-3" /></button>
+          
+          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+            {apiKeys.length === 0 ? (
+              <span className="text-[13px] text-text-muted">Not connected</span>
+            ) : (
+              apiKeys.map(key => (
+                <div key={key.id} className="flex items-center gap-1.5 bg-surface2 rounded px-2 py-0.5 border border-border/50">
+                  <div className="relative flex h-1.5 w-1.5 shrink-0">
+                    {key.status === "unchecked" && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>}
+                    <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${key.status === "valid" ? "bg-success" : key.status === "invalid" ? "bg-risk" : "bg-warning"}`}></span>
+                  </div>
+                  <span className="text-[11px] font-mono text-text">••••{key.last4}</span>
+                  <div className="flex items-center gap-1 border-l border-border/50 pl-1.5 ml-0.5">
+                    <button onClick={() => onCheck(key.id)} className="text-text-muted hover:text-text transition-colors" title="Check status">
+                      <RiRefreshLine className={`w-3 h-3 ${key.status === "unchecked" ? "animate-spin" : ""}`} />
+                    </button>
+                    <button onClick={() => onDelete(key.id)} className="text-risk/70 hover:text-risk transition-colors" title="Delete">
+                      <RiDeleteBinLine className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-wrap items-center gap-2">
-        {apiKeys.length === 0 ? (
-          <span className="text-xs text-text-muted italic">No key connected</span>
-        ) : (
-          apiKeys.map(key => (
-            <div key={key.id} className="flex items-center gap-2 bg-surface2 rounded-lg px-2.5 py-1.5 border border-border/50 max-w-full">
-              <div className="relative flex h-2 w-2 shrink-0">
-                {key.status === "unchecked" && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${key.status === "valid" ? "bg-success" : key.status === "invalid" ? "bg-risk" : "bg-warning"}`}></span>
-              </div>
-              <span className="text-xs font-mono text-text truncate">••••{key.last4}</span>
-              <div className="flex items-center gap-1 shrink-0 ml-1 border-l border-border/50 pl-1">
-                <button onClick={() => onCheck(key.id)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-surface3 text-text-muted" title="Check status">
-                  <RiRefreshLine className={`w-3 h-3 ${key.status === "unchecked" ? "animate-spin" : ""}`} />
-                </button>
-                <button onClick={() => onDelete(key.id)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-risk-container/30 text-risk" title="Delete">
-                  <RiDeleteBinLine className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="shrink-0">
-        <button onClick={onAdd} className="h-8 px-3 rounded-lg bg-surface2 text-text text-xs font-medium hover:bg-surface3 transition-colors border border-border whitespace-nowrap flex items-center gap-1">
-          <RiAddLine className="w-3.5 h-3.5" /> {apiKeys.length > 0 ? "Add another" : "Connect"}
+      {/* Trailing Actions */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button onClick={onAdd} className="h-8 px-3 rounded-full bg-surface2 text-text text-[13px] font-medium hover:bg-surface3 transition-colors border border-border flex items-center gap-1 shadow-sm">
+          <RiAddLine className="w-4 h-4" /> {apiKeys.length > 0 ? "Add" : "Connect"}
+        </button>
+        <button onClick={onHelp} className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface2 hover:text-text transition-colors" title="Setup docs">
+          <RiQuestionLine className="w-4 h-4" />
         </button>
       </div>
+      
     </div>
   );
 }
