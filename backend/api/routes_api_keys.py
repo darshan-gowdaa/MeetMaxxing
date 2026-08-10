@@ -152,7 +152,7 @@ async def async_status_check(key_id: str, provider_id: str, plaintext_key: str):
 
 @router.get("/")
 async def list_keys(user: dict = Depends(get_current_user)):
-    res = get_supabase_admin().table("user_api_keys").select("id, provider_id, label, last4, status, last_checked_at, last_error_message_safe, is_default_for_provider").eq("user_id", user["id"]).execute()
+    res = get_supabase_admin().table("user_api_keys").select("id, provider_id, label, last4, status, last_checked_at, last_error_message_safe, is_default_for_provider").eq("user_id", user["user_id"]).execute()
     return {"api_keys": res.data or []}
 
 @router.post("/")
@@ -162,7 +162,7 @@ async def add_key(data: dict, background_tasks: BackgroundTasks, user: dict = De
         
     try:
         enc_data = _encrypt_key(key)
-        enc_data.update({"user_id": user["id"], "provider_id": provider_id, "label": data.get("label", ""), "status": "unchecked"})
+        enc_data.update({"user_id": user["user_id"], "provider_id": provider_id, "label": data.get("label", ""), "status": "unchecked"})
         res = get_supabase_admin().table("user_api_keys").upsert(enc_data, on_conflict="user_id,provider_id,label").execute()
         key_record = res.data[0]
         background_tasks.add_task(async_status_check, key_record["id"], provider_id, key)
@@ -173,7 +173,7 @@ async def add_key(data: dict, background_tasks: BackgroundTasks, user: dict = De
 @router.post("/{key_id}/check-status")
 async def check_status(key_id: str, user: dict = Depends(get_current_user)):
     supabase = get_supabase_admin()
-    res = supabase.table("user_api_keys").select("*").eq("id", key_id).eq("user_id", user["id"]).execute()
+    res = supabase.table("user_api_keys").select("*").eq("id", key_id).eq("user_id", user["user_id"]).execute()
     if not res.data: raise HTTPException(404, "Not found")
     
     pt = _decrypt_key(res.data[0])
@@ -185,7 +185,7 @@ async def check_status(key_id: str, user: dict = Depends(get_current_user)):
 
 @router.delete("/{key_id}")
 async def delete_key(key_id: str, user: dict = Depends(get_current_user)):
-    get_supabase_admin().table("user_api_keys").delete().eq("id", key_id).eq("user_id", user["id"]).execute()
+    get_supabase_admin().table("user_api_keys").delete().eq("id", key_id).eq("user_id", user["user_id"]).execute()
     return {"status": "deleted"}
 
 @router.get("/providers")
