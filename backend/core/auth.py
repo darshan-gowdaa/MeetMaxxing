@@ -30,9 +30,11 @@ async def get_current_user(
         user_id: str = payload.get("sub")
         org_id: str = payload.get("app_metadata", {}).get("org_id", user_id)
         if not user_id:
+            print("[Auth] Missing user_id in payload")
             raise HTTPException(status_code=401, detail="Invalid token")
         return {"user_id": user_id, "org_id": org_id, "email": payload.get("email")}
-    except JWTError:
+    except JWTError as e:
+        print(f"[Auth] JWT validation failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 

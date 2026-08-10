@@ -47,7 +47,11 @@ export default function ExtensionAuthPage() {
     fetch(`${backendUrl}/api/auth/provision`, {
       method: "POST",
       headers: { Authorization: `Bearer ${session.access_token}` },
-    }).catch(() => {});
+    })
+      .then((res) => {
+        if (!res.ok) console.error("[Auth] Backend provision returned status:", res.status);
+      })
+      .catch((err) => console.error("[Auth] Failed to hit backend provision endpoint:", err));
 
     // Auto-send token to auth-capture.js content script
     window.postMessage(

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/molecules/Topbar";
 import { AuthProvider } from "@/lib/auth-context";
-import { Analytics } from "@vercel/analytics/react";
+
 
 export const metadata: Metadata = {
   title: "MeetMaxxing — AI Meeting Copilot",
@@ -35,7 +35,6 @@ export default function RootLayout({
           <Topbar />
           {children}
         </AuthProvider>
-        <Analytics />
       </body>
     </html>
   );

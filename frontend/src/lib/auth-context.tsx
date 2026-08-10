@@ -40,7 +40,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fetch(`${backendUrl}/api/auth/provision`, {
             method: "POST",
             headers: { Authorization: `Bearer ${session.access_token}` },
-          }).catch(() => {});
+          })
+            .then((res) => {
+              if (!res.ok) console.error("[AuthContext] Backend provision returned status:", res.status);
+            })
+            .catch((err) => console.error("[AuthContext] Failed to hit backend provision endpoint:", err));
         }
       }
     );
