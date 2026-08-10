@@ -39,7 +39,7 @@ export function ActionButton({
     );
   if (state === "error")
     return (
-      <button onClick={onClick} className="flex items-center gap-2 px-4 h-9 rounded-full bg-risk-container/40 border border-risk/30 text-[12px] text-risk spring hover:-translate-y-0.5 active:translate-y-0">
+      <button onClick={onClick} className="flex items-center gap-2 px-4 h-9 rounded-full bg-risk-container/40 border border-risk/30 text-[12px] text-risk spring hover:shadow-md active:translate-y-0">
         <AlertTriangle className="w-3.5 h-3.5" />
         {errorLabel}
       </button>

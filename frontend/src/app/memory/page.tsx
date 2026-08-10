@@ -138,7 +138,7 @@ export default function MemoryPage() {
           <button
             onClick={() => handleQuery()}
             disabled={loading || !query.trim()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:scale-[0.96] disabled:opacity-40"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:opacity-80 disabled:opacity-40"
           >
             <RiSparklingLine className="w-4 h-4" />
             Ask

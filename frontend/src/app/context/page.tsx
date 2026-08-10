@@ -272,7 +272,7 @@ export default function ContextManagerPage() {
                 <p className="text-risk font-semibold text-sm">{error}</p>
                 <button
                   onClick={load}
-                  className="h-10 px-6 bg-surface2 hover:bg-surface3 border border-border rounded-full text-sm font-semibold spring-colors active:scale-[0.97]"
+                  className="h-10 px-6 bg-surface2 hover:bg-surface3 border border-border rounded-full text-sm font-semibold spring-colors active:opacity-80"
                 >
                   Retry
                 </button>
@@ -293,7 +293,7 @@ export default function ContextManagerPage() {
                 {!search && (
                   <button 
                     onClick={() => setShowUpload(true)}
-                    className="mt-4 h-10 px-6 bg-primary-container text-on-primary-container hover:brightness-125 border border-primary/20 rounded-full text-sm font-semibold spring-colors active:scale-[0.97]"
+                    className="mt-4 h-10 px-6 bg-primary-container text-on-primary-container hover:brightness-125 border border-primary/20 rounded-full text-sm font-semibold spring-colors active:opacity-80"
                   >
                     Upload First File
                   </button>
@@ -335,7 +335,7 @@ export default function ContextManagerPage() {
 
                         <button
                           onClick={() => setManualSelectionMode(true)}
-                          className="h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:scale-95 flex items-center gap-2"
+                          className="h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:opacity-80 flex items-center gap-2"
                         >
                           <RiCheckLine className="w-4 h-4" />
                           Select

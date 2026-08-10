@@ -21,11 +21,11 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
   return (
     <div className={`bg-zinc-900/50 backdrop-blur-xl rounded-[32px] border border-zinc-800/50 overflow-hidden shadow-md transition-all duration-300 ${transcriptOpen ? 'shadow-indigo-900/10' : ''}`}>
       <div 
-        className="w-full flex items-center justify-between px-6 py-5 hover:bg-zinc-800/60 active:scale-[0.99] transition-all cursor-pointer group" 
+        className="w-full flex items-center justify-between px-6 py-5 hover:bg-zinc-800/60 active:opacity-80 transition-all cursor-pointer group" 
         onClick={() => setTranscriptOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[20px] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/20 transition-all duration-300 group-hover:scale-110">
+          <div className="w-10 h-10 rounded-[20px] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/20 transition-all duration-300 group-hover:brightness-110">
             <MessageSquare className="w-5 h-5 text-indigo-400" />
           </div>
           <span className="text-[16px] font-extrabold tracking-tight text-zinc-100 group-hover:text-indigo-400 transition-colors">
@@ -43,7 +43,7 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
             <option value="audio">Agent (AI)</option>
           </select>
           <div 
-            className="w-8 h-8 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:border-indigo-500/30 transition-all duration-300 cursor-pointer group-active:scale-90" 
+            className="w-8 h-8 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:border-indigo-500/30 transition-all duration-300 cursor-pointer group-active:opacity-80" 
             onClick={() => setTranscriptOpen((o) => !o)}
           >
             {transcriptOpen
@@ -60,7 +60,7 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
             .map((chunk, idx) => (
             <div
               key={idx}
-              className="flex flex-col gap-2 p-5 rounded-[24px] bg-zinc-900/40 border border-zinc-800/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-500/30 transition-all duration-300 group/chunk"
+              className="flex flex-col gap-2 p-5 rounded-[24px] bg-zinc-900/40 border border-zinc-800/60 hover:shadow-md hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-500/30 transition-all duration-300 group/chunk"
             >
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2.5 text-[13px] font-bold tracking-wide text-zinc-200 group-hover/chunk:text-indigo-200 transition-colors">

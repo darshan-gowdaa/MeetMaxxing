@@ -103,7 +103,7 @@ export default function LoginPage() {
               <button
                 onClick={handleGoogle}
                 disabled={loading}
-                className="w-full h-14 bg-zinc-800 text-white font-semibold rounded-full flex items-center justify-center gap-3 hover:bg-zinc-700 hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] transition-all duration-300 disabled:opacity-50"
+                className="w-full h-14 bg-zinc-800 text-white font-semibold rounded-full flex items-center justify-center gap-3 hover:bg-zinc-700 hover:shadow-md hover:shadow-xl active:opacity-80 transition-all duration-300 disabled:opacity-50"
               >
                 <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -158,7 +158,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-14 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold rounded-full hover:bg-indigo-500/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 active:scale-[0.97] transition-all duration-300 disabled:opacity-50 mt-4"
+                  className="w-full h-14 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold rounded-full hover:bg-indigo-500/20 hover:shadow-md hover:shadow-xl hover:shadow-indigo-500/10 active:opacity-80 transition-all duration-300 disabled:opacity-50 mt-4"
                 >
                   {loading ? "Please wait..." : (
                     mode === "signin" ? "Sign in" :

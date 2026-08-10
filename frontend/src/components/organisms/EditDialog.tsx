@@ -71,14 +71,14 @@ export default function EditDialog({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:scale-[0.97]"
+            className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80"
           >
             Cancel
           </button>
           <button
             onClick={() => title.trim() && onSave(title.trim())}
             disabled={busy || !title.trim()}
-            className="flex-1 h-11 rounded-full bg-primary-container text-on-primary-container text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:scale-[0.97] disabled:opacity-50"
+            className="flex-1 h-11 rounded-full bg-primary-container text-on-primary-container text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:opacity-80 disabled:opacity-50"
           >
             {busy ? <Md3LoadingIndicator size="sm" /> : <RiCheckLine className="w-4 h-4" />}
             {busy ? "Saving…" : "Save"}

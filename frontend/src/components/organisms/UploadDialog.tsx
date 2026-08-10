@@ -125,14 +125,14 @@ export default function UploadDialog({
           <button
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:scale-[0.97] disabled:opacity-50"
+            className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => files.length > 0 && onUpload(files)}
             disabled={busy || files.length === 0}
-            className="flex-1 h-11 rounded-full bg-primary text-on-primary text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:scale-[0.97] disabled:opacity-50"
+            className="flex-1 h-11 rounded-full bg-primary text-on-primary text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:opacity-80 disabled:opacity-50"
           >
             {busy ? <Md3LoadingIndicator size="sm" /> : <RiUploadCloud2Line className="w-4 h-4" />}
             {busy ? "Uploading…" : `Upload ${files.length} File${files.length !== 1 ? 's' : ''}`}

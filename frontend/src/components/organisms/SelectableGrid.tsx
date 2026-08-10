@@ -183,7 +183,7 @@ export function SelectableGrid<T>({
             <div className="flex items-center gap-3">
               <button 
                 onClick={clearSelection}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-text transition-colors active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-text transition-colors active:opacity-80"
                 title="Cancel Selection"
               >
                 <RiCloseLine className="w-5 h-5" />
@@ -196,14 +196,14 @@ export function SelectableGrid<T>({
             <div className="flex items-center gap-1">
               <button
                 onClick={toggleAll}
-                className="px-4 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-[13px] font-bold text-text transition-colors active:scale-95 whitespace-nowrap"
+                className="px-4 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-[13px] font-bold text-text transition-colors active:opacity-80 whitespace-nowrap"
               >
                 {selectedKeys.size === items.length && items.length > 0 ? "Deselect All" : "Select All"}
               </button>
               <button
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={selectedKeys.size === 0}
-                className="px-4 h-10 flex items-center justify-center gap-2 rounded-full bg-risk text-bg text-[13px] font-bold transition-colors hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                className="px-4 h-10 flex items-center justify-center gap-2 rounded-full bg-risk text-bg text-[13px] font-bold transition-colors hover:brightness-110 active:opacity-80 disabled:opacity-50 disabled:pointer-events-none"
               >
                 <RiDeleteBinLine className="w-4 h-4" />
                 Delete

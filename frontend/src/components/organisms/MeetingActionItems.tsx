@@ -142,7 +142,7 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
                 key={item.id}
                 role="button"
                 onClick={() => toggleItemStatus(item.id)}
-                className={`group w-full text-left rounded-[16px] border p-4 spring flex items-start gap-3 hover:-translate-y-0.5 active:scale-[0.99] ${
+                className={`group w-full text-left rounded-[16px] border p-4 spring flex items-start gap-3 hover:shadow-md active:opacity-80 ${
                   isDone
                     ? "bg-success/5 border-success/20 opacity-75"
                     : isInProgress
@@ -193,7 +193,7 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
                   onClick={onPriorityChange ? (e) => handlePriorityClick(e, item) : undefined}
                   title={onPriorityChange ? "Click to change priority" : pStyle.label}
                   className={`flex items-center gap-1.5 text-[10px] font-bold border rounded-full px-2.5 py-1 tracking-wide shrink-0 select-none ${pStyle.chip} ${
-                    onPriorityChange ? "cursor-pointer hover:brightness-110 active:scale-95 spring" : ""
+                    onPriorityChange ? "cursor-pointer hover:brightness-110 active:opacity-80 spring" : ""
                   } ${isCycling ? "opacity-60 pointer-events-none" : ""}`}
                 >
                   {pStyle.icon}

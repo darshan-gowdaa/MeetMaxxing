@@ -51,14 +51,14 @@ export default function DeleteDialog({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:scale-[0.97]"
+            className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={busy}
-            className="flex-1 h-11 rounded-full bg-risk-container text-risk text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:scale-[0.97] disabled:opacity-60"
+            className="flex-1 h-11 rounded-full bg-risk-container text-risk text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:opacity-80 disabled:opacity-60"
           >
             {busy ? <Md3LoadingIndicator size="sm" /> : <RiDeleteBinLine className="w-4 h-4" />}
             {busy ? "Deleting…" : "Delete"}

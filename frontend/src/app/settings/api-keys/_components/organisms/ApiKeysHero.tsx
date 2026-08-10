@@ -12,7 +12,7 @@ export function ApiKeysHero({ onAdd }: { onAdd: () => void }) {
       <div className="relative z-10 shrink-0">
         <button 
           onClick={onAdd}
-          className="h-12 px-6 rounded-full bg-primary text-on-primary font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-sm hover:shadow hover:-translate-y-0.5 w-full md:w-auto"
+          className="h-12 px-6 rounded-full bg-primary text-on-primary font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-sm hover:shadow hover:shadow-md w-full md:w-auto"
         >
           <RiAddLine className="w-5 h-5" /> Add New Key
         </button>

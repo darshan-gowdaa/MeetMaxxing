@@ -56,7 +56,7 @@ export default function ContextHero({ loading, filesCount, totalSizeKB, setShowU
           </div>
           <button 
             onClick={() => setShowUpload(true)}
-            className="relative group flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border overflow-hidden text-text hover:border-transparent spring-sm active:scale-[0.97]"
+            className="relative group flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border overflow-hidden text-text hover:border-transparent spring-sm active:opacity-80"
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] z-0">
               <div className="absolute inset-0 w-full h-full animate-[spin-fade_1.5s_ease-in-out_2_forwards] bg-[conic-gradient(from_0deg,transparent_0_340deg,var(--primary)_360deg)] opacity-0" />
