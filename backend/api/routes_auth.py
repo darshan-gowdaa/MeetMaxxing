@@ -49,6 +49,16 @@ async def get_me(user: dict = Depends(get_current_user)):
     }
 
 
+@router.delete("/me")
+async def delete_me(user: dict = Depends(get_current_user)):
+    """Delete current user."""
+    from ..core.database import get_supabase_admin
+    supabase_admin = get_supabase_admin()
+    
+    supabase_admin.auth.admin.delete_user(user["user_id"])
+    return {"deleted": True}
+
+
 @router.post("/provision")
 async def provision_user(user: dict = Depends(get_current_user)):
     """
