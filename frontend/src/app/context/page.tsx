@@ -17,7 +17,7 @@ import ContextCard from "@/components/organisms/ContextCard";
 import ContextHero from "@/components/organisms/ContextHero";
 
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 type ContextFile = {
   meeting_id: string;

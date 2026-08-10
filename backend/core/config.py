@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # Google Calendar OAuth2
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/calendar/callback"
+    GOOGLE_REDIRECT_URI: str = "https://meetmaxxing-api.onrender.com/calendar/callback"
     GOOGLE_CALENDAR_SCOPES: list[str] = [
         "https://www.googleapis.com/auth/calendar",
         "https://www.googleapis.com/auth/calendar.events",
@@ -55,8 +55,8 @@ class Settings(BaseSettings):
 
     # App
     APP_SECRET_KEY: str = "change-me-in-production"
-    FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str = "https://meetmaxxing.vercel.app"
+    BACKEND_URL: str = "https://meetmaxxing-api.onrender.com"
     ENVIRONMENT: str = "development"
 
 

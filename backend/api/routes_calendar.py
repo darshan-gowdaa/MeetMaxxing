@@ -121,7 +121,7 @@ async def connect_calendar(user: dict = Depends(get_current_user)):
             status_code=501,
             detail=(
                 "Google OAuth not configured. Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET in .env, "
-                "then register http://localhost:8000/calendar/callback as an Authorized Redirect URI "
+                "then register https://meetmaxxing-api.onrender.com/calendar/callback as an Authorized Redirect URI "
                 "in Google Cloud Console."
             ),
         )

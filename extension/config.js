@@ -5,18 +5,21 @@ const isDevMode = () => {
     return true;
   }
   const isFirefox = typeof browser !== 'undefined' && browser.runtime && browser.runtime.getManifest;
-  if (!isFirefox && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
+  if (isFirefox) {
+    return !browser.runtime.getManifest().update_url;
+  }
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
     return !chrome.runtime.getManifest().update_url;
   }
   return false;
 };
 
-const _isDevHost = false;
+const _isDevHost = isDevMode();
 
 const MEETMAXXING_CONFIG = {
-  BASE_URL_BACKEND: "https://meetmaxxing-api.onrender.com",
-  BASE_URL_WEB: "https://meetmaxxing.vercel.app",
-  WS_URL: "wss://meetmaxxing-api.onrender.com",
+  BASE_URL_BACKEND: _isDevHost ? "http://localhost:8000" : "https://meetmaxxing-api.onrender.com",
+  BASE_URL_WEB: _isDevHost ? "http://localhost:3000" : "https://meetmaxxing.vercel.app",
+  WS_URL: _isDevHost ? "ws://localhost:8000" : "wss://meetmaxxing-api.onrender.com",
 };
 const MEETMIND_CONFIG = MEETMAXXING_CONFIG;
 if (typeof globalThis !== 'undefined') {

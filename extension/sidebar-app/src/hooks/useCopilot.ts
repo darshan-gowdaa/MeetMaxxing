@@ -223,7 +223,7 @@ export function useCopilot() {
         }
       }
     } catch (err: any) {
-      const msg = `Backend unreachable: ${err.message}. Ensure FastAPI server is on port 8000.`;
+      const msg = `Backend unreachable: ${err.message}. Ensure backend is running.`;
       setErrorMessage(msg);
       if (actionType === "ASK_NEXT_QUESTION" || actionType === "GENERATE_INSIGHTS") setNextQuestion(msg);
       if (actionType === "REQUEST_RECAP" || actionType === "GENERATE_INSIGHTS") setRecap(msg);

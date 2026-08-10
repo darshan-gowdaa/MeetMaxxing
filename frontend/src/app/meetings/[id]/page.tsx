@@ -16,7 +16,7 @@ import MeetingSummary from "@/components/organisms/MeetingSummary";
 import MeetingDecisions from "@/components/organisms/MeetingDecisions";
 import MeetingActionItems from "@/components/organisms/MeetingActionItems";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 
 

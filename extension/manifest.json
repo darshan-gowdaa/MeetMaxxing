@@ -37,8 +37,7 @@
     },
     {
       "matches": [
-        "https://meetmaxxing.vercel.app/extension-auth*",
-        "http://localhost:3000/extension-auth*"
+        "https://meetmaxxing.vercel.app/extension-auth*"
       ],
       "js": ["auth-capture.js"],
       "run_at": "document_idle"

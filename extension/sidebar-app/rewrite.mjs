@@ -132,7 +132,7 @@ const newReturn = `  return (
                       <div className="flex flex-wrap gap-1.5 mt-1 pt-2 border-t border-zinc-700/60">
                         <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mr-1 flex items-center">Sources</span>
                         {msg.sources.map((s: any, idx: number) => (
-                          <a key={idx} href={\`http://localhost:3000/context\`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={s.speaker_name || "Context Document"}>
+                          <a key={idx} href={\`https://meetmaxxing.vercel.app/context\`} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-[#1E1F22] hover:bg-[#32363B] text-zinc-300 text-[10px] font-medium px-2.5 py-1 rounded-full transition-colors border border-zinc-700/80" title={s.speaker_name || "Context Document"}>
                              <i className="ri-file-text-line"></i> {s.speaker_name ? (s.speaker_name.length > 18 ? s.speaker_name.substring(0, 18) + '...' : s.speaker_name) : "Document"}
                           </a>
                         ))}

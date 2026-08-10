@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { RiCloseLine, RiFileTextLine } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 export default function ViewContentDialog({
   filename,

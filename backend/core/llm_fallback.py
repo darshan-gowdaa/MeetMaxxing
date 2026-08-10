@@ -163,7 +163,7 @@ async def generate_content_with_fallback(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {openrouter_key.strip()}",
-                        "HTTP-Referer": "http://localhost:3000",
+                        "HTTP-Referer": "https://meetmaxxing.vercel.app",
                         "X-Title": "MeetMaxxing",
                         "Content-Type": "application/json",
                     },

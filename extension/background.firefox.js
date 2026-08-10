@@ -2,18 +2,6 @@
  * MeetMaxxing Service Worker (Background Script) for Firefox
  */
 
-const isDevMode = () => {
-  if (typeof location !== 'undefined' && location.hostname === 'localhost') {
-    return true;
-  }
-  const isFirefox = typeof browser !== 'undefined' && browser.runtime && browser.runtime.getManifest;
-  if (!isFirefox && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
-    return !chrome.runtime.getManifest().update_url;
-  }
-  return false;
-};
-const _isDevHost = false;
-
 const MEETMAXXING_CONFIG = {
   BASE_URL_BACKEND: "https://meetmaxxing-api.onrender.com",
   BASE_URL_WEB: "https://meetmaxxing.vercel.app",
