@@ -26,7 +26,7 @@
     "https://meetmaxxing-api.onrender.com/*"
   ],
   "background": {
-    "scripts": ["background.firefox.js"]
+    "scripts": ["background.js"]
   },
   "content_scripts": [
     {

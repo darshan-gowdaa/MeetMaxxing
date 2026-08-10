@@ -166,11 +166,11 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
     try {
       const reqBody = {
         meeting_id: meetingId,
-        question: textStr,
-        target_files: selectedTargetFiles.length > 0 ? selectedTargetFiles : undefined
+        query: textStr,
+        target_file: selectedTargetFiles.length > 0 ? selectedTargetFiles : null
       };
       
-      const reqUrl = `${getBaseUrlBackend()}/memory/query`;
+      const reqUrl = `${getBaseUrlBackend()}/context/chat`;
       console.log("API Request:", reqUrl, reqBody);
       const res = await fetch(reqUrl, {
         method: "POST",
