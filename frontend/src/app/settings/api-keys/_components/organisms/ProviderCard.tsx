@@ -22,23 +22,23 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
           )}
         </div>
 
-        <div className="flex flex-col gap-1 overflow-hidden">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-[15px] text-text leading-none">{provider.name}</h3>
-            {isFree && (
-              <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20">Free Tier</span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 flex-wrap mt-1">
-            {apiKeys.length === 0 ? (
-              <span className="text-[13px] text-text-muted">Not connected</span>
-            ) : (
-              apiKeys.map(key => (
-                <ApiKeyBadge key={key.id} apiKey={key} onCheck={onCheck} onDelete={onDelete} />
-              ))
-            )}
-          </div>
+        {/* Title & Free Tier */}
+        <div className="flex items-center gap-2 shrink-0">
+          <h3 className="font-medium text-[15px] text-text leading-none">{provider.name}</h3>
+          {isFree && (
+            <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20">Free Tier</span>
+          )}
+        </div>
+        
+        {/* Keys List (Middle aligned) */}
+        <div className="flex items-center gap-2 flex-wrap flex-1 ml-4 overflow-hidden">
+          {apiKeys.length === 0 ? (
+            <span className="text-[13px] text-text-muted">Not connected</span>
+          ) : (
+            apiKeys.map(key => (
+              <ApiKeyBadge key={key.id} apiKey={key} onCheck={onCheck} onDelete={onDelete} />
+            ))
+          )}
         </div>
       </div>
 

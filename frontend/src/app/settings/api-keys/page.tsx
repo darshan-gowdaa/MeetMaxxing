@@ -10,6 +10,7 @@ import { ProviderCard } from "./_components/organisms/ProviderCard";
 import { ModelSelection } from "./_components/organisms/ModelSelection";
 import { AddKeyDialog } from "./_components/organisms/AddKeyDialog";
 import { ProviderHelpDrawer } from "./_components/organisms/ProviderHelpDrawer";
+import { ProviderListSkeleton } from "./_components/skeletons/ProviderListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -93,19 +94,7 @@ export default function ApiKeysPage() {
       <ApiKeysHero onAdd={() => setAddDialog(providers[0])} />
 
       {loading ? (
-        <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
-          {[1,2,3,4,5].map(i => (
-            <div key={i} className="p-4 flex items-center justify-between gap-4 border-b border-border last:border-b-0 animate-pulse">
-               <div className="flex items-center gap-4 flex-1">
-                 <div className="w-10 h-10 rounded-full bg-surface2 shrink-0"></div>
-                 <div className="flex flex-col gap-2 w-full max-w-[200px]">
-                   <div className="h-4 bg-surface2 rounded w-1/2"></div>
-                   <div className="h-3 bg-surface2 rounded w-1/3"></div>
-                 </div>
-               </div>
-            </div>
-          ))}
-        </div>
+        <ProviderListSkeleton />
       ) : (
         <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
           {[...providers].sort((a, b) => {
