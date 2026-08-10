@@ -11,7 +11,10 @@ import {
   RiExternalLinkLine,
   RiDeleteBinLine,
   RiEditLine,
-  RiKey2Line
+  RiKey2Line,
+  RiFlashlightLine,
+  RiSparklingLine,
+  RiRobot2Line
 } from "@remixicon/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -224,18 +227,30 @@ export default function ApiKeysPage() {
              {keys.length === 0 ? (
                 <p className="text-sm text-text-muted italic">Add an API key above to select a custom model.</p>
              ) : (
-                <select className="w-full max-w-md bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" aria-label="Select Model">
-                  {keys.some(k => k.provider_id === 'openrouter') && <option>OpenRouter Auto (Auto-select best model)</option>}
-                  {keys.some(k => k.provider_id === 'anthropic') && <option>Claude 3.5 Sonnet (Higher quality, more tokens)</option>}
-                  {keys.some(k => k.provider_id === 'google') && <option>Gemini 2.5 Flash (Fast / low cost)</option>}
-                  {keys.some(k => k.provider_id === 'openai') && <option>GPT-4o (Higher quality)</option>}
-                  {keys.some(k => k.provider_id === 'groq') && <option>Llama 3 70B (Fast / low cost)</option>}
+                <select className="w-full max-w-md bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" aria-label="Select Model" onChange={(e) => {
+                  console.log("Selected model:", e.target.value);
+                  // In a full implementation, this would save to user_model_preferences
+                }}>
+                  <option value="" disabled selected>Select a model...</option>
+                  {keys.some(k => k.provider_id === 'openrouter') && <option value="openrouter/auto">OpenRouter Auto (Auto-select best model)</option>}
+                  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Higher quality, more tokens)</option>}
+                  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (Fast / low cost)</option>}
+                  {keys.some(k => k.provider_id === 'google') && <option value="gemini-1.5-pro">Gemini 1.5 Pro (Advanced reasoning, huge context)</option>}
+                  {keys.some(k => k.provider_id === 'google') && <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast / low cost)</option>}
+                  {keys.some(k => k.provider_id === 'openai') && <option value="gpt-4o">GPT-4o (Higher quality)</option>}
+                  {keys.some(k => k.provider_id === 'openai') && <option value="gpt-4o-mini">GPT-4o-mini (Fast / low cost)</option>}
+                  {keys.some(k => k.provider_id === 'openai') && <option value="o1-preview">o1-preview (Advanced reasoning)</option>}
+                  {keys.some(k => k.provider_id === 'groq') && <option value="llama-3.1-70b-versatile">Llama 3.1 70B (Fast / low cost)</option>}
+                  {keys.some(k => k.provider_id === 'deepseek') && <option value="deepseek-reasoner">DeepSeek R1 (Advanced reasoning)</option>}
+                  {keys.some(k => k.provider_id === 'deepseek') && <option value="deepseek-chat">DeepSeek V3 (Higher quality / low cost)</option>}
+                  {keys.some(k => k.provider_id === 'mistral') && <option value="mistral-large-latest">Mistral Large 2 (Higher quality)</option>}
+                  {keys.some(k => k.provider_id === 'perplexity') && <option value="sonar-pro">Sonar Pro (Web-grounded / Research)</option>}
                 </select>
              )}
              <div className="flex gap-2 mt-2">
-               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted">⚡ Fast / low cost</span>
-               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted">✨ Higher quality</span>
-               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted">🤖 Auto-select best model</span>
+               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted flex items-center gap-1"><RiFlashlightLine className="w-3 h-3 text-warning"/> Fast / low cost</span>
+               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted flex items-center gap-1"><RiSparklingLine className="w-3 h-3 text-primary"/> Higher quality</span>
+               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted flex items-center gap-1"><RiRobot2Line className="w-3 h-3 text-success"/> Auto-select best model</span>
              </div>
           </div>
         </div>
