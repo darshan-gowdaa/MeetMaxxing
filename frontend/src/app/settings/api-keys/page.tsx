@@ -1,56 +1,26 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { 
-  RiLockLine, 
-  RiAddLine, 
-  RiCheckLine, 
-  RiCloseLine, 
-  RiRefreshLine, 
-  RiMore2Line,
-  RiExternalLinkLine,
-  RiDeleteBinLine,
-  RiEditLine,
-  RiKey2Line,
-  RiFlashlightLine,
-  RiSparklingLine,
-  RiRobot2Line,
-  RiQuestionLine,
-  RiInformationLine,
-  RiArrowDownSLine,
-  RiPlugLine
-} from "@remixicon/react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
+import { Provider, ApiKey } from "./types";
 
-// Reuse API call helper or use fetch directly
+import { ApiKeysHero } from "./_components/organisms/ApiKeysHero";
+import { ProviderCard } from "./_components/organisms/ProviderCard";
+import { ModelSelection } from "./_components/organisms/ModelSelection";
+import { AddKeyDialog } from "./_components/organisms/AddKeyDialog";
+import { ProviderHelpDrawer } from "./_components/organisms/ProviderHelpDrawer";
+
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-interface Provider {
-  id: string;
-  name: string;
-  logo: string;
-  docs_url: string;
-  pattern: string;
-  pricing: string;
-}
-
-interface ApiKey {
-  id: string;
-  provider_id: string;
-  label: string;
-  last4: string;
-  status: "valid" | "invalid" | "unchecked" | "rate_limited";
-  last_checked_at: string;
-  is_default_for_provider: boolean;
-}
-
 export default function ApiKeysPage() {
-  const { user, session } = useAuth();
+  const { session } = useAuth();
   const token = session?.access_token;
+  
   const [providers, setProviders] = useState<Provider[]>([]);
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [addDialog, setAddDialog] = useState<Provider | null>(null);
   const [helpDrawer, setHelpDrawer] = useState<Provider | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; action?: () => void } | null>(null);
@@ -63,7 +33,7 @@ export default function ApiKeysPage() {
       });
       const data = await res.json();
       setKeys(data.api_keys || []);
-    } catch (e) {}
+    } catch {}
   };
 
   const fetchProviders = async () => {
@@ -71,11 +41,12 @@ export default function ApiKeysPage() {
       const res = await fetch(`${API_URL}/api-keys/providers`);
       const data = await res.json();
       setProviders(data.providers || []);
-    } catch (e) {}
+    } catch {}
   };
 
   useEffect(() => {
     Promise.all([fetchProviders(), fetchKeys()]).then(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleCheckStatus = async (keyId: string) => {
@@ -87,7 +58,7 @@ export default function ApiKeysPage() {
       });
       const data = await res.json();
       setKeys(keys.map(k => k.id === keyId ? { ...k, status: data.status } : k));
-    } catch (e) {}
+    } catch {}
   };
 
   const handleDelete = async (keyId: string) => {
@@ -98,9 +69,6 @@ export default function ApiKeysPage() {
     const previousKeys = [...keys];
     setKeys(keys.filter(k => k.id !== keyId));
     
-    // In a real impl, we'd wait a few seconds before actually deleting.
-    // For ponytail simplicity: just delete immediately, undo resets the state but doesn't actually recover from backend unless we defer.
-    // Let's defer delete:
     let deleted = false;
     const timeout = setTimeout(async () => {
       deleted = true;
@@ -122,29 +90,24 @@ export default function ApiKeysPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 pb-24">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">API Keys</h1>
-        <button 
-          onClick={() => setAddDialog(providers[0])}
-          className="h-10 px-4 rounded-full bg-primary text-on-primary font-semibold text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
-        >
-          <RiAddLine className="w-5 h-5" /> Add Key
-        </button>
-      </div>
-
-      <div className="bg-primary-container/20 border border-primary/20 rounded-[16px] p-4 flex gap-3 mb-8">
-        <RiLockLine className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-        <p className="text-sm text-on-primary-container leading-relaxed">
-          Your keys stay yours. We encrypt every key before it touches our database and only decrypt it in memory, 
-          for the seconds it takes to call the provider on your behalf. We never view, log, or share your API keys, 
-          and you can delete any key permanently at any time.
-        </p>
-      </div>
+      <ApiKeysHero onAdd={() => setAddDialog(providers[0])} />
 
       {loading ? (
-        <div className="flex justify-center p-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="p-4 flex items-center justify-between gap-4 border-b border-border last:border-b-0 animate-pulse">
+               <div className="flex items-center gap-4 flex-1">
+                 <div className="w-10 h-10 rounded-full bg-surface2 shrink-0"></div>
+                 <div className="flex flex-col gap-2 w-full max-w-[200px]">
+                   <div className="h-4 bg-surface2 rounded w-1/2"></div>
+                   <div className="h-3 bg-surface2 rounded w-1/3"></div>
+                 </div>
+               </div>
+            </div>
+          ))}
+        </div>
       ) : (
-        <div className="flex flex-col border border-border rounded-2xl overflow-hidden bg-surface shadow-sm">
+        <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
           {[...providers].sort((a, b) => {
             const aFree = a.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(a.id);
             const bFree = b.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(b.id);
@@ -169,182 +132,27 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      {/* Add Dialog */}
+      {/* Dialogs & Drawers */}
       <AnimatePresence>
         {addDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddDialog(null)} />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-surface rounded-[24px] shadow-2xl w-full max-w-md border border-border p-6">
-              <div className="flex items-center gap-3 mb-4">
-                {(() => {
-                  const domains: Record<string, string> = { openai: 'openai.com', anthropic: 'anthropic.com', google: 'gemini.google.com', mistral: 'mistral.ai', deepseek: 'deepseek.com', perplexity: 'perplexity.ai', groq: 'groq.com', openrouter: 'openrouter.ai' };
-                  const domain = domains[addDialog.id];
-                  return domain ? (
-                    <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt={addDialog.name} className="w-6 h-6 rounded-sm" />
-                  ) : (
-                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary"><RiPlugLine className="w-4 h-4" /></div>
-                  );
-                })()}
-                <h2 className="text-xl font-bold">Add {addDialog.name} Key</h2>
-              </div>
-              <p className="text-sm text-text-muted mb-4">
-                Need help finding this? <button onClick={() => setHelpDrawer(addDialog)} className="text-primary hover:underline">How do I get this?</button>
-              </p>
-              
-              <form onSubmit={async (e) => {
-                e.preventDefault();
-                setSaving(true);
-                const fd = new FormData(e.currentTarget);
-                const key = fd.get("key") as string;
-                
-                try {
-                  const res = await fetch(`${API_URL}/api-keys/`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ provider_id: addDialog.id, key, label: fd.get("label") })
-                  });
-                  if (res.ok) {
-                    fetchKeys();
-                    setAddDialog(null);
-                  } else {
-                    const data = await res.json().catch(() => ({}));
-                    setSnackbar({ message: data.detail || "Failed to add key. Please try again." });
-                    setTimeout(() => setSnackbar(null), 4000);
-                  }
-                } catch (error) {
-                  setSnackbar({ message: "Network error occurred." });
-                  setTimeout(() => setSnackbar(null), 4000);
-                } finally {
-                  setSaving(false);
-                }
-              }} className="space-y-4">
-                <div className="bg-surface2 p-3 rounded-lg flex gap-2">
-                  <RiLockLine className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-text-muted">Your keys stay yours. We encrypt every key before it touches our database and only decrypt it in memory, for the seconds it takes to call the provider on your behalf.</p>
-                </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-text-muted mb-1.5">API Key</label>
-                  <input required name="key" type="password" placeholder={addDialog.pattern} className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary spring-colors" />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-text-muted mb-1.5">Label (Optional)</label>
-                  <input name="label" type="text" placeholder="e.g. Personal, Work" className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary spring-colors" />
-                </div>
-                
-                <div className="flex justify-end gap-3 pt-4">
-                  <button type="button" onClick={() => setAddDialog(null)} disabled={saving} className="px-5 py-2.5 rounded-full hover:bg-surface2 text-[14px] font-medium transition-colors disabled:opacity-50">Cancel</button>
-                  <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-colors min-w-[100px] flex items-center justify-center disabled:opacity-80">
-                    {saving ? <div className="w-5 h-5 border-2 border-on-primary border-t-transparent rounded-full animate-spin" /> : "Save Key"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+          <AddKeyDialog 
+            provider={addDialog} 
+            token={token} 
+            onAdded={() => { fetchKeys(); setAddDialog(null); }} 
+            onCancel={() => setAddDialog(null)}
+            setSnackbar={setSnackbar}
+          />
         )}
       </AnimatePresence>
 
-      {/* MD3 Expressive Model Selection */}
-      <div className="mt-10 flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold text-text tracking-tight">Model Selection</h2>
-          <p className="text-base text-text-muted">Select which intelligence powers your workspace.</p>
-        </div>
-        
-        <div className="bg-surface border border-border rounded-[24px] p-6 shadow-sm flex flex-col gap-8">
-          {/* Routing Mode */}
-          <div className="flex flex-col gap-4">
-            <h3 className="font-medium text-[15px] text-text">Routing Mode</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="relative flex flex-col p-4 border-2 border-primary bg-primary/5 rounded-[16px] cursor-pointer transition-all hover:bg-primary/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-[15px] text-text">Use my keys</span>
-                  <div className="w-5 h-5 rounded-full border-[5px] border-primary flex items-center justify-center shrink-0"></div>
-                </div>
-                <span className="text-sm text-text-muted leading-relaxed">Route requests directly to your connected API providers.</span>
-                <input type="radio" name="routing" value="custom" className="hidden" defaultChecked />
-              </label>
-              
-              <label className="relative flex flex-col p-4 border-2 border-border/50 bg-surface rounded-[16px] cursor-pointer hover:bg-surface2/50 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-[15px] text-text">App default</span>
-                  <div className="w-5 h-5 rounded-full border-2 border-text-muted flex items-center justify-center shrink-0"></div>
-                </div>
-                <span className="text-sm text-text-muted leading-relaxed">Use the standard models provided by MeetMaxxing.</span>
-                <input type="radio" name="routing" value="default" className="hidden" />
-              </label>
-            </div>
-          </div>
-
-          <div className="h-px w-full bg-border/50"></div>
-
-          {/* Active Model */}
-          <div className="flex flex-col gap-4">
-            <h3 className="font-medium text-[15px] text-text">Active Model</h3>
-            {keys.length === 0 ? (
-              <div className="bg-surface2 rounded-[16px] p-4 flex items-center gap-3 text-text-muted border border-border/50">
-                <RiInformationLine className="w-5 h-5 shrink-0" />
-                <span className="text-[14px]">Connect an API key above to select a custom model.</span>
-              </div>
-            ) : (
-              <div className="relative max-w-md">
-                <select defaultValue="" className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer shadow-sm">
-                  <option value="" disabled>Choose a model</option>
-                  {keys.some(k => k.provider_id === 'openrouter') && <option value="openrouter/auto">OpenRouter Auto (Auto-select best model)</option>}
-                  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Higher quality, more tokens)</option>}
-                  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (Fast / low cost)</option>}
-                  {keys.some(k => k.provider_id === 'google') && <option value="gemini-1.5-pro">Gemini 1.5 Pro (Advanced reasoning, huge context)</option>}
-                  {keys.some(k => k.provider_id === 'google') && <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast / low cost)</option>}
-                  {keys.some(k => k.provider_id === 'openai') && <option value="gpt-4o">GPT-4o (Higher quality)</option>}
-                  {keys.some(k => k.provider_id === 'openai') && <option value="gpt-4o-mini">GPT-4o-mini (Fast / low cost)</option>}
-                  {keys.some(k => k.provider_id === 'openai') && <option value="o1-preview">o1-preview (Advanced reasoning)</option>}
-                  {keys.some(k => k.provider_id === 'groq') && <option value="llama-3.1-70b-versatile">Llama 3.1 70B (Fast / low cost)</option>}
-                  {keys.some(k => k.provider_id === 'deepseek') && <option value="deepseek-reasoner">DeepSeek R1 (Advanced reasoning)</option>}
-                  {keys.some(k => k.provider_id === 'deepseek') && <option value="deepseek-chat">DeepSeek V3 (Higher quality / low cost)</option>}
-                  {keys.some(k => k.provider_id === 'mistral') && <option value="mistral-large-latest">Mistral Large 2 (Higher quality)</option>}
-                  {keys.some(k => k.provider_id === 'perplexity') && <option value="sonar-pro">Sonar Pro (Web-grounded / Research)</option>}
-                </select>
-                <label className="absolute left-4 top-2 text-[10px] font-bold tracking-wider text-primary uppercase pointer-events-none">Preferred Model</label>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                  <RiArrowDownSLine className="w-5 h-5" />
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2 mt-2">
-               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted flex items-center gap-1"><RiFlashlightLine className="w-3 h-3 text-warning"/> Fast / low cost</span>
-               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted flex items-center gap-1"><RiSparklingLine className="w-3 h-3 text-primary"/> Higher quality</span>
-               <span className="px-2 py-1 rounded-md bg-surface3 text-[11px] font-medium text-text-muted flex items-center gap-1"><RiRobot2Line className="w-3 h-3 text-success"/> Auto-select best model</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Help Drawer */}
       <AnimatePresence>
         {helpDrawer && (
-          <div className="fixed inset-0 z-[60] flex justify-end">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setHelpDrawer(null)} />
-            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="relative w-full max-w-sm h-full bg-surface border-l border-border shadow-2xl p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold flex items-center gap-2"><RiKey2Line className="w-5 h-5 text-primary" /> {helpDrawer.name} Setup</h3>
-                <button onClick={() => setHelpDrawer(null)} className="w-8 h-8 rounded-full hover:bg-surface2 flex items-center justify-center"><RiCloseLine className="w-5 h-5" /></button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <ol className="list-decimal pl-5 space-y-4 text-sm text-text-muted mb-6">
-                  <li>Go to the <a href={helpDrawer.docs_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">provider&apos;s dashboard</a>.</li>
-                  <li>Sign in or create an account.</li>
-                  <li>Navigate to API Keys or Settings.</li>
-                  <li>Create a new secret key and copy it.</li>
-                </ol>
-                <a href={helpDrawer.docs_url} target="_blank" rel="noreferrer" className="w-full h-10 rounded-full border border-border flex items-center justify-center gap-2 text-sm font-semibold hover:bg-surface2 transition-colors">
-                  Open Dashboard <RiExternalLinkLine className="w-4 h-4" />
-                </a>
-              </div>
-            </motion.div>
-          </div>
+          <ProviderHelpDrawer provider={helpDrawer} onClose={() => setHelpDrawer(null)} />
         )}
       </AnimatePresence>
 
-      {/* Snackbar */}
+      <ModelSelection keys={keys} />
+
       <AnimatePresence>
         {snackbar && (
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-highest text-text px-4 py-3 rounded-xl shadow-lg border border-border flex items-center gap-4 z-50">
@@ -353,77 +161,6 @@ export default function ApiKeysPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: { provider: Provider, apiKeys: ApiKey[], onAdd: () => void, onCheck: (id: string) => void, onDelete: (id: string) => void, onHelp: () => void }) {
-  const [imgError, setImgError] = useState(false);
-  const domains: Record<string, string> = { openai: 'openai.com', anthropic: 'anthropic.com', google: 'gemini.google.com', mistral: 'mistral.ai', deepseek: 'deepseek.com', perplexity: 'perplexity.ai', groq: 'groq.com', openrouter: 'openrouter.ai' };
-  const domain = domains[provider.id];
-
-  // Fallback for pricing if backend is stale
-  const isFree = provider.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(provider.id);
-
-  return (
-    <div className="p-4 flex items-center justify-between gap-4 hover:bg-surface2/30 transition-colors group">
-      
-      {/* Leading & Body */}
-      <div className="flex items-center gap-4 flex-1 overflow-hidden">
-        {/* Leading Avatar */}
-        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center overflow-hidden border border-border/50 shrink-0 shadow-sm">
-          {(domain && !imgError) ? (
-            <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-6 h-6 rounded-sm" onError={() => setImgError(true)} />
-          ) : (
-            <div className="w-10 h-10 bg-primary/10 flex items-center justify-center text-primary"><RiPlugLine className="w-5 h-5" /></div>
-          )}
-        </div>
-
-        {/* Body (Title & Keys Subtitle) */}
-        <div className="flex flex-col gap-1 overflow-hidden">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-[15px] text-text leading-none">{provider.name}</h3>
-            {isFree && (
-              <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20">Free Tier</span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 flex-wrap mt-0.5">
-            {apiKeys.length === 0 ? (
-              <span className="text-[13px] text-text-muted">Not connected</span>
-            ) : (
-              apiKeys.map(key => (
-                <div key={key.id} className="flex items-center gap-1.5 bg-surface2 rounded px-2 py-0.5 border border-border/50">
-                  <div className="relative flex h-1.5 w-1.5 shrink-0">
-                    {key.status === "unchecked" && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>}
-                    <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${key.status === "valid" ? "bg-success" : key.status === "invalid" ? "bg-risk" : "bg-warning"}`}></span>
-                  </div>
-                  <span className="text-[11px] font-mono text-text">••••{key.last4}</span>
-                  <div className="flex items-center gap-1 border-l border-border/50 pl-1.5 ml-0.5">
-                    <button onClick={() => onCheck(key.id)} className="text-text-muted hover:text-text transition-colors" title="Check status">
-                      <RiRefreshLine className={`w-3 h-3 ${key.status === "unchecked" ? "animate-spin" : ""}`} />
-                    </button>
-                    <button onClick={() => onDelete(key.id)} className="text-risk/70 hover:text-risk transition-colors" title="Delete">
-                      <RiDeleteBinLine className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Trailing Actions */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button onClick={onAdd} className="h-8 px-3 rounded-full bg-surface2 text-text text-[13px] font-medium hover:bg-surface3 transition-colors border border-border flex items-center gap-1 shadow-sm">
-          <RiAddLine className="w-4 h-4" /> {apiKeys.length > 0 ? "Add" : "Connect"}
-        </button>
-        <button onClick={onHelp} className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface2 hover:text-text transition-colors" title="Setup docs">
-          <RiQuestionLine className="w-4 h-4" />
-        </button>
-      </div>
-      
     </div>
   );
 }
