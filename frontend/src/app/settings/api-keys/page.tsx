@@ -41,7 +41,8 @@ interface ApiKey {
 }
 
 export default function ApiKeysPage() {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
+  const token = session?.access_token;
   const [providers, setProviders] = useState<Provider[]>([]);
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,11 +228,11 @@ export default function ApiKeysPage() {
              {keys.length === 0 ? (
                 <p className="text-sm text-text-muted italic">Add an API key above to select a custom model.</p>
              ) : (
-                <select className="w-full max-w-md bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" aria-label="Select Model" onChange={(e) => {
+                <select defaultValue="" className="w-full max-w-md bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" aria-label="Select Model" onChange={(e) => {
                   console.log("Selected model:", e.target.value);
                   // In a full implementation, this would save to user_model_preferences
                 }}>
-                  <option value="" disabled selected>Select a model...</option>
+                  <option value="" disabled>Select a model...</option>
                   {keys.some(k => k.provider_id === 'openrouter') && <option value="openrouter/auto">OpenRouter Auto (Auto-select best model)</option>}
                   {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Higher quality, more tokens)</option>}
                   {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (Fast / low cost)</option>}
