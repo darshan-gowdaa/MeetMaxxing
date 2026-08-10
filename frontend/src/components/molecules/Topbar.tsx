@@ -14,6 +14,7 @@ import {
   RiInformationLine,
   RiLogoutBoxRLine,
   RiArrowDownSLine,
+  RiSettings3Line,
 } from "@remixicon/react";
 import { useAuth } from "@/lib/auth-context";
 import Image from "next/image";
@@ -212,7 +213,7 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
             <div className="h-px bg-border mx-2 my-1" />
             
             <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
-              <RiFolderOpenLine className="w-4 h-4 text-text-muted" /> Settings
+              <RiSettings3Line className="w-4 h-4 text-text-muted" /> Settings
             </Link>
             
             <div className="h-px bg-border mx-2 my-1" />
