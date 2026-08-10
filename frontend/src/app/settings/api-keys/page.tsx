@@ -173,7 +173,8 @@ export default function ApiKeysPage() {
                 const fd = new FormData(e.currentTarget);
                 const key = fd.get("key") as string;
                 if (!new RegExp(addDialog.pattern).test(key)) {
-                  alert("Key format doesn't match expected pattern: " + addDialog.pattern);
+                  setSnackbar({ message: `Key format doesn't match expected pattern for ${addDialog.name}` });
+                  setTimeout(() => setSnackbar(null), 4000);
                   return;
                 }
                 const res = await fetch(`${API_URL}/api-keys`, {

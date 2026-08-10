@@ -79,11 +79,11 @@ class HttpProviderAdapter(ProviderAdapter):
             return "unavailable", "Network or provider unavailable."
 
 class OpenAIAdapter(HttpProviderAdapter):
-    id, name, docs_url, pattern = "openai", "OpenAI", "https://platform.openai.com/docs", "^sk-[a-zA-Z0-9]+$"
+    id, name, docs_url, pattern = "openai", "OpenAI", "https://platform.openai.com/docs", "^sk-.*"
     check_url = "https://api.openai.com/v1/models"
 
 class AnthropicAdapter(HttpProviderAdapter):
-    id, name, docs_url, pattern = "anthropic", "Anthropic", "https://docs.claude.com", "^sk-ant-[a-zA-Z0-9_-]+$"
+    id, name, docs_url, pattern = "anthropic", "Anthropic", "https://docs.claude.com", "^sk-ant-.*"
     check_url = "https://api.anthropic.com/v1/models"
     async def validate(self, key: str):
         try:
@@ -94,7 +94,7 @@ class AnthropicAdapter(HttpProviderAdapter):
         except Exception: return "unavailable", "Network unavailable."
 
 class GoogleAdapter(HttpProviderAdapter):
-    id, name, docs_url, pattern = "google", "Google Gemini", "https://ai.google.dev/docs", "^AIza[a-zA-Z0-9_-]+$"
+    id, name, docs_url, pattern = "google", "Google Gemini", "https://ai.google.dev/docs", "^AIza.*"
     check_url = "https://generativelanguage.googleapis.com/v1beta/models"
     async def validate(self, key: str):
         try:
@@ -105,15 +105,15 @@ class GoogleAdapter(HttpProviderAdapter):
         except Exception: return "unavailable", "Network unavailable."
 
 class OpenRouterAdapter(HttpProviderAdapter):
-    id, name, docs_url, pattern = "openrouter", "OpenRouter", "https://openrouter.ai/docs", "^sk-or-v1-[a-zA-Z0-9]+$"
+    id, name, docs_url, pattern = "openrouter", "OpenRouter", "https://openrouter.ai/docs", "^sk-or-v1-.*"
     check_url = "https://openrouter.ai/api/v1/auth/key"
 
 # Additional providers requested
 class GroqAdapter(HttpProviderAdapter):
-    id, name, docs_url, pattern, check_url = "groq", "Groq", "https://console.groq.com/docs", "^gsk_[a-zA-Z0-9]+$", "https://api.groq.com/openai/v1/models"
+    id, name, docs_url, pattern, check_url = "groq", "Groq", "https://console.groq.com/docs", "^gsk_.*", "https://api.groq.com/openai/v1/models"
 
 class PerplexityAdapter(ProviderAdapter):
-    id, name, docs_url, pattern = "perplexity", "Perplexity", "https://docs.perplexity.ai", "^pplx-[a-zA-Z0-9]+$"
+    id, name, docs_url, pattern = "perplexity", "Perplexity", "https://docs.perplexity.ai", "^pplx-.*"
     async def validate(self, key: str):
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
