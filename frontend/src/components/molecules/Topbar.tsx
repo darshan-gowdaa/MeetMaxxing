@@ -57,7 +57,7 @@ export default function Topbar() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-6 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl rounded-full shadow-md mb-6 transition-all duration-300">
+    <header className="sticky top-2 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 backdrop-blur-xl rounded-full shadow-sm mb-4 transition-all duration-300">
       <div className="px-5 h-[64px] flex items-center justify-between gap-4">
 
         {/* Left: Logo or Back */}
