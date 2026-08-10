@@ -139,7 +139,7 @@ export default function ApiKeysPage() {
       {loading ? (
         <div className="flex justify-center p-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4">
           {providers.map(provider => {
             const providerKeys = keys.filter(k => k.provider_id === provider.id);
             return (
@@ -297,12 +297,28 @@ export default function ApiKeysPage() {
 }
 
 function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: { provider: Provider, apiKeys: ApiKey[], onAdd: () => void, onCheck: (id: string) => void, onDelete: (id: string) => void, onHelp: () => void }) {
+  const brandSlugs: Record<string, string> = {
+    openai: 'openai',
+    anthropic: 'anthropic',
+    google: 'google',
+    mistral: 'mistral',
+    deepseek: 'deepseek',
+    cohere: 'cohere',
+    azure: 'microsoftazure',
+    perplexity: 'perplexity',
+    groq: 'groq'
+  };
+  const slug = brandSlugs[provider.id];
+
   return (
     <div className="bg-surface border border-border rounded-[20px] p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-surface2 flex items-center justify-center font-bold text-lg text-primary">
-            {provider.name[0]}
+          <div className="w-10 h-10 rounded-full bg-surface2 flex items-center justify-center overflow-hidden border border-border/50">
+            {slug ? (
+              <img src={`https://cdn.simpleicons.org/${slug}`} alt={provider.name} className="w-5 h-5" onError={(e) => { e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
+            ) : null}
+            <span className={`font-bold text-lg text-primary ${slug ? 'hidden' : ''}`}>{provider.name[0]}</span>
           </div>
           <h3 className="font-semibold text-text">{provider.name}</h3>
         </div>
