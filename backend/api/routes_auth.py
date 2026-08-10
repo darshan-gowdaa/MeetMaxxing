@@ -55,6 +55,14 @@ async def delete_me(user: dict = Depends(get_current_user)):
     from ..core.database import get_supabase_admin
     supabase_admin = get_supabase_admin()
     
+    # 1. Delete public.users record (which cascades to meetings, api keys, etc)
+    try:
+        supabase_admin.table("users").delete().eq("id", user["user_id"]).execute()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to delete public.users record: {e}")
+        
+    # 2. Delete from auth schema
     supabase_admin.auth.admin.delete_user(user["user_id"])
     return {"deleted": True}
 

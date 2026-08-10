@@ -12,10 +12,15 @@ export const ProfileSecurity = () => {
   const handleUpdatePassword = async () => {
     if (!password) return;
     setLoading(true);
-    await supabase.auth.updateUser({ password });
-    setPassword("");
+    const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    alert("Password updated");
+    
+    if (error) {
+      alert(error.message);
+    } else {
+      setPassword("");
+      alert("Password updated successfully.");
+    }
   };
 
   const handleDeleteAccount = async () => {
