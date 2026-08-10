@@ -61,6 +61,8 @@ backend/qdrant_data/
 
 .gemini_rules/
 scripts/
-*.zip!extension/dist/
+*.zip
+!extension/dist/
 .vercel
 .env*
+meetmaxxing-firefox.zip
