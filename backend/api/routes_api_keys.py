@@ -130,7 +130,7 @@ class MistralAdapter(HttpProviderAdapter):
     id, name, docs_url, check_url = "mistral", "Mistral AI", "https://docs.mistral.ai", "https://api.mistral.ai/v1/models"
     pricing = "Free Tier"
 class DeepSeekAdapter(HttpProviderAdapter): id, name, docs_url, check_url = "deepseek", "DeepSeek", "https://platform.deepseek.com", "https://api.deepseek.com/models"
-class CustomAdapter(ProviderAdapter): id, name, docs_url = "custom", "Custom / OpenAI-compatible", ""
+class CustomAdapter(ProviderAdapter): id, name, docs_url = "custom", "Custom", ""
 
 REGISTRY: dict[str, ProviderAdapter] = {p.id: p() for p in [
     OpenAIAdapter, AnthropicAdapter, GoogleAdapter, OpenRouterAdapter, 

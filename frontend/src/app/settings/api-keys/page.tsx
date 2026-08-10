@@ -142,10 +142,16 @@ export default function ApiKeysPage() {
         <div className="flex justify-center p-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="flex flex-col border border-border rounded-2xl overflow-hidden bg-surface shadow-sm">
-          {providers.map((provider, idx) => {
+          {[...providers].sort((a, b) => {
+            const aFree = a.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(a.id);
+            const bFree = b.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(b.id);
+            if (aFree && !bFree) return -1;
+            if (!aFree && bFree) return 1;
+            return 0;
+          }).map((provider, idx, arr) => {
             const providerKeys = keys.filter(k => k.provider_id === provider.id);
             return (
-              <div key={provider.id} className={idx !== providers.length - 1 ? "border-b border-border" : ""}>
+              <div key={provider.id} className={idx !== arr.length - 1 ? "border-b border-border" : ""}>
                 <ProviderCard 
                   provider={provider} 
                   apiKeys={providerKeys} 
@@ -298,8 +304,8 @@ export default function ApiKeysPage() {
 
 function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: { provider: Provider, apiKeys: ApiKey[], onAdd: () => void, onCheck: (id: string) => void, onDelete: (id: string) => void, onHelp: () => void }) {
   const [imgError, setImgError] = useState(false);
-  const brandSlugs: Record<string, string> = { openai: 'openai', anthropic: 'anthropic', google: 'google', mistral: 'mistral', deepseek: 'deepseek', cohere: 'cohere', azure: 'microsoftazure', perplexity: 'perplexity' };
-  const slug = brandSlugs[provider.id];
+  const domains: Record<string, string> = { openai: 'openai.com', anthropic: 'anthropic.com', google: 'gemini.google.com', mistral: 'mistral.ai', deepseek: 'deepseek.com', perplexity: 'perplexity.ai', groq: 'groq.com', openrouter: 'openrouter.ai' };
+  const domain = domains[provider.id];
 
   // Fallback for pricing if backend is stale
   const isFree = provider.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(provider.id);
@@ -310,9 +316,9 @@ function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHelp }: {
       {/* Leading & Body */}
       <div className="flex items-center gap-4 flex-1 overflow-hidden">
         {/* Leading Avatar */}
-        <div className="w-10 h-10 rounded-full bg-surface2 flex items-center justify-center overflow-hidden border border-border/50 shrink-0 shadow-sm">
-          {(slug && !imgError) ? (
-            <img src={`https://cdn.simpleicons.org/${slug}`} alt={provider.name} className="w-5 h-5" onError={() => setImgError(true)} />
+        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center overflow-hidden border border-border/50 shrink-0 shadow-sm">
+          {(domain && !imgError) ? (
+            <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-6 h-6 rounded-sm" onError={() => setImgError(true)} />
           ) : (
             <span className="font-bold text-base text-primary">{provider.name[0]}</span>
           )}
