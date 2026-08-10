@@ -66,3 +66,5 @@ scripts/
 .vercel
 .env*
 meetmaxxing-firefox.zip
+
+supabase/.temp/

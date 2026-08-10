@@ -120,11 +120,18 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       const actionList = (meeting.action_items || [])
         .map((a, i) => `${i + 1}. ${a.description} (Owner: ${a.owner_name || "Unassigned"})`)
         .join("\n");
-      const body = encodeURIComponent(
-        `Hi team,\n\nMeeting: ${meeting.title || ""}\n\nSummary:\n${meeting.summary || "No summary."}\n\n` +
+      
+      let summaryText = meeting.summary || "No summary.";
+      if (summaryText.length > 600) {
+        summaryText = summaryText.substring(0, 600) + "... (see link for more)";
+      }
+      
+      const bodyStr = `Hi team,\n\nMeeting: ${meeting.title || ""}\n\nSummary:\n${summaryText}\n\n` +
         (actionList ? `Action Items:\n${actionList}\n\n` : "") +
-        `Details: ${window.location.href}\n\nBest,\nMeetMaxxing AI Copilot`
-      );
+        `Details: ${window.location.href}\n\nBest,\nMeetMaxxing AI Copilot`;
+        
+      const body = encodeURIComponent(bodyStr.substring(0, 1500)); // prevent 414 URI Too Long
+      
       window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank");
       setGmailState("success");
     } catch { setGmailState("error"); }
@@ -133,19 +140,25 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   const handleCalendar = async () => {
     if (!meeting) return;
     setCalendarState("loading");
+    
+    // Open a blank window immediately before the async call to bypass popup blockers
+    const newWindow = window.open('about:blank', '_blank');
+    
     const buildGcalUrl = () => {
       const title = encodeURIComponent(`Follow-up: ${meeting.follow_up?.suggested_topic || meeting.title || "Meeting"}`);
-      const details = encodeURIComponent(
-        `Summary:\n${meeting.summary || ""}\n\n` +
+      let detailsText = `Summary:\n${meeting.summary || ""}\n\n` +
         (meeting.action_items?.length ? `Actions:\n${meeting.action_items.map((a, i) => `${i + 1}. ${a.description}`).join("\n")}\n\n` : "") +
-        `Dashboard: ${window.location.href}`
-      );
+        `Dashboard: ${window.location.href}`;
+      if (detailsText.length > 1000) detailsText = detailsText.substring(0, 1000) + "...";
+      
+      const details = encodeURIComponent(detailsText);
       const start = new Date(Date.now() + 86400000); start.setUTCHours(10, 0, 0, 0);
       const end = new Date(start.getTime() + 3600000);
       const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
       const add = meeting.attendees?.length ? `&add=${encodeURIComponent(meeting.attendees.join(","))}` : "";
       return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${fmt(start)}/${fmt(end)}${add}`;
     };
+    
     try {
       const token = await getAuthToken();
       const res = await fetch(`${BACKEND_URL}/calendar/add-url?meeting_id=${id}`, {
@@ -155,11 +168,19 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         try {
           const data = await res.json();
           const url = data.gcal_url || data.html_link;
-          if (url) { window.open(url, "_blank"); setCalendarState("success"); return; }
+          if (url) { 
+            if (newWindow) newWindow.location.href = url;
+            else window.open(url, "_blank");
+            setCalendarState("success"); 
+            return; 
+          }
         } catch {}
       }
     } catch { /* fall through */ }
-    window.open(buildGcalUrl(), "_blank");
+    
+    const fallbackUrl = buildGcalUrl();
+    if (newWindow) newWindow.location.href = fallbackUrl;
+    else window.open(fallbackUrl, "_blank");
     setCalendarState("success");
   };
 
