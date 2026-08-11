@@ -1,230 +1,221 @@
 "use client";
 
-import { useState, useRef, useEffect } from"react";
-import Link from"next/link";
-import { usePathname } from"next/navigation";
-import { motion, AnimatePresence } from"framer-motion";
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
- RiVideoChatLine,
- RiBrainLine,
- RiSparkling2Fill,
- RiFolderOpenLine,
- RiArrowLeftLine,
- RiCalendarEventLine,
- RiInformationLine,
- RiLogoutBoxRLine,
- RiArrowDownSLine,
- RiSettings3Line,
-} from"@remixicon/react";
-import { useAuth } from"@/lib/auth-context";
-import Image from"next/image";
+  RiVideoChatLine,
+  RiBrainLine,
+  RiSparkling2Fill,
+  RiFolderOpenLine,
+  RiArrowLeftLine,
+  RiCalendarEventLine,
+  RiInformationLine,
+  RiLogoutBoxRLine,
+  RiArrowDownSLine,
+  RiSettings3Line,
+} from "@remixicon/react";
+import { useAuth } from "@/lib/auth-context";
+import Image from "next/image";
 
 const NAV_TABS = [
- {
- id:"dashboard",
- label: (isMeeting: boolean) => (isMeeting ?"Meeting":"Dashboard"),
- icon: (isMeeting: boolean) =>
- isMeeting ? RiCalendarEventLine : RiVideoChatLine,
- href:"/",
- match: (p: string) => p ==="/"|| p.startsWith("/meetings/"),
- },
- {
- id:"context",
- label: () =>"Context",
- icon: () => RiFolderOpenLine,
- href:"/context",
- match: (p: string) => p.startsWith("/context"),
- },
- {
- id:"memory",
- label: () =>"Memory",
- icon: () => RiBrainLine,
- href:"/memory",
- match: (p: string) => p.startsWith("/memory"),
- },
- {
- id:"about",
- label: () =>"About",
- icon: () => RiInformationLine,
- href:"/about",
- match: (p: string) => p.startsWith("/about"),
- },
+  {
+    id: "dashboard",
+    label: (isMeeting: boolean) => (isMeeting ? "Meeting" : "Dashboard"),
+    icon: (isMeeting: boolean) =>
+      isMeeting ? RiCalendarEventLine : RiVideoChatLine,
+    href: "/",
+    match: (p: string) => p === "/" || p.startsWith("/meetings/"),
+  },
+  {
+    id: "context",
+    label: () => "Context",
+    icon: () => RiFolderOpenLine,
+    href: "/context",
+    match: (p: string) => p.startsWith("/context"),
+  },
+  {
+    id: "memory",
+    label: () => "Memory",
+    icon: () => RiBrainLine,
+    href: "/memory",
+    match: (p: string) => p.startsWith("/memory"),
+  },
+  {
+    id: "about",
+    label: () => "About",
+    icon: () => RiInformationLine,
+    href: "/about",
+    match: (p: string) => p.startsWith("/about"),
+  },
 ];
 
 export default function Topbar() {
- const pathname = usePathname();
- const isMeetingDetail = pathname.startsWith("/meetings/");
- const { user, signOut } = useAuth();
+  const pathname = usePathname();
+  const isMeetingDetail = pathname.startsWith("/meetings/");
+  const { user, signOut } = useAuth();
 
- return (
- <header className="sticky top-2 z-50 mx-4 sm:mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl bg-surface/80 rounded-full shadow-sm mb-4 transition-all duration-300">
- <div className="px-5 h-[64px] flex items-center justify-between gap-4">
+  return (
+    <header className="sticky top-0 z-50 w-full bg-surface border-b border-border transition-colors">
+      <div className="h-16 px-4 flex items-center justify-between gap-4 max-w-7xl mx-auto">
+        
+        {/* Left: Logo or Back (Small Top App Bar styling) */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <AnimatePresence mode="wait" initial={false}>
+            {isMeetingDetail ? (
+              <motion.div
+                key="back"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+              >
+                <Link
+                  href="/"
+                  className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-surface-container-high transition-colors"
+                  aria-label="Back to Dashboard"
+                >
+                  <RiArrowLeftLine className="w-6 h-6 text-text" />
+                </Link>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="logo"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+              >
+                <Link href="/" className="flex items-center gap-3 pr-4 h-12">
+                  <span className="text-on-primary-container bg-primary-container w-10 h-10 rounded-full flex items-center justify-center">
+                    <RiSparkling2Fill className="w-6 h-6" />
+                  </span>
+                  <span className="font-medium text-[22px] tracking-tight text-text">
+                    MeetMaxxing
+                  </span>
+                </Link>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
- {/* Left: Logo or Back */}
- <AnimatePresence mode="wait"initial={false}>
- {isMeetingDetail ? (
- <motion.div
- key="back"
- initial={{ opacity: 0, x: -10 }}
- animate={{ opacity: 1, x: 0 }}
- exit={{ opacity: 0, x: -10 }}
- transition={{ duration: 0.15, ease:"easeOut"}}
- className="flex-shrink-0"
- >
- <Link
- href="/"
- className="group flex items-center gap-2 pl-2 pr-4 h-10 rounded-full text-[14px] font-medium text-text hover:bg-surface2 transition-colors duration-150"
- >
- <span className="flex items-center justify-center w-7 h-7 rounded-full bg-surface3 group-hover:bg-surface-highest transition-colors">
- <RiArrowLeftLine className="w-4 h-4 text-text transition-transform duration-150"/>
- </span>
- <span className="hidden sm:inline">Dashboard</span>
- </Link>
- </motion.div>
- ) : (
- <motion.div
- key="logo"
- initial={{ opacity: 0, x: -10 }}
- animate={{ opacity: 1, x: 0 }}
- exit={{ opacity: 0, x: -10 }}
- transition={{ duration: 0.15, ease:"easeOut"}}
- className="flex-shrink-0"
- >
- <Link href="/"className="flex items-center gap-2 group px-2">
- <span className="text-primary bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center">
- <RiSparkling2Fill className="w-5 h-5"/>
- </span>
- <span className="font-bold text-[17px] tracking-tight text-text">
- MeetMaxxing
- </span>
- </Link>
- </motion.div>
- )}
- </AnimatePresence>
+        {/* Center: MD3 Tabs */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-2 h-full">
+          {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
+            const isActive = tab.match(pathname);
+            const label = tab.label(isMeetingDetail);
+            const IconComponent = tab.icon(isMeetingDetail);
 
- {/* Nav pills */}
- <nav className="hidden md:flex items-center bg-surface2/50 rounded-full p-1">
- {NAV_TABS.filter((tab) => user || tab.id ==="about").map((tab) => {
- const isActive = tab.match(pathname);
- const label = tab.label(isMeetingDetail);
- const IconComponent = tab.icon(isMeetingDetail);
+            return (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                className="relative flex items-center gap-2 h-14 px-4 rounded-full group outline-none"
+              >
+                <div className="flex items-center gap-2 z-10 relative">
+                  <span className={`flex items-center justify-center w-12 h-8 rounded-full transition-colors ${isActive ? 'bg-secondary-container text-on-secondary-container' : 'text-text-muted group-hover:bg-surface-container-high group-hover:text-text'}`}>
+                    <IconComponent className="w-5 h-5" />
+                  </span>
+                  <span className={`text-[14px] font-medium transition-colors ${isActive ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
+                    {label}
+                  </span>
+                </div>
+                {/* Optional Active underline for Primary Tabs */}
+                {isActive && (
+                  <motion.div
+                    layoutId="md3-active-tab"
+                    className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"
+                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
 
- return (
- <Link
- key={tab.id}
- href={tab.href}
- className={`relative flex items-center gap-2 px-4 h-9 rounded-full text-[14px] font-medium z-10 transition-colors duration-200 select-none ${isActive ? 'text-on-primary-container' : 'text-text-muted hover:text-text hover:bg-surface3/50'}`}
- >
- {isActive && (
- <motion.span
- layoutId="nav-bubble"
- className="absolute inset-0 rounded-full bg-primary-container"
- transition={{ type:"spring", stiffness: 500, damping: 40 }}
- />
- )}
- <IconComponent className="w-[18px] h-[18px] shrink-0 relative z-10"/>
- <AnimatePresence mode="wait"initial={false}>
- <motion.span
- key={label}
- className="relative z-10 leading-none"
- initial={{ opacity: 0, y: 4 }}
- animate={{ opacity: 1, y: 0 }}
- exit={{ opacity: 0, y: -4 }}
- transition={{ duration: 0.12, ease:"easeOut"}}
- >
- {label}
- </motion.span>
- </AnimatePresence>
- </Link>
- );
- })}
- </nav>
-
- {/* Right side: User Profile or Login */}
- <div className="flex items-center gap-3">
- {user ? (
- <ProfileDropdown user={user} signOut={signOut} />
- ) : (
- <Link
- href="/login"
- className="h-10 px-6 flex items-center justify-center rounded-full bg-primary hover:bg-primary/90 text-on-primary text-[14px] font-medium transition-colors shadow-sm"
- >
- Sign In
- </Link>
- )}
- </div>
- </div>
- </header>
- );
+        {/* Right side: User Profile or Login */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {user ? (
+            <ProfileDropdown user={user} signOut={signOut} />
+          ) : (
+            <Link
+              href="/login"
+              className="h-10 px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[14px] font-medium transition-colors hover:opacity-90"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
+      </div>
+    </header>
+  );
 }
 
 function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metadata?: { name?: string; avatar_url?: string } }; signOut: () => void }) {
- const [openState, setOpenState] = useState(false);
- const ref = useRef<HTMLDivElement>(null);
+  const [openState, setOpenState] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
- useEffect(() => {
- const handler = (e: MouseEvent) => {
- if (ref.current && !ref.current.contains(e.target as Node)) {
- setOpenState(false);
- }
- };
- document.addEventListener("mousedown", handler);
- return () => document.removeEventListener("mousedown", handler);
- }, []);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpenState(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
- const avatarUrl = user?.user_metadata?.avatar_url;
- const initial = user?.email?.[0].toUpperCase() ||"U";
- 
- return (
- <div className="relative"ref={ref}>
- <button
- onClick={() => setOpenState(o => !o)}
- className="flex items-center gap-1.5 p-1 pr-2.5 rounded-full bg-surface2 hover:bg-surface3 shrink-0 transition-colors focus:outline-none"
- >
- <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-surface-highest">
- {avatarUrl ? (
- <Image src={avatarUrl} alt="Avatar"width={32} height={32} />
- ) : (
- <span className="text-[13px] font-semibold">{initial}</span>
- )}
- </div>
- <RiArrowDownSLine className="w-4 h-4 text-text-muted"/>
- </button>
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const initial = user?.email?.[0].toUpperCase() || "U";
+  
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpenState(o => !o)}
+        className="flex items-center gap-2 p-1 pr-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest transition-colors outline-none"
+      >
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary-container text-on-primary-container font-medium text-sm">
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
+          ) : (
+            initial
+          )}
+        </div>
+        <RiArrowDownSLine className="w-5 h-5 text-text-muted" />
+      </button>
 
- <AnimatePresence>
- {openState && (
- <motion.div
- initial={{ opacity: 0, scale: 0.95, y: -4 }}
- animate={{ opacity: 1, scale: 1, y: 0 }}
- exit={{ opacity: 0, scale: 0.95, y: -4 }}
- transition={{ type:"spring", stiffness: 400, damping: 30 }}
- className="absolute top-full right-0 mt-2 w-64 bg-surface-highest rounded-[20px] border border-border shadow-sm border border-border overflow-hidden z-50 flex flex-col p-1.5"
- >
- <div className="px-3 py-3 flex items-center gap-3">
- <div className="w-10 h-10 rounded-full bg-surface2 flex flex-shrink-0 items-center justify-center overflow-hidden">
- {avatarUrl ? <Image src={avatarUrl} alt="Avatar"width={40} height={40} /> : <span className="font-semibold text-lg">{initial}</span>}
- </div>
- <div className="flex flex-col min-w-0">
- <span className="text-sm font-bold text-text truncate">{user.user_metadata?.name ||"User"}</span>
- <span className="text-[12px] text-text-muted truncate">{user.email}</span>
- </div>
- </div>
- 
- <div className="h-px bg-border mx-2 my-1"/>
- 
- <Link onClick={() => setOpenState(false)} href="/settings"className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-text hover:bg-surface2 spring-colors">
- <RiSettings3Line className="w-4 h-4 text-text-muted"/> Settings
- </Link>
- 
- <div className="h-px bg-border mx-2 my-1"/>
- 
- <button onClick={() => { setOpenState(false); signOut(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13px] font-medium text-risk hover:bg-risk-container/30 spring-colors">
- <RiLogoutBoxRLine className="w-4 h-4"/> Sign out
- </button>
- </motion.div>
- )}
- </AnimatePresence>
- </div>
- );
+      <AnimatePresence>
+        {openState && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ type: "spring", stiffness: 500, damping: 40 }}
+            className="absolute top-full right-0 mt-3 w-72 bg-surface-container-highest rounded-[24px] shadow-sm flex flex-col p-2 z-50 origin-top-right"
+          >
+            <div className="px-4 py-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex flex-shrink-0 items-center justify-center overflow-hidden font-medium text-xl">
+                {avatarUrl ? <Image src={avatarUrl} alt="Avatar" width={48} height={48} /> : initial}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-base font-medium text-text truncate">{user.user_metadata?.name || "User"}</span>
+                <span className="text-sm text-text-muted truncate">{user.email}</span>
+              </div>
+            </div>
+            
+            <div className="h-[1px] bg-border mx-3 my-1" />
+            
+            <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-[16px] text-[14px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none">
+              <RiSettings3Line className="w-5 h-5 text-text-muted" /> Settings
+            </Link>
+            
+            <button onClick={() => { setOpenState(false); signOut(); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-[14px] font-medium text-risk hover:bg-risk-container hover:text-on-risk-container transition-colors outline-none">
+              <RiLogoutBoxRLine className="w-5 h-5" /> Sign out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
-
