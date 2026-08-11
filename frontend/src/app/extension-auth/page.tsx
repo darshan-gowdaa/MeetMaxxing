@@ -6,11 +6,11 @@ import { useAuth } from"@/lib/auth-context";
 import {
  RiCheckLine,
  RiChromeFill,
- RiLoader4Line,
  RiGoogleFill,
  RiFileCopyLine,
  RiErrorWarningLine,
 } from"@remixicon/react";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { supabase } from"@/lib/supabase";
 
 import Link from"next/link";
@@ -104,7 +104,7 @@ export default function ExtensionAuthPage() {
  if (loading) return (
  <div className="min-h-screen bg-[#1a1c20] flex items-center justify-center">
  <div className="flex flex-col items-center gap-3 text-white/50">
- <RiLoader4Line className="w-8 h-8 animate-spin"/>
+ <Md3LoadingIndicator size="md" />
  <span className="text-sm">Loading...</span>
  </div>
  </div>
@@ -193,7 +193,7 @@ export default function ExtensionAuthPage() {
  <Wrapper>
  <div className="mt-4 space-y-4">
  <div className="flex flex-col items-center gap-3 text-white/50">
- <RiLoader4Line className="w-8 h-8 animate-spin text-[#4a9eff]"/>
+ <Md3LoadingIndicator size="md" />
  <p className="text-sm text-white/60">Connecting to extension…</p>
  </div>
  <p className="text-white/30 text-xs">

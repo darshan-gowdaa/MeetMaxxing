@@ -6,6 +6,7 @@
  * • SVG arc with rounded stroke-linecap
  * • Outer ring rotates continuously
  * • Arc grows then shrinks (stroke-dasharray animation)
+ * • Four-color cycle animation (M3 Expressive)
  */
 export function Md3LoadingIndicator({
   size = "md",
@@ -36,14 +37,11 @@ export function Md3LoadingIndicator({
           cy="24"
           r="18"
           fill="none"
-          strokeWidth="4"
+          strokeWidth="5"
           strokeLinecap="round"
-          className="stroke-primary animate-[md3-arc-dash_1.4s_ease-in-out_infinite]"
+          className="md3-circular-circle"
         />
       </svg>
     </div>
   );
 }
-
-
-

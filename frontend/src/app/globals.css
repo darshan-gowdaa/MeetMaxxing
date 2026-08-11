@@ -262,6 +262,12 @@ body {
   100%  { stroke: var(--primary); }
 }
 
+.md3-circular-circle {
+  animation: 
+    md3-arc-dash 1.4s ease-in-out infinite,
+    md3-arc-color 5.6s ease-in-out infinite;
+}
+
 @keyframes md3-float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-6px); }
