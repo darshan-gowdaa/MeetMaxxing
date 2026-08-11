@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { Switch } from "@/components/atoms/Switch";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -69,17 +70,15 @@ export default function NotificationsPage() {
       {loading ? (
         <div className="text-text-muted">Loading...</div>
       ) : (
-        <div className="bg-surface-container rounded-[32px] p-8 flex flex-col gap-6 border border-border md3-glow-primary">
+        <div className="bg-surface-container rounded-[32px] p-8 flex flex-col gap-6 border border-border">
           <label className="flex items-center justify-between gap-4 cursor-pointer">
             <div className="flex flex-col">
               <span className="font-bold text-lg text-text">Email Summaries</span>
               <span className="text-sm text-text-muted">Daily digests of activity</span>
             </div>
-            <input 
-              type="checkbox" 
+            <Switch 
               checked={notifs.email}
-              onChange={() => toggleNotif('email')}
-              className="w-6 h-6 rounded-md accent-primary transition-colors" 
+              onCheckedChange={() => toggleNotif('email')}
             />
           </label>
           
@@ -90,11 +89,9 @@ export default function NotificationsPage() {
               <span className="font-bold text-lg text-text">Meeting Reminders</span>
               <span className="text-sm text-text-muted">Alerts before meetings start</span>
             </div>
-            <input 
-              type="checkbox" 
+            <Switch 
               checked={notifs.reminders}
-              onChange={() => toggleNotif('reminders')}
-              className="w-6 h-6 rounded-md accent-primary transition-colors" 
+              onCheckedChange={() => toggleNotif('reminders')}
             />
           </label>
           
@@ -105,11 +102,9 @@ export default function NotificationsPage() {
               <span className="font-bold text-lg text-text">In-App Alerts</span>
               <span className="text-sm text-text-muted">Real-time web notifications</span>
             </div>
-            <input 
-              type="checkbox" 
+            <Switch 
               checked={notifs.in_app}
-              onChange={() => toggleNotif('in_app')}
-              className="w-6 h-6 rounded-md accent-primary transition-colors" 
+              onCheckedChange={() => toggleNotif('in_app')}
             />
           </label>
         </div>

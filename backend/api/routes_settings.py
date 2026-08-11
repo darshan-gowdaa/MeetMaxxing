@@ -28,20 +28,4 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
     res = supabase.table("users").update(safe_updates).eq("id", user["id"]).execute()
     return res.data[0] if res.data else {}
 
-@router.get("/integrations")
-async def get_integrations(user: dict = Depends(get_current_user)):
-    supabase = get_supabase_admin()
-    res = supabase.table("integrations").select("*").eq("user_id", user["id"]).execute()
-    return {"integrations": res.data or []}
 
-@router.post("/integrations/{provider}")
-async def toggle_integration(provider: str, payload: dict, user: dict = Depends(get_current_user)):
-    supabase = get_supabase_admin()
-    is_connected = payload.get("is_connected", False)
-    res = supabase.table("integrations").upsert({
-        "user_id": user["id"],
-        "provider": provider,
-        "is_connected": is_connected,
-        "status": "connected" if is_connected else "disconnected"
-    }, on_conflict="user_id,provider").execute()
-    return res.data[0] if res.data else {}
