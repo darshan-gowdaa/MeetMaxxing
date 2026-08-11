@@ -3,16 +3,13 @@
 import { useAuth } from"@/lib/auth-context";
 import { ProfileHero } from"./_components/organisms/ProfileHero";
 import { ProfileSecurity } from"./_components/organisms/ProfileSecurity";
+import { ProfileSkeleton } from "@/components/organisms/skeletons/ProfileSkeleton";
 
 export default function ProfilePage() {
  const { user, loading } = useAuth();
 
  if (loading) {
- return (
- <div className="flex h-screen items-center justify-center">
- <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
- </div>
- );
+ return <ProfileSkeleton />;
  }
 
  if (!user) {

@@ -6,7 +6,7 @@ import { useState, useEffect } from"react";
 import Link from"next/link";
 import { queryMemory } from"@/lib/api";
 import type { Meeting, MemoryResult } from"@/types";
-import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
+import { AnswerSkeleton } from "@/components/organisms/skeletons/AnswerSkeleton";
 import {
  RiBrainLine,
  RiSearchLine,
@@ -155,7 +155,7 @@ export default function MemoryPage() {
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  {loadingSuggestions ? (
  Array.from({ length: 4 }).map((_, i) => (
- <div key={i} className="h-[68px] rounded-2xl md3-skeleton"/>
+ <div key={i} className="h-[68px] rounded-[32px] bg-surface-container-highest animate-pulse" />
  ))
  ) : (
  suggestions.map((q) => (
@@ -175,12 +175,8 @@ export default function MemoryPage() {
 
  {/* ── Loading ────────────────────────────────────────────────────── */}
  {loading && (
- <div className="flex flex-col items-center justify-center gap-5 pt-8 animate-fade-scale">
- <Md3LoadingIndicator size="lg"/>
- <div className="text-center">
- <p className="text-[14px] font-semibold text-text">Scanning semantic embeddings…</p>
- <p className="text-[12px] text-text-muted mt-1">Synthesizing answer with Gemini</p>
- </div>
+ <div className="pt-4">
+   <AnswerSkeleton />
  </div>
  )}
 

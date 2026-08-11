@@ -3,6 +3,7 @@
 import { useState, useEffect } from"react";
 import { useAuth } from"@/lib/auth-context";
 import { Switch } from"@/components/atoms/Switch";
+import { SettingsListSkeleton } from "@/components/organisms/skeletons/SettingsListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"http://localhost:8000";
 
@@ -68,7 +69,7 @@ export default function NotificationsPage() {
  <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-text">Notifications</h1>
  
  {loading ? (
- <div className="text-text-muted">Loading...</div>
+ <SettingsListSkeleton />
  ) : (
  <div className="bg-surface-container rounded-[32px] p-8 flex flex-col gap-6 border border-border">
  <label className="flex items-center justify-between gap-4 cursor-pointer">

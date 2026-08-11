@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from"react";
 import { format, isToday, isYesterday } from"date-fns";
 import { RiCheckLine, RiCloseLine, RiDeleteBinLine } from"@remixicon/react";
-import { GridSkeleton } from"../templates/skeletons";
+import { GridSkeleton } from "@/components/organisms/skeletons/GridSkeleton";
 
 import DeleteDialog from"./DeleteDialog";
 

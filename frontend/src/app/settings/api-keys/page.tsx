@@ -10,7 +10,7 @@ import { ProviderCard } from"./_components/organisms/ProviderCard";
 import { ModelSelection } from"./_components/organisms/ModelSelection";
 import { AddKeyDialog } from"./_components/organisms/AddKeyDialog";
 import { ProviderHelpDrawer } from"./_components/organisms/ProviderHelpDrawer";
-import { ProviderListSkeleton } from"./_components/skeletons/ProviderListSkeleton";
+import { ProviderListSkeleton } from "../../../components/organisms/skeletons/ProviderListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"http://localhost:8000";
 
