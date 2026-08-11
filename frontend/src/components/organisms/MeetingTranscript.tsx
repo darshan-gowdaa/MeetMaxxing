@@ -5,6 +5,8 @@ import {
   RiChat1Line as MessageSquare,
   RiArrowDownSLine as ChevronDown,
   RiArrowUpSLine as ChevronUp,
+  RiFileCopyLine as Copy,
+  RiCheckLine as Check,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
 
@@ -15,6 +17,32 @@ interface MeetingTranscriptProps {
 export default function MeetingTranscript({ transcriptData }: MeetingTranscriptProps) {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<"all" | "dom" | "audio">("all");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!transcriptData) return;
+    const text = transcriptData
+      .filter(chunk => sourceFilter === "all" ? true : (((chunk as Record<string, unknown>).source as string) || "dom") === sourceFilter)
+      .map(chunk => {
+        let content = typeof chunk.text === "string" ? chunk.text : JSON.stringify(chunk.text);
+        if (typeof chunk.text === "string" && (chunk.text.trim().startsWith("{") || chunk.text.trim().startsWith("["))) {
+          try {
+            const parsed = JSON.parse(chunk.text);
+            if (Array.isArray(parsed)) {
+              content = parsed.map((item: {text?: string, utterance?: string, raw_text?: string, refined_text?: string} | string) => typeof item === "string" ? item : (item.text || item.utterance || item.raw_text || item.refined_text || JSON.stringify(item))).join(' ');
+            } else if (parsed && typeof parsed === "object" && Array.isArray(parsed.dialog_turn)) {
+              content = parsed.dialog_turn.map((t: {speaker?: string, refined_text?: string, raw_text?: string}) => `${t.speaker && t.speaker !== chunk.speaker ? t.speaker + ": " : ""}${t.refined_text || t.raw_text}`).join(' ');
+            }
+          } catch {}
+        }
+        const time = chunk.timestamp_ms > 0 ? `[${String(Math.floor(chunk.timestamp_ms / 60000)).padStart(2, "0")}:${String(Math.floor((chunk.timestamp_ms % 60000) / 1000)).padStart(2, "0")}]` : "";
+        return `${time} ${chunk.speaker || "Unknown"}: ${content}`;
+      }).join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (!transcriptData || transcriptData.length === 0) return null;
 
@@ -42,6 +70,13 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
             <option value="dom">DOM (CC)</option>
             <option value="audio">Agent (AI)</option>
           </select>
+          <div
+            className="w-8 h-8 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center hover:bg-zinc-700 transition-colors cursor-pointer text-zinc-400 hover:text-zinc-200"
+            onClick={handleCopy}
+            title="Copy Transcript"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </div>
           <div 
             className="w-8 h-8 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:border-indigo-500/30 transition-all duration-300 cursor-pointer group-active:opacity-80" 
             onClick={() => setTranscriptOpen((o) => !o)}

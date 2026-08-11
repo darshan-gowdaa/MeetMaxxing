@@ -6,6 +6,7 @@ import {
   RiRadioButtonLine as Radio,
   RiExternalLinkLine as ExternalLink,
   RiUserLine as UserIcon,
+  RiDownloadLine as Download,
 } from "@remixicon/react";
 import { ActionButton, GmailIcon, GoogleCalendarIcon, type BtnState } from "@/components/molecules/ActionButtons";
 import type { Meeting } from "@/types";
@@ -32,6 +33,42 @@ export default function MeetingHeader({
     });
   }
   const participantsList = Array.from(set);
+
+  const handleExportTxt = () => {
+    let content = `Meeting: ${meeting.title || 'Untitled'}\n`;
+    content += `Date: ${meeting.start_at && !isNaN(new Date(meeting.start_at).getTime()) ? format(new Date(meeting.start_at), "EEEE, MMMM d, yyyy • h:mm a") : 'Unknown'}\n\n`;
+    
+    if (meeting.summary) {
+      content += `=== SUMMARY ===\n${meeting.summary}\n\n`;
+    }
+    
+    if (meeting.action_items && meeting.action_items.length > 0) {
+      content += `=== ACTION ITEMS ===\n`;
+      meeting.action_items.forEach(item => {
+        content += `- [${item.status === 'done' ? 'x' : ' '}] ${item.description} (Owner: ${item.owner_name || 'Unassigned'})\n`;
+      });
+      content += `\n`;
+    }
+    
+    if (meeting.decisions && meeting.decisions.length > 0) {
+      content += `=== DECISIONS ===\n`;
+      meeting.decisions.forEach(d => {
+        const text = d.text || (typeof d === 'string' ? d : JSON.stringify(d));
+        content += `- ${text}\n`;
+      });
+      content += `\n`;
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${meeting.title || 'meeting'}-export.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="relative bg-surface-container rounded-[28px] border border-border overflow-hidden p-6 md:p-8">
@@ -96,6 +133,14 @@ export default function MeetingHeader({
                   successLabel="Gmail Opened" onClick={handleGmail} />
                 <ActionButton label="Sync Calendar" icon={GoogleCalendarIcon} state={calendarState}
                   successLabel="Calendar Synced" errorLabel="Authorize Calendar" onClick={handleCalendar} />
+                <button
+                  onClick={handleExportTxt}
+                  className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"
+                  title="Export meeting notes as TXT"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Export TXT
+                </button>
               </div>
               {meeting.scheduling_result?.html_link && (
                 <a href={meeting.scheduling_result.html_link} target="_blank" rel="noopener noreferrer"

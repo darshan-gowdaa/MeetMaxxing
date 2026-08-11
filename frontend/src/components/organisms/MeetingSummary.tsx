@@ -3,7 +3,7 @@
 
 import { getAuthToken } from "@/lib/api";
 import { useState } from "react";
-import { RiSparklingLine as Sparkles } from "@remixicon/react";
+import { RiSparklingLine as Sparkles, RiFileCopyLine as Copy, RiCheckLine as Check } from "@remixicon/react";
 import type { Meeting } from "@/types";
 import { endMeeting, reprocessMeeting } from "@/lib/api";
 
@@ -13,6 +13,14 @@ interface MeetingSummaryProps {
 
 export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
   const [isForcing, setIsForcing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!meeting.summary) return;
+    await navigator.clipboard.writeText(meeting.summary);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleForceAction = async () => {
     if (isForcing) return;
@@ -32,13 +40,24 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
 
   return (
     <div className="bg-surface-container rounded-[24px] border border-border p-6 flex flex-col gap-4">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-[12px] bg-tertiary-container flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-tertiary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-[12px] bg-tertiary-container flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-tertiary" />
+          </div>
+          <h2 className="text-[14px] font-bold text-text tracking-tight uppercase text-tertiary">
+            Executive Summary
+          </h2>
         </div>
-        <h2 className="text-[14px] font-bold text-text tracking-tight uppercase text-tertiary">
-          Executive Summary
-        </h2>
+        {meeting.summary && (
+          <button
+            onClick={handleCopy}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface2 active:opacity-80 transition-colors text-text-muted hover:text-primary"
+            title="Copy Summary"
+          >
+            {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+          </button>
+        )}
       </div>
       {meeting.summary ? (
         <p className="text-[13.5px] text-text leading-[1.75] whitespace-pre-wrap">

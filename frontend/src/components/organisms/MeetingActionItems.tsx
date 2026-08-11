@@ -9,6 +9,7 @@ import {
   RiArrowUpLine,
   RiArrowRightLine,
   RiArrowDownLine,
+  RiFileCopyLine as Copy,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
 
@@ -57,6 +58,15 @@ function normalizePriority(p: string | undefined | null): Priority {
 
 export default function MeetingActionItems({ actionItems, toggleItemStatus, onPriorityChange }: MeetingActionItemsProps) {
   const [cyclingId, setCyclingId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!actionItems) return;
+    const text = actionItems.map(item => `- [${item.status === 'done' ? 'x' : ' '}] ${item.description} (Owner: ${item.owner_name || 'Unassigned'}, Due: ${item.due_date || 'None'}, Priority: ${item.priority || 'Medium'})`).join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (!actionItems) return null;
 
@@ -110,9 +120,13 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
                 {doneCount} done
               </span>
             )}
-            <span className="text-[11px] text-text-muted bg-surface2 border border-border rounded-full px-3 py-1 font-medium">
-              Click row → toggle status
-            </span>
+            <button
+              onClick={handleCopy}
+              className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-surface2 active:opacity-80 transition-colors text-text-muted hover:text-primary ml-1"
+              title="Copy Action Items"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
           </div>
         )}
       </div>
