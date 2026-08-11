@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { RiUserLine, RiSettings3Line, RiKey2Line } from '@remixicon/react';
+import { RiUserLine, RiSettings3Line, RiKey2Line, RiNotification3Line, RiApps2Line, RiPaletteLine } from '@remixicon/react';
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -11,6 +11,9 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { href: '/settings/profile', label: 'Profile', icon: RiUserLine },
     { href: '/settings', label: 'General Preferences', icon: RiSettings3Line, exact: true },
     { href: '/settings/api-keys', label: 'API Keys', icon: RiKey2Line },
+    { href: '/settings/notifications', label: 'Notifications', icon: RiNotification3Line },
+    { href: '/settings/integrations', label: 'Integrations', icon: RiApps2Line },
+    { href: '/settings/appearance', label: 'Appearance', icon: RiPaletteLine },
   ];
 
   return (

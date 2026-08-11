@@ -156,3 +156,22 @@ ALTER TABLE user_model_preferences ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own_model_prefs" ON user_model_preferences FOR ALL USING (user_id = auth.uid());
 CREATE TRIGGER model_prefs_updated_at BEFORE UPDATE ON user_model_preferences FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- ─── Settings ───────────────────────────────────────────────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'system';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications JSONB DEFAULT '{"email": true, "reminders": true, "in_app": true}'::jsonb;
+
+CREATE TABLE IF NOT EXISTS integrations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  is_connected BOOLEAN DEFAULT false,
+  status TEXT DEFAULT 'disconnected',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, provider)
+);
+
+CREATE INDEX idx_integrations_user ON integrations(user_id);
+ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_integrations" ON integrations FOR ALL USING (user_id = auth.uid());
+CREATE TRIGGER integrations_updated_at BEFORE UPDATE ON integrations FOR EACH ROW EXECUTE FUNCTION update_updated_at();

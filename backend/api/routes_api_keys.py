@@ -168,7 +168,7 @@ async def add_key(data: dict, background_tasks: BackgroundTasks, user: dict = De
         background_tasks.add_task(async_status_check, key_record["id"], provider_id, key)
         return {"api_key": {k: v for k, v in key_record.items() if k not in ["key_ciphertext", "iv", "auth_tag", "wrapped_dek"]}}
     except Exception as e:
-        raise HTTPException(500, f"Internal Error: {str(e)}")
+        raise HTTPException(500, f"Internal Error: {e!s}")
 
 @router.post("/{key_id}/check-status")
 async def check_status(key_id: str, user: dict = Depends(get_current_user)):
