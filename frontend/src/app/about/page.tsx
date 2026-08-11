@@ -213,7 +213,7 @@ export default function AboutPage() {
  <div className="relative z-10 mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-0 items-center">
  
  <div className="flex flex-col items-start text-left max-w-2xl z-20">
- <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight drop-shadow-sm border border-border">
+ <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight drop-shadow-sm">
  {'Multi-Agent AI '.split(' ').map((w, i) => <BlurWord key={'m'+i} word={w} index={i} />)}
  <br />
  <span className="text-[#a8c7fa]">
@@ -223,7 +223,7 @@ export default function AboutPage() {
 
  <motion.p 
  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
- className="text-xl text-[#868e96] max-w-lg mb-12 drop-shadow-sm border border-border"
+ className="text-xl text-[#868e96] max-w-lg mb-12 drop-shadow-sm"
  >
  An autonomous gRPC-based agent ecosystem that joins your meetings, understands context, and manages your workflow.
  </motion.p>
@@ -253,11 +253,7 @@ export default function AboutPage() {
  transition={{ duration: 1, delay: 0.2, ease:"easeOut"}}
  className="w-full h-[400px] lg:h-[600px] relative overflow-hidden translate-x-4 lg:translate-x-12 z-10"
  >
- {/* Edge fading masks to blend seamlessly into background */}
- <div className="absolute inset-y-0 left-0 w-1/4 bg-primary from-[#141518] to-transparent z-10 pointer-events-none"></div>
- <div className="absolute inset-y-0 right-0 w-1/4 bg-primary from-[#141518] to-transparent z-10 pointer-events-none"></div>
- <div className="absolute top-0 inset-x-0 h-1/4 bg-primary from-[#141518] to-transparent z-10 pointer-events-none"></div>
- <div className="absolute bottom-0 inset-x-0 h-1/4 bg-primary from-[#141518] to-transparent z-10 pointer-events-none"></div>
+ {/* Masks removed due to strict MD3 expressive design without gradients */}
  
  <Strands
  colors={["#a8c7fa","#8cb1f3","#6f9be8","#ffffff"]}
@@ -287,7 +283,7 @@ export default function AboutPage() {
  <div className="w-14 h-14 rounded-[16px] bg-[rgba(168,199,250,0.1)] text-[#a8c7fa] flex items-center justify-center mb-6 mx-auto shadow-inner">
  <stat.icon size={28} />
  </div>
- <div className="text-5xl font-black tracking-tight mb-2 text-[#ffffff] drop-shadow-sm border border-border">
+ <div className="text-5xl font-black tracking-tight mb-2 text-[#ffffff] drop-shadow-sm">
  <CountUp to={stat.value} />{stat.suffix}
  </div>
  <div className="text-lg font-semibold text-[#a8c7fa] mb-2">{stat.label}</div>

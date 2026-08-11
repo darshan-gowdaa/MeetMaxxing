@@ -27,7 +27,7 @@ export default function DashboardHero({ loading, meetingsCount, totalMinutes, fo
  </div>
  <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text leading-tight">
  Your Meeting
- <span className="bg-primary from-primary to-tertiary text-primary"> Dashboard</span>
+ <span className="text-primary"> Dashboard</span>
  </h1>
  <p className="text-[14px] text-text-muted max-w-md leading-relaxed">
  Every call summarized, every decision tracked, every action item captured — powered by Gemini.
