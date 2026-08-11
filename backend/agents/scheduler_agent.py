@@ -35,7 +35,8 @@ Respond ONLY in JSON:
   "duration_minutes": 30,
   "suggested_date_offset_days": 5,
   "attendees": ["email1@example.com"],
-  "reminder_minutes_before": [10, 1440]
+  "reminder_minutes_before": [10, 1440],
+  "has_explicit_date_time": false
 }"""
 
 
@@ -78,9 +79,10 @@ CRITICAL: Respond ONLY in valid JSON format matching this schema exactly:
   "duration_minutes": 30,
   "start_datetime_iso": "YYYY-MM-DDTHH:MM:SSZ",
   "attendees": ["email1@example.com"],
-  "reminder_minutes_before": [10, 1440]
+  "reminder_minutes_before": [10, 1440],
+  "has_explicit_date_time": true
 }}
-Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for the `start_datetime_iso`, usually 3-5 days from today unless a specific date is mentioned."""
+Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for the `start_datetime_iso`, usually 3-5 days from today unless a specific date is mentioned. Set `has_explicit_date_time` to false if the summary does NOT explicitly mention a date or time."""
 
     if settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key", ""] or not settings.GEMINI_API_KEY:
         return {"scheduled": False, "reason": "GEMINI_API_KEY not configured in .env."}
@@ -125,6 +127,14 @@ Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for the `start_date
             ],
         },
     }
+
+    if not event_plan.get("has_explicit_date_time", True):
+        return {
+            "scheduled": False,
+            "needs_user_input": True,
+            "suggested_payload": calendar_payload,
+            "reason": "No explicit date/time mentioned in meeting."
+        }
 
     # Create the actual calendar event
     try:

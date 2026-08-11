@@ -130,3 +130,19 @@ export async function reprocessMeeting(id: string) {
   return safeParse(text);
 }
 export async function getAuthToken() { return getToken(); }
+
+export async function scheduleFollowUp(meetingId: string, payload: Record<string, unknown>) {
+  const token = await getToken();
+  const res = await fetch(`${BACKEND_URL}/meeting/${meetingId}/schedule_followup`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to schedule follow-up");
+  const text = await res.text();
+  return safeParse(text);
+}
+

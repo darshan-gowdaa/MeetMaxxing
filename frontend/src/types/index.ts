@@ -22,7 +22,15 @@ export interface Meeting {
   }>;
   powered_by?: string;
   email_result?: { sent: boolean; message_id?: string; error?: string };
-  scheduling_result?: { status: string; event_id?: string; html_link?: string; error?: string };
+  scheduling_result?: { 
+    status: string; 
+    event_id?: string; 
+    html_link?: string; 
+    error?: string;
+    needs_user_input?: boolean;
+    scheduled?: boolean;
+    suggested_payload?: { start?: { dateTime?: string }; duration_minutes?: number; title?: string; description?: string; attendees?: { email?: string }[] } | null;
+  };
   status?: string;
   max_participants?: number;
 }

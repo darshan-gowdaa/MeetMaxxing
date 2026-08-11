@@ -15,7 +15,7 @@ import MeetingHeader from "@/components/organisms/MeetingHeader";
 import MeetingSummary from "@/components/organisms/MeetingSummary";
 import MeetingDecisions from "@/components/organisms/MeetingDecisions";
 import MeetingActionItems from "@/components/organisms/MeetingActionItems";
-
+import MeetingFollowUpForm from "@/components/organisms/MeetingFollowUpForm";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 
@@ -248,6 +248,8 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           handleGmail={handleGmail} 
           handleCalendar={handleCalendar} 
         />
+
+        <MeetingFollowUpForm meeting={meeting} onScheduled={loadMeeting} />
 
         {/* ai summary box */}
         <MeetingSummary meeting={meeting} />

@@ -4,7 +4,7 @@ Meeting management endpoints — end meeting, trigger post-processing pipeline.
 
 import logging
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
@@ -30,6 +30,14 @@ class EndMeetingRequest(BaseModel):
     attendees: list[str] = []
     max_participants: int = 1
     calendar_token: dict | None = None  # user's Google OAuth token for scheduling
+
+
+class ScheduleFollowupRequest(BaseModel):
+    start_datetime_iso: str
+    duration_minutes: int
+    title: str
+    description: str
+    attendees: list[str]
 
 
 @router.post("/{meeting_id}/end")
@@ -110,6 +118,58 @@ async def reprocess_meeting(
         user_id=user["user_id"],
     )
     return {"status": "reprocessing", "meeting_id": target_id}
+
+
+@router.post("/{meeting_id}/schedule_followup")
+async def schedule_followup(
+    meeting_id: str,
+    req: ScheduleFollowupRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Explicitly schedule a follow-up meeting using user's calendar token."""
+    supabase = get_supabase_admin()
+    user_res = supabase.table("users").select("calendar_token").eq("id", user["user_id"]).single().execute()
+    if not user_res.data or not user_res.data.get("calendar_token"):
+        raise HTTPException(status_code=400, detail="No Google Calendar OAuth token provided.")
+    
+    calendar_token = user_res.data.get("calendar_token")
+
+    try:
+        event_start = datetime.fromisoformat(req.start_datetime_iso.replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid ISO format for start_datetime_iso.")
+        
+    event_end = event_start + timedelta(minutes=req.duration_minutes)
+
+    calendar_payload = {
+        "summary": req.title,
+        "description": req.description,
+        "start": {"dateTime": event_start.isoformat() + "Z", "timeZone": "UTC"},
+        "end": {"dateTime": event_end.isoformat() + "Z", "timeZone": "UTC"},
+        "attendees": [{"email": e} for e in req.attendees if "@" in e],
+    }
+
+    from ..services.calendar_service import create_calendar_event
+    try:
+        result = await create_calendar_event(calendar_payload, calendar_token)
+    except Exception as e:
+        logger.error(f"Failed to create explicit calendar event: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    schedule_result = {
+        "scheduled": True,
+        "event_id": result.get("id"),
+        "event_link": result.get("htmlLink"),
+        "event_summary": req.title,
+        "start_time": event_start.isoformat(),
+        "attendees": req.attendees,
+    }
+
+    supabase.table("meetings").update(
+        {"scheduling_result": schedule_result}
+    ).eq("id", meeting_id).execute()
+
+    return {"status": "success", "scheduling_result": schedule_result}
 
 
 async def _run_end_pipeline(
