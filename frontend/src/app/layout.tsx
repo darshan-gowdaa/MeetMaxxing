@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/molecules/Topbar";
 import { AuthProvider } from "@/lib/auth-context";
-
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "MeetMaxxing — AI Meeting Copilot",
@@ -21,7 +21,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth">
+    <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -31,10 +31,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-bg text-text">
-        <AuthProvider>
-          <Topbar />
-          {children}
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <Topbar />
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

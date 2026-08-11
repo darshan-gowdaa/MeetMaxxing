@@ -7,6 +7,67 @@
    NO hardcoded rgba() in component selectors — use tokens only.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
+  --background:       #f8f9fa;
+  --bg:               #f8f9fa;
+  --surface-container-lowest:  #ffffff;
+  --surface-container-low:     #f1f3f4;
+  --surface:                   #f8f9fa;
+  --surface-container:         #ebebeb;
+  --surface-container-high:    #e0e0e0;
+  --surface-container-highest: #d6d6d6;
+  --surface-dim:               #d6d6d6;
+  --surface2:                  var(--surface-container-high);
+  --surface3:                  var(--surface-container-highest);
+  --surface-highest:           var(--surface-container-highest);
+
+  --primary:                   #0b57d0;
+  --on-primary:                #ffffff;
+  --primary-container:         #d3e3fd;
+  --on-primary-container:      #041e49;
+  --primary-dim:               #0b57d01f;
+  --primary-glow:              #0b57d014;
+  --primary-glow-hover:        #0b57d040;
+
+  --secondary:                 #5e5e5e;
+  --on-secondary:              #ffffff;
+  --secondary-container:       #e0e0e0;
+  --on-secondary-container:    #1f1f1f;
+
+  --tertiary:                  #7252a3;
+  --on-tertiary:               #ffffff;
+  --tertiary-container:        #eaddff;
+  --on-tertiary-container:     #280054;
+
+  --success:                   #146c2e;
+  --on-success:                #ffffff;
+  --success-container:         #c4eed0;
+  --on-success-container:      #00210b;
+
+  --warning:                   #9e6c00;
+  --on-warning:                #ffffff;
+  --warning-container:         #ffe19c;
+  --on-warning-container:      #2b1c00;
+
+  --risk:                      #b3261e;
+  --on-risk:                   #ffffff;
+  --risk-container:            #f9dedc;
+  --on-risk-container:         #410e0b;
+
+  --border:                    #0b57d01f;
+  --border-strong:             #0b57d03d;
+  --outline:                   #74777f;
+  --outline-variant:           #c4c7c5;
+
+  --foreground:                #1f1f1f;
+  --text:                      #1f1f1f;
+  --text-muted:                #444746;
+  --text-variant:              #74777f;
+
+  --grad-primary:              #0b57d029;
+  --grad-tertiary:             #7252a31f;
+}
+
+.dark {
   /* ── Base / Background ──────────────────────────────────────────────────
      Lighter Google Meet dark: less harsh contrast on root bg.      */
   --background:       #141518;

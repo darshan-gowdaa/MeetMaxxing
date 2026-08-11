@@ -1,34 +1,119 @@
-'use client';
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+type Notifications = {
+  email: boolean;
+  reminders: boolean;
+  in_app: boolean;
+};
 
 export default function NotificationsPage() {
+  const { session } = useAuth();
+  const token = session?.access_token;
+  
+  const [notifs, setNotifs] = useState<Notifications>({
+    email: true,
+    reminders: true,
+    in_app: true,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/settings/`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.notifications) setNotifs(data.notifications);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [token]);
+
+  const toggleNotif = async (key: keyof Notifications) => {
+    if (!token) return;
+    const newNotifs = { ...notifs, [key]: !notifs[key] };
+    
+    // Optimistic UI
+    setNotifs(newNotifs);
+    
+    try {
+      await fetch(`${API_URL}/api/settings/`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ notifications: newNotifs })
+      });
+    } catch {
+      // Revert on error
+      setNotifs({ ...notifs, [key]: notifs[key] });
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-8 max-w-3xl">
-      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Notifications</h1>
-      <div className="bg-surface-high border border-outline-variant rounded-[32px] p-6 flex flex-col gap-6 shadow-sm">
-        <label className="flex items-center justify-between gap-4 cursor-pointer">
-          <div className="flex flex-col">
-            <span className="font-bold text-lg">Email Summaries</span>
-            <span className="text-sm text-text-muted">Daily digests of activity</span>
-          </div>
-          <input type="checkbox" className="w-6 h-6 rounded-md accent-primary focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:scale-105 active:scale-95" />
-        </label>
-        <div className="h-px w-full bg-outline-variant"></div>
-        <label className="flex items-center justify-between gap-4 cursor-pointer">
-          <div className="flex flex-col">
-            <span className="font-bold text-lg">Meeting Reminders</span>
-            <span className="text-sm text-text-muted">Alerts before meetings start</span>
-          </div>
-          <input type="checkbox" className="w-6 h-6 rounded-md accent-primary focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:scale-105 active:scale-95" defaultChecked />
-        </label>
-        <div className="h-px w-full bg-outline-variant"></div>
-        <label className="flex items-center justify-between gap-4 cursor-pointer">
-          <div className="flex flex-col">
-            <span className="font-bold text-lg">In-App Alerts</span>
-            <span className="text-sm text-text-muted">Real-time web notifications</span>
-          </div>
-          <input type="checkbox" className="w-6 h-6 rounded-md accent-primary focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 hover:scale-105 active:scale-95" defaultChecked />
-        </label>
-      </div>
+    <div className="flex flex-col gap-8 max-w-3xl animate-fade-scale">
+      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-text">Notifications</h1>
+      
+      {loading ? (
+        <div className="text-text-muted">Loading...</div>
+      ) : (
+        <div className="bg-surface-container rounded-[32px] p-8 flex flex-col gap-6 border border-border md3-glow-primary">
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <div className="flex flex-col">
+              <span className="font-bold text-lg text-text">Email Summaries</span>
+              <span className="text-sm text-text-muted">Daily digests of activity</span>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={notifs.email}
+              onChange={() => toggleNotif('email')}
+              className="w-6 h-6 rounded-md accent-primary transition-colors" 
+            />
+          </label>
+          
+          <div className="h-px w-full bg-border"></div>
+          
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <div className="flex flex-col">
+              <span className="font-bold text-lg text-text">Meeting Reminders</span>
+              <span className="text-sm text-text-muted">Alerts before meetings start</span>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={notifs.reminders}
+              onChange={() => toggleNotif('reminders')}
+              className="w-6 h-6 rounded-md accent-primary transition-colors" 
+            />
+          </label>
+          
+          <div className="h-px w-full bg-border"></div>
+          
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <div className="flex flex-col">
+              <span className="font-bold text-lg text-text">In-App Alerts</span>
+              <span className="text-sm text-text-muted">Real-time web notifications</span>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={notifs.in_app}
+              onChange={() => toggleNotif('in_app')}
+              className="w-6 h-6 rounded-md accent-primary transition-colors" 
+            />
+          </label>
+        </div>
+      )}
     </div>
   );
 }

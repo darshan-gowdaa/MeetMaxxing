@@ -1,8 +1,8 @@
-/* eslint-disable */
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { RiLockPasswordLine, RiSparkling2Fill, RiCheckLine } from "@remixicon/react";
+import Link from "next/link";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -15,57 +15,60 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     if (password !== confirm) { setError("Passwords don't match"); return; }
     if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) setError(error.message);
-    else setSuccess(true);
+    if (error) setError(error.message); else setSuccess(true);
     setLoading(false);
   };
 
   if (success) return (
-    <div className="min-h-screen bg-[#1a1c20] flex items-center justify-center p-4">
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-          <RiCheckLine className="w-8 h-8 text-green-400" />
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+      <div className="bg-surface-container rounded-[32px] p-8 max-w-sm w-full text-center border border-border md3-glow-primary">
+        <div className="w-16 h-16 bg-success-container rounded-full flex items-center justify-center mx-auto mb-6">
+          <RiCheckLine className="w-8 h-8 text-on-success-container" />
         </div>
-        <h2 className="text-2xl font-bold text-white">Password updated!</h2>
-        <p className="text-white/60">You can now sign in with your new password.</p>
-        <a href="/login" className="block w-full h-12 bg-gradient-to-r from-[#4a9eff] to-[#3a7bd5] text-white font-semibold rounded-xl flex items-center justify-center hover:opacity-90 transition-opacity">Go to Sign In</a>
+        <h2 className="text-2xl font-black text-text mb-2">Password updated!</h2>
+        <p className="text-text-muted mb-8">You can now sign in with your new password.</p>
+        <Link href="/login" className="block w-full h-14 bg-primary text-on-primary font-bold rounded-full flex items-center justify-center hover:bg-primary-container hover:text-on-primary-container transition-colors spring">
+          Go to Sign In
+        </Link>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#1a1c20] flex items-center justify-center p-4 overflow-hidden relative">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#4a9eff]/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#8eaaff]/10 blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4 animate-fade-scale">
       <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center gap-3">
-            <span className="text-[#4a9eff] drop-shadow-[0_0_12px_rgba(74,158,255,0.6)]"><RiSparkling2Fill className="w-8 h-8" /></span>
-            <span className="font-black text-3xl tracking-tight bg-gradient-to-r from-white via-[#a8c8ff] to-[#4a9eff] bg-clip-text text-transparent">MeetMaxxing</span>
-          </div>
-          <p className="text-white/50 mt-3 text-sm">Set a new password</p>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <RiSparkling2Fill className="w-10 h-10 text-primary mb-2" />
+          <h1 className="font-black text-3xl tracking-tight text-text">MeetMaxxing</h1>
         </div>
-        <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-8 shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Reset Password</h2>
+        
+        <div className="bg-surface-container rounded-[32px] p-8 md3-glow-primary border border-border">
+          <h2 className="text-2xl font-black text-text mb-2 text-center">Reset Password</h2>
+          <p className="text-text-muted mb-8 text-center text-sm font-medium">Set a new password for your account</p>
+          
           <form onSubmit={handleReset} className="space-y-4">
             <div className="relative">
-              <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="New password" className="w-full h-12 bg-white/[0.04] border border-white/[0.1] rounded-xl pl-11 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-[#4a9eff]/50 transition-colors" />
+              <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" />
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="New password" className="w-full h-14 bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
             </div>
             <div className="relative">
-              <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-              <input type="password" required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirm new password" className="w-full h-12 bg-white/[0.04] border border-white/[0.1] rounded-xl pl-11 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-[#4a9eff]/50 transition-colors" />
+              <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" />
+              <input type="password" required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirm new password" className="w-full h-14 bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
             </div>
-            {error && <div className="text-red-400 text-sm text-center bg-red-400/10 py-2 rounded-lg">{error}</div>}
-            <button type="submit" disabled={loading} className="w-full h-12 bg-gradient-to-r from-[#4a9eff] to-[#3a7bd5] text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 mt-2">
+            
+            {error && <div className="text-on-risk bg-risk-container text-sm text-center py-3 rounded-[16px] font-medium">{error}</div>}
+            
+            <button type="submit" disabled={loading} className="w-full h-14 bg-primary text-on-primary font-bold rounded-full hover:bg-primary-container hover:text-on-primary-container transition-colors disabled:opacity-50 mt-4 spring">
               {loading ? "Updating..." : "Update Password"}
             </button>
           </form>
-          <div className="mt-6 text-center">
-            <a href="/login" className="text-[#4a9eff] text-sm hover:opacity-80 transition-opacity">Back to sign in</a>
+          
+          <div className="mt-8 text-center">
+            <Link href="/login" className="text-primary hover:text-primary-container text-sm font-bold transition-colors">
+              Back to sign in
+            </Link>
           </div>
         </div>
       </div>
