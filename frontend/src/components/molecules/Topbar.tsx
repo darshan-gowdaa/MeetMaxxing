@@ -10,7 +10,6 @@ import {
   RiSparkling2Fill,
   RiFolderOpenLine,
   RiArrowLeftLine,
-  RiCalendarEventLine,
   RiInformationLine,
   RiLogoutBoxRLine,
   RiArrowDownSLine,
@@ -22,9 +21,8 @@ import Image from "next/image";
 const NAV_TABS = [
   {
     id: "dashboard",
-    label: (isMeeting: boolean) => (isMeeting ? "Meeting" : "Dashboard"),
-    icon: (isMeeting: boolean) =>
-      isMeeting ? RiCalendarEventLine : RiVideoChatLine,
+    label: () => "Dashboard",
+    icon: () => RiVideoChatLine,
     href: "/",
     match: (p: string) => p === "/" || p.startsWith("/meetings/"),
   },
@@ -104,8 +102,8 @@ export default function Topbar() {
         <nav className="hidden md:flex flex-1 items-center justify-center gap-2 h-full">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
-            const label = tab.label(isMeetingDetail);
-            const IconComponent = tab.icon(isMeetingDetail);
+            const label = tab.label();
+            const IconComponent = tab.icon();
 
             return (
               <Link

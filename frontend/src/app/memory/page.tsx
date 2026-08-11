@@ -6,7 +6,7 @@ import { useState, useEffect } from"react";
 import Link from"next/link";
 import { queryMemory } from"@/lib/api";
 import type { Meeting, MemoryResult } from"@/types";
-import { AnswerSkeleton } from "@/components/organisms/skeletons/AnswerSkeleton";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import {
  RiBrainLine,
  RiSearchLine,
@@ -175,8 +175,9 @@ export default function MemoryPage() {
 
  {/* ── Loading ────────────────────────────────────────────────────── */}
  {loading && (
- <div className="pt-4">
-   <AnswerSkeleton />
+ <div className="pt-16 pb-12 flex flex-col items-center justify-center gap-4 w-full">
+   <Md3LoadingIndicator size="lg" />
+   <span className="text-sm font-medium text-text-muted">Searching memory...</span>
  </div>
  )}
 
