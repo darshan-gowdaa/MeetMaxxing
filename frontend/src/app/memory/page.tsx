@@ -117,7 +117,7 @@ export default function MemoryPage() {
 
  {/* ── Search box ────────────────────────────────────────────────── */}
  <div className="relative">
- <RiSearchLine className="absolute left-4 top-1/2 /2 w-4 h-4 text-text-muted pointer-events-none"/>
+ <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"/>
  <input
  type="text"
  placeholder="Ask your meeting memory…"
@@ -130,7 +130,7 @@ export default function MemoryPage() {
  {query && (
  <button
  onClick={() => { setQuery(""); setResult(null); }}
- className="absolute right-24 top-1/2 /2 text-text-muted hover:text-text spring-sm"
+ className="absolute right-24 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
  >
  <RiCloseLine className="w-4 h-4"/>
  </button>
@@ -138,7 +138,7 @@ export default function MemoryPage() {
  <button
  onClick={() => handleQuery()}
  disabled={loading || !query.trim()}
- className="absolute right-2 top-1/2 /2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:opacity-80 disabled:opacity-40"
+ className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:opacity-80 disabled:opacity-40"
  >
  <RiSparklingLine className="w-4 h-4"/>
  Ask

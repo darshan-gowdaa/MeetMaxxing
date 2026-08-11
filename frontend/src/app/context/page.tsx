@@ -342,7 +342,7 @@ export default function ContextManagerPage() {
  </button>
 
  <div className="relative">
- <RiSearchLine className="absolute left-3.5 top-1/2 /2 w-4 h-4 text-text-muted pointer-events-none"/>
+ <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"/>
  <input
  type="text"
  value={search}
@@ -353,7 +353,7 @@ export default function ContextManagerPage() {
  {search && (
  <button
  onClick={() => setSearch("")}
- className="absolute right-3 top-1/2 /2 text-text-muted hover:text-text spring-sm"
+ className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
  >
  <RiCloseLine className="w-4 h-4"/>
  </button>
