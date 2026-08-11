@@ -1,43 +1,43 @@
 /* eslint-disable @next/next/no-page-custom-font */
-import type { Metadata } from "next";
-import "./globals.css";
-import Topbar from "@/components/molecules/Topbar";
-import { AuthProvider } from "@/lib/auth-context";
-import { ThemeProvider } from "@/components/theme-provider";
+import type { Metadata } from"next";
+import"./globals.css";
+import Topbar from"@/components/molecules/Topbar";
+import { AuthProvider } from"@/lib/auth-context";
+import { ThemeProvider } from"@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "MeetMaxxing — AI Meeting Copilot",
-  description:
-    "AI-powered meeting intelligence: auto-summaries, action items, semantic memory, and real-time insights powered by Gemini.",
-  keywords: ["meeting AI", "meeting notes", "action items", "Gemini AI"],
-  openGraph: {
-    title: "MeetMaxxing — AI Meeting Copilot",
-    description: "AI-powered meeting intelligence powered by Gemini",
-    type: "website",
-  },
+ title:"MeetMaxxing — AI Meeting Copilot",
+ description:
+"AI-powered meeting intelligence: auto-summaries, action items, semantic memory, and real-time insights powered by Gemini.",
+ keywords: ["meeting AI","meeting notes","action items","Gemini AI"],
+ openGraph: {
+ title:"MeetMaxxing — AI Meeting Copilot",
+ description:"AI-powered meeting intelligence powered by Gemini",
+ type:"website",
+ },
 };
 
 export default function RootLayout({
-  children,
+ children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&family=Google+Sans+Mono&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-full flex flex-col bg-bg text-text">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            <Topbar />
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+ return (
+ <html lang="en"className="h-full antialiased"data-scroll-behavior="smooth"suppressHydrationWarning>
+ <head>
+ <link rel="preconnect"href="https://fonts.googleapis.com"/>
+ <link rel="preconnect"href="https://fonts.gstatic.com"crossOrigin="anonymous"/>
+ <link
+ href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&family=Google+Sans+Mono&display=swap"
+ rel="stylesheet"
+ />
+ </head>
+ <body className="min-h-full flex flex-col bg-bg text-text">
+ <ThemeProvider attribute="class"defaultTheme="system"enableSystem disableTransitionOnChange>
+ <AuthProvider>
+ <Topbar />
+ {children}
+ </AuthProvider>
+ </ThemeProvider>
+ </body>
+ </html>
+ );
 }

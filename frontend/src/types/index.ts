@@ -1,59 +1,59 @@
 // ─── Meeting ─────────────────────────────────────────────────────────────────
 
 export interface Meeting {
-  id: string;
-  google_meet_link?: string;
-  title: string;
-  start_at: string;
-  end_at: string;
-  summary: string;
-  decisions: Array<{ text: string; decided_by: string; confidence: string }>;
-  follow_up: { required: boolean; suggested_topic: string };
-  attendees: string[];
-  guardrail_score: number;
-  transcript_data: Array<{ speaker: string; text: string; timestamp_ms: number; source?: "dom" | "audio" }>;
-  action_items: Array<{
-    id: string;
-    description: string;
-    owner_name: string;
-    priority: string;
-    status: string;
-    due_date: string;
-  }>;
-  powered_by?: string;
-  email_result?: { sent: boolean; message_id?: string; error?: string };
-  scheduling_result?: { 
-    status: string; 
-    event_id?: string; 
-    html_link?: string; 
-    error?: string;
-    needs_user_input?: boolean;
-    scheduled?: boolean;
-    suggested_payload?: { start?: { dateTime?: string }; duration_minutes?: number; title?: string; description?: string; attendees?: { email?: string }[] } | null;
-  };
-  status?: string;
-  max_participants?: number;
+ id: string;
+ google_meet_link?: string;
+ title: string;
+ start_at: string;
+ end_at: string;
+ summary: string;
+ decisions: Array<{ text: string; decided_by: string; confidence: string }>;
+ follow_up: { required: boolean; suggested_topic: string };
+ attendees: string[];
+ guardrail_score: number;
+ transcript_data: Array<{ speaker: string; text: string; timestamp_ms: number; source?:"dom"|"audio"}>;
+ action_items: Array<{
+ id: string;
+ description: string;
+ owner_name: string;
+ priority: string;
+ status: string;
+ due_date: string;
+ }>;
+ powered_by?: string;
+ email_result?: { sent: boolean; message_id?: string; error?: string };
+ scheduling_result?: { 
+ status: string; 
+ event_id?: string; 
+ html_link?: string; 
+ error?: string;
+ needs_user_input?: boolean;
+ scheduled?: boolean;
+ suggested_payload?: { start?: { dateTime?: string }; duration_minutes?: number; title?: string; description?: string; attendees?: { email?: string }[] } | null;
+ };
+ status?: string;
+ max_participants?: number;
 }
 
 // ─── Memory ───────────────────────────────────────────────────────────────────
 
 export interface MemorySource {
-  meeting_id: string;
-  meeting_date: string;
-  speaker_name: string;
-  memory_type: string;
-  excerpt: string;
-  score: number;
+ meeting_id: string;
+ meeting_date: string;
+ speaker_name: string;
+ memory_type: string;
+ excerpt: string;
+ score: number;
 }
 
 export interface MemoryResult {
-  answer: string;
-  confidence: string;
-  sources: MemorySource[];
-  total_retrieved: number;
-  powered_by?: string;
-  error?: string;
-  guardrail_valid?: boolean;
-  guardrail_score?: number;
+ answer: string;
+ confidence: string;
+ sources: MemorySource[];
+ total_retrieved: number;
+ powered_by?: string;
+ error?: string;
+ guardrail_valid?: boolean;
+ guardrail_score?: number;
 }
 
