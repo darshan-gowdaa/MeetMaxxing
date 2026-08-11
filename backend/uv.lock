@@ -60,6 +60,7 @@ dependencies = [
     { name = "langfuse" },
     { name = "loguru" },
     { name = "lyzr-adk" },
+    { name = "markdown" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -75,6 +76,7 @@ dependencies = [
     { name = "python-multipart" },
     { name = "qdrant-client" },
     { name = "redis" },
+    { name = "resend" },
     { name = "supabase" },
     { name = "tiktoken" },
     { name = "uvicorn" },
@@ -97,6 +99,7 @@ requires-dist = [
     { name = "langfuse", specifier = ">=4.14.1" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "lyzr-adk", specifier = ">=0.1.11" },
+    { name = "markdown", specifier = ">=3.10.3" },
     { name = "opentelemetry-api", specifier = ">=1.44.0" },
     { name = "opentelemetry-exporter-otlp", specifier = ">=1.44.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.65b0" },
@@ -112,6 +115,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.32" },
     { name = "qdrant-client", specifier = ">=1.18.0" },
     { name = "redis", specifier = ">=8.0.1" },
+    { name = "resend", specifier = ">=2.35.0" },
     { name = "supabase", specifier = ">=2.31.0" },
     { name = "tiktoken", specifier = ">=0.13.0" },
     { name = "uvicorn", specifier = ">=0.51.0" },
@@ -714,6 +718,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c6/31/f6fbd8340668ac44fcaa9174071160d29f48f26a3f8849ce051f70ecf52c/lyzr_adk-0.1.11.tar.gz", hash = "sha256:385a22100f3e96be72cde6b4ded0bd3a591e27bbada443f37da9a782ed6120e8", size = 286199, upload-time = "2026-06-18T10:34:54.811Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1c/06/86b3f672bbc5acf00d1b3da9523779f996df2e5e0027d8854491d34663cd/lyzr_adk-0.1.11-py3-none-any.whl", hash = "sha256:8ae58db975aeaa1dbc31dd0438a90b6cfdf6ccb814d2a71f4a3b36b00e591804", size = 132423, upload-time = "2026-06-18T10:34:21.403Z" },
+]
+
+[[package]]
+name = "markdown"
+version = "3.10.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/6f/da4c6aea59b3001f2e8c0ec7497475aadaf3b021c10cab5b2858f0f32b26/markdown-3.10.3.tar.gz", hash = "sha256:3589362618f743188b4d955b874402bc814f4f83f544dc207719f4baa7d9c45f", size = 372596, upload-time = "2026-07-30T19:05:29.005Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/64/69/4a5af2bc115a9a33fefe51709749de8262be3f9ba063d1753a837cdbc49c/markdown-3.10.3-py3-none-any.whl", hash = "sha256:fa6c92a00a4a3c98b22728c64a935ae1928250ae65058a6ded814d2cc29a4cea", size = 110757, upload-time = "2026-07-30T19:05:27.883Z" },
 ]
 
 [[package]]
@@ -1451,6 +1464,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/f2/05f29bc3913aea15eb670be136045bf5c5bbf4b99ecb839da9b422bb2c85/requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9", size = 55650, upload-time = "2024-03-22T20:32:29.939Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/5d/63d4ae3b9daea098d5d6f5da83984853c1bbacd5dc826764b249fe119d24/requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36", size = 24179, upload-time = "2024-03-22T20:32:28.055Z" },
+]
+
+[[package]]
+name = "resend"
+version = "2.35.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/b9/e07f2f2bd992ef4565b9c315dfd46b3df66ce89df1d928f442b9b39cbe3b/resend-2.35.0.tar.gz", hash = "sha256:26ced7b22cbd89f7b8c7ba9719d0708ab10c06ddd0f91ba6ec861f3a328101b3", size = 55347, upload-time = "2026-07-27T16:46:48.35Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/92/1c0912b68ae082a55dfdd32e4b5117905ae9fd1b6efc5f5e7c69a4ee6894/resend-2.35.0-py2.py3-none-any.whl", hash = "sha256:cd75299d626f4735af52910989b3f51919032ef316e2d60563c79c319e7b24a6", size = 87336, upload-time = "2026-07-27T16:46:47.229Z" },
 ]
 
 [[package]]
