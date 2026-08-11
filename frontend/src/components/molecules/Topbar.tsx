@@ -61,7 +61,7 @@ export default function Topbar() {
       <div className="h-16 px-4 flex items-center justify-between gap-4 max-w-7xl mx-auto">
         
         {/* Left: Logo or Back (Small Top App Bar styling) */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 w-48">
           <AnimatePresence mode="wait" initial={false}>
             {isMeetingDetail ? (
               <motion.div
@@ -88,10 +88,10 @@ export default function Topbar() {
                 transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 <Link href="/" className="flex items-center gap-3 pr-4 h-12">
-                  <span className="text-on-primary-container bg-primary-container w-10 h-10 rounded-full flex items-center justify-center">
+                  <span className="text-on-primary-container bg-primary-container w-10 h-10 rounded-full flex items-center justify-center shrink-0">
                     <RiSparkling2Fill className="w-6 h-6" />
                   </span>
-                  <span className="font-medium text-[22px] tracking-tight text-text">
+                  <span className="font-medium text-[22px] tracking-tight text-text whitespace-nowrap">
                     MeetMaxxing
                   </span>
                 </Link>
@@ -135,7 +135,7 @@ export default function Topbar() {
         </nav>
 
         {/* Right side: User Profile or Login */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center justify-end gap-3 flex-shrink-0 w-48">
           {user ? (
             <ProfileDropdown user={user} signOut={signOut} />
           ) : (

@@ -9,22 +9,18 @@ export function LoginPrompt() {
     window.open(`${webUrl}${path}`, "_blank");
 
   return (
-    <div className="mm-state-container bg-[#1a1c20] text-white h-full flex flex-col justify-center items-center px-5 text-center">
-      {/* glow orbs */}
-      <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-[#4a9eff]/5 blur-[80px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-[#8eaaff]/5 blur-[80px] rounded-full pointer-events-none" />
-
-      <div className="relative z-10 w-full">
+    <div className="flex flex-col justify-center items-center h-full w-full px-5 text-center bg-surface text-text rounded-[32px] border border-border">
+      <div className="relative z-10 w-full max-w-[260px] mx-auto">
         {/* logo */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          <RiSparkling2Fill className="w-6 h-6 text-[#4a9eff]" />
-          <span className="font-black text-xl bg-gradient-to-r from-white to-[#4a9eff] bg-clip-text text-transparent">
+          <RiSparkling2Fill className="w-6 h-6 text-primary" />
+          <span className="font-bold text-xl text-primary">
             MeetMaxxing
           </span>
         </div>
 
-        <h2 className="text-lg font-bold mb-1">Welcome</h2>
-        <p className="text-xs text-white/50 mb-6 leading-relaxed">
+        <h2 className="text-lg font-bold mb-1 text-text">Welcome</h2>
+        <p className="text-xs text-text-muted mb-6 leading-relaxed">
           Sign in to activate your AI meeting copilot.
           The extension connects automatically — no copy-paste needed.
         </p>
@@ -33,29 +29,29 @@ export function LoginPrompt() {
           {/* Google sign-in */}
           <button
             onClick={() => openAuth("/extension-auth")}
-            className="w-full py-2.5 px-4 bg-white text-black font-semibold rounded-xl flex items-center justify-between transition-colors hover:bg-white/90 active:scale-95 shadow-lg shadow-black/20"
+            className="w-full py-2.5 px-4 bg-primary text-on-primary font-semibold rounded-full flex items-center justify-between transition-opacity hover:brightness-110 active:opacity-80"
           >
             <div className="flex items-center gap-2">
-              <RiGoogleFill className="w-4 h-4 text-[#ea4335]" />
+              <RiGoogleFill className="w-4 h-4 text-on-primary" />
               <span className="text-sm">Continue with Google</span>
             </div>
-            <RiArrowRightSLine className="w-4 h-4 opacity-40" />
+            <RiArrowRightSLine className="w-4 h-4 opacity-70" />
           </button>
 
           {/* Email sign-in */}
           <button
             onClick={() => openAuth("/login?next=/extension-auth")}
-            className="w-full py-2.5 px-4 bg-white/[0.06] border border-white/[0.1] text-white font-semibold rounded-xl flex items-center justify-between transition-colors hover:bg-white/[0.1] active:scale-95"
+            className="w-full py-2.5 px-4 bg-surface-container text-text font-semibold rounded-full flex items-center justify-between border border-border transition-colors hover:bg-surface-container-high active:opacity-80"
           >
             <div className="flex items-center gap-2">
-              <RiMailLine className="w-4 h-4 text-white/60" />
+              <RiMailLine className="w-4 h-4 text-text-muted" />
               <span className="text-sm">Sign in with Email</span>
             </div>
-            <RiArrowRightSLine className="w-4 h-4 opacity-40" />
+            <RiArrowRightSLine className="w-4 h-4 text-text-muted opacity-70" />
           </button>
         </div>
 
-        <p className="text-[10px] text-white/30 mt-5">
+        <p className="text-[10px] text-text-variant mt-5">
           New? Sign up is on the login page.
         </p>
       </div>

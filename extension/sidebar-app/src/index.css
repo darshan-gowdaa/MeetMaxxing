@@ -1,28 +1,144 @@
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Google Sans", "Google Sans Text", ui-sans-serif, system-ui, sans-serif;
+@theme inline {
+  --font-sans: 'Google Sans', 'Google Sans Text', system-ui, sans-serif;
+
+  /* Background */
+  --color-background:                   var(--background);
+  --color-foreground:                   var(--foreground);
+  --color-bg:                           var(--bg);
+
+  /* Surfaces */
+  --color-surface-dim:                  var(--surface-dim);
+  --color-surface:                      var(--surface);
+  --color-surface-container-lowest:     var(--surface-container-lowest);
+  --color-surface-container-low:        var(--surface-container-low);
+  --color-surface-container:            var(--surface-container);
+  --color-surface-container-high:       var(--surface-container-high);
+  --color-surface-container-highest:    var(--surface-container-highest);
+  --color-surface2:                     var(--surface2);
+  --color-surface3:                     var(--surface3);
+  --color-surface-highest:              var(--surface-highest);
+
+  /* Primary */
+  --color-primary:                      var(--primary);
+  --color-on-primary:                   var(--on-primary);
+  --color-primary-container:            var(--primary-container);
+  --color-on-primary-container:         var(--on-primary-container);
+  --color-primary-dim:                  var(--primary-dim);
+  --color-primary-glow:                 var(--primary-glow);
+
+  /* Secondary */
+  --color-secondary:                    var(--secondary);
+  --color-on-secondary:                 var(--on-secondary);
+  --color-secondary-container:          var(--secondary-container);
+  --color-on-secondary-container:       var(--on-secondary-container);
+
+  /* Tertiary */
+  --color-tertiary:                     var(--tertiary);
+  --color-on-tertiary:                  var(--on-tertiary);
+  --color-tertiary-container:           var(--tertiary-container);
+  --color-on-tertiary-container:        var(--on-tertiary-container);
+
+  /* Semantic */
+  --color-success:                      var(--success);
+  --color-on-success:                   var(--on-success);
+  --color-success-container:            var(--success-container);
+  --color-on-success-container:         var(--on-success-container);
+
+  --color-warning:                      var(--warning);
+  --color-on-warning:                   var(--on-warning);
+  --color-warning-container:            var(--warning-container);
+  --color-on-warning-container:         var(--on-warning-container);
+
+  --color-risk:                         var(--risk);
+  --color-on-risk:                      var(--on-risk);
+  --color-risk-container:               var(--risk-container);
+  --color-on-risk-container:            var(--on-risk-container);
+  --color-risk-bg:                      var(--risk-container);
+
+  /* Borders */
+  --color-border:                       var(--border);
+  --color-border-strong:                var(--border-strong);
+  --color-outline:                      var(--outline);
+  --color-outline-variant:              var(--outline-variant);
+
+  /* Text */
+  --color-text:                         var(--text);
+  --color-text-muted:                   var(--text-muted);
+  --color-text-variant:                 var(--text-variant);
 }
 
 :root {
-  /* Google Meet Material 3 Expressive Dark Theme Tokens */
-  --background: #141518;
-  --surface-low: #27292c;
-  --surface: #27292c;
-  --surface-high: #333537;
-  --surface-highest: #3e4042;
-  --border: rgba(227, 227, 227, 0.12);
-  --border-highlight: rgba(168, 199, 250, 0.4);
-  --foreground: #ffffff;
-  --foreground-variant: #868e96;
-  --primary: #a8c7fa;
-  --primary-container: #0842a0;
-  --on-primary-container: #d3e3fd;
-  --tertiary: #7fcfff;
-  --success: #6dd58c;
-  --warning: #fdd663;
-  --error: #f2b8b5;
+  /* ── Base / Background ────────────────────────────────────────────────── */
+  --background:       #141518;
+  --bg:               #141518;
+
+  /* ── Surface Hierarchy ──────────── */
+  --surface-container-lowest:  #27292c;
+  --surface-container-low:     #27292c;
+  --surface:                   #27292c;
+  --surface-container:         #27292c;
+  --surface-container-high:    #33353c;
+  --surface-container-highest: #3b3d46;
+  --surface-dim:               #27292c;
+  
+  --surface2:                  var(--surface-container-high);
+  --surface3:                  var(--surface-container-highest);
+  --surface-highest:           var(--surface-container-highest);
+
+  /* ── Primary — Google Blue ────────────────────────── */
+  --primary:                   #a8c7fa;   
+  --on-primary:                #062e6f;   
+  --primary-container:         #0842a0;   
+  --on-primary-container:      #d6e3ff;   
+  --primary-dim:               #a8c7fa1f;  
+  --primary-glow:              #a8c7fa14;  
+  --primary-glow-hover:        #a8c7fa40;  
+
+  /* ── Secondary ──────────────────────────────────────────────────────── */
+  --secondary:                 #bfc6dc;
+  --on-secondary:              #293041;
+  --secondary-container:       #3b4664;
+  --on-secondary-container:    #dbe2f9;
+
+  /* ── Tertiary — Expressive Purple ────────────────────────────── */
+  --tertiary:                  #dbb9fd;
+  --on-tertiary:               #3b1060;
+  --tertiary-container:        #5b3589;
+  --on-tertiary-container:     #f3daff;
+
+  /* ── Semantic / State colors ────────────────────────────────────────── */
+  --success:                   #6dd58c;
+  --on-success:                #003920;
+  --success-container:         #0d3f23;
+  --on-success-container:      #89f5a8;
+
+  --warning:                   #ffc107;
+  --on-warning:                #3c2800;
+  --warning-container:         #3d2a00;
+  --on-warning-container:      #ffd966;
+
+  --risk:                      #f2b8b5;   
+  --on-risk:                   #601410;
+  --risk-container:            #601410;
+  --on-risk-container:         #ffdad7;
+  
+  /* ── Outline / Border ───────────────────────────────────────────────── */
+  --border:                    #a8c7fa1f;  
+  --border-strong:             #a8c7fa3d;  
+  --outline:                   #8d9199;   
+  --outline-variant:           #41474e;   
+
+  /* ── Text / Foreground ──────────────────────────────────────────────── */
+  --foreground:                #ffffff;
+  --text:                      #ffffff;   
+  --text-muted:                #868e96;   
+  --text-variant:              #7e7d78;   
+
+  --grad-primary:              #a8c7fa29; 
+  --grad-tertiary:             #dbb9fd1f; 
 }
 
 * {

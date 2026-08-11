@@ -3,22 +3,22 @@ import { getWebUrl } from "../config";
 
 export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) {
   return (
-    <header className="flex items-center justify-between px-4 py-3 mx-3 mt-3 mb-1 bg-zinc-900/80 backdrop-blur-3xl border border-zinc-800/80 shrink-0 shadow-lg z-10 rounded-[24px] box-border transition-all">
+    <header className="flex items-center justify-between px-4 py-3 mx-3 mt-3 mb-1 bg-surface-container border border-border shrink-0 shadow-lg z-10 rounded-[24px] box-border transition-all">
       <div className="flex items-center gap-2 shrink truncate">
-        <div className="flex items-center gap-1.5 font-black text-[17px] tracking-tight bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent truncate">
-          <span className="text-blue-500 flex items-center justify-center text-lg shrink-0"><i className="ri-sparkling-2-fill"></i></span>
+        <div className="flex items-center gap-1.5 font-bold text-[17px] tracking-tight text-primary truncate">
+          <span className="text-primary flex items-center justify-center text-lg shrink-0"><i className="ri-sparkling-2-fill"></i></span>
           <span>MeetMaxxing</span>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <div id="status-badge" className={`flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-extrabold tracking-[0.1em] uppercase transition-colors shrink-0 ${meetingId && !isEnded ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'bg-zinc-800/60 text-zinc-400 border border-zinc-700/60'}`}>
-          <span className={`w-2 h-2 rounded-full ${meetingId && !isEnded ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-500'}`}></span>
+        <div id="status-badge" className={`flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-extrabold tracking-[0.1em] uppercase transition-colors shrink-0 ${meetingId && !isEnded ? 'bg-success-container text-on-success-container border border-border shadow-sm' : 'bg-surface-container-high text-text-muted border border-border'}`}>
+          <span className={`w-2 h-2 rounded-full ${meetingId && !isEnded ? 'bg-success animate-pulse' : 'bg-text-muted'}`}></span>
           <span>{meetingId && !isEnded ? 'Live' : 'Idle'}</span>
         </div>
-        <div id="timer" className="text-xs font-mono font-bold tracking-wide text-zinc-200 bg-zinc-800/60 px-2 py-1 rounded-full border border-zinc-700/50 shadow-inner shrink-0">{elapsedTime}</div>
+        <div id="timer" className="text-xs font-mono font-bold tracking-wide text-text bg-surface-container-high px-2 py-1 rounded-full border border-border shadow-inner shrink-0">{elapsedTime}</div>
         {meetingId && !isEnded && (
           <button
-            className="inline-flex items-center justify-center gap-2 px-2.5 py-1 text-[11px] font-bold rounded-full cursor-pointer transition-colors whitespace-nowrap bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-2.5 py-1 text-[11px] font-bold rounded-full cursor-pointer transition-colors whitespace-nowrap bg-risk-container text-on-risk-container border border-border hover:brightness-110 shrink-0"
             title="End Meeting & Process Summary"
             onClick={() => triggerAction("REQUEST_END_MEETING")}
           >
@@ -33,14 +33,14 @@ export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) 
 export function Footer({ meetingId, isEnded }: any) {
   if (!meetingId || isEnded) return null;
   return (
-    <footer className="p-3 mx-3 mb-3 mt-1 border border-zinc-800/50 bg-zinc-900/60 backdrop-blur-2xl flex justify-center shrink-0 shadow-xl rounded-[28px] transition-all">
+    <footer className="p-3 mx-3 mb-3 mt-1 border border-border bg-surface-container flex justify-center shrink-0 shadow-xl rounded-[28px] transition-all">
       <a 
         href={getWebUrl()} 
         target="_blank" 
         rel="noreferrer" 
-        className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-300 text-[13px] font-bold tracking-wide transition-all hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400 no-underline group active:scale-[0.97]"
+        className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-surface-container-high border border-border text-text text-[13px] font-bold tracking-wide transition-all hover:brightness-110 hover:text-primary no-underline group active:opacity-80"
       >
-        <i className="ri-layout-masonry-fill text-lg group-hover:scale-110 transition-transform"></i> 
+        <i className="ri-layout-masonry-fill text-lg transition-transform"></i> 
         <span>Open Intelligence Dashboard</span>
         <i className="ri-arrow-right-up-line ml-auto opacity-50 group-hover:opacity-100 transition-opacity"></i>
       </a>
@@ -51,10 +51,10 @@ export function Footer({ meetingId, isEnded }: any) {
 export function ErrorBanner({ errorMessage, poweredBy }: any) {
   if (!errorMessage) return null;
   return (
-    <div className="p-4 rounded-3xl bg-red-950/40 border border-red-500/20 flex items-start gap-3 text-xs text-red-200 shadow-lg animate-fade-in mb-3">
-      <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+    <div className="p-4 rounded-[24px] bg-risk-container border border-border flex items-start gap-3 text-xs text-on-risk-container shadow-lg animate-fade-in mb-3">
+      <ShieldAlert className="w-5 h-5 text-risk shrink-0 mt-0.5" />
       <div className="flex flex-col gap-1">
-        <span className="font-bold text-red-300 tracking-wide">AI Service Error ({poweredBy})</span>
+        <span className="font-bold text-on-risk-container tracking-wide">AI Service Error ({poweredBy})</span>
         <span className="leading-relaxed opacity-90 break-words">{errorMessage}</span>
       </div>
     </div>

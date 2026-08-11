@@ -220,7 +220,10 @@
 /* ── Base reset ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { 
+  scroll-behavior: smooth;
+  overflow-y: scroll;
+}
 
 body {
   background: var(--bg);

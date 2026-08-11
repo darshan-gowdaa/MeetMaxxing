@@ -97,17 +97,17 @@ export default function App() {
         <main>
           <div id="active-state" className="state-container">
             
-            <div className="flex bg-zinc-900/60 p-1.5 rounded-full border border-zinc-800/50 shrink-0 sticky top-0 z-10 backdrop-blur-xl mb-3 shadow-sm">
-              <button onClick={() => setActiveTab("live")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "live" ? "bg-blue-600/90 text-white shadow-md shadow-blue-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+            <div className="flex bg-surface-container p-1.5 rounded-full border border-border shrink-0 sticky top-0 z-10 mb-3">
+              <button onClick={() => setActiveTab("live")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "live" ? "bg-primary-container text-on-primary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-sparkling-fill mr-1"></i>Copilot
               </button>
-              <button onClick={() => setActiveTab("rag")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "rag" ? "bg-cyan-600/90 text-white shadow-md shadow-cyan-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+              <button onClick={() => setActiveTab("rag")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "rag" ? "bg-secondary-container text-on-secondary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-robot-2-fill mr-1"></i>Chat
               </button>
-              <button onClick={() => setActiveTab("recap")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "recap" ? "bg-emerald-600/90 text-white shadow-md shadow-emerald-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+              <button onClick={() => setActiveTab("recap")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "recap" ? "bg-tertiary-container text-on-tertiary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-article-fill mr-1"></i>Recap
               </button>
-              <button onClick={() => setActiveTab("transcript")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "transcript" ? "bg-indigo-600/90 text-white shadow-md shadow-indigo-900/20" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 active:scale-95"}`}>
+              <button onClick={() => setActiveTab("transcript")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "transcript" ? "bg-secondary-container text-on-secondary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-chat-voice-fill mr-1"></i>Feed
               </button>
             </div>
@@ -118,12 +118,12 @@ export default function App() {
                 <button 
                   onClick={handleGenerateInsights} 
                   disabled={isProcessing} 
-                  className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative overflow-hidden"
+                  className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-2.5 rounded-full hover:brightness-110 active:opacity-80 transition-all mt-1 mb-1 relative overflow-hidden"
                 >
-                  {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
+                  {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-risk rounded-full animate-pulse"></span>}
                   {isProcessing ? (
                     <span className="flex items-center gap-2">
-                      <div className="md3-loading-indicator md3-loading-indicator-sm text-white"></div>
+                      <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary"></div>
                       <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
                     </span>
                   ) : (
@@ -143,12 +143,12 @@ export default function App() {
                 <button 
                     onClick={handleGenerateInsights} 
                     disabled={isProcessing} 
-                    className="md3-btn md3-btn-primary w-full !bg-blue-600/90 !text-white !py-2.5 hover:!bg-blue-500 !mt-1 !mb-1 !rounded-[16px] relative overflow-hidden"
+                    className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-2.5 rounded-full hover:brightness-110 active:opacity-80 transition-all mt-1 mb-1 relative overflow-hidden"
                   >
-                    {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>}
+                    {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-risk rounded-full animate-pulse"></span>}
                     {isProcessing ? (
                     <span className="flex items-center gap-2">
-                      <div className="md3-loading-indicator md3-loading-indicator-sm text-white"></div>
+                      <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary"></div>
                       <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
                     </span>
                     ) : (
