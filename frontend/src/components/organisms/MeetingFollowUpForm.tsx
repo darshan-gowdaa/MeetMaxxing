@@ -66,7 +66,7 @@ export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFol
  };
 
  return (
- <div className="bg-surface-container rounded-[32px] p-6 mb-5 border border-outline-variant/30 flex flex-col gap-4 shadow-sm">
+ <div className="bg-surface-container rounded-[32px] p-5 md:p-6 mb-5 border border-outline-variant/30 flex flex-col gap-4 shadow-sm">
  <div className="flex flex-col gap-1">
  <h3 className="text-[18px] font-semibold text-text">Follow-up Needed</h3>
  <p className="text-[14px] text-text-muted">

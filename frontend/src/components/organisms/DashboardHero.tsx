@@ -12,7 +12,7 @@ interface DashboardHeroProps {
 
 export default function DashboardHero({ loading, meetingsCount, totalMinutes, formatTime }: DashboardHeroProps) {
  return (
- <div className="relative rounded-[32px] bg-surface-container border border-border overflow-hidden p-8 md:p-10">
+ <div className="relative rounded-[32px] bg-surface-container border border-border overflow-hidden p-6 md:p-10">
  {/* glowing blob in the background so it looks modern */}
  <div className="absolute top-0 right-0 w-80 h-80 rounded-full blur-[120px] pointer-events-none"
  style={{ background:"radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)"}} />

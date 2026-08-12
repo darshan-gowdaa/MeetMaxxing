@@ -59,7 +59,7 @@ export default function Topbar() {
       <div className="h-16 px-4 flex items-center justify-between gap-4 max-w-7xl mx-auto">
         
         {/* Left: Logo or Back (Small Top App Bar styling) */}
-        <div className="flex items-center gap-2 flex-shrink-0 w-48">
+        <div className="flex items-center gap-2 flex-shrink-0 w-auto md:w-48">
           <AnimatePresence mode="wait" initial={false}>
             {isMeetingDetail ? (
               <motion.div
@@ -133,7 +133,7 @@ export default function Topbar() {
         </nav>
 
         {/* Right side: User Profile or Login */}
-        <div className="flex items-center justify-end gap-3 flex-shrink-0 w-48">
+        <div className="flex items-center justify-end gap-3 flex-shrink-0 w-auto md:w-48">
           {user ? (
             <ProfileDropdown user={user} signOut={signOut} />
           ) : (

@@ -45,7 +45,7 @@ export default function EditDialog({
  return createPortal(
  <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
  <div className="absolute inset-0 bg-bg/80"onClick={onCancel} />
- <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm border border-border">
+ <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm border border-border">
  <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
  <RiEditLine className="w-6 h-6 text-primary"/>
  </div>

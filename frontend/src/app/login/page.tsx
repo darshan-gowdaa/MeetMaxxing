@@ -72,9 +72,9 @@ export default function LoginPage() {
  <div className="mt-16 md3-loading-indicator md3-loading-indicator-lg"></div>
  </div>
 
- {/* Auth Section */}
- <div className="flex-1 flex flex-col justify-center p-6 sm:p-12 lg:p-24">
- <div className="w-full max-w-md mx-auto bg-surface-container rounded-[32px] p-8 md3-glow-primary border border-border">
+      {/* Auth Section */}
+      <div className="flex-1 flex flex-col justify-center p-4 sm:p-6 md:p-12 lg:p-24">
+        <div className="w-full max-w-md mx-auto bg-surface-container rounded-[32px] p-6 sm:p-8 md3-glow-primary border border-border">
  <h2 className="text-3xl font-black mb-8 text-center text-text">
  {mode ==="signin"&&"Welcome back"}
  {mode ==="signup"&&"Create account"}

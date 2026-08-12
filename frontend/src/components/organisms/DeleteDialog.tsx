@@ -37,7 +37,7 @@ export default function DeleteDialog({
  onClick={onCancel}
  />
  {/* Dialog surface */}
- <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm border border-border">
+ <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm border border-border">
  {/* Icon */}
  <div className="w-12 h-12 rounded-full bg-risk-container flex items-center justify-center mx-auto mb-4">
  <RiDeleteBinLine className="w-6 h-6 text-risk"/>

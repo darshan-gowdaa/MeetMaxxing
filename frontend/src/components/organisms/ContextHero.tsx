@@ -12,7 +12,7 @@ interface ContextHeroProps {
 
 export default function ContextHero({ loading, filesCount, totalSizeKB, setShowUpload }: ContextHeroProps) {
  return (
- <div className="relative rounded-[32px] bg-surface-container border border-border overflow-hidden p-8 md:p-10">
+ <div className="relative rounded-[32px] bg-surface-container border border-border overflow-hidden p-6 md:p-10">
 
  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
  <div className="flex flex-col gap-2">

@@ -14,7 +14,7 @@ export default function MeetingDecisions({ decisions }: MeetingDecisionsProps) {
  if (!decisions || decisions.length === 0) return null;
 
  return (
- <div className="bg-surface-container rounded-[24px] border border-border p-6 flex flex-col gap-4">
+ <div className="bg-surface-container rounded-[24px] border border-border p-5 md:p-6 flex flex-col gap-4">
  <div className="flex items-center gap-2.5">
  <div className="w-8 h-8 rounded-[12px] bg-success/15 flex items-center justify-center">
  <CheckCircle2 className="w-4 h-4 text-success"/>

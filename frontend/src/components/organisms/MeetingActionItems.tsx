@@ -89,7 +89,7 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
  };
 
  return (
- <div className="bg-surface-container rounded-[24px] border border-border p-6 flex flex-col gap-4">
+ <div className="bg-surface-container rounded-[24px] border border-border p-5 md:p-6 flex flex-col gap-4">
  <div className="flex items-center justify-between gap-3 flex-wrap">
  <div className="flex items-center gap-2.5">
  <div className="w-8 h-8 rounded-[12px] bg-primary-container flex items-center justify-center">
@@ -132,7 +132,7 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
  </div>
 
  {actionItems.length === 0 ? (
- <div className="rounded-[16px] border border-dashed border-border bg-surface-dim p-6 text-center">
+ <div className="rounded-[16px] border border-dashed border-border bg-surface-dim p-5 md:p-6 text-center">
  <p className="text-[13px] text-text-muted font-medium">No action items in this meeting.</p>
  </div>
  ) : (

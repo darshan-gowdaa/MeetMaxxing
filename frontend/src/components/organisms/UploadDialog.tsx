@@ -43,7 +43,7 @@ export default function UploadDialog({
  return createPortal(
  <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
  <div className="absolute inset-0 bg-bg/80"onClick={!busy ? onCancel : undefined} />
- <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-6 max-w-lg w-full border border-border animate-fade-scale shadow-sm border border-border">
+ <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-lg w-full border border-border animate-fade-scale shadow-sm border border-border">
  <div className="flex justify-between items-center mb-4">
  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
  <RiUploadCloud2Line className="w-5 h-5 text-primary"/>
@@ -71,7 +71,7 @@ export default function UploadDialog({
  ) : (
  <>
  <div 
- className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer mb-6 ${dragActive ? 'border-primary bg-primary/5' : 'border-border bg-surface2 hover:bg-surface3 hover:border-primary/50'}`}
+ className={`border-2 border-dashed rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer mb-6 ${dragActive ? 'border-primary bg-primary/5' : 'border-border bg-surface2 hover:bg-surface3 hover:border-primary/50'}`}
  onDragEnter={handleDrag}
  onDragLeave={handleDrag}
  onDragOver={handleDrag}

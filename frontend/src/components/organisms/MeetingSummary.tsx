@@ -39,7 +39,7 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
  };
 
  return (
- <div className="bg-surface-container rounded-[24px] border border-border p-6 flex flex-col gap-4">
+ <div className="bg-surface-container rounded-[24px] border border-border p-5 md:p-6 flex flex-col gap-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
  <div className="w-8 h-8 rounded-[12px] bg-tertiary-container flex items-center justify-center">
@@ -64,7 +64,7 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
  {meeting.summary}
  </p>
  ) : meeting.status ==="active"|| meeting.status ==="processing"? (
- <div className="flex flex-col items-center justify-center py-6 gap-4">
+ <div className="flex flex-col items-center justify-center py-5 md:py-6 gap-4">
  <div className="flex items-center justify-center gap-2">
  <div className="w-3 h-3 bg-white rounded-full animate-bounce"style={{ animationDelay:"-0.3s"}}></div>
  <div className="w-3 h-3 bg-white rounded-full animate-bounce"style={{ animationDelay:"-0.15s"}}></div>
@@ -82,7 +82,7 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
  </button>
  </div>
  ) : (
- <div className="bg-risk-container/10 border border-risk/30 rounded-xl p-4 my-2">
+ <div className="bg-risk-container/10 border border-risk/30 rounded-xl p-3 md:p-4 my-2">
  <p className="text-[13.5px] text-risk/90 italic leading-relaxed">
  {meeting.status ==="no_transcript"
  ?"No transcript was captured during this meeting, so no summary could be generated."

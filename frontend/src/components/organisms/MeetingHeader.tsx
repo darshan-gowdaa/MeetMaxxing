@@ -71,7 +71,7 @@ export default function MeetingHeader({
  };
 
  return (
- <div className="relative bg-surface-container rounded-[28px] border border-border overflow-hidden p-6 md:p-8">
+ <div className="relative bg-surface-container rounded-[28px] border border-border overflow-hidden p-5 md:p-8">
  {/* some ambient light effect, stackoverflow ftw */}
  <div className="absolute top-0 right-0 w-72 h-72 rounded-full blur-[100px] pointer-events-none"
  style={{ background:"radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)"}} />

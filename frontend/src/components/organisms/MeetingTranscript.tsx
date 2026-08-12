@@ -49,7 +49,7 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
  return (
  <div className={`bg-surface-container rounded-[32px] border border-zinc-800/50 overflow-hidden shadow-sm border border-border transition-all duration-300 ${transcriptOpen ? 'shadow-indigo-900/10' : ''}`}>
  <div 
- className="w-full flex items-center justify-between px-6 py-5 hover:bg-surface-container active:opacity-80 transition-all cursor-pointer group"
+ className="w-full flex items-center justify-between px-4 md:px-6 py-4 md:py-5 hover:bg-surface-container active:opacity-80 transition-all cursor-pointer group flex-wrap gap-4"
  onClick={() => setTranscriptOpen((o) => !o)}
  >
  <div className="flex items-center gap-3">
@@ -60,7 +60,7 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
  Full Transcript <span className="text-zinc-500 font-medium ml-1">({transcriptData.length} items)</span>
  </span>
  </div>
- <div className="flex items-center gap-4"onClick={(e) => e.stopPropagation()}>
+ <div className="flex items-center gap-2 md:gap-4 flex-wrap"onClick={(e) => e.stopPropagation()}>
  <select 
  value={sourceFilter} 
  onChange={(e) => setSourceFilter(e.target.value as"all"|"dom"|"audio")}
@@ -89,13 +89,13 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
  </div>
 
  {transcriptOpen && (
- <div className="border-t border-zinc-800/50 px-6 pb-6 pt-5 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar bg-surface-container">
+ <div className="border-t border-zinc-800/50 px-4 md:px-6 pb-4 md:pb-6 pt-4 md:pt-5 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar bg-surface-container">
  {transcriptData
  .filter(chunk => sourceFilter ==="all"? true : (((chunk as Record<string, unknown>).source as string) ||"dom") === sourceFilter)
  .map((chunk, idx) => (
  <div
  key={idx}
- className="flex flex-col gap-2 p-5 rounded-[24px] bg-surface-container border border-zinc-800/60 hover:shadow-sm border border-border hover:shadow-sm border border-border hover:shadow-indigo-500/5 hover:border-indigo-500/30 transition-all duration-300 group/chunk"
+ className="flex flex-col gap-2 p-4 md:p-5 rounded-[24px] bg-surface-container border border-zinc-800/60 hover:shadow-sm border border-border hover:shadow-sm border border-border hover:shadow-indigo-500/5 hover:border-indigo-500/30 transition-all duration-300 group/chunk"
  >
  <div className="flex items-center justify-between">
  <span className="flex items-center gap-2.5 text-[13px] font-bold tracking-wide text-zinc-200 group-hover/chunk:text-indigo-200 transition-colors">

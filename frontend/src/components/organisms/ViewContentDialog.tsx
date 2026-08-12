@@ -63,7 +63,7 @@ export default function ViewContentDialog({
  return createPortal(
  <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
  <div className="absolute inset-0 bg-bg/80"onClick={onClose} />
- <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-6 max-w-3xl w-full h-[80vh] flex flex-col border border-border animate-fade-scale shadow-sm border border-border">
+ <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-3xl w-full h-[80vh] flex flex-col border border-border animate-fade-scale shadow-sm border border-border">
  <div className="flex justify-between items-center mb-4 shrink-0">
  <div className="flex items-center gap-3">
  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">

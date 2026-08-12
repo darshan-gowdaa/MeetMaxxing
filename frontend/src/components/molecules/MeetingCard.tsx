@@ -50,7 +50,7 @@ export default function MeetingCard({
  const variant = colorVariants[index % colorVariants.length];
 
  return (
- <div className={`group relative rounded-[24px] border spring flex flex-col h-[220px] overflow-visible ${variant}`}>
+ <div className={`group relative rounded-[24px] border spring flex flex-col h-auto min-h-[200px] md:h-[220px] overflow-visible ${variant}`}>
  {/* Top glow accent removed to comply with MD3 tonal design */}
 
  {/* 3-Dots Menu (Top Right) */}
