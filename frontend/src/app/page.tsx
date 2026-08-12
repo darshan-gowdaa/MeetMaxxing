@@ -91,6 +91,7 @@ export default function Dashboard() {
                   skeletonCount={6}
                   getKey={(m) => m.id}
                   getDate={(m) => (m.start_at ? new Date(m.start_at) : new Date())}
+                  groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
                   renderHeader={({ setManualSelectionMode, activeGroup }) => (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
@@ -104,7 +105,7 @@ export default function Dashboard() {
 
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <div className="relative flex-1 sm:flex-none sm:w-[140px]">
+                          <div className="relative flex-1 sm:flex-none sm:w-[160px]">
                             <select 
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value as "date" | "name" | "duration")}

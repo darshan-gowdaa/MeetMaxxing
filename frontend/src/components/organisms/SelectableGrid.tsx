@@ -27,6 +27,7 @@ export interface SelectableGridProps<T> {
   emptyState?: React.ReactNode;
   loading?: boolean;
   skeletonCount?: number;
+  groupBy?: (item: T) => string;
 }
 
 export function SelectableGrid<T>({
@@ -41,6 +42,7 @@ export function SelectableGrid<T>({
   emptyState,
   loading = false,
   skeletonCount = 6,
+  groupBy,
 }: SelectableGridProps<T>) {
   
   const {
@@ -62,7 +64,8 @@ export function SelectableGrid<T>({
     items,
     getKey,
     getDate,
-    onDelete
+    onDelete,
+    groupBy,
   });
 
   if (!loading && items.length === 0 && emptyState) {
@@ -125,21 +128,23 @@ export function SelectableGrid<T>({
             const someSelected = groupKeys.some((k) => selectedKeys.has(k));
 
             return (
-              <div key={group.title} className="flex flex-col gap-4 group-section" data-group={group.title}>
-                <div className="flex items-center gap-3 group/header cursor-pointer w-fit" onClick={() => toggleGroup(group.items)}>
-                  <div 
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                      allSelected 
-                        ? "bg-primary border-primary text-bg"
-                        : someSelected 
-                        ? "bg-primary/50 border-primary text-bg"
-                        : "border-border/50 text-primary opacity-0 group-hover/header:opacity-100 group-hover/header:border-primary/50"
-                    } ${selectionMode && !allSelected && !someSelected ? "opacity-100" : ""}`}
-                  >
-                    <RiCheckLine className="w-3.5 h-3.5"/>
+              <div key={group.title || "all"} className="flex flex-col gap-4 group-section" data-group={group.title}>
+                {group.title && (
+                  <div className="flex items-center gap-3 group/header cursor-pointer w-fit" onClick={() => toggleGroup(group.items)}>
+                    <div 
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                        allSelected 
+                          ? "bg-primary border-primary text-bg"
+                          : someSelected 
+                          ? "bg-primary/50 border-primary text-bg"
+                          : "border-border/50 text-primary opacity-0 group-hover/header:opacity-100 group-hover/header:border-primary/50"
+                      } ${selectionMode && !allSelected && !someSelected ? "opacity-100" : ""}`}
+                    >
+                      <RiCheckLine className="w-3.5 h-3.5"/>
+                    </div>
+                    <h3 className="text-[13px] font-bold text-text-muted tracking-wider select-none">{group.title}</h3>
                   </div>
-                  <h3 className="text-[13px] font-bold text-text-muted tracking-wider select-none">{group.title}</h3>
-                </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {group.items.map((item) => {
                     const key = getKey(item);

@@ -66,9 +66,6 @@ export default function ContextCard({
 
  return (
  <div className={`group relative rounded-[24px] border spring flex flex-col h-[220px] overflow-visible ${variant}`}>
- {/* Top glow accent */}
- <div className="absolute top-0 left-0 right-0 h-px bg-primary from-transparent via-primary/30 to-transparent rounded-t-[24px]"/>
-
  {/* 3-Dots Menu (Top Right) */}
  <div className="absolute top-4 right-4 z-20"ref={menuRef}>
  <button

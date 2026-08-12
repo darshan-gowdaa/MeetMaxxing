@@ -7,6 +7,7 @@ interface UseSelectableGridProps<T> {
   getKey: (item: T) => string;
   getDate: (item: T) => Date;
   onDelete: (selectedItems: T[]) => Promise<void> | void;
+  groupBy?: (item: T) => string;
 }
 
 export function useSelectableGrid<T>({
@@ -14,7 +15,8 @@ export function useSelectableGrid<T>({
   items,
   getKey,
   getDate,
-  onDelete
+  onDelete,
+  groupBy
 }: UseSelectableGridProps<T>) {
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => {
     if (typeof sessionStorage !== "undefined" && storeKey) {
@@ -76,14 +78,19 @@ export function useSelectableGrid<T>({
 
   const groups = useMemo(() => {
     const map = new Map<string, T[]>();
-    [...items].sort((a, b) => getDate(b).getTime() - getDate(a).getTime()).forEach((item) => {
-      const d = getDate(item);
-      const k = isToday(d) ? "Today" : isYesterday(d) ? "Yesterday" : format(d, "MMMM d, yyyy");
+    items.forEach((item) => {
+      let k = "";
+      if (groupBy) {
+        k = groupBy(item);
+      } else {
+        const d = getDate(item);
+        k = isToday(d) ? "Today" : isYesterday(d) ? "Yesterday" : format(d, "MMMM d, yyyy");
+      }
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(item);
     });
     return Array.from(map.entries()).map(([title, items]) => ({ title, items }));
-  }, [items, getDate]);
+  }, [items, getDate, groupBy]);
 
   const toggleItem = (key: string) => {
     const next = new Set(selectedKeys);

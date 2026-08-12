@@ -105,6 +105,7 @@ export default function ContextManagerPage() {
                   skeletonCount={6}
                   getKey={(f) => `${f.meeting_id}-${f.filename}`}
                   getDate={(f) => new Date(f.date)}
+                  groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
                   renderHeader={({ setManualSelectionMode }) => (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
@@ -118,7 +119,7 @@ export default function ContextManagerPage() {
 
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <div className="relative flex-1 sm:flex-none sm:w-[140px]">
+                          <div className="relative flex-1 sm:flex-none sm:w-[160px]">
                             <select 
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value as "date" | "name" | "size")}
