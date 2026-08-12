@@ -2,6 +2,7 @@ import { useState } from"react";
 import { motion } from"framer-motion";
 import { RiPlugLine, RiLockLine } from"@remixicon/react";
 import { Provider } from"../../types";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export function AddKeyDialog({ provider, token, onAdded, onCancel, setSnackbar }: { provider: Provider, token: string | undefined, onAdded: () => void, onCancel: () => void, setSnackbar: (s: { message: string, action?: () => void } | null) => void }) {
  const [saving, setSaving] = useState(false);
@@ -13,7 +14,7 @@ export function AddKeyDialog({ provider, token, onAdded, onCancel, setSnackbar }
  return (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-surface-container-high"onClick={onCancel} />
- <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-surface rounded-[24px] shadow-sm border border-border w-full max-w-md border border-border p-6">
+ <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-surface rounded-[24px] shadow-sm border border-border w-full max-w-md p-6">
  <div className="flex items-center gap-3 mb-6">
  {domain ? (
  /* eslint-disable-next-line @next/next/no-img-element */
@@ -66,7 +67,7 @@ export function AddKeyDialog({ provider, token, onAdded, onCancel, setSnackbar }
  <div className="flex justify-end gap-3 pt-4">
  <button type="button"onClick={onCancel} disabled={saving} className="px-5 py-2.5 rounded-full hover:bg-surface2 text-[14px] font-medium transition-colors disabled:opacity-50">Cancel</button>
  <button type="submit"disabled={saving} className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-colors min-w-[100px] flex items-center justify-center disabled:opacity-80 shadow-sm">
- {saving ? <div className="w-5 h-5 border-2 border-on-primary border-t-transparent rounded-full animate-spin"/> :"Save Key"}
+ {saving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> :"Save Key"}
  </button>
  </div>
  </form>
