@@ -128,7 +128,7 @@ async def run_email_agent(
                 if res.data and res.data.get("email"):
                     recipient_email = res.data["email"]
             except Exception as e:
-                logger.warning("[Email Agent] Could not resolve email for user_id {}: {}", lookup_id, e)
+                logger.warning("[Email Agent] Could not resolve email for user_id %s: %s", lookup_id, e)
 
     if not recipient_email or "@" not in recipient_email:
         logger.warning("[Email Agent] No valid recipient email — skipping send.")
@@ -168,14 +168,14 @@ async def run_email_agent(
             "subject": f"Meeting Summary: {meeting_title or 'Your Meeting'}",
             "html": html_body,
         })
-        logger.info("[Email Agent] Email sent → {} (id: {})", recipient_email, result.get("id"))
+        logger.info("[Email Agent] Email sent → %s (id: %s)", recipient_email, result.get("id"))
         return {
             "sent": True,
             "resend_id": result.get("id"),
             "to": recipient_email,
         }
     except Exception as e:
-        logger.error("[Email Agent] Failed to send email: {}", e)
+        logger.error("[Email Agent] Failed to send email: %s", e)
         return {
             "sent": False,
             "error": str(e)[:200],

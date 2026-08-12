@@ -190,7 +190,7 @@ async def refine_transcript(
         raise HTTPException(status_code=400, detail="No transcript data found")
 
     try:
-        from ..services.llm_service import call_llm
+        from ..core.llm_fallback import generate_content_with_fallback
         raw_text = "\n".join([f"[{t.get('timestamp_ms', 0)}ms] {t.get('speaker', 'Unknown')}: {t.get('text', '')}" for t in transcript_data])
         
         prompt = f"""You are an expert transcription editor. Review the following raw meeting transcript.
@@ -204,7 +204,7 @@ Raw transcript:
 {raw_text}"""
         
         import json
-        refined_json_str = await call_llm(prompt, model="gemini-2.5-flash", response_format="json")
+        refined_json_str = await generate_content_with_fallback(prompt, response_format="json")
         refined_data = json.loads(refined_json_str)
         
         # Ensure format
@@ -460,15 +460,11 @@ async def _run_end_pipeline(
             "user_id": user_id
         })
 
-        # Persist email result to Supabase
-        try:
-            supabase.table("meetings").update(
-                {
-                    "email_result": email_result
-                }
-            ).eq("id", target_id or meeting_id).execute()
-        except Exception as e:
-            logger.warning(f"Could not persist email results: {e}")
+        # Log email result (skip saving to DB as column doesn't exist)
+        if email_result.get("sent"):
+            logger.info("Email sent successfully to user.")
+        else:
+            logger.warning(f"Email send result: {email_result}")
 
     except Exception as e:
         logger.error(f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True)
