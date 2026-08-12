@@ -9,14 +9,6 @@ import { NextQuestionAgent } from "./components/organisms/NextQuestionAgent";
 import { RecapAgent } from "./components/organisms/RecapAgent";
 import { ContextAgent } from "./components/organisms/ContextAgent";
 
-const INSIGHT_LABELS = [
-  "Analyzing context…",
-  "Synthesizing insights…",
-  "Crafting answers…",
-  "Reading transcript…",
-  "Generating insights…",
-];
-
 export default function App() {
   const {
     authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
@@ -32,10 +24,28 @@ export default function App() {
   const [insightLabelIdx, setInsightLabelIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const getDynamicLabels = () => {
+    const provider = (poweredBy || "").toLowerCase();
+    let connectingStr = "Connecting to AI...";
+    if (provider.includes("gemini")) connectingStr = "Connecting to Gemini API...";
+    else if (provider.includes("groq")) connectingStr = "Connecting to Groq API...";
+    else if (provider.includes("openrouter")) connectingStr = "Connecting to OpenRouter...";
+    else if (provider.includes("perplexity")) connectingStr = "Connecting to Perplexity...";
+    
+    return [
+      connectingStr,
+      "Analyzing context…",
+      "Synthesizing insights…",
+      "Crafting answers…",
+      "Reading transcript…",
+      "Generating insights…",
+    ];
+  };
+
   useEffect(() => {
     if (isProcessing) {
       setInsightLabelIdx(0);
-      intervalRef.current = setInterval(() => setInsightLabelIdx((p) => (p + 1) % INSIGHT_LABELS.length), 1100);
+      intervalRef.current = setInterval(() => setInsightLabelIdx((p) => (p + 1) % 6), 1100);
     } else {
       if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     }
@@ -74,7 +84,7 @@ export default function App() {
       {isProcessing ? (
         <span className="flex items-center gap-2">
           <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary" />
-          <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
+          <span className="transition-all duration-500">{getDynamicLabels()[insightLabelIdx]}</span>
         </span>
       ) : (
         <><i className="ri-sparkling-fill text-[15px] group-hover:animate-pulse" /> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>
@@ -101,8 +111,8 @@ export default function App() {
       ) : isEnded ? (
         <main><EndedState meetingId={meetingId} meetingTitle={meetingTitle} /></main>
       ) : (
-        <main>
-          <div id="active-state" className="state-container">
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div id="active-state" className="state-container flex-1 flex flex-col min-h-0 overflow-hidden px-3 pt-3">
             <div className="flex bg-surface-container p-1.5 rounded-full border border-border shrink-0 sticky top-0 z-10 mb-3 shadow-sm">
               {tabBtn("live", "ri-sparkling-fill", "Copilot")}
               {tabBtn("rag", "ri-robot-2-fill", "Chat")}

@@ -208,7 +208,7 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (meetCode.length >= 3 && !title.startsWith("Meet - ")) title = `Meet - ${meetCode}`;
     else if (!title || title === "Google Meet") title = meetCode ? `Meet - ${meetCode}` : "Meet - Live Session";
 
-    activeMeetingId = msg.fallbackId || (meetCode || "live_" + Date.now());
+    activeMeetingId = msg.fallbackId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "live_" + Date.now());
     activeMeetTabId = sender?.tab?.id || null;
 
     const tabId = sender?.tab?.id || activeMeetTabId;

@@ -23,9 +23,12 @@ export function useCopilot() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!meetingId || isEnded) {
+      if (!meetingId) {
         // Skip state update if already idle to prevent re-renders
         setElapsedTime((prev) => prev === "--:--" ? prev : "--:--");
+        return;
+      }
+      if (isEnded) {
         return;
       }
       const diff = Math.floor((Date.now() - meetingStartTime) / 1000);

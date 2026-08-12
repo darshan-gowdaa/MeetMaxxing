@@ -10,13 +10,14 @@ export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: st
         </h3>
       </div>
       <div className="mt-2 flex flex-col gap-2 flex-1">
-        {suggestions.length > 0 ? (
-          suggestions.map((sug, idx) => <SuggestionCard key={idx} text={sug} />)
-        ) : isProcessing ? (
-          <div className="flex flex-col gap-2 flex-1 justify-center">
+        {isProcessing ? (
+          <div className="flex flex-col gap-2 flex-1 justify-center relative cursor-not-allowed">
+            <div className="absolute inset-0 z-10"></div>
             <Skeleton lines={3} />
             <Skeleton lines={2} />
           </div>
+        ) : suggestions.length > 0 ? (
+          suggestions.map((sug, idx) => <SuggestionCard key={idx} text={sug} />)
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-xs text-text-variant italic text-center py-3 px-4 bg-surface-container rounded-[20px] border border-border w-full">

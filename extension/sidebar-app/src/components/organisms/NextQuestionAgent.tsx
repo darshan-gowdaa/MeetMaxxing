@@ -16,12 +16,15 @@ export function NextQuestionAgent({ nextQuestions, isProcessing, onSendToIntelli
         </h3>
       </div>
       <div className="mt-1 flex-1 flex flex-col gap-2 justify-center">
-        {nextQuestions?.length > 0 ? (
+        {isProcessing ? (
+          <div className="relative cursor-not-allowed">
+            <div className="absolute inset-0 z-10"></div>
+            <Skeleton lines={2} />
+          </div>
+        ) : nextQuestions?.length > 0 ? (
           nextQuestions.map((q, idx) => (
             <QuestionCard key={idx} question={q} onSendToChat={onSendToIntelliAgent} />
           ))
-        ) : isProcessing ? (
-          <Skeleton lines={2} />
         ) : (
           <div className="text-xs text-text-variant italic text-center py-3 px-4 bg-surface-container rounded-[20px] border border-border w-full">
             Click &ldquo;Generate AI Insights&rdquo; to formulate questions.

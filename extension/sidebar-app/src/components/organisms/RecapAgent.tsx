@@ -23,18 +23,19 @@ export function RecapAgent({ recap, isProcessing }: { recap: string; isProcessin
         )}
       </div>
       <div className="mt-2 flex-1 flex flex-col justify-center">
-        {recap ? (
+        {isProcessing ? (
+          <div className="flex flex-col gap-2 flex-1 relative cursor-not-allowed">
+            <div className="absolute inset-0 z-10"></div>
+            <Skeleton lines={3} />
+            <Skeleton lines={2} />
+            <Skeleton lines={1} />
+          </div>
+        ) : recap ? (
           <div className="rounded-[24px] bg-surface-container border border-border text-[13px] text-text leading-relaxed shadow-inner overflow-hidden transition-all hover:brightness-110 break-words">
             <MarkdownView
               className="recap-markdown p-3.5"
               children={recap}
             />
-          </div>
-        ) : isProcessing ? (
-          <div className="flex flex-col gap-2 flex-1">
-            <Skeleton lines={3} />
-            <Skeleton lines={2} />
-            <Skeleton lines={1} />
           </div>
         ) : (
           <div className="text-xs text-text-variant italic text-center py-3 px-4 bg-surface-container rounded-[20px] border border-border w-full">
