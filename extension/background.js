@@ -345,8 +345,26 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
 
-  if (["FORCE_TEST_UPDATE", "ASK_SUGGESTIONS", "ASK_NEXT_QUESTION", "REQUEST_RECAP"].includes(msg.type)) {
+  if (["FORCE_TEST_UPDATE", "ASK_SUGGESTIONS", "ASK_NEXT_QUESTION", "REQUEST_RECAP", "GENERATE_INSIGHTS"].includes(msg.type)) {
     const targetId = msg.meetingId || activeMeetingId;
+    if (msg.type === "GENERATE_INSIGHTS") {
+      Promise.all([
+        fetch(`${BASE}/ingest/realtime/${targetId}?force=true`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` } }),
+        fetch(`${BASE}/ingest/late-recap/${targetId}?force=true`, { method: "GET", headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` } })
+      ]).then(async ([realtimeRes, recapRes]) => {
+        const realtimeData = await realtimeRes.json();
+        const recapData = await recapRes.json();
+        let recapText = recapData.recap?.trim() ? `**Recap**\n${recapData.recap}` : "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
+        if (recapData.current_topic && recapData.current_topic !== "Unknown") recapText += `\n\n**Current Topic**\n${recapData.current_topic}`;
+        if (recapData.key_decisions_so_far?.length) recapText += `\n\n**Decisions**\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
+        if (recapData.who_said_what?.length) recapText += `\n\n**Who said what**\n- ${recapData.who_said_what.join("\n- ")}`;
+        realtimeData.recap = recapText;
+        pushUpdate(realtimeData, targetId);
+      }).catch(() => {});
+      sendResponse({ success: true });
+      return true;
+    }
+
     if (targetId) {
       if (ws?.readyState === WebSocket.OPEN) { try { ws.send(JSON.stringify({ type: "ping" })); } catch (e) {} }
       else connectWebSocket(targetId);

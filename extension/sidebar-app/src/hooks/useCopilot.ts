@@ -182,85 +182,15 @@ export function useCopilot() {
     setActiveRequests(prev => prev + 1);
     try {
       if (ext && ext.runtime?.sendMessage) {
-        ext.runtime.sendMessage({ type: actionType, meetingId }, () => void ext.runtime?.lastError);
+        ext.runtime.sendMessage({ type: actionType, meetingId }, () => {
+          void ext.runtime?.lastError;
+          // Decrement once the background script finishes processing the request
+          setActiveRequests(prev => Math.max(0, prev - 1));
+        });
+      } else {
+        setActiveRequests(prev => Math.max(0, prev - 1));
       }
     } catch (e) {
-      // Ignore sync message errors
-    }
-    
-    if (!meetingId) {
-      setActiveRequests(prev => Math.max(0, prev - 1));
-      return;
-    }
-    
-    try {
-      if (actionType === "GENERATE_INSIGHTS") {
-        const [realtimeRes, recapRes] = await Promise.all([
-          fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/ingest/realtime/${meetingId}?force=true`, { 
-            method: "POST",
-            headers: { "Authorization": `Bearer ${authToken}` } 
-          }),
-          fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}/ingest/late-recap/${meetingId}?force=true`, { 
-            method: "GET",
-            headers: { "Authorization": `Bearer ${authToken}` } 
-          })
-        ]);
-        const realtimeData = await realtimeRes.json();
-        const recapData = await recapRes.json();
-        handleCopilotUpdate(realtimeData);
-        
-        // Follow background.js formatting for recap
-        let recapText = "";
-        if (recapData.recap && recapData.recap.trim().length > 0) {
-          recapText = `**Recap**\n${recapData.recap}`;
-        } else {
-          recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
-        }
-        if (recapData.current_topic && recapData.current_topic !== "Unknown") {
-          recapText += `\n\n**Current Topic**\n${recapData.current_topic}`;
-        }
-        if (recapData.key_decisions_so_far && recapData.key_decisions_so_far.length) {
-          recapText += `\n\n**Decisions**\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
-        }
-        if (recapData.who_said_what && recapData.who_said_what.length) {
-          recapText += `\n\n**Who said what**\n- ${recapData.who_said_what.join("\n- ")}`;
-        }
-        setRecap(recapText);
-      } else {
-        const isRecap = actionType === "REQUEST_RECAP";
-        const endpoint = isRecap ? `/ingest/late-recap/${meetingId}?force=true` : `/ingest/realtime/${meetingId}?force=true`;
-        const response = await fetch(`${(window as any).MEETMAXXING_CONFIG?.BASE_URL_BACKEND || "https://meetmaxxing-api.onrender.com"}${endpoint}`, { 
-          method: isRecap ? "GET" : "POST",
-          headers: { "Authorization": `Bearer ${authToken}` } 
-        });
-        const data = await response.json();
-        if (isRecap) {
-          let recapText = "";
-          if (data.recap && data.recap.trim().length > 0) {
-            recapText = `**Recap**\n${data.recap}`;
-          } else {
-            recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
-          }
-          if (data.current_topic && data.current_topic !== "Unknown") {
-            recapText += `\n\n**Current Topic**\n${data.current_topic}`;
-          }
-          if (data.key_decisions_so_far && data.key_decisions_so_far.length) {
-            recapText += `\n\n**Decisions**\n- ${data.key_decisions_so_far.join("\n- ")}`;
-          }
-          if (data.who_said_what && data.who_said_what.length) {
-            recapText += `\n\n**Who said what**\n- ${data.who_said_what.join("\n- ")}`;
-          }
-          setRecap(recapText);
-        } else {
-          handleCopilotUpdate(data);
-        }
-      }
-    } catch (err: any) {
-      const msg = `Backend unreachable: ${err.message}. Ensure backend is running.`;
-      setErrorMessage(msg);
-      if (actionType === "ASK_NEXT_QUESTION" || actionType === "GENERATE_INSIGHTS") setNextQuestions([msg]);
-      if (actionType === "REQUEST_RECAP" || actionType === "GENERATE_INSIGHTS") setRecap(msg);
-    } finally {
       setActiveRequests(prev => Math.max(0, prev - 1));
     }
   };

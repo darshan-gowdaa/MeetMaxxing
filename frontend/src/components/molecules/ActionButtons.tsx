@@ -32,7 +32,7 @@ export function ActionButton({
  );
  if (state ==="success")
  return (
- <button disabled className="flex items-center gap-2 px-4 h-9 rounded-full bg-success/10 border border-success/30 text-[12px] text-success cursor-default">
+ <button onClick={onClick} className="flex items-center gap-2 px-4 h-9 rounded-full bg-success/10 hover:bg-success/20 border border-success/30 text-[12px] text-success cursor-pointer spring">
  <Check className="w-3.5 h-3.5"/>
  {successLabel}
  </button>

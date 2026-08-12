@@ -38,7 +38,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
  e.stopPropagation();
  if (!transcriptData) return;
  const text = transcriptData
- .filter(chunk => (((chunk as Record<string, unknown>).source as string) ||"dom") === sourceFilter)
+ .filter(chunk => sourceFilter === "dom" ? ((chunk as Record<string, unknown>).source !== "refined") : ((chunk as Record<string, unknown>).source === "refined"))
  .map(chunk => {
  let content = typeof chunk.text ==="string"? chunk.text : JSON.stringify(chunk.text);
  if (typeof chunk.text ==="string"&& (chunk.text.trim().startsWith("{") || chunk.text.trim().startsWith("["))) {
@@ -130,7 +130,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
               <p className="text-[13px] text-text-muted font-medium">Applying AI refinement to transcript...</p>
             </div>
           ) : transcriptData
-            .filter(chunk => (((chunk as Record<string, unknown>).source as string) || "dom") === sourceFilter)
+            .filter(chunk => sourceFilter === "dom" ? ((chunk as Record<string, unknown>).source !== "refined") : ((chunk as Record<string, unknown>).source === "refined"))
             .map((chunk, idx) => (
               <div
                 key={idx}
