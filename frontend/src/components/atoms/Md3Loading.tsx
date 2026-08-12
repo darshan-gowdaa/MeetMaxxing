@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-// @ts-ignore
+// @ts-expect-error
 import {
   M3Animator,
   setupCanvas,
