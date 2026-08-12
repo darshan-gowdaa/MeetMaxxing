@@ -98,8 +98,8 @@ export default function Topbar() {
           </AnimatePresence>
         </div>
 
-        {/* Center: MD3 Tabs */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-2 h-full">
+        {/* Center/Bottom: MD3 Tabs */}
+        <nav className="fixed md:static bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:border-t-0 flex md:flex-1 items-center justify-around md:justify-center gap-1 md:gap-2 h-16 md:h-full pb-safe md:pb-0 px-2 md:px-0">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
             const label = tab.label();
@@ -109,21 +109,21 @@ export default function Topbar() {
               <Link
                 key={tab.id}
                 href={tab.href}
-                className="relative flex items-center gap-2 h-14 px-4 rounded-full group outline-none"
+                className="relative flex flex-col md:flex-row items-center justify-center md:gap-2 h-full md:h-14 md:px-4 rounded-xl md:rounded-full group outline-none w-full md:w-auto"
               >
-                <div className="flex items-center gap-2 z-10 relative">
-                  <span className={`flex items-center justify-center w-12 h-8 rounded-full transition-colors ${isActive ? 'bg-secondary-container text-on-secondary-container' : 'text-text-muted group-hover:bg-surface-container-high group-hover:text-text'}`}>
+                <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 z-10 relative">
+                  <span className={`flex items-center justify-center w-14 md:w-12 h-8 rounded-full transition-colors ${isActive ? 'bg-secondary-container text-on-secondary-container' : 'text-text-muted group-hover:bg-surface-container-high group-hover:text-text'}`}>
                     <IconComponent className="w-5 h-5" />
                   </span>
-                  <span className={`text-[14px] font-medium transition-colors ${isActive ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
+                  <span className={`text-[11px] md:text-[14px] font-medium transition-colors ${isActive ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
                     {label}
                   </span>
                 </div>
-                {/* Optional Active underline for Primary Tabs */}
+                {/* Optional Active underline for Primary Tabs (desktop only) */}
                 {isActive && (
                   <motion.div
                     layoutId="md3-active-tab"
-                    className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"
+                    className="hidden md:block absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"
                     transition={{ type: "spring", stiffness: 500, damping: 40 }}
                   />
                 )}

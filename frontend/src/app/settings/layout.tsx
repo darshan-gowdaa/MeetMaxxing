@@ -19,14 +19,14 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
  <div className="flex flex-col md:flex-row w-full max-w-6xl mx-auto gap-6 sm:gap-10 pt-4 pb-24 px-4 sm:px-8">
  <nav className="w-full md:w-64 shrink-0 flex flex-col gap-2">
  <h2 className="text-xl font-bold mb-2 px-4 text-text">Settings</h2>
- <ul className="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+ <ul className="flex flex-nowrap md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
  {links.map(link => {
  const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);
  return (
- <li key={link.href}>
+ <li key={link.href} className="shrink-0">
  <Link 
  href={link.href} 
- className={`flex items-center gap-3 px-4 py-3 rounded-full font-medium text-sm transition-colors ${
+ className={`flex items-center gap-3 px-4 py-3 rounded-full font-medium text-sm transition-colors whitespace-nowrap ${
  isActive 
  ? 'bg-primary-container text-on-primary-container shadow-sm' 
  : 'bg-surface hover:bg-surface2 text-text-muted hover:text-text'
