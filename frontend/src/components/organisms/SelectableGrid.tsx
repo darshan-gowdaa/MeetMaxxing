@@ -68,10 +68,6 @@ export function SelectableGrid<T>({
     groupBy,
   });
 
-  if (!loading && items.length === 0 && emptyState) {
-    return <>{emptyState}</>;
-  }
-
   return (
     <div className="relative pb-24">
       {/* Sticky Header with Overlay Action Bar */}
@@ -121,6 +117,8 @@ export function SelectableGrid<T>({
       <div className="flex flex-col gap-8">
         {loading ? (
           <GridSkeleton count={skeletonCount} />
+        ) : items.length === 0 && emptyState ? (
+          emptyState
         ) : (
           groups.map((group) => {
             const groupKeys = group.items.map(getKey);

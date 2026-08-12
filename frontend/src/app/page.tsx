@@ -67,20 +67,6 @@ export default function Dashboard() {
                   Retry
                 </button>
               </div>
-            ) : !loading && filtered.length === 0 ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[32px] border border-dashed border-border bg-surface-dim text-center p-6">
-                <div className="w-16 h-16 rounded-[24px] bg-surface2 border border-border flex items-center justify-center mb-1">
-                  <RiVideoChatLine className="w-8 h-8 text-text-muted" />
-                </div>
-                <p className="text-[15px] font-bold text-text">
-                  {search ? "No matching meetings" : "No meetings yet"}
-                </p>
-                <p className="text-[12.5px] text-text-muted max-w-xs leading-relaxed">
-                  {search
-                    ? "Try a different search term."
-                    : "Start a Google Meet with the MeetMaxxing extension active to record your first meeting."}
-                </p>
-              </div>
             ) : (
               <div className="flex flex-col gap-8">
                 <SelectableGrid<Meeting>
@@ -93,6 +79,21 @@ export default function Dashboard() {
                   getDate={(m) => (m.start_at ? new Date(m.start_at) : new Date())}
                   groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
+                  emptyState={
+                    <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[32px] border border-dashed border-border bg-surface-dim text-center p-6">
+                      <div className="w-16 h-16 rounded-[24px] bg-surface2 border border-border flex items-center justify-center mb-1">
+                        <RiVideoChatLine className="w-8 h-8 text-text-muted" />
+                      </div>
+                      <p className="text-[15px] font-bold text-text">
+                        {search ? "No matching meetings" : "No meetings yet"}
+                      </p>
+                      <p className="text-[12.5px] text-text-muted max-w-xs leading-relaxed">
+                        {search
+                          ? "Try a different search term."
+                          : "Start a Google Meet with the MeetMaxxing extension active to record your first meeting."}
+                      </p>
+                    </div>
+                  }
                   renderHeader={({ setManualSelectionMode, activeGroup }) => (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                       <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
@@ -127,19 +128,19 @@ export default function Dashboard() {
                           </button>
                         </div>
 
-                        <div className="relative w-full sm:w-auto">
-                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                        <div className="relative w-full sm:w-auto group/search">
+                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" />
                           <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search meetings…"
-                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 spring-colors hover:-translate-y-0.5 hover:shadow-sm transition-all"
+                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 spring-colors transition-all"
                           />
                           {search && (
                             <button
                               onClick={() => setSearch("")}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-surface-dim hover:bg-surface3 text-text-muted hover:text-text spring-colors"
                             >
                               <RiCloseLine className="w-4 h-4" />
                             </button>

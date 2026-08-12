@@ -61,9 +61,9 @@ export default function ContextManagerPage() {
         <section className="flex flex-col gap-5 mt-2">
           <div className="min-h-[280px]">
             {error ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-4 rounded-[24px] border border-risk/30 bg-risk-container/20 text-center p-6">
+              <div className="h-72 flex flex-col items-center justify-center gap-4 rounded-[32px] border border-risk/30 bg-risk-container/20 text-center p-6">
                 <div className="w-14 h-14 rounded-full bg-risk-container flex items-center justify-center">
-                  <RiCloseLine className="w-7 h-7 text-risk" />
+                  <RiErrorWarningFill className="w-7 h-7 text-risk" />
                 </div>
                 <p className="text-risk font-semibold text-sm">{error}</p>
                 <button
@@ -73,32 +73,10 @@ export default function ContextManagerPage() {
                   Retry
                 </button>
               </div>
-            ) : !loading && filtered.length === 0 ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-border bg-surface-dim text-center p-6">
-                <div className="w-16 h-16 rounded-[20px] bg-surface2 border border-border flex items-center justify-center mb-1">
-                  <RiFolderOpenFill className="w-8 h-8 text-text-muted" />
-                </div>
-                <p className="text-[15px] font-bold text-text">
-                  {search ? "No matching files" : "No files uploaded"}
-                </p>
-                <p className="text-[12.5px] text-text-muted max-w-xs leading-relaxed">
-                  {search
-                    ? "Try a different search term."
-                    : "Upload documents to empower the AI Context Agent with custom knowledge."}
-                </p>
-                {!search && (
-                  <button 
-                    onClick={() => setShowUpload(true)}
-                    className="mt-4 h-10 px-6 bg-primary-container text-on-primary-container hover:brightness-125 border border-primary/20 rounded-full text-sm font-semibold spring-colors active:opacity-80"
-                  >
-                    Upload First File
-                  </button>
-                )}
-              </div>
             ) : (
               <div className="flex flex-col gap-8">
                 <SelectableGrid<ContextFile>
-                  storeKey="context-manager"
+                  storeKey="context"
                   itemTypeName="File"
                   items={filtered}
                   loading={loading}
@@ -107,11 +85,26 @@ export default function ContextManagerPage() {
                   getDate={(f) => new Date(f.date)}
                   groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
+                  emptyState={
+                    <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[32px] border border-dashed border-border bg-surface-dim text-center p-6">
+                      <div className="w-16 h-16 rounded-[24px] bg-surface2 border border-border flex items-center justify-center mb-1">
+                        <RiFolderOpenFill className="w-8 h-8 text-text-muted" />
+                      </div>
+                      <p className="text-[15px] font-bold text-text">
+                        {search ? "No matching files" : "No files yet"}
+                      </p>
+                      <p className="text-[12.5px] text-text-muted max-w-xs leading-relaxed">
+                        {search
+                          ? "Try a different search term."
+                          : "Upload documents or code files to provide context for your meetings."}
+                      </p>
+                    </div>
+                  }
                   renderHeader={({ setManualSelectionMode }) => (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                       <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
                         <RiFileLine className="w-5 h-5 text-text-muted" />
-                        Uploaded Contexts
+                        All Files
                         <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
                           {filtered.length}
                         </span>
@@ -141,21 +134,21 @@ export default function ContextManagerPage() {
                           </button>
                         </div>
 
-                        <div className="relative w-full sm:w-auto">
-                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                        <div className="relative w-full sm:w-auto group/search">
+                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" />
                           <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search files…"
-                            className="h-9 w-full sm:w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
+                            className="h-9 w-full sm:w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors transition-all"
                           />
                           {search && (
                             <button
                               onClick={() => setSearch("")}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-surface-dim hover:bg-surface3 text-text-muted hover:text-text spring-colors"
                             >
-                              <RiCloseLine className="w-4 h-4" />
+                              <RiCloseLine className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>
