@@ -373,6 +373,10 @@ async def _run_end_pipeline(
             for ai in (final_summary.get("action_items") or []):
                 raw_priority = (ai.get("priority") or "medium").strip().lower()
                 priority = raw_priority if raw_priority in _valid_priorities else "medium"
+                
+                raw_due_date = ai.get("due_date")
+                due_date = raw_due_date if raw_due_date and re.match(r"^\d{4}-\d{2}-\d{2}$", str(raw_due_date).strip()) else None
+
                 supabase.table("action_items").insert(
                     {
                         "id": str(uuid.uuid4()),
@@ -381,7 +385,7 @@ async def _run_end_pipeline(
                         "description": ai.get("text", ""),
                         "owner_name": ai.get("owner", "Unassigned"),
                         "priority": priority,
-                        "due_date": ai.get("due_date"),
+                        "due_date": due_date,
                         "status": "open",
                     }
                 ).execute()

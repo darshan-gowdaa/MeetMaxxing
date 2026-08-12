@@ -176,8 +176,8 @@ export function useMeetingManager(id: string) {
         setMeeting(prev => {
           if (!prev) return prev;
           const existing = prev.transcript_data.filter(c => (c as Record<string, unknown>).source !== "refined");
-          const refined = data.transcript_data.filter((c: any) => c.source === "refined");
-          const newRefined = refined.length > 0 ? refined : data.transcript_data.map((c: any) => ({ ...c, source: "refined" }));
+          const refined = data.transcript_data.filter((c: Record<string, unknown>) => c.source === "refined");
+          const newRefined = refined.length > 0 ? refined : data.transcript_data.map((c: Record<string, unknown>) => ({ ...c, source: "refined" }));
           return { ...prev, transcript_data: [...existing, ...newRefined] };
         });
       } else {
