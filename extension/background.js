@@ -1,87 +1,65 @@
 /**
- * MeetMaxxing Service Worker (Background Script)
- *
- * Handles:
- * - Tab audio capture via chrome.tabCapture + offscreen document
- * - WebSocket connection to backend for copilot_update stream
- * - Forwarding base64 audio chunks to backend /ingest/audio
- * - Routing messages between content script, side panel, and backend
+ * MeetMaxxing Background Script — Chrome + Firefox
+ * Depends on: config.js (loaded first), compat.js (loaded second)
+ * `ext` and `MEETMAXXING_CONFIG` are globals from those files.
  */
-
-const MEETMAXXING_CONFIG = {
-  BASE_URL_BACKEND: "https://meetmaxxing-api.onrender.com",
-  BASE_URL_WEB: "https://meetmaxxing.vercel.app",
-  WS_URL: "wss://meetmaxxing-api.onrender.com",
-};
+"use strict";
 
 let ws = null;
 let activeMeetingId = null;
 let activeMeetTabId = null;
 let activeMeetingMaxParticipants = 1;
-let activeAuthToken = '';
+let activeAuthToken = "";
 
-// Init auth token
-chrome.storage.local.get(["authToken"], (r) => {
+const BASE = MEETMAXXING_CONFIG.BASE_URL_BACKEND;
+const WS_BASE = MEETMAXXING_CONFIG.WS_URL;
+const SUPABASE_URL = "https://gcslaozkazuhdqctefpn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_vgpAoeKLmTotYUKQwVBKng_O0rqqE5i";
+const STORAGE_CLEAR_KEYS = ["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"];
+
+// Init token from storage
+ext.storage.get(["authToken"]).then((r) => {
   if (r.authToken) activeAuthToken = r.authToken;
 });
 
-// Listen for token updates from auth-capture.js or refreshes
-chrome.storage.onChanged.addListener((changes, area) => {
+ext.storageOnChanged.addListener((changes, area) => {
   if (area === "local" && changes.authToken?.newValue) {
     activeAuthToken = changes.authToken.newValue;
-    console.log("[MeetMaxxing] Auth token updated");
   }
 });
 
-// Refresh Supabase access token using stored refresh token
+// Refresh Supabase token
 async function refreshAuthToken() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["authRefreshToken"], async (r) => {
-      if (!r.authRefreshToken) { resolve(false); return; }
-      try {
-        const SUPABASE_URL = "https://gcslaozkazuhdqctefpn.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_vgpAoeKLmTotYUKQwVBKng_O0rqqE5i";
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-          body: JSON.stringify({ refresh_token: r.authRefreshToken }),
-        });
-        if (!res.ok) { resolve(false); return; }
-        const data = await res.json();
-        if (data.access_token) {
-          activeAuthToken = data.access_token;
-          const updates = { authToken: data.access_token };
-          if (data.refresh_token) updates.authRefreshToken = data.refresh_token;
-          chrome.storage.local.set(updates);
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      } catch (e) {
-        resolve(false);
-      }
+  const r = await ext.storage.get(["authRefreshToken"]);
+  if (!r.authRefreshToken) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY },
+      body: JSON.stringify({ refresh_token: r.authRefreshToken }),
     });
-  });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data.access_token) {
+      activeAuthToken = data.access_token;
+      const updates = { authToken: data.access_token };
+      if (data.refresh_token) updates.authRefreshToken = data.refresh_token;
+      await ext.storage.set(updates);
+      return true;
+    }
+  } catch (e) {}
+  return false;
 }
 
-// Refresh token every 45min using alarms (survives service worker sleep in MV3)
-if (chrome.alarms) {
-  chrome.alarms.create('refreshToken', { periodInMinutes: 45 });
-  chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === 'refreshToken') refreshAuthToken();
-  });
-} else {
-  // Fallback for MV2 / Firefox
-  setInterval(() => refreshAuthToken(), 45 * 60 * 1000);
-}
+ext.setRefreshAlarm(refreshAuthToken);
 
-// Fetch with automatic 401 retry after token refresh
+// Fetch with 401 auto-retry
 async function authFetch(url, options = {}) {
   const headers = { ...options.headers, Authorization: `Bearer ${activeAuthToken}` };
   let res = await fetch(url, { ...options, headers });
   if (res.status === 401) {
-    const refreshed = await refreshAuthToken();
-    if (refreshed) {
+    const ok = await refreshAuthToken();
+    if (ok) {
       headers.Authorization = `Bearer ${activeAuthToken}`;
       res = await fetch(url, { ...options, headers });
     }
@@ -89,292 +67,223 @@ async function authFetch(url, options = {}) {
   return res;
 }
 
-const _actionApi = chrome.action || chrome.browserAction;
-if (_actionApi && _actionApi.onClicked) {
-  _actionApi.onClicked.addListener((tab) => {
-    if (tab.id) {
-      try {
-        chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_PANEL" }, () => {
-          let _ = chrome.runtime.lastError;
-        });
-      } catch (e) {}
-    }
-  });
-}
-
-// Enable side panel on Google Meet room tabs (but don't force open)
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  if (activeMeetTabId === tabId) {
-    handleMeetingEnd(tabId);
-  }
+ext.onActionClicked((tab) => {
+  if (tab.id) ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete" && tab.url?.includes("meet.google.com")) {
-    // We no longer use native sidePanel
-  }
+ext.tabs.onRemoved.addListener((tabId) => {
+  if (activeMeetTabId === tabId) handleMeetingEnd();
+});
+
+ext.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.url && activeMeetTabId === tabId && !changeInfo.url.includes("meet.google.com")) {
-    handleMeetingEnd(tabId);
+    handleMeetingEnd();
   }
 });
 
-function handleMeetingEnd(tabId) {
-  console.log("[MeetMaxxing Background] Meet tab left, triggering END_MEETING");
+function handleMeetingEnd() {
   const meetingIdToEnd = activeMeetingId;
-  const maxPart = activeMeetingMaxParticipants;
   if (meetingIdToEnd) {
-    fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
+    fetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-      body: JSON.stringify({ title: "Google Meet", attendees: [], max_participants: maxPart }),
+      body: JSON.stringify({ title: "Google Meet", attendees: [], max_participants: activeMeetingMaxParticipants }),
     }).catch(() => {});
   }
-  stopTabCapture();
   if (ws) { try { ws.close(); } catch (e) {} ws = null; }
   activeMeetingId = null;
   activeMeetTabId = null;
   activeMeetingMaxParticipants = 1;
-  chrome.storage.local.remove(["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"]);
-  chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
+  ext.storage.remove(STORAGE_CLEAR_KEYS);
+  ext.broadcast({ type: "MEETING_ENDED", meetingId: meetingIdToEnd });
 }
 
-
-// ─── WebSocket ──────────────────────────────────────────────────────────────────
+// WebSocket
 function connectWebSocket(meetingId) {
   if (ws) { try { ws.close(); } catch (e) {} }
-  const wsUrl = `${MEETMAXXING_CONFIG.WS_URL}/ingest/ws/${meetingId}?token=${activeAuthToken}`;
+  // Chrome passes auth in query param; Firefox doesn't support it the same way in MV2
+  const wsUrl = ext.isFx
+    ? `${WS_BASE}/ingest/ws/${meetingId}`
+    : `${WS_BASE}/ingest/ws/${meetingId}?token=${activeAuthToken}`;
   try { ws = new WebSocket(wsUrl); } catch (e) { return; }
-
-  ws.onopen = () => {
-    chrome.runtime.sendMessage({ type: "WS_CONNECTED" }, () => { let _ = chrome.runtime.lastError; });
-  };
 
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data);
       if (msg.type === "copilot_update" && msg.data) {
-        console.log("[MeetMaxxing Background] Copilot update received:", msg.data);
         const update = { ...msg.data, meeting_id: msg.data.meeting_id || activeMeetingId };
-        chrome.storage.local.set({ lastCopilotUpdate: update, copilot_state: update, poweredBy: update.powered_by });
-        chrome.runtime.sendMessage({ type: "COPILOT_UPDATE", data: update }, () => { let _ = chrome.runtime.lastError; });
+        ext.storage.set({ lastCopilotUpdate: update, copilot_state: update, poweredBy: update.powered_by });
+        ext.broadcast({ type: "COPILOT_UPDATE", data: update });
       } else if (msg.type === "live_caption_chunk" && msg.chunk) {
-        chrome.runtime.sendMessage({ type: "LIVE_CAPTION_CHUNK", chunk: msg.chunk }, () => { let _ = chrome.runtime.lastError; });
+        ext.broadcast({ type: "LIVE_CAPTION_CHUNK", chunk: msg.chunk });
       }
     } catch (e) {}
   };
 
   ws.onclose = () => {
     setTimeout(() => {
-      if (activeMeetingId && activeMeetingId === meetingId) connectWebSocket(meetingId);
+      if (activeMeetingId === meetingId) connectWebSocket(meetingId);
     }, 4000);
   };
 
   ws.onerror = () => {};
 }
 
-// ─── Tab Audio Capture (all participants) ──────────────────────────────────────
+// Chrome-only: offscreen tab audio capture
 async function ensureOffscreenDocument() {
-  // chrome.runtime.getContexts is MV3-only (Chrome 116+)
-  if (chrome.runtime.getContexts) {
-    const existingContexts = await chrome.runtime.getContexts({
-      contextTypes: ["OFFSCREEN_DOCUMENT"],
-    });
-    if (existingContexts.length > 0) return;
+  if (ext.isFx || !ext.api.offscreen) return;
+  if (ext.runtime.getContexts) {
+    const existing = await ext.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"] });
+    if (existing.length > 0) return;
   }
-
-  if (!chrome.offscreen) return; // MV2 / Firefox — skip offscreen
-  await chrome.offscreen.createDocument({
+  await ext.api.offscreen.createDocument({
     url: "offscreen.html",
     reasons: ["USER_MEDIA"],
     justification: "Capture Google Meet tab audio for real-time AI transcription",
   });
 }
 
-async function startTabCapture(tabId, meetingId) {
-  try {
-    await ensureOffscreenDocument();
-
-    // Get stream ID for the target tab
-    const streamId = await new Promise((resolve, reject) => {
-      chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, (id) => {
-        if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-        else resolve(id);
-      });
-    });
-
-    // Tell offscreen to start recording
-    chrome.runtime.sendMessage({
-      target: "offscreen",
-      type: "START_CAPTURE",
-      streamId,
-      meetingId,
-    }, () => { let _ = chrome.runtime.lastError; });
-
-    console.log("[MeetMaxxing Background] Tab capture started for tab", tabId);
-  } catch (err) {
-    console.error("[MeetMaxxing Background] Tab capture failed:", err.message);
+// Persist + forward transcript chunk to storage
+async function persistChunk(chunk) {
+  const res = await ext.storage.get(["transcript"]);
+  const prev = Array.isArray(res.transcript) ? res.transcript : [];
+  const now = Date.now();
+  const updated = [...prev];
+  if (updated.length > 0) {
+    const last = updated[updated.length - 1];
+    if (last.speaker === (chunk.speaker || "Speaker") && now - (last.timestamp || 0) < 60000) {
+      const newText = (chunk.text || "").trim();
+      if (newText.startsWith(last.text) || last.text.startsWith(newText) || newText.includes(last.text)) {
+        updated[updated.length - 1] = {
+          ...last,
+          text: newText.length > last.text.length ? newText : last.text,
+          timestamp: now,
+        };
+        return ext.storage.set({ transcript: updated });
+      }
+    }
   }
+  updated.push({ speaker: chunk.speaker || "Speaker", text: (chunk.text || "").trim(), timestamp: now, source: chunk.source });
+  return ext.storage.set({ transcript: updated });
 }
 
-function stopTabCapture() {
-  chrome.runtime.sendMessage(
-    { target: "offscreen", type: "STOP_CAPTURE" },
-    () => { let _ = chrome.runtime.lastError; }
-  );
+// Build recap text from raw backend response
+function buildRecapText(data, targetId) {
+  let recapText = data.recap?.trim()
+    ? `**Recap**\n${data.recap}`
+    : "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
+  if (data.current_topic && data.current_topic !== "Unknown")
+    recapText += `\n\n**Current Topic**\n${data.current_topic}`;
+  if (data.key_decisions_so_far?.length)
+    recapText += `\n\n**Decisions**\n- ${data.key_decisions_so_far.join("\n- ")}`;
+  if (data.who_said_what?.length)
+    recapText += `\n\n**Who said what**\n- ${data.who_said_what.join("\n- ")}`;
+  return { recap: recapText, meeting_id: data.meeting_id || targetId, powered_by: data.powered_by };
 }
 
-// ─── Message Router ─────────────────────────────────────────────────────────────
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+// Push update to storage + broadcast
+async function pushUpdate(updateData, targetId) {
+  const res = await ext.storage.get(["copilot_state"]);
+  const tagged = { ...(res.copilot_state || {}), ...updateData, meeting_id: updateData.meeting_id || targetId };
+  await ext.storage.set({ lastCopilotUpdate: tagged, copilot_state: tagged, poweredBy: tagged.powered_by });
+  ext.broadcast({ type: "COPILOT_UPDATE", data: tagged });
+}
 
-  // ── START_MEETING ──
+// Message router
+ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+
   if (msg.type === "START_MEETING") {
     const meetCode = msg.meetCode || "";
     let title = msg.title || "";
-    if (meetCode && meetCode.length >= 3 && !title.startsWith("Meet - ")) {
-      title = `Meet - ${meetCode}`;
-    } else if (!title || title === "Google Meet") {
-      title = meetCode ? `Meet - ${meetCode}` : "Meet - Live Session";
-    }
+    if (meetCode.length >= 3 && !title.startsWith("Meet - ")) title = `Meet - ${meetCode}`;
+    else if (!title || title === "Google Meet") title = meetCode ? `Meet - ${meetCode}` : "Meet - Live Session";
 
-    activeMeetingId = msg.fallbackId || (meetCode ? meetCode : "live_" + Date.now());
+    activeMeetingId = msg.fallbackId || (meetCode || "live_" + Date.now());
     activeMeetTabId = sender?.tab?.id || null;
 
-    // Enable side panel on meeting start
     const tabId = sender?.tab?.id || activeMeetTabId;
-    if (tabId) {
-      try {
-        chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }, () => {
-          let _ = chrome.runtime.lastError;
-        });
-      } catch (e) {}
-    }
+    if (tabId) ext.sendTabMessage(tabId, { type: "TOGGLE_PANEL_OPEN" });
 
-    chrome.storage.local.get(["meetCodeMap"], (res) => {
+    ext.storage.get(["meetCodeMap"]).then((res) => {
       const meetCodeMap = res.meetCodeMap || {};
       const now = Date.now();
       const existing = meetCode ? meetCodeMap[meetCode] : null;
 
-      // Always reuse existing meeting for the same meet code if within 12 hours
-      if (existing && existing.id && (now - existing.timestamp < 43200000)) {
+      if (existing?.id && now - existing.timestamp < 43200000) {
         activeMeetingId = existing.id;
-        console.log(`[MeetMaxxing Background] Reusing meeting ${activeMeetingId} for code ${meetCode}`);
-        
-        chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: now });
+        ext.storage.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: now });
         connectWebSocket(activeMeetingId);
-        chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now, reused: true }, () => { let _ = chrome.runtime.lastError; });
-        
+        ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now, reused: true });
         sendResponse({ success: true, meetingId: activeMeetingId });
-        // if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
         return;
       }
 
-      // Otherwise, register with backend
-      fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/ingest/start`, {
+      const afterStart = (data) => {
+        if (data?.meeting_id) {
+          activeMeetingId = data.meeting_id;
+          meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
+          ext.storage.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
+          connectWebSocket(activeMeetingId);
+        }
+        ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now });
+        sendResponse({ success: true, meetingId: activeMeetingId });
+      };
+
+      const onFail = () => {
+        meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
+        ext.storage.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
+        connectWebSocket(activeMeetingId);
+        ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now });
+        sendResponse({ success: true, meetingId: activeMeetingId });
+      };
+
+      fetch(`${BASE}/ingest/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
         body: JSON.stringify({ title, attendees: [], meet_code: meetCode, google_meet_link: meetCode }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.meeting_id) {
-            activeMeetingId = data.meeting_id;
-            meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
-            chrome.storage.local.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
-            connectWebSocket(activeMeetingId);
-          }
-          chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now }, () => { let _ = chrome.runtime.lastError; });
-          sendResponse({ success: true, meetingId: activeMeetingId });
-          // if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
-        })
-        .catch(() => {
-          meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
-          chrome.storage.local.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
-          connectWebSocket(activeMeetingId);
-          chrome.runtime.sendMessage({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now }, () => { let _ = chrome.runtime.lastError; });
-          sendResponse({ success: true, meetingId: activeMeetingId });
-          // if (activeMeetTabId) startTabCapture(activeMeetTabId, activeMeetingId);
-        });
+      }).then((r) => r.json()).then(afterStart).catch(onFail);
     });
-
     return true;
   }
 
-  // ── ENSURE_SIDE_PANEL_OPEN ──
   if (msg.type === "ENSURE_SIDE_PANEL_OPEN") {
     const tabId = sender?.tab?.id || activeMeetTabId;
-    if (tabId) {
-      try {
-        chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }, () => {
-          let _ = chrome.runtime.lastError;
-        });
-      } catch (e) {}
-    }
+    if (tabId) ext.sendTabMessage(tabId, { type: "TOGGLE_PANEL_OPEN" });
     return false;
   }
 
-  // ── AUDIO_CHUNK (from offscreen.js) — send to backend for Gemini transcription ──
   if (msg.type === "AUDIO_CHUNK") {
     if (!activeMeetingId) { sendResponse({ success: false }); return false; }
-    fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/ingest/audio`, {
+    fetch(`${BASE}/ingest/audio`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-      body: JSON.stringify({
-        meeting_id: activeMeetingId,
-        audio_base64: msg.base64,
-        mime_type: msg.mimeType || "audio/webm",
-      }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        // If Gemini returned a copilot_update, push to sidepanel
-        if (data.copilot_update) {
-          const tagged = { ...data.copilot_update, meeting_id: data.copilot_update.meeting_id || activeMeetingId };
-          chrome.storage.local.set({ lastCopilotUpdate: tagged, copilot_state: tagged, poweredBy: tagged.powered_by });
-          chrome.runtime.sendMessage({ type: "COPILOT_UPDATE", data: tagged },
-            () => { let _ = chrome.runtime.lastError; });
-        }
-      })
-      .catch(() => {});
+      body: JSON.stringify({ meeting_id: activeMeetingId, audio_base64: msg.base64, mime_type: msg.mimeType || "audio/webm" }),
+    }).then((r) => r.json()).then((data) => {
+      if (data.copilot_update) {
+        const tagged = { ...data.copilot_update, meeting_id: data.copilot_update.meeting_id || activeMeetingId };
+        ext.storage.set({ lastCopilotUpdate: tagged, copilot_state: tagged, poweredBy: tagged.powered_by });
+        ext.broadcast({ type: "COPILOT_UPDATE", data: tagged });
+      }
+    }).catch(() => {});
     sendResponse({ success: true });
     return false;
   }
 
-  // ── INGEST_CHUNK (text transcript, fallback path) ──
   if (msg.type === "INGEST_CHUNK") {
     const chunk = msg.chunk;
-    chrome.runtime.sendMessage({ type: "LIVE_CAPTION_CHUNK", chunk: chunk }, () => { let _ = chrome.runtime.lastError; });
-    
-    // Persist chunk to local storage for sidepanel recovery/initial load
-    chrome.storage.local.get(["transcript"], (res) => {
-      const prev = res.transcript && Array.isArray(res.transcript) ? res.transcript : [];
-      const now = Date.now();
-      let updated = [...prev];
-      if (updated.length > 0) {
-        const last = updated[updated.length - 1];
-        if (last.speaker === (chunk.speaker || "Speaker") && (now - (last.timestamp || 0) < 60000)) {
-          const newText = (chunk.text || "").trim();
-          if (newText.startsWith(last.text) || last.text.startsWith(newText) || newText.includes(last.text)) {
-            updated[updated.length - 1] = { ...last, text: newText.length > last.text.length ? newText : last.text, timestamp: now };
-            chrome.storage.local.set({ transcript: updated });
-            return;
-          }
-        }
-      }
-      updated.push({ speaker: chunk.speaker || "Speaker", text: (chunk.text || "").trim(), timestamp: now, source: chunk.source });
-      chrome.storage.local.set({ transcript: updated });
-    });
+    ext.broadcast({ type: "LIVE_CAPTION_CHUNK", chunk });
+    persistChunk(chunk);
 
     const chunkMeetingId = msg.meetingId || activeMeetingId;
-    
     const handleSend = (id) => {
       if (ws && ws.readyState === WebSocket.OPEN) {
-        try { ws.send(JSON.stringify({ ...chunk, meeting_id: id })); } catch(e){}
+        try { ws.send(JSON.stringify({ ...chunk, meeting_id: id })); } catch (e) {}
         sendResponse({ success: true });
       } else if (id) {
         if (!ws) connectWebSocket(id);
-        authFetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/ingest/transcript`, {
+        authFetch(`${BASE}/ingest/transcript`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...chunk, meeting_id: id }),
         }).then(() => sendResponse({ success: true })).catch(() => sendResponse({ success: false }));
       } else {
@@ -385,50 +294,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (chunkMeetingId) {
       handleSend(chunkMeetingId);
     } else {
-      chrome.storage.local.get(["currentMeetingId"], (r) => {
-        if (r && r.currentMeetingId) {
-          activeMeetingId = r.currentMeetingId;
-          handleSend(activeMeetingId);
-        } else {
-          sendResponse({ success: false });
-        }
+      ext.storage.get(["currentMeetingId"]).then((r) => {
+        if (r?.currentMeetingId) { activeMeetingId = r.currentMeetingId; handleSend(activeMeetingId); }
+        else sendResponse({ success: false });
       });
     }
-    return true; // Keep service worker alive until sendResponse is called
+    return true;
   }
 
-  // ── END_MEETING ──
   if (msg.type === "END_MEETING" || msg.type === "REQUEST_END_MEETING") {
-    stopTabCapture();
     if (ws) { try { ws.close(); } catch (e) {} ws = null; }
     const meetingIdToEnd = activeMeetingId || msg.meetingId;
-    if (!meetingIdToEnd) {
-      sendResponse({ success: true });
-      return false;
-    }
+    if (!meetingIdToEnd) { sendResponse({ success: true }); return false; }
 
     const finishEnd = () => {
       activeMeetingId = null;
       activeMeetTabId = null;
       activeMeetingMaxParticipants = 1;
-      chrome.storage.local.remove(["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"]);
-      chrome.runtime.sendMessage({ type: "MEETING_ENDED", meetingId: meetingIdToEnd }, () => { let _ = chrome.runtime.lastError; });
+      ext.storage.remove(STORAGE_CLEAR_KEYS);
+      ext.broadcast({ type: "MEETING_ENDED", meetingId: meetingIdToEnd });
       sendResponse({ success: true });
     };
 
     if (activeMeetingId) {
-      activeMeetingId = null; // Clear immediately to prevent re-entry
-      const maxParticipants = msg.maxParticipants || activeMeetingMaxParticipants || 1;
-      fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}/meeting/${meetingIdToEnd}/end`, {
+      activeMeetingId = null;
+      fetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-        body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [], max_participants: maxParticipants }),
+        body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [], max_participants: msg.maxParticipants || activeMeetingMaxParticipants || 1 }),
       }).then(finishEnd).catch(finishEnd);
-      return true; // Keep service worker alive during fetch
-    } else {
-      finishEnd();
-      return false;
+      return true;
     }
+    finishEnd();
+    return false;
   }
 
   if (msg.type === "UPDATE_PARTICIPANTS") {
@@ -437,67 +335,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
 
-  // ── FORCE_TEST_UPDATE / ASK_SUGGESTIONS / ASK_NEXT_QUESTION / REQUEST_RECAP ──
   if (["FORCE_TEST_UPDATE", "ASK_SUGGESTIONS", "ASK_NEXT_QUESTION", "REQUEST_RECAP"].includes(msg.type)) {
     const targetId = msg.meetingId || activeMeetingId;
-    if (targetId && ws && ws.readyState === WebSocket.OPEN) {
-      try { ws.send(JSON.stringify({ type: "ping" })); } catch (e) {}
-    } else if (targetId) {
-      connectWebSocket(targetId);
-    }
     if (targetId) {
+      if (ws?.readyState === WebSocket.OPEN) { try { ws.send(JSON.stringify({ type: "ping" })); } catch (e) {} }
+      else connectWebSocket(targetId);
+
       const isRecap = msg.type === "REQUEST_RECAP";
       const endpoint = isRecap ? `/ingest/late-recap/${targetId}?force=true` : `/ingest/realtime/${targetId}?force=true`;
-      const method = isRecap ? "GET" : "POST";
-      
-      fetch(`${MEETMAXXING_CONFIG.BASE_URL_BACKEND}${endpoint}`, {
-        method: method,
+      fetch(`${BASE}${endpoint}`, {
+        method: isRecap ? "GET" : "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          let updateData = data;
-          if (isRecap) {
-            let recapText = "";
-            if (data.recap && data.recap.trim().length > 0) {
-              recapText = `**Recap**\n${data.recap}`;
-            } else {
-              recapText = "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
-            }
-
-            if (data.current_topic && data.current_topic !== "Unknown") {
-              recapText += `\n\n**Current Topic**\n${data.current_topic}`;
-            }
-            if (data.key_decisions_so_far && data.key_decisions_so_far.length) {
-              recapText += `\n\n**Decisions**\n- ${data.key_decisions_so_far.join("\n- ")}`;
-            }
-            if (data.who_said_what && data.who_said_what.length) {
-              recapText += `\n\n**Who said what**\n- ${data.who_said_what.join("\n- ")}`;
-            }
-            updateData = { recap: recapText, meeting_id: data.meeting_id || targetId, powered_by: data.powered_by };
-          }
-          
-          chrome.storage.local.get(["copilot_state"], (res) => {
-            const prevState = res.copilot_state || {};
-            const tagged = { ...prevState, ...updateData, meeting_id: updateData.meeting_id || targetId };
-            chrome.storage.local.set({ lastCopilotUpdate: tagged, copilot_state: tagged, poweredBy: tagged.powered_by });
-            chrome.runtime.sendMessage({ type: "COPILOT_UPDATE", data: tagged }, () => { let _ = chrome.runtime.lastError; });
-          });
-        })
-        .catch(() => {});
+      }).then((r) => r.json()).then((data) => {
+        pushUpdate(isRecap ? buildRecapText(data, targetId) : data, targetId);
+      }).catch(() => {});
     }
     sendResponse({ success: true });
     return true;
   }
 
   if (msg.type === "GET_CONFIG") { sendResponse(MEETMAXXING_CONFIG); return false; }
+
   if (msg.type === "MEETING_STARTED") {
     activeMeetingId = msg.meetingId;
     activeMeetTabId = sender?.tab?.id ?? null;
-    chrome.storage.local.set({ currentMeetingId: activeMeetingId, meetingTitle: msg.title });
-    // Don't re-broadcast — background already sent MEETING_STARTED upstream
-    sendResponse({ success: true }); return false;
+    ext.storage.set({ currentMeetingId: activeMeetingId, meetingTitle: msg.title });
+    sendResponse({ success: true });
+    return false;
   }
-  // Note: MEETING_ENDED re-broadcast removed — would cause self-loop;
-  // sidepanel uses storage.onChanged as reliable fallback.
 });
