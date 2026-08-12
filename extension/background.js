@@ -18,8 +18,18 @@ const SUPABASE_KEY = "sb_publishable_vgpAoeKLmTotYUKQwVBKng_O0rqqE5i";
 const STORAGE_CLEAR_KEYS = ["currentMeetingId", "lastCopilotUpdate", "copilot_state", "transcript"];
 
 // Init token from storage
-ext.storage.get(["authToken"]).then((r) => {
+ext.storage.get(["authToken", "currentMeetingId"]).then((r) => {
   if (r.authToken) activeAuthToken = r.authToken;
+  if (r.currentMeetingId) {
+    // Check if any meet tabs are actually open, otherwise we have a stuck state from a browser crash
+    ext.tabs.query({ url: "*://meet.google.com/*" }, (tabs) => {
+      if (!tabs || tabs.length === 0) {
+        ext.storage.remove(STORAGE_CLEAR_KEYS);
+      } else {
+        activeMeetingId = r.currentMeetingId;
+      }
+    });
+  }
 });
 
 ext.storageOnChanged.addListener((changes, area) => {

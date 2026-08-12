@@ -62,7 +62,7 @@ export default function App() {
     <button
       onClick={handleGenerateInsights}
       disabled={isProcessing}
-      className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-3 rounded-full shadow hover:shadow-md transition-all duration-300 mt-1 mb-2 relative overflow-hidden group"
+      className={`flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-3 rounded-full shadow hover:shadow-md transition-all duration-300 mt-1 mb-2 relative overflow-hidden group ${isProcessing ? 'opacity-80 cursor-not-allowed' : ''}`}
     >
       {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-risk rounded-full animate-pulse" />}
       {isProcessing ? (

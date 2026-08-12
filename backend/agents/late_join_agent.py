@@ -57,7 +57,7 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> dict
 
         if not isinstance(result, dict) or not result.get("recap"):
             result = {
-                "recap": "Error generating recap due to LLM output parsing failure.",
+                "recap": result.get("_raw") if isinstance(result, dict) and result.get("_raw") else "Error generating recap due to LLM output parsing failure.",
                 "key_decisions_so_far": [],
                 "current_topic": "Unknown",
                 "who_said_what": [],

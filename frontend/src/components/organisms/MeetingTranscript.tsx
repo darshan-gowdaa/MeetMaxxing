@@ -17,8 +17,8 @@ interface MeetingTranscriptProps {
 
 export default function MeetingTranscript({ transcriptData, onRefine }: MeetingTranscriptProps) {
  const [transcriptOpen, setTranscriptOpen] = useState(false);
- const [sourceFilter, setSourceFilter] = useState<"all"|"dom"|"audio"|"refined">(
-   () => transcriptData?.some(c => (c as Record<string, unknown>).source === "refined") ? "refined" : "all"
+ const [sourceFilter, setSourceFilter] = useState<"dom"|"refined">(
+   () => transcriptData?.some(c => (c as Record<string, unknown>).source === "refined") ? "refined" : "dom"
  );
  const [copied, setCopied] = useState(false);
  const [isRefining, setIsRefining] = useState(false);
@@ -38,7 +38,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
  e.stopPropagation();
  if (!transcriptData) return;
  const text = transcriptData
- .filter(chunk => sourceFilter ==="all"? true : (((chunk as Record<string, unknown>).source as string) ||"dom") === sourceFilter)
+ .filter(chunk => (((chunk as Record<string, unknown>).source as string) ||"dom") === sourceFilter)
  .map(chunk => {
  let content = typeof chunk.text ==="string"? chunk.text : JSON.stringify(chunk.text);
  if (typeof chunk.text ==="string"&& (chunk.text.trim().startsWith("{") || chunk.text.trim().startsWith("["))) {
@@ -77,9 +77,9 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
         </div>
         <div className="flex items-center gap-2 md:gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
-            {(["all", "dom", "refined"] as const).map((source) => {
+            {(["refined", "dom"] as const).map((source) => {
               const hasRefinedData = transcriptData.some(c => (c as Record<string, unknown>).source === "refined");
-              const labels = { all: "All", dom: "Closed Caption (By google Meet)", refined: "AI Refined Transcript" };
+              const labels = { dom: "Raw Transcript", refined: "AI Refined Transcript" };
               const isActive = sourceFilter === source;
               const isLoading = source === "refined" && isRefining;
               
@@ -124,8 +124,13 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
 
       {transcriptOpen && (
         <div className="border-t border-border px-4 md:px-6 pb-4 md:pb-6 pt-4 md:pt-5 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar bg-surface">
-          {transcriptData
-            .filter(chunk => sourceFilter === "all" ? true : (((chunk as Record<string, unknown>).source as string) || "dom") === sourceFilter)
+          {isRefining && sourceFilter === "refined" ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4 animate-fade-in">
+              <div className="md3-loading-indicator md3-loading-indicator-lg text-primary"></div>
+              <p className="text-[13px] text-text-muted font-medium">Applying AI refinement to transcript...</p>
+            </div>
+          ) : transcriptData
+            .filter(chunk => (((chunk as Record<string, unknown>).source as string) || "dom") === sourceFilter)
             .map((chunk, idx) => (
               <div
                 key={idx}

@@ -58,4 +58,16 @@ def parse_json_clean(raw: str) -> dict:
                 int(s.strip()) for s in src_match.group(1).split(",") if s.strip().isdigit()
             ]
 
+        if not result:
+            recap_match = re.search(r'"recap"\s*:\s*"(.*?)"\s*(?:,\s*"current_topic"|,\s*"key_decisions_so_far"|\n\})', cleaned, re.DOTALL)
+            if recap_match:
+                result["recap"] = recap_match.group(1).replace('\\"', '"').replace("\\n", "\n")
+            topic_match = re.search(r'"current_topic"\s*:\s*"(.*?)"', cleaned)
+            if topic_match:
+                result["current_topic"] = topic_match.group(1).replace('\\"', '"')
+
+        # In case of absolute failure to parse, just return a dict with the raw text so it can be handled or debugged
+        if not result:
+            result["_raw"] = cleaned
+            
         return result

@@ -173,7 +173,13 @@ export function useMeetingManager(id: string) {
       });
       if (res.ok) {
         const data = await res.json();
-        setMeeting(prev => prev ? { ...prev, transcript_data: data.transcript_data } : prev);
+        setMeeting(prev => {
+          if (!prev) return prev;
+          const existing = prev.transcript_data.filter(c => (c as Record<string, unknown>).source !== "refined");
+          const refined = data.transcript_data.filter((c: any) => c.source === "refined");
+          const newRefined = refined.length > 0 ? refined : data.transcript_data.map((c: any) => ({ ...c, source: "refined" }));
+          return { ...prev, transcript_data: [...existing, ...newRefined] };
+        });
       } else {
         throw new Error("Failed to refine transcript");
       }
