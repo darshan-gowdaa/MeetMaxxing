@@ -13,22 +13,24 @@ export const PasswordStrength = ({ password, visible }: { password: string; visi
 
   const score = [hasLength, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
 
-  const getBarColor = (idx: number) => {
-    if (idx > score) return 'bg-transparent';
+  const getIndicatorColor = () => {
+    if (score === 0) return 'bg-transparent';
     if (score < 3) return 'bg-risk';
     if (score === 3) return 'bg-primary';
     return 'bg-success';
   };
 
   return (
-    <div className={`overflow-hidden transition-all duration-300 ease-in-out shrink-0 w-full ${visible ? 'h-[72px] sm:h-[48px] opacity-100 mt-3' : 'h-0 opacity-0 mt-0'}`}>
-      <div className="flex flex-col gap-2 px-1">
-        <div className="flex gap-1 h-1.5 w-full bg-surface-variant rounded-full overflow-hidden">
-          {[1, 2, 3, 4].map(idx => (
-            <div key={idx} className={`h-full transition-colors duration-500 ease-out flex-1 ${getBarColor(idx)}`} />
-          ))}
+    <div className={`grid transition-all duration-300 ease-in-out shrink-0 w-full ${visible ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0 mt-0'}`}>
+      <div className="overflow-hidden flex flex-col gap-3 px-1">
+        {/* MD3 Linear Progress Indicator */}
+        <div className="relative h-1 w-full bg-surface-variant rounded-full overflow-hidden mt-1">
+          <div 
+            className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out ${getIndicatorColor()}`} 
+            style={{ width: `${(score / 4) * 100}%` }}
+          />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 mt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 pb-1">
           <RequirementItem met={hasLength} text="At least 8 characters" />
           <RequirementItem met={hasUpper} text="1 uppercase letter" />
           <RequirementItem met={hasNumber} text="1 number" />
