@@ -143,7 +143,10 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
           {isRefining && sourceFilter === "refined" ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 animate-fade-in">
               <div className="md3-loading-indicator md3-loading-indicator-lg text-primary"></div>
-              <p className="text-[13px] text-text-muted font-medium">Applying AI refinement to transcript...</p>
+              <p className="text-[14px] text-text-muted font-bold">Connecting to Gemini API...</p>
+              <p className="text-[12px] text-text-variant italic max-w-sm text-center">
+                Processing your raw transcript to remove filler words, fix grammar, and perfect diarization. This may take up to a minute...
+              </p>
             </div>
           ) : transcriptData
             .filter(chunk => sourceFilter === "dom" ? ((chunk as Record<string, unknown>).source !== "refined") : ((chunk as Record<string, unknown>).source === "refined"))

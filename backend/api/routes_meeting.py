@@ -194,11 +194,18 @@ async def refine_transcript(
         raw_text = "\n".join([f"[{t.get('timestamp_ms', 0)}ms] {t.get('speaker', 'Unknown')}: {t.get('text', '')}" for t in transcript_data])
         
         prompt = f"""You are an expert transcription editor. Review the following raw meeting transcript.
-Your task is to produce a CLEARED - REFINED transcript. Fix grammar, remove filler words, correct diarization errors, and make it highly readable while preserving all meaning.
+Your task is to produce a CLEARED, REFINED, and HIGHLY READABLE transcript. 
+CRITICAL RULES:
+1. MERGE duplicate or stuttered sentences completely.
+2. REMOVE ALL filler words (e.g., um, uh, like, you know, sort of).
+3. COMBINE consecutive utterances by the same speaker into a single fluent paragraph where appropriate.
+4. FIX grammar, correct obvious diarization (speaker) errors, and make it read like a professional script.
+5. PRESERVE all original meaning, decisions, and context. Do NOT summarize; just clean it perfectly.
+
 Output ONLY a JSON array of objects, each containing:
 - speaker: The speaker's name
-- timestamp_ms: The original timestamp in ms
-- text: The refined text
+- timestamp_ms: The original timestamp in ms (use the first timestamp of the merged chunk)
+- text: The perfectly refined, clean text
 
 Raw transcript:
 {raw_text}"""
