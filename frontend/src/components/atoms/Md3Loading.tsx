@@ -40,8 +40,9 @@ export function Md3LoadingIndicator({
       animator.update(timestamp);
       const shape = getMorphedShape(animator.morph);
       
+      const computedColor = getComputedStyle(canvas).color || "#6750A4";
       drawIndicator(ctx, pxSize, shape, animator.rotation, {
-        color: "currentColor",
+        color: computedColor,
         sizeRatio: 0.79,
         contained: false,
       });
