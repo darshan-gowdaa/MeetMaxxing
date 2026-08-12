@@ -193,3 +193,22 @@ async def delete_key(key_id: str, user: dict = Depends(get_current_user)):
 @router.get("/providers")
 async def get_providers():
     return {"providers": [{"id": p.id, "name": p.name, "docs_url": p.docs_url, "pattern": p.pattern, "pricing": p.pricing} for p in REGISTRY.values()]}
+
+@router.get("/model-preferences")
+async def get_model_preferences(user: dict = Depends(get_current_user)):
+    supabase = get_supabase_admin()
+    res = supabase.table("user_model_preferences").select("*").eq("user_id", user["user_id"]).eq("feature_scope", "default_chat").execute()
+    return res.data[0] if res.data else {"mode": "manual", "model_id": ""}
+
+@router.patch("/model-preferences")
+async def update_model_preferences(updates: dict, user: dict = Depends(get_current_user)):
+    supabase = get_supabase_admin()
+    mode = updates.get("mode")
+    model_id = updates.get("model_id")
+    
+    data = {"user_id": user["user_id"], "feature_scope": "default_chat"}
+    if mode: data["mode"] = mode
+    if model_id is not None: data["model_id"] = model_id
+    
+    res = supabase.table("user_model_preferences").upsert(data, on_conflict="user_id,feature_scope").execute()
+    return res.data[0] if res.data else {}

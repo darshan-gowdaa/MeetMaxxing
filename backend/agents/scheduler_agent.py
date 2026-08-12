@@ -130,7 +130,7 @@ async def run_scheduler_agent(
 
     try:
         result = await create_calendar_event(calendar_payload, calendar_token)
-        logger.info("[Scheduler Agent] Successfully scheduled event using {}", powered_by)
+        logger.info(f"[Scheduler Agent] Successfully scheduled event using {powered_by}")
         return {
             "scheduled": True,
             "event_id": result.get("id"),
@@ -141,5 +141,5 @@ async def run_scheduler_agent(
             "powered_by": powered_by,
         }
     except Exception as e:
-        logger.error("[Scheduler Agent] Failed to create calendar event: {}", e)
+        logger.error(f"[Scheduler Agent] Failed to create calendar event: {e}")
         return {"scheduled": False, "reason": f"Calendar API error: {e!s}"}

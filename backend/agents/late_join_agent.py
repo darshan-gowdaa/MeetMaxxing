@@ -69,7 +69,7 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> dict
         result["powered_by"] = powered_by
         return result
     except Exception as e:
-        logger.error("[Late Join Agent] Error: {}", e)
+        logger.error(f"[Late Join Agent] Error: {e}")
         return {
             "recap": "Error generating recap due to API failure or rate limits.",
             "key_decisions_so_far": [],

@@ -8,7 +8,6 @@ import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis

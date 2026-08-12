@@ -3,19 +3,46 @@
 import { useState, useEffect } from 'react';
 import { RiFileTextLine, RiFileList3Line, RiFlashlightLine, RiTranslate2 } from '@remixicon/react';
 
+import { useAuth } from '@/lib/auth-context';
 import { SelectionCard } from "@/components/molecules/SelectionCard";
 
 export default function GeneralPreferences() {
+  const { session } = useAuth();
+  const token = session?.access_token;
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
   const [lang, setLang] = useState('en');
   const [style, setStyle] = useState('concise');
 
   useEffect(() => {
-    setLang(localStorage.getItem('pref-lang') || 'en');
-    setStyle(localStorage.getItem('pref-style') || 'concise');
-  }, []);
+    if (!token) return;
+    fetch(`${API_URL}/api/settings`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => {
+        setLang(data.language || 'en');
+        setStyle(data.summary_style || 'concise');
+      });
+  }, [token, API_URL]);
 
-  const saveLang = (v: string) => { setLang(v); localStorage.setItem('pref-lang', v); };
-  const saveStyle = (v: string) => { setStyle(v); localStorage.setItem('pref-style', v); };
+  const saveLang = async (v: string) => {
+    setLang(v);
+    if (!token) return;
+    await fetch(`${API_URL}/api/settings`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ language: v })
+    });
+  };
+
+  const saveStyle = async (v: string) => {
+    setStyle(v);
+    if (!token) return;
+    await fetch(`${API_URL}/api/settings`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ summary_style: v })
+    });
+  };
 
   const summaryOptions = [
     { id: 'concise', label: 'Concise', icon: RiFileTextLine, desc: 'Brief overview' },

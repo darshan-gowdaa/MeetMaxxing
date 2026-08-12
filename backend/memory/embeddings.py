@@ -46,21 +46,18 @@ async def embed_text(text: str) -> list[float]:
         _set_in_cache(text, vec)
         return vec
         
-    try:
-        client = _get_client()
-        result = client.models.embed_content(
-            model=settings.GEMINI_EMBEDDING_MODEL,
-            contents=text,
-            config=genai_types.EmbedContentConfig(
-                task_type="RETRIEVAL_DOCUMENT",
-                output_dimensionality=settings.EMBEDDING_DIM,
-            ),
-        )
-        vec = result.embeddings[0].values
-        _set_in_cache(text, vec)
-        return vec
-    except Exception:
-        raise
+    client = _get_client()
+    result = client.models.embed_content(
+        model=settings.GEMINI_EMBEDDING_MODEL,
+        contents=text,
+        config=genai_types.EmbedContentConfig(
+            task_type="RETRIEVAL_DOCUMENT",
+            output_dimensionality=settings.EMBEDDING_DIM,
+        ),
+    )
+    vec = result.embeddings[0].values
+    _set_in_cache(text, vec)
+    return vec
 
 
 async def embed_query(text: str) -> list[float]:
@@ -68,19 +65,16 @@ async def embed_query(text: str) -> list[float]:
     # Note: query embeddings might not be cached since they are highly variable and context-dependent
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key"]:
         return await _fallback_vector(text)
-    try:
-        client = _get_client()
-        result = client.models.embed_content(
-            model=settings.GEMINI_EMBEDDING_MODEL,
-            contents=text,
-            config=genai_types.EmbedContentConfig(
-                task_type="RETRIEVAL_QUERY",
-                output_dimensionality=settings.EMBEDDING_DIM,
-            ),
-        )
-        return result.embeddings[0].values
-    except Exception:
-        raise
+    client = _get_client()
+    result = client.models.embed_content(
+        model=settings.GEMINI_EMBEDDING_MODEL,
+        contents=text,
+        config=genai_types.EmbedContentConfig(
+            task_type="RETRIEVAL_QUERY",
+            output_dimensionality=settings.EMBEDDING_DIM,
+        ),
+    )
+    return result.embeddings[0].values
 
 
 async def embed_batch(texts: list[str]) -> list[list[float]]:

@@ -218,12 +218,9 @@ Raw transcript:
 
         # sometimes LLMs return JSON inside markdown block
         refined_json_str = refined_json_str.strip()
-        if refined_json_str.startswith("```json"):
-            refined_json_str = refined_json_str[7:]
-        if refined_json_str.startswith("```"):
-            refined_json_str = refined_json_str[3:]
-        if refined_json_str.endswith("```"):
-            refined_json_str = refined_json_str[:-3]
+        refined_json_str = refined_json_str.removeprefix("```json")
+        refined_json_str = refined_json_str.removeprefix("```")
+        refined_json_str = refined_json_str.removesuffix("```")
             
         refined_data = json.loads(refined_json_str.strip())
         
@@ -243,7 +240,7 @@ Raw transcript:
             supabase.table("meetings").update({"transcript_data": refined_list}).eq("id", target_id).execute()
             return {"status": "success", "transcript_data": refined_list}
         else:
-            raise ValueError("LLM did not return a list inside transcript")
+            raise TypeError("LLM did not return a list inside transcript")
     except Exception as e:
         logger.error(f"Failed to refine transcript: {e}")
         raise HTTPException(status_code=500, detail="Failed to refine transcript")
@@ -259,7 +256,7 @@ async def _run_end_pipeline(
     user_id: str,
 ) -> None:
     """Background task — full post-meeting processing pipeline."""
-    logger.info("[MeetMaxxing END PIPELINE] Starting pipeline for {}...", meeting_id)
+    logger.info(f"[MeetMaxxing END PIPELINE] Starting pipeline for {meeting_id}...")
     supabase = get_supabase_admin()
 
     try:

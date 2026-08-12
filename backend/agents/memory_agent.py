@@ -145,7 +145,7 @@ async def run_memory_agent(
                 lines.append(line)
             meetings_context = "\n\n".join(lines)
     except Exception as e:
-        logger.warning("Could not fetch meetings from DB for memory context: {}", e)
+        logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
 
     if not results and not meetings_context:
         return {

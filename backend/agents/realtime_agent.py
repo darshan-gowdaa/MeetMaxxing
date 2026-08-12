@@ -143,7 +143,7 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
             return _last_results[meeting_id]
         return {
             "meeting_id": meeting_id,
-            "error": f"AI temporarily unavailable. Insights will auto-refresh shortly.",
+            "error": "AI temporarily unavailable. Insights will auto-refresh shortly.",
             "suggestions": ["AI temporarily unavailable. Insights will auto-refresh."],
             "risks": [],
             "next_questions": ["Waiting for AI..."],

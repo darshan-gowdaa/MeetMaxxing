@@ -1,8 +1,40 @@
-import { RiInformationLine, RiArrowDownSLine, RiFlashlightLine, RiSparklingLine, RiRobot2Line } from"@remixicon/react";
-import { ApiKey } from"../../types";
+import { useState, useEffect } from "react";
+import { RiInformationLine, RiArrowDownSLine, RiFlashlightLine, RiSparklingLine, RiRobot2Line } from "@remixicon/react";
+import { ApiKey } from "../../types";
+import { useAuth } from "@/lib/auth-context";
 
 export function ModelSelection({ keys }: { keys: ApiKey[] }) {
- return (
+  const { session } = useAuth();
+  const token = session?.access_token;
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+  const [mode, setMode] = useState("manual");
+  const [modelId, setModelId] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/api-keys/model-preferences`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => {
+        setMode(data.mode || "manual");
+        setModelId(data.model_id || "");
+      })
+      .catch(() => {});
+  }, [token, API_URL]);
+
+  const updatePrefs = async (updates: { mode?: string, model_id?: string }) => {
+    if (updates.mode) setMode(updates.mode);
+    if (updates.model_id !== undefined) setModelId(updates.model_id);
+    
+    if (!token) return;
+    await fetch(`${API_URL}/api-keys/model-preferences`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updates)
+    });
+  };
+
+  return (
  <div className="mt-8 sm:mt-10 flex flex-col gap-5 sm:gap-6">
  <div className="flex flex-col gap-1">
  <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight">Model Selection</h2>
@@ -13,22 +45,22 @@ export function ModelSelection({ keys }: { keys: ApiKey[] }) {
  <div className="flex flex-col gap-4">
  <h3 className="font-medium text-[15px] text-text">Routing Mode</h3>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <label className="relative flex flex-col p-4 border-2 border-primary bg-primary/5 rounded-[16px] cursor-pointer transition-all hover:bg-primary/10">
+ <label className={`relative flex flex-col p-4 border-2 rounded-[16px] cursor-pointer transition-all ${mode === 'manual' ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border/50 bg-surface hover:bg-surface2/50'}`}>
  <div className="flex items-center justify-between mb-2">
  <span className="font-bold text-[15px] text-text">Use my keys</span>
- <div className="w-5 h-5 rounded-full border-[5px] border-primary flex items-center justify-center shrink-0"></div>
+ <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${mode === 'manual' ? 'border-[5px] border-primary' : 'border-2 border-text-muted'}`}></div>
  </div>
  <span className="text-sm text-text-muted leading-relaxed">Route requests directly to your connected API providers.</span>
- <input type="radio"name="routing"value="custom"className="hidden"defaultChecked />
+ <input type="radio"name="routing"value="manual"checked={mode === "manual"} onChange={() => updatePrefs({ mode: "manual" })} className="hidden"/>
  </label>
  
- <label className="relative flex flex-col p-4 border-2 border-border/50 bg-surface rounded-[16px] cursor-pointer hover:bg-surface2/50 transition-colors">
+ <label className={`relative flex flex-col p-4 border-2 rounded-[16px] cursor-pointer transition-all ${mode === 'smart' ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border/50 bg-surface hover:bg-surface2/50'}`}>
  <div className="flex items-center justify-between mb-2">
  <span className="font-bold text-[15px] text-text">App default</span>
- <div className="w-5 h-5 rounded-full border-2 border-text-muted flex items-center justify-center shrink-0"></div>
+ <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${mode === 'smart' ? 'border-[5px] border-primary' : 'border-2 border-text-muted'}`}></div>
  </div>
  <span className="text-sm text-text-muted leading-relaxed">Use the standard models provided by MeetMaxxing.</span>
- <input type="radio"name="routing"value="default"className="hidden"/>
+ <input type="radio"name="routing"value="smart"checked={mode === "smart"} onChange={() => updatePrefs({ mode: "smart" })} className="hidden"/>
  </label>
  </div>
  </div>
@@ -44,7 +76,7 @@ export function ModelSelection({ keys }: { keys: ApiKey[] }) {
  </div>
  ) : (
  <div className="relative max-w-md">
- <select defaultValue=""className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer shadow-sm">
+ <select value={modelId} onChange={(e) => updatePrefs({ model_id: e.target.value })} className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer shadow-sm">
  <option value=""disabled>Choose a model</option>
  {keys.some(k => k.provider_id === 'openrouter') && <option value="openrouter/auto">OpenRouter Auto (Auto-select best model)</option>}
  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Higher quality, more tokens)</option>}
