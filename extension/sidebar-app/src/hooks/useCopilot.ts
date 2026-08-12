@@ -264,8 +264,10 @@ export function useCopilot() {
     }
   };
 
+  const clearError = () => setErrorMessage("");
+
   return { authToken,
     meetingId, meetingTitle, isEnded, transcriptLines, suggestions, nextQuestion, recap,
-    errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction, clearTranscript
+    errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction, clearTranscript, clearError
   };
 }

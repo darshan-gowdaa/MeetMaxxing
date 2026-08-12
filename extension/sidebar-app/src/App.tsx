@@ -11,7 +11,7 @@ export default function App() {
   const {
     authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
     nextQuestion, recap, errorMessage, isProcessing, poweredBy,
-    elapsedTime, triggerAction, clearTranscript
+    elapsedTime, triggerAction, clearTranscript, clearError
   } = useCopilot();
 
   const [activeTab, setActiveTab] = useState<"live" | "transcript" | "rag" | "recap">(() => {
@@ -112,7 +112,7 @@ export default function App() {
               </button>
             </div>
 
-            <ErrorBanner errorMessage={errorMessage} poweredBy={poweredBy} isProcessing={isProcessing} triggerAction={triggerAction} />
+            <ErrorBanner errorMessage={errorMessage} poweredBy={poweredBy} isProcessing={isProcessing} triggerAction={triggerAction} clearError={clearError} />
 
             <div className={activeTab === "live" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>
                 <button 
