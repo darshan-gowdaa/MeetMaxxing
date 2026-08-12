@@ -1,15 +1,19 @@
 import datetime
 import uuid
-from loguru import logger
 
 import docx
 import PyPDF2
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from loguru import logger
 from pydantic import BaseModel
+from qdrant_client.http import models as qmodels
 
+from ..agents.docs_qa_agent import run_docs_qa_agent
+from ..agents.memory_agent import run_memory_agent
 from ..core.auth import get_current_user
+from ..core.config import settings
 from ..memory.embeddings import embed_text
-from ..memory.qdrant_client import upsert_memories
+from ..memory.qdrant_client import get_qdrant, upsert_memories
 from ..memory.schemas import MemoryPoint, MemoryType
 
 router = APIRouter(prefix="/context", tags=["context"])
@@ -87,29 +91,21 @@ async def chat_context(
     req: ContextChatRequest,
     user: dict = Depends(get_current_user)
 ):
-    from loguru import logger
-    from ..agents.docs_qa_agent import run_docs_qa_agent
-    from ..agents.memory_agent import run_memory_agent
-    
-    print(f"\n=== CHAT REQUEST ===\nQuery: {req.query}, Target: {req.target_file}\n")
     try:
         if req.target_file:
             res = await run_docs_qa_agent(
                 question=req.query, org_id=user["org_id"], user_id=user["user_id"],
                 filters={"meeting_id": req.meeting_id, "speaker_name": req.target_file}
             )
-            print(f"Docs QA Response: {res}\n")
-            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Docs QA Agent"), "sources": res.get("sources", [])}
+            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Docs QA Agent"), "sources": res.get("sources", [])}
         else:
             res = await run_memory_agent(
                 question=req.query, org_id=user["org_id"], user_id=user["user_id"],
                 filters={"meeting_id": [req.meeting_id, "global"], "memory_type": "key_topic"}
             )
-            print(f"Memory Agent Response: {res}\n")
-            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Lyzr Memory Agent"), "sources": res.get("sources", [])}
+            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Memory Agent"), "sources": res.get("sources", [])}
     except Exception as e:
-        logger.error(f"Error in chat_context: {e}", exc_info=True)
-        print(f"\n=== ERROR ===\n{e}\n")
+        logger.error("Error in chat_context: {}", e, exc_info=True)
         return {"answer": f"An error occurred: {e!s}"}
 
 class ContextClearRequest(BaseModel):
@@ -120,10 +116,6 @@ async def clear_context(
     req: ContextClearRequest,
     user: dict = Depends(get_current_user)
 ):
-    from qdrant_client.http import models as qmodels
-
-    from ..core.config import settings
-    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         await client.delete(
@@ -144,10 +136,6 @@ async def clear_context(
 async def list_all_files(
     user: dict = Depends(get_current_user)
 ):
-    from qdrant_client.http import models as qmodels
-
-    from ..core.config import settings
-    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         results = await client.scroll(
@@ -185,10 +173,6 @@ async def list_files(
     meeting_id: str,
     user: dict = Depends(get_current_user)
 ):
-    from qdrant_client.http import models as qmodels
-
-    from ..core.config import settings
-    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         results = await client.scroll(
@@ -224,10 +208,6 @@ async def clear_file(
     req: ContextClearFileRequest,
     user: dict = Depends(get_current_user)
 ):
-    from qdrant_client.http import models as qmodels
-
-    from ..core.config import settings
-    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         await client.delete(
@@ -255,10 +235,6 @@ async def rename_file(
     req: ContextRenameFileRequest,
     user: dict = Depends(get_current_user),
 ):
-    from qdrant_client.http import models as qmodels
-
-    from ..core.config import settings
-    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         # Scroll to get all matching point IDs first
@@ -302,10 +278,6 @@ async def get_file_content(
     req: ContextFileContentRequest,
     user: dict = Depends(get_current_user)
 ):
-    from qdrant_client.http import models as qmodels
-
-    from ..core.config import settings
-    from ..memory.qdrant_client import get_qdrant
     try:
         client = await get_qdrant()
         results = await client.scroll(

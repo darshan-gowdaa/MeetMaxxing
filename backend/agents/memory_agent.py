@@ -8,8 +8,11 @@ Output:  {answer, sources: [{meeting_id, date, excerpt, speaker}]}
 Governed by Lyzr guardrail — answer must cite sources
 """
 
+import re
 import logging
 
+from ..core.lyzr_integration import run_lyzr_agent
+from ..core.utils import parse_json_clean
 from ..memory.embeddings import embed_query
 from ..memory.qdrant_client import search_memories
 from ..memory.schemas import MemoryFilter, MemoryType
@@ -54,33 +57,29 @@ def _build_context_block(results) -> tuple[str, list[dict]]:
 
     return "\n\n".join(context_lines), sources
 
+
 def _rerank_results(results):
-    """
-    Reranks results based on score and memory type priority.
-    Prioritizes DECISION > ACTION_ITEM > TRANSCRIPT_CHUNK / TRANSCRIPT.
-    """
+    """Rerank by score × memory-type priority weight. DECISION > ACTION_ITEM > rest."""
     priority_weights = {
         MemoryType.DECISION: 1.5,
         MemoryType.ACTION_ITEM: 1.3,
+        MemoryType.KEY_TOPIC: 1.2,
         MemoryType.TRANSCRIPT_CHUNK: 1.0,
         MemoryType.TRANSCRIPT: 1.0,
-        MemoryType.KEY_TOPIC: 1.2,
     }
-    
-    # Keep all results, RRF scores can be very low but rank is what matters
-    filtered = [r for r in results if r.score > 0.0]
-    
-    for r in filtered:
-        # r.memory_type is a raw string from Qdrant payload — normalize to enum for lookup
+    scored = []
+    for r in results:
+        if r.score <= 0.0:
+            continue
         try:
             mem_type = MemoryType(r.memory_type)
         except (ValueError, KeyError):
             mem_type = None
         weight = priority_weights.get(mem_type, 1.0)
-        r._rerank_score = r.score * weight
-        
-    filtered.sort(key=lambda x: x._rerank_score, reverse=True)
-    return filtered[:20]  # Top 20 after reranking for richer LLM context
+        scored.append((r.score * weight, r))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [r for _, r in scored[:20]]
 
 
 async def run_memory_agent(
@@ -95,7 +94,6 @@ async def run_memory_agent(
     """
     filters = filters or {}
 
-    # Build memory filter — org_id always mandatory
     mem_filter = MemoryFilter(
         org_id=org_id,
         user_id=filters.get("user_id", ""),
@@ -107,30 +105,22 @@ async def run_memory_agent(
         date_to=filters.get("date_to", ""),
     )
 
-    # Parse memory_type filter if provided
     if mt := filters.get("memory_type"):
         try:
             mem_filter.memory_type = MemoryType(mt)
         except ValueError:
             pass
 
-    # Embed the question with RETRIEVAL_QUERY task type
     query_vec = await embed_query(question)
-
-    # Search Qdrant — fetch 40 to allow strong reranking
-    raw_results = await search_memories(
-        query_vector=query_vec,
-        memory_filter=mem_filter,
-        limit=40,
-    )
+    raw_results = await search_memories(query_vector=query_vec, memory_filter=mem_filter, limit=40)
     results = _rerank_results(raw_results)
 
-    # ── Fetch all meeting summaries from Supabase for richer context ──────────
     meetings_context = ""
+    meetings_list = []
     try:
         from ..core.database import get_supabase_admin
         supabase = get_supabase_admin()
-        meetings_res = (
+        res = (
             supabase.table("meetings")
             .select("id, title, start_at, summary, decisions, attendees, status")
             .eq("org_id", org_id)
@@ -139,7 +129,7 @@ async def run_memory_agent(
             .limit(50)
             .execute()
         )
-        meetings_list = meetings_res.data or []
+        meetings_list = res.data or []
         if meetings_list:
             lines = []
             for m in meetings_list:
@@ -148,14 +138,14 @@ async def run_memory_agent(
                 summary = m.get("summary") or ""
                 decisions = m.get("decisions") or []
                 attendees = ", ".join(m.get("attendees") or [])
-                dec_text = "; ".join([d.get("text", "") for d in decisions if d.get("text")]) if decisions else ""
+                dec_text = "; ".join(d.get("text", "") for d in decisions if d.get("text"))
                 line = f"[Meeting: {title} | Date: {date_str} | Attendees: {attendees}]\nSummary: {summary}"
                 if dec_text:
                     line += f"\nDecisions: {dec_text}"
                 lines.append(line)
             meetings_context = "\n\n".join(lines)
     except Exception as e:
-        logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
+        logger.warning("Could not fetch meetings from DB for memory context: {}", e)
 
     if not results and not meetings_context:
         return {
@@ -166,76 +156,54 @@ async def run_memory_agent(
 
     context_block, sources = _build_context_block(results)
 
-    # Build combined prompt with both Qdrant chunks AND DB summaries
-    db_section = f"""
+    db_section = (
+        f"\n\n--- ALL PAST MEETING SUMMARIES (from database) ---\n{meetings_context}\n--- END OF MEETING SUMMARIES ---\n"
+        if meetings_context else ""
+    )
 
---- ALL PAST MEETING SUMMARIES (from database) ---
-{meetings_context}
---- END OF MEETING SUMMARIES ---
-""" if meetings_context else ""
-
-    prompt = f"""{_SYSTEM_PROMPT}
-
-Question: {question}
-
-Retrieved semantic context from past meetings (most relevant chunks):
-{context_block if context_block else "(No semantic matches found)"}
-{db_section}
-Answer the question conversationally based solely on the context above.
-If the answer is clearly present in the meeting summaries above, use that.
-You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
-{{
-  "answer": "Your conversational answer here. Do not include [Context N]. Format numbers in Indian style (e.g. ₹50,000).",
-  "confidence": "high|medium|low",
-  "sources_used": [0, 1, 2] 
-}}"""
+    prompt = (
+        f"{_SYSTEM_PROMPT}\n\nQuestion: {question}\n\n"
+        f"Retrieved semantic context from past meetings (most relevant chunks):\n"
+        f"{context_block if context_block else '(No semantic matches found)'}"
+        f"{db_section}\n"
+        "Answer the question conversationally based solely on the context above.\n"
+        "You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. "
+        "Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:\n"
+        '{{\n  "answer": "...",\n  "confidence": "high|medium|low",\n  "sources_used": [0, 1, 2]\n}}'
+    )
 
     try:
-        from ..core.lyzr_integration import run_lyzr_agent
         raw, powered_by = await run_lyzr_agent("Memory Agent - MeetMaxxing", prompt)
-        
-        from ..core.utils import parse_json_clean
         result = parse_json_clean(raw)
         if not result:
-            result = {
-                "answer": raw.strip(),
-                "confidence": "low",
-                "sources_used": []
-            }
+            result = {"answer": raw.strip(), "confidence": "low", "sources_used": []}
     except Exception as e:
         err_str = str(e)
         return {
-            "answer": f"Error querying Lyzr Memory Agent: {err_str[:150]}",
+            "answer": "An error occurred while querying memory. Please try again.",
             "confidence": "low",
             "sources": sources,
             "total_retrieved": len(results),
             "error": err_str[:150],
-            "powered_by": "Lyzr SDK Error"
+            "powered_by": "Error",
         }
 
-    # Map source indices to full source objects
     used_indices = result.get("sources_used", list(range(len(sources))))
     cited_sources = [sources[i] for i in used_indices if i < len(sources)]
 
-    # Lyzr cross-contextual guardrail validation
     from ..services.guardrails import validate_memory_output
-    guardrail_res = await validate_memory_output(
-        answer=result.get("answer", ""),
-        sources=cited_sources
-    )
+    guardrail_res = await validate_memory_output(answer=result.get("answer", ""), sources=cited_sources)
 
     final_answer = guardrail_res.cleaned_output.get("answer", result.get("answer", ""))
-
-    import re
     final_answer = re.sub(r'\[Context\s*[\d,\s]*\]', '', final_answer).strip()
 
     return {
         "answer": final_answer,
         "confidence": result.get("confidence", "low"),
         "sources": cited_sources,
-        "total_retrieved": len(results) + len(meetings_context.splitlines() if meetings_context else []),
+        "total_retrieved": len(results) + len(meetings_list),
         "powered_by": powered_by,
         "guardrail_score": guardrail_res.score,
         "guardrail_valid": guardrail_res.valid,
-        "guardrail_violations": guardrail_res.violations
+        "guardrail_violations": guardrail_res.violations,
     }

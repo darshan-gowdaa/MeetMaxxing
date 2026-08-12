@@ -3,18 +3,75 @@ import json
 from typing import Any
 
 import httpx
+from loguru import logger
 
 from .config import settings
 from .rate_limiter import rate_limiter
 
-# Global client for connection pooling
+# Shared connection-pooled client — closed at process exit
 _http_client: httpx.AsyncClient | None = None
+
 
 def get_http_client() -> httpx.AsyncClient:
     global _http_client
     if _http_client is None or _http_client.is_closed:
         _http_client = httpx.AsyncClient(timeout=20.0)
     return _http_client
+
+
+def _is_placeholder(key: str) -> bool:
+    return not key or key.strip() in ["", "your-gemini-api-key", "mock-key", "your-groq-key", "your-openrouter-key", "your-perplexity-key"]
+
+
+async def _call_openai_compat(
+    http_client: httpx.AsyncClient,
+    url: str,
+    key: str,
+    model: str,
+    messages: list[dict],
+    temperature: float,
+    max_tokens: int,
+    response_format_json: bool,
+    extra_headers: dict | None = None,
+    provider: str = "",
+) -> str | None:
+    """
+    Shared helper for Groq/OpenRouter/Perplexity — all are OpenAI-compatible.
+    Returns response text on success, None on failure.
+    """
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if response_format_json:
+        payload["response_format"] = {"type": "json_object"}
+
+    headers = {"Authorization": f"Bearer {key.strip()}", "Content-Type": "application/json"}
+    if extra_headers:
+        headers.update(extra_headers)
+
+    res = await http_client.post(url, headers=headers, json=payload)
+    if res.status_code == 200:
+        text = res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+        return text.strip() if text else None
+    if res.status_code == 429:
+        rate_limiter.record_failure(provider)
+        logger.warning("[LLM Fallback] {} rate limited (429)", provider)
+    else:
+        rate_limiter.record_failure(provider)
+        logger.warning("[LLM Fallback] {} error {}: {}", provider, res.status_code, res.text[:150])
+    return None
+
+
+def _build_messages(system_instruction: str, prompt: str) -> list[dict]:
+    msgs = []
+    if system_instruction:
+        msgs.append({"role": "system", "content": system_instruction})
+    msgs.append({"role": "user", "content": prompt})
+    return msgs
+
 
 async def generate_content_with_fallback(
     prompt: str,
@@ -26,240 +83,140 @@ async def generate_content_with_fallback(
     bypass_cache: bool = False,
 ) -> tuple[str, str]:
     """
-    Generate text adhering strictly to fallback order requested by user:
-    1: Google Gemini API (`gemini-2.5-flash`)
-    2: Groq API (`llama-3.3-70b-versatile`)
-    3: OpenRouter API (`google/gemini-2.0-flash-001` / `meta-llama/llama-3.3-70b-instruct`)
-    4: Perplexity API (`sonar-pro`)
-    
-    Returns: tuple[response_text, powered_by_provider_string]
+    Generate text with fallback order: Gemini → Groq → OpenRouter → Perplexity.
+    Returns (response_text, powered_by_string).
     """
-    
-    # Check cache first
     if not bypass_cache:
         cached = await rate_limiter.get_cached_response(prompt, "fallback", temperature)
         if cached:
-            print("[MeetMaxxing LLM Fallback] Returning cached response.")
             return cached["text"], cached["provider"]
 
     http_client = get_http_client()
     errors = []
 
-    # 1. Try Google Gemini API (Priority 1)
-    gemini_key = getattr(settings, "GEMINI_API_KEY", "")
-    if gemini_key and gemini_key.strip() and gemini_key.strip() not in ["your-gemini-api-key", "mock-key", ""]:
-        if await rate_limiter.acquire("gemini"):
-            try:
-                print(f"[MeetMaxxing LLM Fallback] [Priority 1] Calling Google Gemini Flash ({settings.GEMINI_FLASH_MODEL})...")
-                from google import genai
-                from google.genai import types as genai_types
+    async def _cache_and_return(text: str, provider_str: str) -> tuple[str, str]:
+        await rate_limiter.set_cached_response(
+            prompt, "fallback", temperature, {"text": text, "provider": provider_str}, cache_ttl
+        )
+        return text, provider_str
 
-                client = genai.Client(api_key=gemini_key)
-                config_kwargs: dict[str, Any] = {
-                    "temperature": temperature,
-                    "max_output_tokens": max_tokens,
-                }
-                if system_instruction:
-                    config_kwargs["system_instruction"] = system_instruction
-                if response_format_json:
-                    config_kwargs["response_mime_type"] = "application/json"
+    # 1. Google Gemini
+    gemini_key = settings.GEMINI_API_KEY
+    if not _is_placeholder(gemini_key) and await rate_limiter.acquire("gemini"):
+        try:
+            from google import genai
+            from google.genai import types as genai_types
 
-                loop = asyncio.get_event_loop()
-                def _run_gemini():
-                    return client.models.generate_content(
-                        model=settings.GEMINI_FLASH_MODEL,
-                        contents=prompt,
-                        config=genai_types.GenerateContentConfig(**config_kwargs),
-                    )
-                response = await loop.run_in_executor(None, _run_gemini)
-                if response and response.text:
-                    print("[MeetMaxxing LLM Fallback] Gemini Flash succeeded!")
-                    rate_limiter.record_success("gemini")
-                    result_text = response.text.strip()
-                    provider_str = f"Google Gemini API ({settings.GEMINI_FLASH_MODEL})"
-                    await rate_limiter.set_cached_response(prompt, "fallback", temperature, {"text": result_text, "provider": provider_str}, cache_ttl)
-                    return result_text, provider_str
-            except Exception as gemini_err:
-                errors.append(f"Gemini: {gemini_err}")
-                if "429" in str(gemini_err) or "RESOURCE_EXHAUSTED" in str(gemini_err):
-                    rate_limiter.record_failure("gemini")
-                print(f"[MeetMaxxing LLM Fallback] Gemini failed: {gemini_err}. Moving to Groq...")
-        else:
-            errors.append("Gemini: Rate limited/degraded")
-            print("[MeetMaxxing LLM Fallback] Gemini rate limit/degraded, skipping...")
+            client = genai.Client(api_key=gemini_key)
+            config_kwargs: dict[str, Any] = {
+                "temperature": temperature,
+                "max_output_tokens": max_tokens,
+            }
+            if system_instruction:
+                config_kwargs["system_instruction"] = system_instruction
+            if response_format_json:
+                config_kwargs["response_mime_type"] = "application/json"
 
-    # 2. Try Groq API (Priority 2)
-    groq_key = getattr(settings, "GROQ_API_KEY", "")
-    if groq_key and groq_key.strip() and groq_key.strip() != "your-groq-key":
-        if await rate_limiter.acquire("groq"):
-            try:
-                print("[MeetMaxxing LLM Fallback] [Priority 2] Using Groq API (llama-3.3-70b-versatile)...")
-                messages = []
-                if system_instruction:
-                    messages.append({"role": "system", "content": system_instruction})
-                messages.append({"role": "user", "content": prompt})
-
-                payload = {
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": messages,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                }
-                if response_format_json:
-                    payload["response_format"] = {"type": "json_object"}
-
-                res = await http_client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {groq_key.strip()}", "Content-Type": "application/json"},
-                    json=payload,
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.models.generate_content(
+                    model=settings.GEMINI_FLASH_MODEL,
+                    contents=prompt,
+                    config=genai_types.GenerateContentConfig(**config_kwargs),
                 )
-                if res.status_code == 200:
-                    data = res.json()
-                    text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    if text:
-                        print("[MeetMaxxing LLM Fallback] Groq succeeded!")
-                        rate_limiter.record_success("groq")
-                        result_text = text.strip()
-                        provider_str = "Groq API (Llama 3.3 70B)"
-                        await rate_limiter.set_cached_response(prompt, "fallback", temperature, {"text": result_text, "provider": provider_str}, cache_ttl)
-                        return result_text, provider_str
-                elif res.status_code == 429:
-                    rate_limiter.record_failure("groq")
-                    errors.append(f"Groq: Rate Limit ({res.status_code})")
-                    print(f"[MeetMaxxing LLM Fallback] Groq Rate Limit ({res.status_code})")
-                else:
-                    rate_limiter.record_failure("groq")
-                    errors.append(f"Groq: Error {res.status_code}")
-                    print(f"[MeetMaxxing LLM Fallback] Groq error ({res.status_code}): {res.text[:150]}")
-            except Exception as groq_err:
-                rate_limiter.record_failure("groq")
-                errors.append(f"Groq: Exception {groq_err}")
-                print(f"[MeetMaxxing LLM Fallback] Groq exception: {groq_err}")
-        else:
-            errors.append("Groq: Rate limited/degraded")
-            print("[MeetMaxxing LLM Fallback] Groq rate limit/degraded, skipping...")
-
-    # 3. Try OpenRouter (Priority 3)
-    openrouter_key = getattr(settings, "OPEN_ROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEY", "")
-    if openrouter_key and openrouter_key.strip() and openrouter_key.strip() != "your-openrouter-key":
-        if await rate_limiter.acquire("openrouter"):
-            try:
-                print("[MeetMaxxing LLM Fallback] [Priority 3] Using OpenRouter API (google/gemini-2.0-flash-001)...")
-                messages = []
-                if system_instruction:
-                    messages.append({"role": "system", "content": system_instruction})
-                messages.append({"role": "user", "content": prompt})
-
-                payload: dict[str, Any] = {
-                    "model": "google/gemini-2.0-flash-001",
-                    "messages": messages,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                }
-                if response_format_json:
-                    payload["response_format"] = {"type": "json_object"}
-
-                res = await http_client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {openrouter_key.strip()}",
-                        "HTTP-Referer": "https://meetmaxxing.vercel.app",
-                        "X-Title": "MeetMaxxing",
-                        "Content-Type": "application/json",
-                    },
-                    json=payload,
+            )
+            if response and response.text:
+                rate_limiter.record_success("gemini")
+                return await _cache_and_return(
+                    response.text.strip(),
+                    f"Google Gemini API ({settings.GEMINI_FLASH_MODEL})"
                 )
-                if res.status_code == 200:
-                    data = res.json()
-                    text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    if text:
-                        print("[MeetMaxxing LLM Fallback] OpenRouter succeeded!")
-                        rate_limiter.record_success("openrouter")
-                        result_text = text.strip()
-                        provider_str = "OpenRouter API (Gemini Flash)"
-                        await rate_limiter.set_cached_response(prompt, "fallback", temperature, {"text": result_text, "provider": provider_str}, cache_ttl)
-                        return result_text, provider_str
-                elif res.status_code == 429:
-                    rate_limiter.record_failure("openrouter")
-                    errors.append(f"OpenRouter: Rate Limit ({res.status_code})")
-                    print(f"[MeetMaxxing LLM Fallback] OpenRouter Rate Limit ({res.status_code})")
-                else:
-                    rate_limiter.record_failure("openrouter")
-                    errors.append(f"OpenRouter: Error {res.status_code}")
-                    print(f"[MeetMaxxing LLM Fallback] OpenRouter error ({res.status_code}): {res.text[:150]}")
-            except Exception as openrouter_err:
-                rate_limiter.record_failure("openrouter")
-                errors.append(f"OpenRouter: Exception {openrouter_err}")
-                print(f"[MeetMaxxing LLM Fallback] OpenRouter exception: {openrouter_err}")
-        else:
-            errors.append("OpenRouter: Rate limited/degraded")
-            print("[MeetMaxxing LLM Fallback] OpenRouter rate limit/degraded, skipping...")
+        except Exception as e:
+            errors.append(f"Gemini: {e}")
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                rate_limiter.record_failure("gemini")
+            logger.debug("[LLM Fallback] Gemini failed: {}", e)
+    else:
+        errors.append("Gemini: skipped (no key or degraded)")
 
-    # 4. Try Perplexity API (Priority 4)
-    perplexity_key = getattr(settings, "PERPLEXITY_API_KEY", "")
-    if perplexity_key and perplexity_key.strip() and perplexity_key.strip() != "your-perplexity-key":
-        if await rate_limiter.acquire("perplexity"):
-            try:
-                print("[MeetMaxxing LLM Fallback] [Priority 4] Using Perplexity API (sonar-pro)...")
-                messages = []
-                if system_instruction:
-                    messages.append({"role": "system", "content": system_instruction})
-                messages.append({"role": "user", "content": prompt})
+    # 2. Groq
+    groq_key = settings.GROQ_API_KEY
+    if not _is_placeholder(groq_key) and await rate_limiter.acquire("groq"):
+        try:
+            text = await _call_openai_compat(
+                http_client, "https://api.groq.com/openai/v1/chat/completions",
+                groq_key, "llama-3.3-70b-versatile",
+                _build_messages(system_instruction, prompt),
+                temperature, max_tokens, response_format_json, provider="groq",
+            )
+            if text:
+                rate_limiter.record_success("groq")
+                return await _cache_and_return(text, "Groq API (Llama 3.3 70B)")
+        except Exception as e:
+            rate_limiter.record_failure("groq")
+            errors.append(f"Groq: {e}")
+    else:
+        errors.append("Groq: skipped (no key or degraded)")
 
-                payload = {
-                    "model": "sonar-pro",
-                    "messages": messages,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                }
+    # 3. OpenRouter
+    openrouter_key = settings.OPENROUTER_API_KEY
+    if not _is_placeholder(openrouter_key) and await rate_limiter.acquire("openrouter"):
+        try:
+            text = await _call_openai_compat(
+                http_client, "https://openrouter.ai/api/v1/chat/completions",
+                openrouter_key, "google/gemini-2.0-flash-001",
+                _build_messages(system_instruction, prompt),
+                temperature, max_tokens, response_format_json,
+                extra_headers={
+                    "HTTP-Referer": "https://meetmaxxing.vercel.app",
+                    "X-Title": "MeetMaxxing",
+                },
+                provider="openrouter",
+            )
+            if text:
+                rate_limiter.record_success("openrouter")
+                return await _cache_and_return(text, "OpenRouter API (Gemini Flash)")
+        except Exception as e:
+            rate_limiter.record_failure("openrouter")
+            errors.append(f"OpenRouter: {e}")
+    else:
+        errors.append("OpenRouter: skipped (no key or degraded)")
 
-                res = await http_client.post(
-                    "https://api.perplexity.ai/chat/completions",
-                    headers={"Authorization": f"Bearer {perplexity_key.strip()}", "Content-Type": "application/json"},
-                    json=payload,
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    if text:
-                        print("[MeetMaxxing LLM Fallback] Perplexity succeeded!")
-                        rate_limiter.record_success("perplexity")
-                        result_text = text.strip()
-                        provider_str = "Perplexity API (Sonar Pro)"
-                        await rate_limiter.set_cached_response(prompt, "fallback", temperature, {"text": result_text, "provider": provider_str}, cache_ttl)
-                        return result_text, provider_str
-                elif res.status_code == 429:
-                    rate_limiter.record_failure("perplexity")
-                    errors.append(f"Perplexity: Rate Limit ({res.status_code})")
-                    print(f"[MeetMaxxing LLM Fallback] Perplexity Rate Limit ({res.status_code})")
-                else:
-                    rate_limiter.record_failure("perplexity")
-                    errors.append(f"Perplexity: Error {res.status_code}")
-                    print(f"[MeetMaxxing LLM Fallback] Perplexity error ({res.status_code}): {res.text[:150]}")
-            except Exception as perp_err:
-                rate_limiter.record_failure("perplexity")
-                errors.append(f"Perplexity: Exception {perp_err}")
-                print(f"[MeetMaxxing LLM Fallback] Perplexity exception: {perp_err}")
-        else:
-            errors.append("Perplexity: Rate limited/degraded")
-            print("[MeetMaxxing LLM Fallback] Perplexity rate limit/degraded, skipping...")
+    # 4. Perplexity
+    perplexity_key = settings.PERPLEXITY_API_KEY
+    if not _is_placeholder(perplexity_key) and await rate_limiter.acquire("perplexity"):
+        try:
+            text = await _call_openai_compat(
+                http_client, "https://api.perplexity.ai/chat/completions",
+                perplexity_key, "sonar-pro",
+                _build_messages(system_instruction, prompt),
+                temperature, max_tokens, response_format_json=False,
+                provider="perplexity",
+            )
+            if text:
+                rate_limiter.record_success("perplexity")
+                return await _cache_and_return(text, "Perplexity API (Sonar Pro)")
+        except Exception as e:
+            rate_limiter.record_failure("perplexity")
+            errors.append(f"Perplexity: {e}")
+    else:
+        errors.append("Perplexity: skipped (no key or degraded)")
 
-    error_summary = " | ".join(errors)
-    print(f"[MeetMaxxing LLM Fallback] All APIs failed: {error_summary}. Returning mock response.")
-    
+    logger.error("[LLM Fallback] All providers failed: {}", " | ".join(errors))
+
     if response_format_json:
         mock = {
-            "recap": "Meeting is ongoing. Discussing current project status and next steps. (Mock recap due to API limit/error)",
-            "key_decisions_so_far": ["Proceed with current architecture"],
-            "current_topic": "Project Status Sync",
-            "who_said_what": ["Speaker: Provided updates"],
-            "suggestions": ["Ask about the next milestone", "Clarify the timeline"],
-            "next_question": "What are the key deliverables for next week?",
-            "summary": "Mock summary due to API limits. Please check API keys.",
-            "decisions": [{"text": "Mock decision", "confidence": "high", "decided_by": "Speaker A"}],
-            "action_items": [{"text": "Mock action item", "owner": "Unassigned", "priority": "medium", "due_date": None}],
-            "follow_up": {"required": False, "reason": "Mock"}
+            "recap": "Meeting is ongoing. (Mock recap — check API keys)",
+            "key_decisions_so_far": [],
+            "current_topic": "Unknown",
+            "who_said_what": [],
+            "suggestions": ["Check API key configuration"],
+            "next_question": "What are the key deliverables?",
+            "summary": "Mock summary — API limits reached. Please check API keys.",
+            "decisions": [],
+            "action_items": [],
+            "follow_up": {"required": False, "reason": "Mock"},
         }
         return json.dumps(mock), "Mock Fallback (API Error)"
-    else:
-        return "Mock response due to API failure or missing keys. Please check API settings.", "Mock Fallback (API Error)"
+    return "Mock response — API failure or missing keys. Check API settings.", "Mock Fallback (API Error)"

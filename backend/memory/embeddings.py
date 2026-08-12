@@ -1,5 +1,4 @@
 import hashlib
-from functools import lru_cache
 
 from google import genai
 from google.genai import types as genai_types
@@ -20,12 +19,8 @@ async def _fallback_vector(text: str) -> list[float]:
     raise RuntimeError("GEMINI_API_KEY is not set. Cannot generate embeddings.")
 
 # Simple in-memory LRU cache for embeddings
-@lru_cache(maxsize=500)
-def _get_cached_embedding(text: str) -> list[float] | None:
-    return None # We use this just for the decorator, but async makes it tricky. We'll implement a custom async cache instead.
-
-_embed_cache = {}
-_embed_cache_keys = []
+_embed_cache: dict[str, list[float]] = {}
+_embed_cache_keys: list[str] = []
 CACHE_MAX_SIZE = 500
 
 def _get_from_cache(text: str):
@@ -64,8 +59,7 @@ async def embed_text(text: str) -> list[float]:
         vec = result.embeddings[0].values
         _set_in_cache(text, vec)
         return vec
-    except Exception as e:
-        print(f"Embedding failed: {e}")
+    except Exception:
         raise
 
 
@@ -85,8 +79,7 @@ async def embed_query(text: str) -> list[float]:
             ),
         )
         return result.embeddings[0].values
-    except Exception as e:
-        print(f"Query embedding failed: {e}")
+    except Exception:
         raise
 
 

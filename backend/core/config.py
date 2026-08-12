@@ -16,12 +16,10 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = "https://your-project.supabase.co"
     SUPABASE_ANON_KEY: str = "your-anon-key"
     SUPABASE_SERVICE_ROLE_KEY: str = ""
-    SUPABASE_JWT_SECRET: str = ""  # from Supabase Project Settings → API → JWT Secret
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
     REDIS_PASSWORD: str = ""
-    REDIS_PORT: int = 6379
 
     # Qdrant
     QDRANT_URL: str = "http://localhost:6333"
@@ -34,11 +32,13 @@ class Settings(BaseSettings):
     GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
     EMBEDDING_DIM: int = 768
 
-    # Fallback LLM API Keys
+    # Fallback LLM API Keys — use OPENROUTER_API_KEY as canonical name
     GROQ_API_KEY: str = ""
-    OPEN_ROUTER_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     PERPLEXITY_API_KEY: str = ""
+
+    # Resend
+    RESEND_API_KEY: str = ""
 
     # Google Calendar OAuth2
     GOOGLE_CLIENT_ID: str = ""
@@ -55,20 +55,18 @@ class Settings(BaseSettings):
 
     # App
     APP_SECRET_KEY: str = "change-me-in-production"
-    KEK_SECRET: str = "0000000000000000000000000000000000000000000000000000000000000000" # 32-byte hex
+    KEK_SECRET: str = "0000000000000000000000000000000000000000000000000000000000000000"
     FRONTEND_URL: str = "https://meetmaxxing.vercel.app"
     BACKEND_URL: str = "https://meetmaxxing-api.onrender.com"
     ENVIRONMENT: str = "development"
-
-
 
     # Rate Limiting Settings
     RATE_LIMIT_RPM: int = 15
     RATE_LIMIT_BURST: int = 5
 
     # Realtime agent settings
-    REALTIME_WINDOW_MINUTES: int = 5  # rolling transcript window
-    REALTIME_CADENCE_SECONDS: int = 20  # how often realtime agent runs
+    REALTIME_WINDOW_MINUTES: int = 5
+    REALTIME_CADENCE_SECONDS: int = 20
 
 
 settings = Settings()

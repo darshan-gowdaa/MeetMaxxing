@@ -2,11 +2,14 @@
 Auth endpoints — user provisioning, token refresh, session info.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..core.auth import get_current_user
 from ..core.config import settings
+from ..core.database import get_supabase_admin
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -52,18 +55,14 @@ async def get_me(user: dict = Depends(get_current_user)):
 @router.delete("/me")
 async def delete_me(user: dict = Depends(get_current_user)):
     """Delete current user."""
-    from ..core.database import get_supabase_admin
-    supabase_admin = get_supabase_admin()
-    
     # 1. Delete public.users record (which cascades to meetings, api keys, etc)
     try:
-        supabase_admin.table("users").delete().eq("id", user["user_id"]).execute()
+        get_supabase_admin().table("users").delete().eq("id", user["user_id"]).execute()
     except Exception as e:
-        import logging
         logging.warning(f"Failed to delete public.users record: {e}")
-        
+
     # 2. Delete from auth schema
-    supabase_admin.auth.admin.delete_user(user["user_id"])
+    get_supabase_admin().auth.admin.delete_user(user["user_id"])
     return {"deleted": True}
 
 
@@ -74,11 +73,9 @@ async def provision_user(user: dict = Depends(get_current_user)):
     Call this after signup/login so subsequent dashboard calls have org_id.
     New users get org_id = user_id (personal org).
     """
-    from ..core.database import get_supabase_admin
-    
     supabase_admin = get_supabase_admin()
     org_id = user["user_id"]  # personal org = user_id for solo accounts
-    
+
     # 1. Update app_metadata if needed
     if not user.get("org_id") or user["org_id"] == user["user_id"]:
         try:
@@ -88,7 +85,7 @@ async def provision_user(user: dict = Depends(get_current_user)):
             )
         except Exception:
             pass
-            
+
     # 2. Ensure public.users record exists (required for foreign keys)
     try:
         supabase_admin.table("users").upsert({
@@ -97,7 +94,6 @@ async def provision_user(user: dict = Depends(get_current_user)):
             "email": user.get("email", ""),
         }, on_conflict="id").execute()
     except Exception as e:
-        import logging
         logging.warning(f"Failed to provision public.users record: {e}")
-    
+
     return {"org_id": org_id, "provisioned": True}

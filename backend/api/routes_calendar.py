@@ -2,6 +2,7 @@
 Google Calendar OAuth flow + direct-link endpoints.
 """
 
+import logging
 import urllib.parse
 from datetime import UTC, datetime, timedelta
 
@@ -110,7 +111,6 @@ async def get_calendar_add_url(
             {"scheduling_result": {"status": "gcal_url_generated", "html_link": gcal_url}}
         ).eq("id", meeting_id).execute()
     except Exception as e:
-        import logging
         logging.warning(f"Could not persist scheduling_result (column may be missing): {e}")
 
     return {"gcal_url": gcal_url, "html_link": gcal_url, "status": "gcal_url_generated"}
@@ -223,7 +223,6 @@ async def schedule_followup(
             {"scheduling_result": {"status": "gcal_url_generated", "html_link": gcal_url}}
         ).eq("id", meeting_id).execute()
     except Exception as e:
-        import logging
         logging.warning(f"Could not persist scheduling_result (column may be missing): {e}")
 
     return {

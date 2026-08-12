@@ -2,10 +2,13 @@
 Dashboard endpoints — meeting list, summaries, action items.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..core.auth import get_current_user
 from ..core.database import get_meeting_record, get_supabase_admin
+from ..memory.qdrant_client import delete_meeting_memories
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -169,10 +172,8 @@ async def delete_meeting(
     
     # Delete associated memories from Qdrant
     try:
-        from ..memory.qdrant_client import delete_meeting_memories
         await delete_meeting_memories(target_id, user["org_id"])
     except Exception as e:
-        import logging
         logging.warning(f"Could not delete memories from Qdrant: {e}")
 
     return {"status": "deleted"}

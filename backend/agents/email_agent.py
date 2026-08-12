@@ -1,192 +1,183 @@
+"""
+Email Agent — drafts and sends meeting summary emails.
+
+Trigger: SEND_EMAIL trigger from Orchestrator (post-meeting pipeline)
+Input:   meeting_id, summary, action_items, attendees
+Flow:    Draft email → format Markdown → send via Resend
+"""
+
 import logging
-import os
-import markdown
+import re
+import uuid
+
 import resend
-from ..core.lyzr_integration import run_lyzr_agent
+
+from ..core.config import settings
+from ..core.utils import is_valid_uuid
 from ..core.database import get_supabase_admin
 
 logger = logging.getLogger(__name__)
 
-_EMAIL_SYSTEM_PROMPT = """You are MeetMaxxing's Email Agent.
-Your job is to draft a professional, concise follow-up email based on the meeting summary and action items.
 
-Input will be:
-- Meeting Title
-- Attendees (if any)
-- Summary of discussion
-- Action Items
+def _format_action_items_html(items: list) -> str:
+    """Format action items list into HTML for the email."""
+    if not items:
+        return "<p>No action items recorded.</p>"
 
-Output EXACTLY one string which is the email body formatted in Markdown (no subject line).
-Start with a polite greeting (e.g. # Meeting Recap), provide a very brief executive summary, bullet points for action items, and a professional sign-off.
-Do NOT use HTML tags. Use markdown for headings (##) and bold (**).
-"""
+    rows = ""
+    for item in items:
+        if isinstance(item, dict):
+            text = item.get("text") or item.get("description") or ""
+            owner = item.get("owner") or item.get("owner_name") or "Unassigned"
+            priority = (item.get("priority") or "medium").capitalize()
+            due = item.get("due_date") or "Not specified"
+        else:
+            text = str(item)
+            owner = "Unassigned"
+            priority = "Medium"
+            due = "Not specified"
 
-MD3_TEMPLATE = """
-<!DOCTYPE html>
+        rows += (
+            f"<tr>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{text}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{owner}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{priority}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{due}</td>"
+            f"</tr>"
+        )
+
+    return (
+        "<table style='width:100%;border-collapse:collapse;font-size:14px;'>"
+        "<thead><tr style='background:#f8fafc'>"
+        "<th style='padding:8px;text-align:left'>Task</th>"
+        "<th style='padding:8px;text-align:left'>Owner</th>"
+        "<th style='padding:8px;text-align:left'>Priority</th>"
+        "<th style='padding:8px;text-align:left'>Due</th>"
+        "</tr></thead>"
+        f"<tbody>{rows}</tbody></table>"
+    )
+
+
+def _build_email_html(meeting_title: str, summary: str, action_items: list, meeting_id: str) -> str:
+    """Build full HTML email body for meeting summary."""
+    summary_html = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", summary or "No summary available.")
+    summary_html = summary_html.replace("\n", "<br>")
+    action_items_html = _format_action_items_html(action_items)
+
+    dashboard_url = f"{settings.FRONTEND_URL}/meetings/{meeting_id}"
+    return f"""<!DOCTYPE html>
 <html>
-<head>
-<style>
-  body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #f3f4f9;
-    color: #1f1f1f;
-    margin: 0;
-    padding: 32px;
-  }
-  .container {
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #ffffff;
-    border-radius: 32px;
-    padding: 40px;
-    box-shadow: 0 4px 12px rgba(11, 87, 208, 0.05);
-  }
-  h1, h2, h3 {
-    color: #0b57d0;
-    margin-top: 0;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-  p, li {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #444746;
-  }
-  ul {
-    padding-left: 20px;
-  }
-  .footer {
-    margin-top: 40px;
-    font-size: 14px;
-    color: #74777f;
-    text-align: center;
-    border-top: 1px solid #e0e0e0;
-    padding-top: 20px;
-  }
-</style>
-</head>
-<body>
-  <div class="container">
-    {content}
-    <div class="footer">
-      Sent by <strong>MeetMaxxing AI</strong><br>
-      You can manage your notification preferences in your dashboard.
+<body style="font-family:system-ui,sans-serif;color:#1a202c;background:#f7fafc;margin:0;padding:0">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden">
+  <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:32px 40px">
+    <h1 style="color:#fff;margin:0;font-size:24px">Meeting Summary</h1>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0">{meeting_title}</p>
+  </div>
+  <div style="padding:32px 40px">
+    <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em">Summary</h2>
+    <p style="color:#2d3748;line-height:1.7">{summary_html}</p>
+    <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em;margin-top:32px">Action Items</h2>
+    {action_items_html}
+    <div style="margin-top:32px;text-align:center">
+      <a href="{dashboard_url}" style="background:#667eea;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View Full Summary →</a>
     </div>
   </div>
+  <div style="padding:16px 40px;background:#f7fafc;border-top:1px solid #e2e8f0;text-align:center">
+    <p style="color:#718096;font-size:12px;margin:0">Sent by MeetMaxxing — your AI meeting copilot</p>
+  </div>
+</div>
 </body>
-</html>
-"""
+</html>"""
 
-async def draft_followup_email(
-    meeting_title: str,
-    attendees: list[str],
-    summary: str,
-    action_items: list[str]
-) -> str:
-    prompt = f"""{_EMAIL_SYSTEM_PROMPT}
 
-Meeting Title: {meeting_title}
-Attendees: {', '.join(attendees) if attendees else 'Unknown'}
+async def run_email_agent(
+    meeting_id: str,
+    meeting_title: str = "",
+    attendees: list[str] | None = None,
+    summary: str = "",
+    action_items: list | None = None,
+    send_immediately: bool = True,
+    to_email: str = "",
+    user_id: str = "",
+    summary_output: dict | None = None,
+) -> dict:
+    """
+    Draft and send a meeting summary email.
 
-Summary:
-{summary}
+    to_email is expected to be an actual email address.
+    Falls back to Supabase lookup if it looks like a UUID.
+    """
+    # Accept summary_output dict as alternative to explicit params
+    if summary_output and not summary:
+        summary = summary_output.get("summary", "")
+    if summary_output and not action_items:
+        action_items = summary_output.get("action_items", [])
+    if summary_output and not meeting_title:
+        meeting_title = summary_output.get("title", "Meeting Summary")
 
-Action Items:
-{chr(10).join(f'- {item}' for item in action_items)}
+    action_items = action_items or []
 
-Draft a highly professional, well-formatted markdown follow-up email.
-Use clear sections:
-1. A polite greeting
-2. A brief 1-2 sentence executive summary
-3. Bulleted action items (assigning names where available)
-4. A professional sign-off
+    # Resolve recipient email — to_email may be a UUID from pipeline
+    recipient_email = to_email or ""
+    if not recipient_email or is_valid_uuid(recipient_email):
+        lookup_id = user_id or recipient_email
+        if lookup_id:
+            try:
+                supabase = get_supabase_admin()
+                res = supabase.table("users").select("email").eq("id", lookup_id).single().execute()
+                if res.data and res.data.get("email"):
+                    recipient_email = res.data["email"]
+            except Exception as e:
+                logger.warning("[Email Agent] Could not resolve email for user_id {}: {}", lookup_id, e)
 
-Do NOT include subject lines. Return only the final ready-to-send markdown body."""
-    
+    if not recipient_email or "@" not in recipient_email:
+        logger.warning("[Email Agent] No valid recipient email — skipping send.")
+        return {
+            "sent": False,
+            "reason": "No valid recipient email.",
+            "draft_saved": True,
+        }
+
+    if not settings.RESEND_API_KEY or settings.RESEND_API_KEY in ["", "your-resend-key"]:
+        return {
+            "sent": False,
+            "draft_saved": True,
+            "reason": "RESEND_API_KEY not configured.",
+            "to": recipient_email,
+        }
+
+    html_body = _build_email_html(
+        meeting_title or "Meeting Summary",
+        summary,
+        action_items,
+        meeting_id,
+    )
+
+    if not send_immediately:
+        return {
+            "sent": False,
+            "draft_saved": True,
+            "draft": {"subject": f"Meeting Summary: {meeting_title}", "body": html_body},
+        }
+
     try:
-        raw_email, powered_by = await run_lyzr_agent("Email Agent - MeetMaxxing", prompt)
-        logger.info(f"[Email Agent] Successfully drafted email using {powered_by}")
-        return raw_email.strip()
-    except Exception as e:
-        logger.error(f"[Email Agent] Error drafting email: {e}")
-        email_body = f"# Meeting Recap: {meeting_title}\n\n"
-        email_body += f"## Summary\n{summary}\n\n"
-        if action_items:
-            email_body += "## Action Items\n"
-            for item in action_items:
-                email_body += f"- {item}\n"
-        email_body += "\nBest,\nMeetMaxxing AI"
-        return email_body
-
-async def send_followup_email(
-    to_email: str,
-    subject: str,
-    body_markdown: str,
-    user_id: str
-) -> bool:
-    try:
-        supabase = get_supabase_admin()
-        res = supabase.table("users").select("notifications").eq("id", user_id).execute()
-        if res.data:
-            notifs = res.data[0].get("notifications") or {}
-            if not notifs.get("email", True):
-                logger.info(f"[Email Agent] User {user_id} disabled email notifications. Skipping.")
-                return False
-    except Exception as e:
-        logger.warning(f"[Email Agent] Could not verify notification preferences: {e}")
-
-    html_content = markdown.markdown(body_markdown)
-    final_html = MD3_TEMPLATE.replace("{content}", html_content)
-
-    resend_key = os.environ.get("RESEND_API_KEY")
-    if not resend_key:
-        logger.error("[Email Agent] RESEND_API_KEY not set. Cannot send email.")
-        return False
-
-    resend.api_key = resend_key
-    
-    logger.info(f"[Email Agent] Sending email to {to_email} with subject '{subject}' via Resend")
-    try:
-        r = resend.Emails.send({
-            "from": "MeetMaxxing <onboarding@resend.dev>",
-            "to": [to_email],
-            "subject": subject,
-            "html": final_html
+        resend.api_key = settings.RESEND_API_KEY
+        result = resend.Emails.send({
+            "from": "MeetMaxxing <noreply@meetmaxxing.app>",
+            "to": [recipient_email],
+            "subject": f"Meeting Summary: {meeting_title or 'Your Meeting'}",
+            "html": html_body,
         })
-        logger.info(f"[Email Agent] Email sent successfully: {r}")
-        return True
+        logger.info("[Email Agent] Email sent → {} (id: {})", recipient_email, result.get("id"))
+        return {
+            "sent": True,
+            "resend_id": result.get("id"),
+            "to": recipient_email,
+        }
     except Exception as e:
-        logger.error(f"[Email Agent] Failed to send email via Resend: {e}")
-        return False
-
-async def run_email_agent(meeting_id: str, summary_output: dict) -> dict:
-    logger.info(f"[Email Agent] Starting follow-up email draft for meeting {meeting_id}")
-    summary = summary_output.get("summary", "")
-    raw_action_items = summary_output.get("action_items", [])
-    action_items = [
-        item.get("text", str(item)) if isinstance(item, dict) else str(item)
-        for item in raw_action_items
-    ]
-    
-    email_body = await draft_followup_email(
-        meeting_title=summary_output.get("title", "Meeting Recap"),
-        attendees=summary_output.get("attendees", []),
-        summary=summary,
-        action_items=action_items
-    )
-    
-    user_id = summary_output.get("user_id", "default")
-    to_email = summary_output.get("host_email", "host@example.com")
-    
-    sent = await send_followup_email(
-        to_email=to_email,
-        subject=f"Meeting Recap: {summary_output.get('title', 'Meeting')}",
-        body_markdown=email_body,
-        user_id=user_id
-    )
-    
-    return {
-        "email_body": email_body,
-        "sent": sent,
-        "to_email": to_email
-    }
+        logger.error("[Email Agent] Failed to send email: {}", e)
+        return {
+            "sent": False,
+            "error": str(e)[:200],
+            "to": recipient_email,
+        }

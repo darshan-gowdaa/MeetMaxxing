@@ -3,14 +3,12 @@ MeetMaxxing FastAPI application entry point.
 """
 
 import sys
+import threading
 import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
-from loguru import logger
-
+import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis
@@ -25,33 +23,31 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
     except Exception:
         pass
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-# Setup OpenTelemetry
-# resource = Resource.create(attributes={"service.name": "meetmaxxing-api"})
-# trace.set_tracer_provider(TracerProvider(resource=resource))
-# otlp_exporter = OTLPSpanExporter(endpoint="http://jaeger:4317", insecure=True)
-# trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(otlp_exporter))
-
 if __package__ is None or __package__ == "":
     _parent_dir = str(Path(__file__).resolve().parent.parent)
     if _parent_dir not in sys.path:
         sys.path.insert(0, _parent_dir)
     __package__ = "backend"
 
-import threading
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from loguru import logger
 
+from .api.routes_api_keys import router as api_keys_router
 from .api.routes_auth import router as auth_router
 from .api.routes_calendar import router as calendar_router
 from .api.routes_context import router as context_router
 from .api.routes_dashboard import router as dashboard_router
 from .api.routes_meeting import router as meeting_router
 from .api.routes_memory import router as memory_router
+from .api.routes_settings import router as settings_router
 from .api.routes_transcript import router as transcript_router
 from .core.config import settings
 from .grpc_bus.grpc_server import serve as grpc_serve
 from .memory.qdrant_client import ensure_collection
+
+APP_VERSION = "1.0.0"
 
 
 @asynccontextmanager
@@ -61,28 +57,26 @@ async def lifespan(app: FastAPI):
         await ensure_collection()
     except Exception:
         pass
-    
-    # Start gRPC Task Bus in background
+
     grpc_thread = threading.Thread(target=grpc_serve, daemon=True)
     grpc_thread.start()
-    
+
     yield
-    # Shutdown: nothing to clean up for now
 
 
 app = FastAPI(
     title="MeetMaxxing API",
     description="Multi-agent meeting copilot with persistent cross-meeting memory",
-    version="1.0.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
+# De-duplicate the vercel.app origin — FRONTEND_URL may already be it
+_origins = list({settings.FRONTEND_URL, "https://meetmaxxing.vercel.app"})
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.FRONTEND_URL,
-        "https://meetmaxxing.vercel.app",
-    ],
+    allow_origins=_origins,
     allow_origin_regex=r"^https://.*\.vercel\.app$|^moz-extension://.*$|^chrome-extension://.*$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -92,7 +86,6 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Use repr() to avoid loguru KeyError when exc str contains {dict} syntax
     try:
         logger.error("Unhandled error: {}", repr(exc), exc_info=True)
     except Exception:
@@ -101,6 +94,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Internal server error occurred."}
     )
+
 
 @app.middleware("http")
 async def secure_headers_middleware(request: Request, call_next):
@@ -114,18 +108,12 @@ async def secure_headers_middleware(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
-# FastAPIInstrumentor.instrument_app(app)
-# Register all routers
+
 app.include_router(auth_router)
 app.include_router(transcript_router)
 app.include_router(meeting_router)
 app.include_router(memory_router)
 app.include_router(calendar_router)
-from .api.routes_api_keys import router as api_keys_router
-from .api.routes_settings import router as settings_router
-
-# ...
-
 app.include_router(dashboard_router)
 app.include_router(context_router)
 app.include_router(api_keys_router)
@@ -134,7 +122,7 @@ app.include_router(settings_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "meetmaxxing-api", "version": "1.0.0"}
+    return {"status": "ok", "service": "meetmaxxing-api", "version": APP_VERSION}
 
 
 @app.get("/api/diagnostics")
@@ -143,29 +131,29 @@ async def diagnostics():
     import lyzr
     from google import genai
 
-    from .memory.qdrant_client import ensure_collection, get_qdrant
-    
-    # 1. ADK / GenAI check
-    adk_configured = bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY not in ["your-gemini-api-key", "mock-key", ""])
+    from .memory.qdrant_client import get_qdrant
+
+    adk_configured = bool(
+        settings.GEMINI_API_KEY
+        and settings.GEMINI_API_KEY not in ["your-gemini-api-key", "mock-key", ""]
+    )
     adk_info = {
         "status": "ready" if adk_configured else "missing_key",
         "sdk_version": getattr(genai, "__version__", "loaded"),
         "model_configured": settings.GEMINI_FLASH_MODEL,
-        "api_key_configured": adk_configured
+        "api_key_configured": adk_configured,
     }
 
-    # 2. Lyzr guardrails check
     lyzr_info = {
         "status": "ready",
         "sdk_version": getattr(lyzr, "__version__", "loaded"),
         "realtime_guardrail_enabled": True,
-        "summary_guardrail_enabled": True
+        "summary_guardrail_enabled": True,
     }
 
-    # 3. Qdrant (`qdart`) check
     qdrant_info = {"status": "error"}
     try:
-        await ensure_collection()
+        # ensure_collection was already called at startup; just verify here
         client = await get_qdrant()
         collections = await client.get_collections()
         has_collection = any(c.name == settings.QDRANT_COLLECTION for c in collections.collections)
@@ -180,7 +168,7 @@ async def diagnostics():
             "status": "ready" if has_collection else "collection_missing",
             "collection": settings.QDRANT_COLLECTION,
             "points_stored": points_count,
-            "url": settings.QDRANT_URL
+            "url": settings.QDRANT_URL,
         }
     except Exception as e:
         qdrant_info = {"status": "error", "error": str(e)}
@@ -189,7 +177,7 @@ async def diagnostics():
         "service": "MeetMaxxing API Diagnostics",
         "adk": adk_info,
         "lyzr": lyzr_info,
-        "qdrant": qdrant_info
+        "qdrant": qdrant_info,
     }
 
 
@@ -199,5 +187,5 @@ async def root():
         "service": "MeetMaxxing API",
         "docs": "/docs",
         "health": "/health",
-        "diagnostics": "/api/diagnostics"
+        "diagnostics": "/api/diagnostics",
     }

@@ -11,6 +11,24 @@ from googleapiclient.errors import HttpError
 from ..core.config import settings
 
 
+def _build_flow():
+    """Build Google OAuth2 Flow from settings (shared by auth URL + code exchange)."""
+    from google_auth_oauthlib.flow import Flow
+    return Flow.from_client_config(
+        {
+            "web": {
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "redirect_uris": [settings.GOOGLE_REDIRECT_URI],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=settings.GOOGLE_CALENDAR_SCOPES,
+        redirect_uri=settings.GOOGLE_REDIRECT_URI,
+    )
+
+
 def _build_service(token_data: dict):
     """Build Google Calendar service from stored OAuth token dict."""
     creds = Credentials(
@@ -21,7 +39,6 @@ def _build_service(token_data: dict):
         client_secret=settings.GOOGLE_CLIENT_SECRET,
         scopes=settings.GOOGLE_CALENDAR_SCOPES,
     )
-    # Auto-refresh if expired
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
     return build("calendar", "v3", credentials=creds)
@@ -38,62 +55,34 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
 
     try:
         service = _build_service(token_data)
-        event = (
-            service.events()
-            .insert(
-                calendarId="primary",
-                body=event_body,
-                sendUpdates="all",  # sends email invites to attendees
-            )
-            .execute()
-        )
-        return event
+        return service.events().insert(
+            calendarId="primary",
+            body=event_body,
+            sendUpdates="all",
+        ).execute()
     except HttpError as e:
         raise RuntimeError(f"Calendar API error: {e.status_code} — {e.reason}")
     except Exception as e:
         raise RuntimeError(f"Failed to create event: {e}")
 
 
-async def update_calendar_event(
-    event_id: str,
-    updates: dict,
-    token_data: dict,
-) -> dict:
+async def update_calendar_event(event_id: str, updates: dict, token_data: dict) -> dict:
     """Partial update of an existing calendar event."""
     try:
         service = _build_service(token_data)
-        event = (
-            service.events()
-            .patch(
-                calendarId="primary",
-                eventId=event_id,
-                body=updates,
-                sendUpdates="all",
-            )
-            .execute()
-        )
-        return event
+        return service.events().patch(
+            calendarId="primary",
+            eventId=event_id,
+            body=updates,
+            sendUpdates="all",
+        ).execute()
     except HttpError as e:
         raise RuntimeError(f"Calendar update error: {e.status_code} — {e.reason}")
 
 
 async def get_calendar_auth_url() -> str:
     """Generate Google OAuth2 authorization URL for Calendar access."""
-    from google_auth_oauthlib.flow import Flow
-
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "redirect_uris": [settings.GOOGLE_REDIRECT_URI],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-            }
-        },
-        scopes=settings.GOOGLE_CALENDAR_SCOPES,
-        redirect_uri=settings.GOOGLE_REDIRECT_URI,
-    )
+    flow = _build_flow()
     auth_url, _ = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
@@ -104,21 +93,7 @@ async def get_calendar_auth_url() -> str:
 
 async def exchange_calendar_code(code: str) -> dict:
     """Exchange OAuth2 authorization code for tokens."""
-    from google_auth_oauthlib.flow import Flow
-
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "redirect_uris": [settings.GOOGLE_REDIRECT_URI],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-            }
-        },
-        scopes=settings.GOOGLE_CALENDAR_SCOPES,
-        redirect_uri=settings.GOOGLE_REDIRECT_URI,
-    )
+    flow = _build_flow()
     flow.fetch_token(code=code)
     creds = flow.credentials
     return {

@@ -8,12 +8,14 @@ Model:   Gemini Flash (via fallback)
 Governed by Lyzr full guardrail + eval (groundedness check)
 """
 
+import json
 import logging
 
 from ..core.redis_client import get_full_transcript
 from ..core.utils import parse_json_clean
 
 logger = logging.getLogger(__name__)
+
 _SYSTEM_PROMPT = """You are MeetMaxxing's Summary Agent. You extract structured meeting intelligence from transcripts.
 
 Produce:
@@ -47,65 +49,40 @@ Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or `
   }
 }"""
 
-_SYNTHESIS_PROMPT = """You are MeetMaxxing's Final Summary Synthesis Agent.
-You will be given multiple sub-summaries from a very long meeting.
-Your task is to merge them into a single, cohesive, non-repetitive final JSON output matching the exact schema.
-
-Merge all decisions, action items, and create a single unified summary.
-CRITICAL RULE: Break down grouped or list-like tasks into separate, individual action items. If multiple things need to be bought or done, keep them as separate action items rather than consolidating them into a single "checklist".
-
-Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
-{
-  "summary": "...",
-  "decisions": [
-    {"text": "...", "decided_by": "...", "confidence": "high|medium"}
-  ],
-  "action_items": [
-    {"text": "...", "owner": "...", "due_date": null, "priority": "high|medium|low"}
-  ],
-  "follow_up": {
-    "required": true,
-    "suggested_topic": "...",
-    "suggested_attendees": ["..."]
-  }
-}"""
-
-
 
 def _format_full_transcript(utterances: list[dict]) -> str:
     lines = []
     for utt in utterances:
         speaker = utt.get("speaker", "Unknown")
         text = utt.get("text", "")
-        
-        # Handle cases where the text itself is a JSON array string from the AI service
+
+        # Handle cases where text is a JSON array/object string from AI service
         if isinstance(text, str) and text.strip().startswith("["):
             try:
-                import json
                 parsed = json.loads(text)
                 if isinstance(parsed, list):
-                    extracted_texts = []
+                    parts = []
                     for item in parsed:
                         if isinstance(item, dict):
                             val = item.get("text") or item.get("utterance") or item.get("raw_text") or item.get("refined_text") or ""
                             if val:
-                                extracted_texts.append(val)
+                                parts.append(val)
                         elif isinstance(item, str):
-                            extracted_texts.append(item)
-                    if extracted_texts:
-                        text = " ".join(extracted_texts)
+                            parts.append(item)
+                    if parts:
+                        text = " ".join(parts)
             except Exception:
                 pass
         elif isinstance(text, str) and text.strip().startswith("{"):
             try:
-                import json
                 parsed = json.loads(text)
                 if isinstance(parsed, dict):
                     if "dialog_turn" in parsed and isinstance(parsed["dialog_turn"], list):
-                        texts = []
-                        for t in parsed["dialog_turn"]:
-                            texts.append(t.get("refined_text") or t.get("raw_text") or "")
-                        text = " ".join([t for t in texts if t])
+                        text = " ".join(
+                            t.get("refined_text") or t.get("raw_text") or ""
+                            for t in parsed["dialog_turn"]
+                            if t.get("refined_text") or t.get("raw_text")
+                        )
                     else:
                         text = parsed.get("text") or parsed.get("utterance") or text
             except Exception:
@@ -130,13 +107,18 @@ async def run_summary_agent(
     """
     if not utterances:
         utterances = await get_full_transcript(meeting_id)
-    raw_lines = _format_full_transcript(utterances).split("\n")
-    transcript_text = "\n".join(raw_lines)
 
+    transcript_text = _format_full_transcript(utterances)
     attendee_str = ", ".join(attendees or []) or "Unknown"
-    
+
     try:
-        prompt = f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\nAttendees: {attendee_str}\nDuration: {len(utterances)} utterances recorded\n\nFull transcript:\n{transcript_text}\n\nExtract the structured meeting intelligence as per instructions."
+        prompt = (
+            f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\n"
+            f"Attendees: {attendee_str}\n"
+            f"Duration: {len(utterances)} utterances recorded\n\n"
+            f"Full transcript:\n{transcript_text}\n\n"
+            "Extract the structured meeting intelligence as per instructions."
+        )
         from ..core.llm_fallback import generate_content_with_fallback
         raw, powered_by = await generate_content_with_fallback(
             prompt,
@@ -144,25 +126,24 @@ async def run_summary_agent(
             max_tokens=4096,
             bypass_cache=True,
         )
-            
+
         result = parse_json_clean(raw or "{}")
-        if not result or "summary" not in result:
-            if not result:
-                result = {}
-            result["summary"] = result.get("summary", "The meeting was too brief or context was limited, but it has been successfully logged.")
-            result["decisions"] = result.get("decisions", [])
-            result["action_items"] = result.get("action_items", [])
-            result["follow_up"] = result.get("follow_up", {"required": False})
+        if not result:
+            result = {}
+        result.setdefault("summary", "The meeting was too brief or context was limited, but it has been successfully logged.")
+        result.setdefault("decisions", [])
+        result.setdefault("action_items", [])
+        result.setdefault("follow_up", {"required": False})
         result["powered_by"] = powered_by
     except Exception as e:
         err_str = str(e)
         result = {
-            "summary": f"Error generating meeting summary (all LLM fallbacks failed): {err_str[:200]}",
+            "summary": "An error occurred while generating the meeting summary. Please try reprocessing.",
             "decisions": [],
             "action_items": [],
-            "follow_up": {"required": False, "error": err_str[:100]},
+            "follow_up": {"required": False},
             "error": err_str[:200],
-            "powered_by": "All LLM Fallbacks Failed"
+            "powered_by": "All LLM Fallbacks Failed",
         }
 
     result["meeting_id"] = meeting_id

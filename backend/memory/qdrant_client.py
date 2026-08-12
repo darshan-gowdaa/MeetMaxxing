@@ -7,6 +7,8 @@ Collection: meetmaxxing_memories
   for fast metadata filtering without relying solely on vector similarity
 """
 
+import collections
+import hashlib
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -23,7 +25,6 @@ _collection_ensured = False
 async def get_qdrant() -> AsyncQdrantClient:
     global _client, _collection_ensured
     if _client is None:
-        import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             if settings.QDRANT_URL in [":memory:", "memory"]:
@@ -108,9 +109,6 @@ async def upsert_memories(points: list[MemoryPoint]) -> None:
         return
     await ensure_collection()
     client = await get_qdrant()
-    
-    import collections
-    import hashlib
     
     qdrant_points = []
     for p in points:
@@ -241,14 +239,11 @@ async def search_memories(
         )
 
     # Create a simple sparse vector query using term frequencies
-    import collections
-    import hashlib
-    # We use a crude hash-based BM25 approximation for hackathon hybrid search
-    query_str = memory_filter.query_text if memory_filter.query_text else (memory_filter.topic if memory_filter.topic else "query")
+    # Crude hash-based BM25 approximation for hybrid search
+    query_str = memory_filter.query_text or memory_filter.topic or "query"
     words = query_str.lower().split()
-
     freq = collections.Counter(words)
-    sparse_dict = {}
+    sparse_dict: dict[int, float] = {}
     for w, v in freq.items():
         idx = int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000
         sparse_dict[idx] = sparse_dict.get(idx, 0) + float(v)

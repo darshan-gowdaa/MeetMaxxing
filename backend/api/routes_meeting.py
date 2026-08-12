@@ -7,9 +7,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
-from pydantic import BaseModel
 
 from ..agents.orchestrator import AgentTrigger, dispatch
 from ..core.auth import get_current_user
