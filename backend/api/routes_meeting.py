@@ -204,8 +204,18 @@ Raw transcript:
 {raw_text}"""
         
         import json
-        refined_json_str = await generate_content_with_fallback(prompt, response_format="json")
-        refined_data = json.loads(refined_json_str)
+        refined_json_str, _ = await generate_content_with_fallback(prompt, response_format_json=True, bypass_cache=True, max_tokens=8192)
+        
+        # sometimes LLMs return JSON inside markdown block
+        refined_json_str = refined_json_str.strip()
+        if refined_json_str.startswith("```json"):
+            refined_json_str = refined_json_str[7:]
+        if refined_json_str.startswith("```"):
+            refined_json_str = refined_json_str[3:]
+        if refined_json_str.endswith("```"):
+            refined_json_str = refined_json_str[:-3]
+            
+        refined_data = json.loads(refined_json_str.strip())
         
         # Ensure format
         if isinstance(refined_data, list):
