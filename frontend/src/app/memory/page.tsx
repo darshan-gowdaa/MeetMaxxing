@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   RiBrainLine,
   RiSearchLine,
@@ -113,8 +114,8 @@ export default function MemoryPage() {
         {/* ── Loading ────────────────────────────────────────────────────── */}
         {loading && (
           <div className="pt-16 pb-12 flex flex-col items-center justify-center gap-4 w-full">
-            <Md3LoadingIndicator size="lg" />
-            <span className="text-sm font-medium text-text-muted">Searching memory...</span>
+            <Md3LoadingIndicator size="lg" className="text-primary" />
+            <LoadingPhrases />
           </div>
         )}
 
@@ -129,5 +130,27 @@ export default function MemoryPage() {
         )}
       </main>
     </div>
+  );
+}
+
+function LoadingPhrases() {
+  const phrases = [
+    "Searching past meetings and transcripts...",
+    "Analyzing context and key decisions...",
+    "Synthesizing insights for your query...",
+  ];
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIdx((prev) => (prev + 1) % phrases.length);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [phrases.length]);
+
+  return (
+    <span className="text-sm font-medium text-text-muted transition-opacity duration-300">
+      {phrases[idx]}
+    </span>
   );
 }
