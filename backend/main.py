@@ -44,6 +44,7 @@ from .api.routes_memory import router as memory_router
 from .api.routes_settings import router as settings_router
 from .api.routes_transcript import router as transcript_router
 from .core.config import settings
+from .core.security import RateLimitMiddleware, validate_production_secrets
 from .grpc_bus.grpc_server import serve as grpc_serve
 from .memory.qdrant_client import ensure_collection
 
@@ -53,6 +54,8 @@ APP_VERSION = "1.0.0"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: ensure Qdrant collection + indexes exist and start gRPC server."""
+    validate_production_secrets()
+    
     try:
         await ensure_collection()
     except Exception:
@@ -83,6 +86,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+app.add_middleware(RateLimitMiddleware)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

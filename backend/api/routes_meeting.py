@@ -182,8 +182,7 @@ async def _run_end_pipeline(
     user_id: str,
 ) -> None:
     """Background task — full post-meeting processing pipeline."""
-    print(f"[MeetMaxxing END PIPELINE] Starting pipeline for {meeting_id}...")
-    logger.info(f"[MeetMaxxing END PIPELINE] Starting pipeline for {meeting_id}...")
+    logger.info("[MeetMaxxing END PIPELINE] Starting pipeline for {}...", meeting_id)
     supabase = get_supabase_admin()
 
     try:

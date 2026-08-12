@@ -4,7 +4,7 @@ API Keys management endpoints.
 
 import os
 import httpx
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -146,7 +146,7 @@ async def async_status_check(key_id: str, provider_id: str, plaintext_key: str):
     supabase = get_supabase_admin()
     supabase.table("user_api_keys").update({
         "status": status,
-        "last_checked_at": datetime.utcnow().isoformat(),
+        "last_checked_at": datetime.now(UTC).isoformat(),
         "last_error_message_safe": error_msg if status != "valid" else None
     }).eq("id", key_id).execute()
 
@@ -168,7 +168,8 @@ async def add_key(data: dict, background_tasks: BackgroundTasks, user: dict = De
         background_tasks.add_task(async_status_check, key_record["id"], provider_id, key)
         return {"api_key": {k: v for k, v in key_record.items() if k not in ["key_ciphertext", "iv", "auth_tag", "wrapped_dek"]}}
     except Exception as e:
-        raise HTTPException(500, f"Internal Error: {e!s}")
+        logger.error("Error adding key: {}", e)
+        raise HTTPException(500, "Internal Error while saving key")
 
 @router.post("/{key_id}/check-status")
 async def check_status(key_id: str, user: dict = Depends(get_current_user)):
@@ -180,7 +181,7 @@ async def check_status(key_id: str, user: dict = Depends(get_current_user)):
     provider = REGISTRY.get(res.data[0]["provider_id"])
     status, err = await provider.validate(pt) if provider and hasattr(provider, 'validate') else ("valid", "")
     
-    supabase.table("user_api_keys").update({"status": status, "last_checked_at": datetime.utcnow().isoformat(), "last_error_message_safe": err}).eq("id", key_id).execute()
+    supabase.table("user_api_keys").update({"status": status, "last_checked_at": datetime.now(UTC).isoformat(), "last_error_message_safe": err}).eq("id", key_id).execute()
     return {"status": status, "error": err}
 
 @router.delete("/{key_id}")
