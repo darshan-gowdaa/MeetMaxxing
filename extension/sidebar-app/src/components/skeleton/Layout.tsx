@@ -30,10 +30,10 @@ export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) 
   );
 }
 
-export function Footer({ meetingId, isEnded }: any) {
+export function Footer({ meetingId, isEnded, poweredBy }: any) {
   if (!meetingId || isEnded) return null;
   return (
-    <footer className="p-3 mx-3 mb-3 mt-1 border border-border bg-surface-container flex justify-center shrink-0 shadow-xl rounded-[28px] transition-all">
+    <footer className="p-3 mx-3 mb-3 mt-1 border border-border bg-surface-container flex flex-col justify-center shrink-0 shadow-xl rounded-[28px] transition-all gap-2">
       <a
         href={getWebUrl()}
         target="_blank"
@@ -44,24 +44,47 @@ export function Footer({ meetingId, isEnded }: any) {
         <span>Open Intelligence Dashboard</span>
         <i className="ri-arrow-right-up-line ml-auto opacity-50 group-hover:opacity-100 transition-opacity" />
       </a>
+      {poweredBy && (
+        <div className="text-[9px] text-text-muted text-center font-medium tracking-wide uppercase flex items-center justify-center gap-1 opacity-70">
+          <i className="ri-server-line" /> {poweredBy}
+        </div>
+      )}
     </footer>
   );
 }
 
 export function ErrorBanner({ errorMessage, clearError }: any) {
   if (!errorMessage) return null;
+  const isApiError = errorMessage.includes("Limit Exceeded") || errorMessage.includes("API key") || errorMessage.includes("API keys");
+  
   return (
-    <div className="p-4 rounded-[24px] bg-risk-container border border-border flex items-start gap-3 text-[13px] text-on-risk-container shadow-lg animate-fade-in mb-3 relative overflow-hidden group">
+    <div className="p-4 rounded-[24px] bg-risk-container border border-border flex flex-col gap-3 text-[13px] text-on-risk-container shadow-lg animate-fade-in mb-3 relative overflow-hidden group">
       <div className="absolute top-0 left-0 w-1 h-full bg-risk opacity-80" />
-      <ShieldAlert className="w-[18px] h-[18px] text-risk shrink-0 mt-[1px]" />
-      <div className="flex flex-col gap-1 pr-6 flex-1 min-w-0">
-        <span className="font-bold text-on-risk-container tracking-tight text-[14px]">Something went wrong</span>
-        <span className="leading-relaxed opacity-90 break-words">{errorMessage}</span>
+      <div className="flex items-start gap-3 w-full">
+        <ShieldAlert className="w-[18px] h-[18px] text-risk shrink-0 mt-[1px]" />
+        <div className="flex flex-col gap-1 pr-6 flex-1 min-w-0">
+          <span className="font-bold text-on-risk-container tracking-tight text-[14px]">Something went wrong</span>
+          <span className="leading-relaxed opacity-90 break-words">{errorMessage}</span>
+        </div>
+        {clearError && (
+          <button onClick={clearError} className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-on-risk-container opacity-50 hover:opacity-100 hover:bg-on-risk hover:text-risk-container transition-all active:scale-95" title="Dismiss">
+            <i className="ri-close-line text-lg" />
+          </button>
+        )}
       </div>
-      {clearError && (
-        <button onClick={clearError} className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-on-risk-container opacity-50 hover:opacity-100 hover:bg-on-risk hover:text-risk-container transition-all active:scale-95" title="Dismiss">
-          <i className="ri-close-line text-lg" />
-        </button>
+      
+      {isApiError && (
+        <div className="pl-[30px] w-full">
+          <a 
+            href="https://meetmaxxing.vercel.app/settings/api-keys"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-risk text-risk-container rounded-full text-[11px] font-bold hover:brightness-110 active:scale-95 transition-all no-underline"
+          >
+            <i className="ri-key-2-fill" />
+            Manage API Keys
+          </a>
+        </div>
       )}
     </div>
   );

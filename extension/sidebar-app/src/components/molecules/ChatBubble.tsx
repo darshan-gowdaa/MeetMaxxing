@@ -14,7 +14,7 @@ export function ChatBubble({ role, content, sources, onCopy, copied }: ChatBubbl
   const isAgent = role === "agent";
   return (
     <div className={`flex ${isAgent ? "justify-start" : "justify-end"}`}>
-      <div className={`max-w-[88%] px-4 py-3 text-[13px] leading-relaxed shadow-sm ${
+      <div className={`max-w-[88%] min-w-0 break-words px-4 py-3 text-[13px] leading-relaxed shadow-sm ${
         isAgent
           ? "bg-surface-container text-text rounded-[24px] rounded-bl-[4px] border border-border"
           : "bg-primary text-on-primary rounded-[24px] rounded-br-[4px] font-medium"
@@ -30,7 +30,7 @@ export function ChatBubble({ role, content, sources, onCopy, copied }: ChatBubbl
                 <i className={copied ? "ri-check-line text-primary text-[12px]" : "ri-file-copy-line text-[12px]"} />
               </button>
             )}
-            <MarkdownView className="markdown-body prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:my-2 [&>li]:mb-1 font-normal leading-relaxed whitespace-pre-wrap">
+            <MarkdownView className="markdown-body prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:my-2 [&>li]:mb-1 font-normal leading-relaxed whitespace-pre-wrap break-words">
               {content}
             </MarkdownView>
             {sources && sources.length > 0 && (

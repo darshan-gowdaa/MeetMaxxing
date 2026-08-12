@@ -24,7 +24,7 @@ export function RecapAgent({ recap, isProcessing }: { recap: string; isProcessin
       </div>
       <div className="mt-2 flex-1 flex flex-col justify-center">
         {recap ? (
-          <div className="rounded-[24px] bg-surface-container border border-border text-[13px] text-text leading-relaxed shadow-inner overflow-hidden transition-all hover:brightness-110">
+          <div className="rounded-[24px] bg-surface-container border border-border text-[13px] text-text leading-relaxed shadow-inner overflow-hidden transition-all hover:brightness-110 break-words">
             <MarkdownView
               className="recap-markdown p-3.5"
               children={recap}

@@ -206,17 +206,25 @@ async def generate_content_with_fallback(
     logger.error("[LLM Fallback] All providers failed: {}", " | ".join(errors))
 
     if response_format_json:
+        is_rate_limit = any("429" in e or "RESOURCE_EXHAUSTED" in e for e in errors)
+        err_msg = "Gemini's Free Limit Exceeded or experiencing high demand. Please try again with another API key." if is_rate_limit else "All AI providers failed or keys are missing. Please check your API keys."
+        
         mock = {
-            "recap": "Meeting is ongoing. (Mock recap — check API keys)",
+            "error": err_msg,
+            "error_type": "QUOTA_EXCEEDED" if is_rate_limit else "API_ERROR",
+            "recap": err_msg,
             "key_decisions_so_far": [],
             "current_topic": "Unknown",
             "who_said_what": [],
-            "suggestions": ["Check API key configuration"],
-            "next_question": "What are the key deliverables?",
-            "summary": "Mock summary — API limits reached. Please check API keys.",
+            "suggestions": [err_msg],
+            "next_questions": [err_msg],
+            "summary": err_msg,
             "decisions": [],
             "action_items": [],
             "follow_up": {"required": False, "reason": "Mock"},
         }
-        return json.dumps(mock), "Mock Fallback (API Error)"
-    return "Mock response — API failure or missing keys. Check API settings.", "Mock Fallback (API Error)"
+        return json.dumps(mock), "API Error"
+    
+    is_rate_limit = any("429" in e or "RESOURCE_EXHAUSTED" in e for e in errors)
+    err_msg = "Gemini's Free Limit Exceeded or experiencing high demand. Please try again with another API key." if is_rate_limit else "Mock response — API failure or missing keys. Check API settings."
+    return err_msg, "API Error"

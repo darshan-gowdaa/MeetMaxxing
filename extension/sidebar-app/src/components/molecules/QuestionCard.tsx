@@ -19,8 +19,8 @@ export function QuestionCard({ question, onSendToChat }: QuestionCardProps) {
       onClick={copy}
       className="p-4 rounded-[24px] bg-surface-container border border-border hover:brightness-110 text-[13px] text-text transition-all duration-300 group cursor-pointer"
     >
-      <div className="flex justify-between items-start gap-3">
-        <span className="leading-relaxed font-medium active:opacity-70">{question}</span>
+      <div className="flex justify-between items-start gap-3 w-full">
+        <span className="flex-1 min-w-0 break-words leading-relaxed font-medium active:opacity-70">{question}</span>
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={copy}

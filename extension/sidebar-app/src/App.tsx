@@ -20,7 +20,7 @@ const INSIGHT_LABELS = [
 export default function App() {
   const {
     authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
-    nextQuestions, recap, errorMessage, isProcessing, elapsedTime,
+    nextQuestions, recap, errorMessage, isProcessing, poweredBy, elapsedTime,
     triggerAction, clearTranscript, clearError,
   } = useCopilot();
 
@@ -44,8 +44,14 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem("meetmaxxing_activeTab", activeTab); }, [activeTab]);
 
+  const lastTriggerRef = useRef(0);
   const handleRef = useRef(() => {});
-  const handleGenerateInsights = () => { triggerAction("GENERATE_INSIGHTS"); setLastInsightsCount(transcriptLines.length); };
+  const handleGenerateInsights = () => { 
+    if (Date.now() - lastTriggerRef.current < 500) return;
+    lastTriggerRef.current = Date.now();
+    triggerAction("GENERATE_INSIGHTS"); 
+    setLastInsightsCount(transcriptLines.length); 
+  };
   useEffect(() => { handleRef.current = handleGenerateInsights; }, [handleGenerateInsights]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -122,7 +128,7 @@ export default function App() {
           </div>
         </main>
       )}
-      <Footer meetingId={meetingId} isEnded={isEnded} />
+      <Footer meetingId={meetingId} isEnded={isEnded} poweredBy={poweredBy} />
     </>
   );
 }
