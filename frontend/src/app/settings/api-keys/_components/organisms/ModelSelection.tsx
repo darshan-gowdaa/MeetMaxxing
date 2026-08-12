@@ -3,7 +3,7 @@ import { RiInformationLine, RiArrowDownSLine, RiFlashlightLine, RiSparklingLine,
 import { ApiKey } from "../../types";
 import { useAuth } from "@/lib/auth-context";
 
-export function ModelSelection({ keys }: { keys: ApiKey[] }) {
+export function ModelSelection({ keys, setSnackbar }: { keys: ApiKey[], setSnackbar: (s: { message: string, action?: () => void } | null) => void }) {
   const { session } = useAuth();
   const token = session?.access_token;
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -27,11 +27,18 @@ export function ModelSelection({ keys }: { keys: ApiKey[] }) {
     if (updates.model_id !== undefined) setModelId(updates.model_id);
     
     if (!token) return;
-    await fetch(`${API_URL}/api-keys/model-preferences`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(updates)
-    });
+    try {
+      await fetch(`${API_URL}/api-keys/model-preferences`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updates)
+      });
+      setSnackbar({ message: "Preferences saved" });
+      setTimeout(() => setSnackbar(null), 3000);
+    } catch {
+      setSnackbar({ message: "Failed to save preferences" });
+      setTimeout(() => setSnackbar(null), 3000);
+    }
   };
 
   return (
@@ -76,8 +83,8 @@ export function ModelSelection({ keys }: { keys: ApiKey[] }) {
  </div>
  ) : (
  <div className="relative max-w-md">
- <select value={modelId} onChange={(e) => updatePrefs({ model_id: e.target.value })} className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer shadow-sm">
- <option value=""disabled>Choose a model</option>
+ <select value={modelId} disabled={mode === "smart"} onChange={(e) => updatePrefs({ model_id: e.target.value })} className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+ <option value=""disabled>{mode === 'smart' ? 'Auto-selected by MeetMaxxing' : 'Choose a model'}</option>
  {keys.some(k => k.provider_id === 'openrouter') && <option value="openrouter/auto">OpenRouter Auto (Auto-select best model)</option>}
  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Higher quality, more tokens)</option>}
  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (Fast / low cost)</option>}

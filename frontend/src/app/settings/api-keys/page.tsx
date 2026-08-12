@@ -172,7 +172,7 @@ export default function ApiKeysPage() {
  )}
  </AnimatePresence>
 
- <ModelSelection keys={keys} />
+ <ModelSelection keys={keys} setSnackbar={setSnackbar} />
 
  <AnimatePresence>
  {snackbar && (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { RiFileTextLine, RiFileList3Line, RiFlashlightLine, RiTranslate2 } from '@remixicon/react';
 
 import { useAuth } from '@/lib/auth-context';
@@ -13,6 +14,7 @@ export default function GeneralPreferences() {
 
   const [lang, setLang] = useState('en');
   const [style, setStyle] = useState('concise');
+  const [snackbar, setSnackbar] = useState<{ message: string } | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -27,21 +29,35 @@ export default function GeneralPreferences() {
   const saveLang = async (v: string) => {
     setLang(v);
     if (!token) return;
-    await fetch(`${API_URL}/api/settings`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ language: v })
-    });
+    try {
+      await fetch(`${API_URL}/api/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ language: v })
+      });
+      setSnackbar({ message: "Language updated" });
+      setTimeout(() => setSnackbar(null), 3000);
+    } catch {
+      setSnackbar({ message: "Failed to update language" });
+      setTimeout(() => setSnackbar(null), 3000);
+    }
   };
 
   const saveStyle = async (v: string) => {
     setStyle(v);
     if (!token) return;
-    await fetch(`${API_URL}/api/settings`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ summary_style: v })
-    });
+    try {
+      await fetch(`${API_URL}/api/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ summary_style: v })
+      });
+      setSnackbar({ message: "Summary style updated" });
+      setTimeout(() => setSnackbar(null), 3000);
+    } catch {
+      setSnackbar({ message: "Failed to update summary style" });
+      setTimeout(() => setSnackbar(null), 3000);
+    }
   };
 
   const summaryOptions = [
@@ -90,6 +106,14 @@ export default function GeneralPreferences() {
           ))}
         </div>
       </section>
+
+      <AnimatePresence>
+        {snackbar && (
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-highest text-text px-4 py-3 rounded-xl shadow-sm border border-border flex items-center gap-4 z-50">
+            <span className="text-sm font-medium">{snackbar.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

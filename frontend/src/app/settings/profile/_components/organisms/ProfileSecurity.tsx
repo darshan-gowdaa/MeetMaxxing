@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from"react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from"@/lib/auth-context";
 
 import { supabase } from "@/lib/supabase";
@@ -12,6 +13,7 @@ export const ProfileSecurity = () => {
  const [pwdLoading, setPwdLoading] = useState(false);
  const [password, setPassword] = useState("");
  const [message, setMessage] = useState("");
+ const [snackbar, setSnackbar] = useState<{ message: string } | null>(null);
 
  const handleUpdatePassword = async (e: React.FormEvent) => {
  e.preventDefault();
@@ -52,11 +54,13 @@ export const ProfileSecurity = () => {
  if (res.ok) {
  await signOut();
  } else {
- alert("Failed to delete account");
+ setSnackbar({ message: "Failed to delete account" });
+ setTimeout(() => setSnackbar(null), 3000);
  }
  } catch (e) {
  console.error(e);
- alert("Error deleting account");
+ setSnackbar({ message: "Error deleting account" });
+ setTimeout(() => setSnackbar(null), 3000);
  } finally {
  setLoading(false);
  }
@@ -107,6 +111,14 @@ export const ProfileSecurity = () => {
  </button>
  </div>
  </div>
+
+ <AnimatePresence>
+ {snackbar && (
+ <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-highest text-text px-4 py-3 rounded-xl shadow-sm border border-border flex items-center gap-4 z-50">
+ <span className="text-sm font-medium">{snackbar.message}</span>
+ </motion.div>
+ )}
+ </AnimatePresence>
  </div>
  );
 };

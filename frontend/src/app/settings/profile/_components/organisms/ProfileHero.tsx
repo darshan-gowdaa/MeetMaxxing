@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from"react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from"@/lib/auth-context";
 import { supabase } from"@/lib/supabase";
 
@@ -8,12 +9,20 @@ export const ProfileHero = () => {
  const { user } = useAuth();
  const [loading, setLoading] = useState(false);
  const [name, setName] = useState(user?.user_metadata?.name ||"");
+ const [snackbar, setSnackbar] = useState<{ message: string } | null>(null);
 
  const handleUpdateName = async () => {
  if (!name) return;
  setLoading(true);
- await supabase.auth.updateUser({ data: { name } });
+ const { error } = await supabase.auth.updateUser({ data: { name } });
  setLoading(false);
+ if (!error) {
+ setSnackbar({ message: "Profile updated" });
+ setTimeout(() => setSnackbar(null), 3000);
+ } else {
+ setSnackbar({ message: "Failed to update profile" });
+ setTimeout(() => setSnackbar(null), 3000);
+ }
  };
 
  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,8 +48,15 @@ export const ProfileHero = () => {
  .from("avatars")
  .getPublicUrl(filePath);
 
- await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
+ const { error: updateError } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
  setLoading(false);
+ if (!updateError) {
+ setSnackbar({ message: "Avatar updated" });
+ setTimeout(() => setSnackbar(null), 3000);
+ } else {
+ setSnackbar({ message: "Failed to update avatar" });
+ setTimeout(() => setSnackbar(null), 3000);
+ }
  };
 
  const avatarUrl = user?.user_metadata?.avatar_url ||"https://api.dicebear.com/7.x/avataaars/svg?seed=fallback";
@@ -75,6 +91,14 @@ export const ProfileHero = () => {
  </div>
  <p className="text-[13px] text-text-muted">{user?.email}</p>
  </div>
+
+ <AnimatePresence>
+ {snackbar && (
+ <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-highest text-text px-4 py-3 rounded-xl shadow-sm border border-border flex items-center gap-4 z-50">
+ <span className="text-sm font-medium">{snackbar.message}</span>
+ </motion.div>
+ )}
+ </AnimatePresence>
  </div>
  );
 };
