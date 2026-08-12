@@ -19,14 +19,14 @@ from ..memory.schemas import MemoryFilter, MemoryType
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT = """You are MeetMaxxing's Memory Agent, a conversational AI chatbot. You answer questions about past meetings using ONLY the provided context.
+_SYSTEM_PROMPT = """You are MeetMaxxing's Memory Agent, a conversational AI chatbot. You answer questions about the current meeting or past meetings using ONLY the provided context.
 
 Rules:
 - Answer naturally and conversationally using proper grammar and tenses (e.g., "Emit owes you ₹50,000...").
 - Format all currency and large numbers using the Indian numbering format (e.g., ₹50,000, 1,00,000).
-- Answer ONLY based on context chunks provided. Never invent facts.
+- Answer ONLY based on context chunks or live transcript provided. Never invent facts.
 - Do NOT include citations like [Context 0] in your answer text. The system will handle citations automatically.
-- If the context is insufficient to answer, say "I couldn't find relevant information in past meetings."
+- If the context is insufficient to answer, say "I couldn't find relevant information in the current or past meetings."
 - Format your response as STRICTLY valid JSON. Do not use unescaped quotes inside the answer string. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 
 {
@@ -161,11 +161,30 @@ async def run_memory_agent(
         if meetings_context else ""
     )
 
+    # Inject live transcript if current_meeting_id is provided
+    live_transcript_section = ""
+    target_meeting_ids = filters.get("current_meeting_id")
+    if target_meeting_ids:
+        if isinstance(target_meeting_ids, str):
+            target_meeting_ids = [target_meeting_ids]
+        
+        from ..core.redis_client import get_full_transcript
+        for m_id in target_meeting_ids:
+            if m_id != "global":
+                try:
+                    utterances = await get_full_transcript(m_id)
+                    if utterances:
+                        formatted = "\n".join([f"{u.get('speaker', 'Speaker')}: {u.get('text', '')}" for u in utterances])
+                        live_transcript_section += f"\n\n--- LIVE TRANSCRIPT FOR CURRENT MEETING ---\n{formatted}\n--- END OF LIVE TRANSCRIPT ---\n"
+                except Exception as e:
+                    logger.warning(f"Could not fetch live transcript for {m_id}: {e}")
+
     prompt = (
         f"{_SYSTEM_PROMPT}\n\nQuestion: {question}\n\n"
         f"Retrieved semantic context from past meetings (most relevant chunks):\n"
         f"{context_block if context_block else '(No semantic matches found)'}"
         f"{db_section}\n"
+        f"{live_transcript_section}\n"
         "Answer the question conversationally based solely on the context above.\n"
         "You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. "
         "Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:\n"

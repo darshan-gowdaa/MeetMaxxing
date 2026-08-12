@@ -241,7 +241,7 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
             <button
               ref={dropdownBtnRef}
               onClick={() => { setShowFileDropdown(v => !v); if (!showFileDropdown) setFileSearch(""); }}
-              className="w-full bg-surface-container hover:bg-surface-container-high text-[12px] font-medium text-text rounded-full px-3 py-1.5 outline-none flex items-center gap-2 transition-colors border border-border"
+              className="w-full bg-surface-container hover:bg-surface-container-high text-[13px] font-bold text-text rounded-full px-3 py-2 outline-none flex items-center gap-2 transition-colors border border-border shadow-sm"
             >
               <i className="ri-folder-open-line text-text-muted text-[14px]"></i>
               <span className="truncate text-left flex-1">
@@ -359,10 +359,10 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
           
           {chatHistory.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[88%] px-4 py-2.5 text-[13px] leading-relaxed ${
+              <div className={`max-w-[88%] px-4 py-3 text-[13px] leading-relaxed shadow-sm ${
                 msg.role === 'user' 
-                  ? 'bg-primary text-on-primary rounded-[24px] rounded-br-sm font-medium' 
-                  : 'bg-surface-container-high text-text rounded-[24px] rounded-bl-sm border border-border'
+                  ? 'bg-primary text-on-primary rounded-[24px] rounded-br-[4px] font-medium' 
+                  : 'bg-surface-container text-text rounded-[24px] rounded-bl-[4px] border border-border'
               }`}>
                 {msg.role === 'agent' ? (
                   <div className="flex flex-col gap-2 relative group">
@@ -428,7 +428,7 @@ export function ContextAgent({ meetingId, authToken, pendingQuery, clearPendingQ
             </div>
           )}
           
-          <div className="flex items-center gap-2 bg-surface-container rounded-[28px] p-2 focus-within:ring-1 focus-within:ring-primary transition-all border border-border mx-1 mb-1">
+          <div className="flex items-center gap-2 bg-surface-container-high rounded-[28px] p-2 focus-within:ring-2 focus-within:ring-primary/50 transition-all border border-border mx-1 mb-1 shadow-sm">
             <input type="file" multiple className="hidden" accept=".pdf,.docx,.txt" ref={fileInputRef} onChange={handleFileChange} />
             
             <button 

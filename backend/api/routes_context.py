@@ -101,7 +101,7 @@ async def chat_context(
         else:
             res = await run_memory_agent(
                 question=req.query, org_id=user["org_id"], user_id=user["user_id"],
-                filters={"meeting_id": [req.meeting_id, "global"], "memory_type": "key_topic"}
+                filters={"current_meeting_id": req.meeting_id}
             )
             return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Memory Agent"), "sources": res.get("sources", [])}
     except Exception as e:
