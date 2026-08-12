@@ -73,50 +73,57 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             Full Transcript <span className="text-text-muted font-medium ml-1">({transcriptData.length} lines)</span>
           </span>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 flex-wrap" onClick={(e) => e.stopPropagation()}>
-          {onRefine && (
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
+            {(["all", "dom", "audio", "refined"] as const).map((source) => {
+              if (source === "refined" && !transcriptData.some(c => (c as Record<string, unknown>).source === "refined") && sourceFilter !== "refined") {
+                return null;
+              }
+              const labels = { all: "All", dom: "CC", audio: "Agent", refined: "Refined" };
+              const isActive = sourceFilter === source;
+              return (
+                <button
+                  key={source}
+                  onClick={() => setSourceFilter(source)}
+                  className={`px-3 py-1.5 text-[12px] font-bold rounded-full transition-colors ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
+                >
+                  {labels[source]}
+                </button>
+              );
+            })}
+          </div>
+
+          {onRefine && !transcriptData.some(c => (c as Record<string, unknown>).source === "refined") && (
             <button
               onClick={handleRefine}
               disabled={isRefining}
-              className="bg-primary text-on-primary font-bold py-2 px-4 rounded-full text-[13px] flex items-center gap-2 shadow-sm hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary-container text-on-primary-container font-bold py-1.5 px-3 rounded-full text-[12px] flex items-center gap-1.5 border border-primary/20 hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {isRefining ? (
-                <div className="flex items-center gap-2">
-                  <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary"></div>
-                  <span>Refining...</span>
-                </div>
-              ) : (
                 <>
-                  <MessageSquare className="w-4 h-4" />
-                  <span>CLEARED - REFINED transcript</span>
+                  <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary-container"></div>
+                  <span>Refining...</span>
                 </>
+              ) : (
+                <span>✨ Refine</span>
               )}
             </button>
           )}
-          <select 
-            value={sourceFilter} 
-            onChange={(e) => setSourceFilter(e.target.value as "all"|"dom"|"audio"|"refined")}
-            className="bg-surface-container-high border border-border rounded-full text-[13px] font-bold tracking-wide text-text py-2 px-4 outline-none focus:border-primary/50 transition-colors cursor-pointer appearance-none shadow-sm"
-          >
-            <option value="all">All sources</option>
-            <option value="dom">DOM (CC)</option>
-            <option value="audio">Agent (AI)</option>
-            <option value="refined">Refined (AI)</option>
-          </select>
+
           <div
-            className="w-10 h-10 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
+            className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
             onClick={handleCopy}
             title="Copy Transcript"
           >
             {copied ? <Check className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
           </div>
           <div 
-            className="w-10 h-10 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
+            className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
             onClick={() => setTranscriptOpen((o) => !o)}
           >
             {transcriptOpen
-              ? <ChevronUp className="w-6 h-6 text-text transition-colors" />
-              : <ChevronDown className="w-6 h-6 text-text transition-colors" />
+              ? <ChevronUp className="w-5 h-5 text-text transition-colors" />
+              : <ChevronDown className="w-5 h-5 text-text transition-colors" />
             }
           </div>
         </div>
