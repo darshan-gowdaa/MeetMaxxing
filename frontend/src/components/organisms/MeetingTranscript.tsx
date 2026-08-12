@@ -78,39 +78,30 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
         <div className="flex items-center gap-2 md:gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
             {(["all", "dom", "refined"] as const).map((source) => {
-              if (source === "refined" && !transcriptData.some(c => (c as Record<string, unknown>).source === "refined") && sourceFilter !== "refined") {
-                return null;
-              }
+              const hasRefinedData = transcriptData.some(c => (c as Record<string, unknown>).source === "refined");
               const labels = { all: "All", dom: "Closed Caption (By google Meet)", refined: "AI Refined Transcript" };
               const isActive = sourceFilter === source;
+              const isLoading = source === "refined" && isRefining;
+              
               return (
                 <button
                   key={source}
-                  onClick={() => setSourceFilter(source)}
-                  className={`px-3 py-1.5 text-[12px] font-bold rounded-full transition-colors ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
+                  disabled={isLoading}
+                  onClick={(e) => {
+                    if (source === "refined" && !hasRefinedData && !isRefining && onRefine) {
+                      handleRefine(e);
+                    } else {
+                      setSourceFilter(source);
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-[12px] font-bold rounded-full transition-colors ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
                 >
-                  {labels[source as keyof typeof labels]}
+                  {isLoading && <div className="md3-loading-indicator md3-loading-indicator-sm text-current"></div>}
+                  <span>{labels[source as keyof typeof labels]}</span>
                 </button>
               );
             })}
           </div>
-
-          {onRefine && !transcriptData.some(c => (c as Record<string, unknown>).source === "refined") && (
-            <button
-              onClick={handleRefine}
-              disabled={isRefining}
-              className="bg-primary-container text-on-primary-container font-bold py-1.5 px-3 rounded-full text-[12px] flex items-center gap-1.5 border border-primary/20 hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-            >
-              {isRefining ? (
-                <>
-                  <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary-container"></div>
-                  <span>Refining...</span>
-                </>
-              ) : (
-                <span>✨ Refine</span>
-              )}
-            </button>
-          )}
 
           <div
             className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
