@@ -118,12 +118,12 @@ export default function App() {
                 <button 
                   onClick={handleGenerateInsights} 
                   disabled={isProcessing} 
-                  className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3 rounded-full shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-300 mt-1 mb-2 relative overflow-hidden group"
+                  className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-3 rounded-full shadow hover:shadow-md transition-all duration-300 mt-1 mb-2 relative overflow-hidden group"
                 >
                   {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-risk rounded-full animate-pulse"></span>}
                   {isProcessing ? (
                     <span className="flex items-center gap-2">
-                      <div className="md3-loading-indicator md3-loading-indicator-sm text-white"></div>
+                      <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary"></div>
                       <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
                     </span>
                   ) : (
@@ -143,7 +143,7 @@ export default function App() {
                 <button 
                     onClick={handleGenerateInsights} 
                     disabled={isProcessing} 
-                    className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-2.5 rounded-full hover:brightness-110 active:opacity-80 transition-all mt-1 mb-1 relative overflow-hidden"
+                    className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-3 rounded-full shadow hover:shadow-md transition-shadow mt-1 mb-2 relative overflow-hidden"
                   >
                     {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-risk rounded-full animate-pulse"></span>}
                     {isProcessing ? (
@@ -152,7 +152,7 @@ export default function App() {
                       <span className="transition-all duration-500">{INSIGHT_LABELS[insightLabelIdx]}</span>
                     </span>
                     ) : (
-                      <><i className="ri-sparkling-line text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>
+                      <><i className="ri-sparkling-fill text-[15px]"></i> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>
                     )}
                   </button>
               <RecapAgent recap={recap} isProcessing={isProcessing} />

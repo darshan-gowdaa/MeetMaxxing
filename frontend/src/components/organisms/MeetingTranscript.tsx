@@ -62,11 +62,11 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
   return (
     <div className={`bg-surface-container rounded-[32px] overflow-hidden shadow-sm border border-border transition-all duration-300 ${transcriptOpen ? 'shadow-md shadow-primary/5' : ''}`}>
       <div 
-        className="w-full flex items-center justify-between px-4 md:px-6 py-4 md:py-5 hover:bg-surface-container-high active:opacity-80 transition-all cursor-pointer group flex-wrap gap-4"
+        className="w-full flex items-center justify-between px-4 md:px-6 py-4 md:py-5 hover:bg-surface-container-high transition-colors cursor-pointer group flex-wrap gap-4"
         onClick={() => setTranscriptOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-[20px] bg-primary-container border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-[1.03]">
+          <div className="w-12 h-12 rounded-[20px] bg-primary-container border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
             <MessageSquare className="w-6 h-6 text-on-primary-container" />
           </div>
           <span className="text-[18px] font-extrabold tracking-tight text-text group-hover:text-primary transition-colors">
@@ -78,7 +78,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             <button
               onClick={handleRefine}
               disabled={isRefining}
-              className="bg-primary text-on-primary font-bold py-2 px-4 rounded-full text-[13px] flex items-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary text-on-primary font-bold py-2 px-4 rounded-full text-[13px] flex items-center gap-2 shadow-sm hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isRefining ? (
                 <div className="flex items-center gap-2">
@@ -104,14 +104,14 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             <option value="refined">Refined (AI)</option>
           </select>
           <div
-            className="w-10 h-10 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-all cursor-pointer text-text hover:text-on-secondary-container shadow-sm active:scale-95"
+            className="w-10 h-10 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
             onClick={handleCopy}
             title="Copy Transcript"
           >
             {copied ? <Check className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
           </div>
           <div 
-            className="w-10 h-10 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-all duration-300 cursor-pointer active:scale-95 group-hover:text-primary shadow-sm"
+            className="w-10 h-10 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
             onClick={() => setTranscriptOpen((o) => !o)}
           >
             {transcriptOpen
@@ -133,7 +133,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
               >
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2.5 text-[14px] font-bold tracking-wide text-text group-hover/chunk:text-primary transition-colors">
-                    <span className="w-8 h-8 rounded-[12px] bg-primary-container text-on-primary-container border border-primary/20 text-[12px] flex items-center justify-center shadow-inner group-hover/chunk:scale-105 transition-transform">
+                    <span className="w-8 h-8 rounded-[12px] bg-primary-container text-on-primary-container border border-primary/20 text-[12px] flex items-center justify-center shadow-inner transition-colors">
                       {(chunk.speaker || "?").charAt(0).toUpperCase()}
                     </span>
                     {chunk.speaker || "Unknown"}
