@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-// @ts-expect-error: no types for this package
 import {
   M3Animator,
   setupCanvas,
