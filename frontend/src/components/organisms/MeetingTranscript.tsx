@@ -17,7 +17,9 @@ interface MeetingTranscriptProps {
 
 export default function MeetingTranscript({ transcriptData, onRefine }: MeetingTranscriptProps) {
  const [transcriptOpen, setTranscriptOpen] = useState(false);
- const [sourceFilter, setSourceFilter] = useState<"all"|"dom"|"audio"|"refined">("all");
+ const [sourceFilter, setSourceFilter] = useState<"all"|"dom"|"audio"|"refined">(
+   () => transcriptData?.some(c => (c as Record<string, unknown>).source === "refined") ? "refined" : "all"
+ );
  const [copied, setCopied] = useState(false);
  const [isRefining, setIsRefining] = useState(false);
 
@@ -75,11 +77,11 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
         </div>
         <div className="flex items-center gap-2 md:gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
-            {(["all", "dom", "audio", "refined"] as const).map((source) => {
+            {(["all", "dom", "refined"] as const).map((source) => {
               if (source === "refined" && !transcriptData.some(c => (c as Record<string, unknown>).source === "refined") && sourceFilter !== "refined") {
                 return null;
               }
-              const labels = { all: "All", dom: "CC", audio: "Agent", refined: "Refined" };
+              const labels = { all: "All", dom: "Closed Caption (By google Meet)", refined: "AI Refined Transcript" };
               const isActive = sourceFilter === source;
               return (
                 <button
@@ -87,7 +89,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                   onClick={() => setSourceFilter(source)}
                   className={`px-3 py-1.5 text-[12px] font-bold rounded-full transition-colors ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
                 >
-                  {labels[source]}
+                  {labels[source as keyof typeof labels]}
                 </button>
               );
             })}
