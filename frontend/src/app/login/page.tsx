@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { RiMailLine, RiLockPasswordLine, RiSparkling2Fill, RiUserLine } from "@remixicon/react";
+import { PasswordStrength, isValidPassword } from "@/components/molecules/PasswordStrength";
 
 type Mode = "signin" | "signup" | "forgot";
 
@@ -49,13 +50,8 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      if (password.length < 8) {
-        setError("Password must be at least 8 characters.");
-        setLoading(false);
-        return;
-      }
-      if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-        setError("Password must contain at least one uppercase letter and one number.");
+      if (!isValidPassword(password)) {
+        setError("Please meet all password requirements.");
         setLoading(false);
         return;
       }
@@ -135,6 +131,7 @@ export default function LoginPage() {
                 <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" />
                 <input type="password" required={mode !== "forgot"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
               </div>
+              <PasswordStrength password={password} visible={mode === 'signup' && password.length > 0} />
             </div>
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out w-full flex items-center justify-center shrink-0 ${error || success ? 'h-14 mt-4 opacity-100' : 'h-0 mt-0 opacity-0'}`}>

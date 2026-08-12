@@ -3,7 +3,8 @@
 import { useState } from"react";
 import { useAuth } from"@/lib/auth-context";
 
-import { supabase } from"@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { PasswordStrength, isValidPassword } from "@/components/molecules/PasswordStrength";
 
 export const ProfileSecurity = () => {
  const { session, signOut } = useAuth();
@@ -14,7 +15,10 @@ export const ProfileSecurity = () => {
 
  const handleUpdatePassword = async (e: React.FormEvent) => {
  e.preventDefault();
- if (!password) return;
+ if (!isValidPassword(password)) {
+ setMessage("Please meet all password requirements.");
+ return;
+ }
  setPwdLoading(true);
  setMessage("");
  
@@ -63,9 +67,10 @@ export const ProfileSecurity = () => {
  <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
  <div className="flex flex-col gap-1">
  <h3 className="text-[15px] font-bold text-text">Change Password</h3>
- <p className="text-[13px] text-text-muted font-medium">Update your account password. Must be at least 6 characters.</p>
+ <p className="text-[13px] text-text-muted font-medium">Update your account password securely.</p>
  </div>
- <form onSubmit={handleUpdatePassword} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mt-2">
+ <div className="flex flex-col gap-2 mt-2">
+ <form onSubmit={handleUpdatePassword} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
  <input
  type="password"
  placeholder="New password"
@@ -73,7 +78,6 @@ export const ProfileSecurity = () => {
  onChange={(e) => setPassword(e.target.value)}
  className="w-full sm:w-auto flex-1 px-4 py-3 rounded-xl bg-surface border border-outline-variant text-text focus:outline-none focus:border-primary transition-colors"
  required
- minLength={6}
  />
  <button 
  type="submit"
@@ -83,6 +87,8 @@ export const ProfileSecurity = () => {
  {pwdLoading ?"Updating...":"Update Password"}
  </button>
  </form>
+ <PasswordStrength password={password} visible={password.length > 0} />
+ </div>
  {message && <p className="text-sm font-medium text-text-variant">{message}</p>}
  </div>
 
