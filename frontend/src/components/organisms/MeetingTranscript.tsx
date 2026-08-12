@@ -12,13 +12,26 @@ import type { Meeting } from"@/types";
 
 interface MeetingTranscriptProps {
  transcriptData: Meeting["transcript_data"];
+ onRefine?: () => Promise<void>;
 }
 
-export default function MeetingTranscript({ transcriptData }: MeetingTranscriptProps) {
+export default function MeetingTranscript({ transcriptData, onRefine }: MeetingTranscriptProps) {
  const [transcriptOpen, setTranscriptOpen] = useState(false);
- const [sourceFilter, setSourceFilter] = useState<"all"|"dom"|"audio">("all");
+ const [sourceFilter, setSourceFilter] = useState<"all"|"dom"|"audio"|"refined">("all");
  const [copied, setCopied] = useState(false);
+ const [isRefining, setIsRefining] = useState(false);
 
+ const handleRefine = async (e: React.MouseEvent) => {
+   e.stopPropagation();
+   if (!onRefine) return;
+   setIsRefining(true);
+   try {
+     await onRefine();
+     setSourceFilter("refined");
+   } finally {
+     setIsRefining(false);
+   }
+ };
  const handleCopy = async (e: React.MouseEvent) => {
  e.stopPropagation();
  if (!transcriptData) return;
@@ -61,14 +74,34 @@ export default function MeetingTranscript({ transcriptData }: MeetingTranscriptP
  </span>
  </div>
  <div className="flex items-center gap-2 md:gap-4 flex-wrap"onClick={(e) => e.stopPropagation()}>
+ {onRefine && (
+   <button
+     onClick={handleRefine}
+     disabled={isRefining}
+     className="bg-primary text-on-primary font-bold py-1.5 px-3 rounded-full text-[12px] flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-sm"
+   >
+     {isRefining ? (
+       <div className="flex items-center gap-2">
+         <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary"></div>
+         <span>Refining...</span>
+       </div>
+     ) : (
+       <>
+         <MessageSquare className="w-4 h-4" />
+         <span>CLEARED - REFINED transcript</span>
+       </>
+     )}
+   </button>
+ )}
  <select 
  value={sourceFilter} 
- onChange={(e) => setSourceFilter(e.target.value as"all"|"dom"|"audio")}
+ onChange={(e) => setSourceFilter(e.target.value as"all"|"dom"|"audio"|"refined")}
  className="bg-surface-container border border-zinc-700/50 rounded-full text-[12px] font-bold tracking-wide text-zinc-300 py-1.5 px-3 outline-none focus:border-indigo-500/50 transition-colors cursor-pointer appearance-none"
  >
  <option value="all">All sources</option>
  <option value="dom">DOM (CC)</option>
  <option value="audio">Agent (AI)</option>
+ <option value="refined">Refined (AI)</option>
  </select>
  <div
  className="w-8 h-8 rounded-full bg-surface-container border border-zinc-700/50 flex items-center justify-center hover:bg-zinc-700 transition-colors cursor-pointer text-zinc-400 hover:text-zinc-200"

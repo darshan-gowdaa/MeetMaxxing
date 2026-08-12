@@ -172,6 +172,57 @@ async def schedule_followup(
     return {"status": "success", "scheduling_result": schedule_result}
 
 
+@router.post("/{meeting_id}/refine_transcript")
+async def refine_transcript(
+    meeting_id: str,
+    user: dict = Depends(get_current_user),
+):
+    """Refine the transcript using AI."""
+    supabase = get_supabase_admin()
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    target_id = meeting.get("id") or meeting_id
+    transcript_data = meeting.get("transcript_data") or []
+    
+    if not transcript_data:
+        raise HTTPException(status_code=400, detail="No transcript data found")
+
+    try:
+        from ..services.llm_service import call_llm
+        raw_text = "\n".join([f"[{t.get('timestamp_ms', 0)}ms] {t.get('speaker', 'Unknown')}: {t.get('text', '')}" for t in transcript_data])
+        
+        prompt = f"""You are an expert transcription editor. Review the following raw meeting transcript.
+Your task is to produce a CLEARED - REFINED transcript. Fix grammar, remove filler words, correct diarization errors, and make it highly readable while preserving all meaning.
+Output ONLY a JSON array of objects, each containing:
+- speaker: The speaker's name
+- timestamp_ms: The original timestamp in ms
+- text: The refined text
+
+Raw transcript:
+{raw_text}"""
+        
+        import json
+        refined_json_str = await call_llm(prompt, model="gemini-2.5-flash", response_format="json")
+        refined_data = json.loads(refined_json_str)
+        
+        # Ensure format
+        if isinstance(refined_data, list):
+            for item in refined_data:
+                item["source"] = "refined"
+            
+            # Combine with old or replace
+            # Let's replace the whole transcript_data with refined
+            supabase.table("meetings").update({"transcript_data": refined_data}).eq("id", target_id).execute()
+            return {"status": "success", "transcript_data": refined_data}
+        else:
+            raise ValueError("LLM did not return a list")
+    except Exception as e:
+        logger.error(f"Failed to refine transcript: {e}")
+        raise HTTPException(status_code=500, detail="Failed to refine transcript")
+
+
 async def _run_end_pipeline(
     meeting_id: str,
     title: str,

@@ -163,6 +163,26 @@ export function useMeetingManager(id: string) {
     setCalendarState("success");
   };
 
+  const refineTranscript = async () => {
+    if (!meeting) return;
+    try {
+      const token = await getAuthToken();
+      const res = await fetch(`${BACKEND_URL}/meeting/${id}/refine_transcript`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMeeting(prev => prev ? { ...prev, transcript_data: data.transcript_data } : prev);
+      } else {
+        throw new Error("Failed to refine transcript");
+      }
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  };
+
   return {
     meeting,
     loading,
@@ -174,6 +194,7 @@ export function useMeetingManager(id: string) {
     toggleItemStatus,
     changePriority,
     handleGmail,
-    handleCalendar
+    handleCalendar,
+    refineTranscript
   };
 }

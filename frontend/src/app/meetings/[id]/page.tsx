@@ -30,7 +30,8 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     toggleItemStatus,
     changePriority,
     handleGmail,
-    handleCalendar
+    handleCalendar,
+    refineTranscript
   } = useMeetingManager(id);
 
   if (loading) {
@@ -110,7 +111,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         )}
 
         {meeting.transcript_data && meeting.transcript_data.length > 0 && (
-          <MeetingTranscript transcriptData={meeting.transcript_data} />
+          <MeetingTranscript transcriptData={meeting.transcript_data} onRefine={refineTranscript} />
         )}
 
       </div>
