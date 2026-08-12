@@ -107,11 +107,11 @@ def serve():
     try:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         grpc_bus_pb2_grpc.add_AgentTaskBusServicer_to_server(AgentTaskBusServicer(), server)
-        port = server.add_insecure_port('[::]:50051')
+        port = server.add_insecure_port('127.0.0.1:50051')
         if port == 0:
             logger.warning("[gRPC Task Bus] Port 50051 already bound or unavailable. Skipping gRPC server startup.")
             return
-        logger.info("Starting gRPC Task Bus on port 50051...")
+        logger.info("Starting gRPC Task Bus on 127.0.0.1:50051...")
         server.start()
         server.wait_for_termination()
     except Exception as e:
