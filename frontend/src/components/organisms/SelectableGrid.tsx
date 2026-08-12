@@ -72,9 +72,9 @@ export function SelectableGrid<T>({
   return (
     <div className="relative pb-24">
       {/* Sticky Header with Overlay Action Bar */}
-      <div className="sticky top-[76px] z-40 pt-1 pb-4">
-        <div className="absolute inset-x-0 bottom-4 top-1 bg-surface2/70 rounded-[20px] border border-border/40 shadow-sm z-[-1]" />
-        <div className="relative min-h-[48px] px-4 py-2 grid items-center">
+      <div className="sticky top-0 md:top-[76px] z-40 pt-2 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="absolute inset-x-0 bottom-4 top-0 sm:top-1 bg-surface2/85 backdrop-blur-xl sm:rounded-[20px] border-b sm:border border-border/40 shadow-sm z-[-1]" />
+        <div className="relative min-h-[48px] px-2 sm:px-4 py-2 grid items-center">
           {/* Default Header */}
           <div className={`col-start-1 row-start-1 transition-all duration-300 ${selectionMode ? 'opacity-0 pointer-events-none' : 'opacity-100 '}`}>
             {renderHeader?.({ selectionMode, setManualSelectionMode, activeGroup })}
