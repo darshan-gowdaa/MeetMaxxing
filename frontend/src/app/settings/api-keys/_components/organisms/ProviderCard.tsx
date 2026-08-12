@@ -11,7 +11,7 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
  const isFree = provider.pricing === 'Free Tier' || ['google', 'groq', 'mistral', 'openrouter'].includes(provider.id);
 
  return (
- <div className="p-5 grid grid-cols-1 md:grid-cols-[240px_1fr_auto] items-center gap-6 hover:bg-surface-highest transition-colors group">
+ <div className="p-4 sm:p-5 flex flex-col md:grid md:grid-cols-[240px_1fr_auto] md:items-center gap-4 md:gap-6 hover:bg-surface-highest transition-colors group">
  
  {/* Column 1: Leading Avatar & Title */}
  <div className="flex items-center gap-4">
@@ -46,8 +46,8 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
  </div>
 
  {/* Column 3: Trailing Actions */}
- <div className="flex items-center justify-end gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
- <button onClick={onAdd} className="h-10 px-4 rounded-full bg-primary-container text-on-primary-container text-[14px] font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center gap-1.5 shadow-sm">
+ <div className="flex items-center justify-end w-full md:w-auto gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 mt-2 md:mt-0">
+ <button onClick={onAdd} className="flex-1 md:flex-none h-10 px-4 rounded-full bg-primary-container text-on-primary-container text-[14px] font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center md:justify-start gap-1.5 shadow-sm">
  <RiAddLine className="w-4 h-4"/> {apiKeys.length > 0 ?"Add":"Connect"}
  </button>
  <button onClick={onHelp} className="w-10 h-10 rounded-full flex items-center justify-center text-text hover:bg-surface3 transition-colors focus:ring-2 focus:ring-primary/20 outline-none"title="Setup docs">

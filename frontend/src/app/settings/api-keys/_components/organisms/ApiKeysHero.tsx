@@ -2,9 +2,9 @@ import { RiAddLine } from"@remixicon/react";
 
 export function ApiKeysHero({ onAdd }: { onAdd: () => void }) {
  return (
- <div className="relative overflow-hidden bg-surface border border-border rounded-[28px] p-6 sm:p-8 mb-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+ <div className="relative overflow-hidden bg-surface border border-border rounded-[24px] sm:rounded-[28px] p-5 sm:p-8 mb-6 sm:mb-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
  <div className="flex flex-col gap-2 max-w-xl relative z-10">
- <h1 className="text-[32px] sm:text-[40px] font-black tracking-tight text-text leading-none">API Keys</h1>
+ <h1 className="text-[28px] sm:text-[32px] lg:text-[40px] font-black tracking-tight text-text leading-none">API Keys</h1>
  <p className="text-[14px] sm:text-[15px] text-text-muted leading-relaxed">
  Your keys stay yours. We encrypt every key before it touches our database and only decrypt it in memory, for the seconds it takes to call the provider. We never view, log, or share your API keys.
  </p>

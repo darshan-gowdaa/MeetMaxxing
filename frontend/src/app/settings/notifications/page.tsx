@@ -65,13 +65,13 @@ export default function NotificationsPage() {
  };
 
  return (
- <div className="flex flex-col gap-8 max-w-3xl animate-fade-scale">
- <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-text">Notifications</h1>
+ <div className="flex flex-col gap-6 sm:gap-8 max-w-3xl animate-fade-scale">
+ <h1 className="text-[28px] sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text">Notifications</h1>
  
  {loading ? (
  <SettingsListSkeleton />
  ) : (
- <div className="bg-surface-container rounded-[32px] p-8 flex flex-col gap-6 border border-border">
+ <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
  <label className="flex items-center justify-between gap-4 cursor-pointer">
  <div className="flex flex-col">
  <span className="font-bold text-lg text-text">Email Summaries</span>

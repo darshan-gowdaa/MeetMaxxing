@@ -24,13 +24,13 @@ export default function GeneralPreferences() {
   ];
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-3xl animate-in fade-in duration-300">
+    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl animate-in fade-in duration-300">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black text-text tracking-tight">
+        <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
           General Preferences
         </h1>
       </div>
-      <section className="p-6 rounded-[32px] bg-surface-container border border-border flex flex-col gap-6">
+      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
           <RiTranslate2 className="w-4 h-4 text-primary"/> Default Meeting Language
         </h2>
@@ -45,7 +45,7 @@ export default function GeneralPreferences() {
         </select>
       </section>
 
-      <section className="p-6 rounded-[32px] bg-surface-container border border-border flex flex-col gap-6">
+      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
           <RiFileList3Line className="w-4 h-4 text-primary"/> Summary Style
         </h2>

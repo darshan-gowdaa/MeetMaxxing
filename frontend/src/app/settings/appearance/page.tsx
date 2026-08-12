@@ -23,10 +23,10 @@ export default function AppearancePage() {
   ];
 
   return (
-    <div className="flex flex-col gap-8 max-w-3xl animate-fade-scale">
-      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-text">Appearance</h1>
+    <div className="flex flex-col gap-6 sm:gap-8 max-w-3xl animate-fade-scale">
+      <h1 className="text-[28px] sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text">Appearance</h1>
       
-      <div className="bg-surface-container rounded-[32px] p-8 flex flex-col gap-6 border border-border">
+      <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
         <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted">Theme Preference</h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup">

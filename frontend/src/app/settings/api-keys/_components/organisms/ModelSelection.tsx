@@ -3,13 +3,13 @@ import { ApiKey } from"../../types";
 
 export function ModelSelection({ keys }: { keys: ApiKey[] }) {
  return (
- <div className="mt-10 flex flex-col gap-6">
+ <div className="mt-8 sm:mt-10 flex flex-col gap-5 sm:gap-6">
  <div className="flex flex-col gap-1">
- <h2 className="text-2xl font-bold text-text tracking-tight">Model Selection</h2>
- <p className="text-base text-text-muted">Select which intelligence powers your workspace.</p>
+ <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight">Model Selection</h2>
+ <p className="text-[14px] sm:text-base text-text-muted">Select which intelligence powers your workspace.</p>
  </div>
  
- <div className="bg-surface border border-border rounded-[24px] p-6 shadow-sm flex flex-col gap-8">
+ <div className="bg-surface border border-border rounded-[24px] p-5 sm:p-6 shadow-sm flex flex-col gap-6 sm:gap-8">
  <div className="flex flex-col gap-4">
  <h3 className="font-medium text-[15px] text-text">Routing Mode</h3>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -46,7 +46,7 @@ export const ProfileHero = () => {
  const avatarUrl = user?.user_metadata?.avatar_url ||"https://api.dicebear.com/7.x/avataaars/svg?seed=fallback";
 
  return (
- <div className="flex flex-col md:flex-row gap-6 items-center md:items-start p-6 rounded-[24px] bg-surface border border-border shadow-sm mb-2">
+ <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-center md:items-start p-5 md:p-6 rounded-[24px] bg-surface border border-border shadow-sm mb-2">
  <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-border bg-surface shrink-0">
  {/* eslint-disable-next-line @next/next/no-img-element */}
  <img src={avatarUrl} alt="Avatar"className="w-full h-full object-cover"/>

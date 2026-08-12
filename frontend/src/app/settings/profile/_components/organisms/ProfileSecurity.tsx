@@ -60,7 +60,7 @@ export const ProfileSecurity = () => {
 
  return (
  <div className="flex flex-col gap-6">
- <div className="flex flex-col gap-4 p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
+ <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
  <div className="flex flex-col gap-1">
  <h3 className="text-[15px] font-bold text-text">Change Password</h3>
  <p className="text-[13px] text-text-muted font-medium">Update your account password. Must be at least 6 characters.</p>
@@ -86,7 +86,7 @@ export const ProfileSecurity = () => {
  {message && <p className="text-sm font-medium text-text-variant">{message}</p>}
  </div>
 
- <div className="flex flex-col gap-4 p-6 rounded-[24px] bg-risk-container border border-risk/20 text-on-risk-container shadow-sm">
+ <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-risk-container border border-risk/20 text-on-risk-container shadow-sm">
  <div className="flex flex-col gap-1">
  <h3 className="text-[15px] font-bold text-risk">Danger Zone</h3>
  <p className="text-[13px] text-risk/80 font-medium">Permanently delete your account and all associated data. This action is irreversible.</p>
