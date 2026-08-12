@@ -12,4 +12,4 @@ services:
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: KEK_SECRET
-        value: 208f1b36864582d7b15339c8a1645e65e5ebc637e98be10ef7b121238b3f4e02
+        sync: false
