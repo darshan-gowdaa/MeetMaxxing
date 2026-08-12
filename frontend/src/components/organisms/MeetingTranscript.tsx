@@ -24,14 +24,15 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
  const [isRefining, setIsRefining] = useState(false);
  const [refineError, setRefineError] = useState("");
 
- const handleRefine = async (e: React.MouseEvent) => {
-   e.stopPropagation();
-   if (!onRefine) return;
+ const handleRefine = async (e?: React.MouseEvent) => {
+   if (e) e.stopPropagation();
+   if (!onRefine || isRefining) return;
    setIsRefining(true);
    setRefineError("");
+   setSourceFilter("refined");
+   setTranscriptOpen(true);
    try {
      await onRefine();
-     setSourceFilter("refined");
    } catch (e: unknown) {
      console.error(e);
      setRefineError((e as Error).message || "Failed to refine transcript.");
@@ -98,6 +99,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                       handleRefine(e);
                     } else {
                       setSourceFilter(source);
+                      setTranscriptOpen(true);
                     }
                   }}
                   className={`flex items-center gap-2 px-3 py-1.5 text-[12px] font-bold rounded-full transition-colors ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}

@@ -202,7 +202,7 @@ CRITICAL RULES:
 4. FIX grammar, correct obvious diarization (speaker) errors, and make it read like a professional script.
 5. PRESERVE all original meaning, decisions, and context. Do NOT summarize; just clean it perfectly.
 
-Output ONLY a JSON array of objects, each containing:
+Output ONLY a JSON object with a single key "transcript" containing an array of objects, each containing:
 - speaker: The speaker's name
 - timestamp_ms: The original timestamp in ms (use the first timestamp of the merged chunk)
 - text: The perfectly refined, clean text
@@ -213,6 +213,9 @@ Raw transcript:
         import json
         refined_json_str, _ = await generate_content_with_fallback(prompt, response_format_json=True, bypass_cache=True, max_tokens=8192)
         
+        if not refined_json_str:
+            raise ValueError("Failed to get response from AI providers")
+
         # sometimes LLMs return JSON inside markdown block
         refined_json_str = refined_json_str.strip()
         if refined_json_str.startswith("```json"):
@@ -225,16 +228,22 @@ Raw transcript:
         refined_data = json.loads(refined_json_str.strip())
         
         # Ensure format
-        if isinstance(refined_data, list):
-            for item in refined_data:
+        if isinstance(refined_data, dict) and "transcript" in refined_data:
+            refined_list = refined_data["transcript"]
+        elif isinstance(refined_data, list):
+            refined_list = refined_data
+        else:
+            raise ValueError("LLM did not return a valid list or transcript object")
+            
+        if isinstance(refined_list, list):
+            for item in refined_list:
                 item["source"] = "refined"
             
             # Combine with old or replace
-            # Let's replace the whole transcript_data with refined
-            supabase.table("meetings").update({"transcript_data": refined_data}).eq("id", target_id).execute()
-            return {"status": "success", "transcript_data": refined_data}
+            supabase.table("meetings").update({"transcript_data": refined_list}).eq("id", target_id).execute()
+            return {"status": "success", "transcript_data": refined_list}
         else:
-            raise ValueError("LLM did not return a list")
+            raise ValueError("LLM did not return a list inside transcript")
     except Exception as e:
         logger.error(f"Failed to refine transcript: {e}")
         raise HTTPException(status_code=500, detail="Failed to refine transcript")
