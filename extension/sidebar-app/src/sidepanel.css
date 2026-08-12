@@ -76,14 +76,14 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ── Recap Markdown ────────────────────────────────────────────────────── */
 .recap-markdown { font-size: 12.5px; line-height: 1.65; color: var(--text); }
-.recap-markdown h1, .recap-markdown h2 { font-size: 13px; font-weight: 700; color: var(--success); margin: 10px 0 4px; }
-.recap-markdown h3, .recap-markdown h4 { font-size: 12.5px; font-weight: 600; color: var(--success); margin: 8px 0 3px; }
+.recap-markdown h1, .recap-markdown h2 { font-size: 13px; font-weight: 700; color: var(--tertiary); margin: 10px 0 4px; }
+.recap-markdown h3, .recap-markdown h4 { font-size: 12.5px; font-weight: 600; color: var(--tertiary); margin: 8px 0 3px; }
 .recap-markdown p { margin: 0 0 6px; }
 .recap-markdown p:last-child { margin-bottom: 0; }
 .recap-markdown ul, .recap-markdown ol { margin: 4px 0 6px; padding-left: 18px; }
 .recap-markdown li { margin: 2px 0; }
-.recap-markdown strong { color: var(--success); font-weight: 600; }
+.recap-markdown strong { color: var(--tertiary); font-weight: 600; }
 .recap-markdown em { color: var(--text-muted); }
-.recap-markdown code { background: var(--surface-container-high); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 11px; color: var(--success); }
-.recap-markdown blockquote { border-left: 2px solid var(--success); padding-left: 10px; color: var(--text-muted); margin: 4px 0; }
+.recap-markdown code { background: var(--surface-container-high); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 11px; color: var(--tertiary); }
+.recap-markdown blockquote { border-left: 2px solid var(--tertiary); padding-left: 10px; color: var(--text-muted); margin: 4px 0; }
 .recap-markdown hr { border-color: var(--border); margin: 8px 0; }

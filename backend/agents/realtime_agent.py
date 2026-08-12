@@ -27,7 +27,7 @@ _SYSTEM_PROMPT = """You are MeetMaxxing, an AI meeting copilot giving LIVE assis
 Your job:
 1. SUGGESTIONS ("What to answer") — 1-2 precise, direct, and actionable talking points the user should say right now in response to the current discussion. Must be extremely concise.
 2. RISKS — Flag any red flags in the conversation. 1-2 max. Only flag real issues visible in the text.
-3. NEXT_QUESTION ("Suggestion of what to Ask") — A single, highly strategic, thought-provoking question to ask next. Must be EXACTLY 1 sentence.
+3. NEXT_QUESTIONS ("Suggestion of what to Ask") — Exactly 2 highly strategic, thought-provoking questions to ask next based on the conversation context.
 
 CRITICAL RULES:
 - Only reference names, numbers, and facts that EXPLICITLY appear in the transcript or Uploaded Meeting Context Documents.
@@ -38,7 +38,7 @@ Respond ONLY in valid JSON matching this exact schema. Do NOT include markdown c
 {
   "suggestions": ["...", "..."],
   "risks": ["..."],
-  "next_question": "..."
+  "next_questions": ["...", "..."]
 }"""
 
 
@@ -72,7 +72,7 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
             "meeting_id": meeting_id,
             "suggestions": ["Listening for spoken speech... Turn on Google Meet Captions (CC) at the bottom right to begin real-time AI analysis."],
             "risks": [],
-            "next_question": "Waiting for speaker utterance...",
+            "next_questions": ["Waiting for speaker utterance..."],
             "transcript_chunks": 0,
         }
 
@@ -146,7 +146,7 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
             "error": f"AI temporarily unavailable. Insights will auto-refresh shortly.",
             "suggestions": ["AI temporarily unavailable. Insights will auto-refresh."],
             "risks": [],
-            "next_question": "Waiting for AI...",
+            "next_questions": ["Waiting for AI..."],
             "transcript_chunks": len(chunks),
             "powered_by": "Error",
         }
@@ -154,11 +154,16 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
     from ..services.guardrails import validate_realtime_output
     validated_suggs = validate_realtime_output(result.get("suggestions", []), transcript_text)
 
+    # In case the model still returns a string
+    raw_nq = result.get("next_questions") or result.get("next_question") or []
+    if isinstance(raw_nq, str):
+        raw_nq = [raw_nq]
+
     res = {
         "meeting_id": meeting_id,
         "suggestions": validated_suggs,
         "risks": result.get("risks", []),
-        "next_question": result.get("next_question", ""),
+        "next_questions": raw_nq,
         "transcript_chunks": len(chunks),
         "powered_by": result.get("powered_by", "Unknown API"),
     }

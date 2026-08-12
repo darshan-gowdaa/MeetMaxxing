@@ -205,8 +205,8 @@ export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: st
 }
 
 // ── NextQuestionAgent ─────────────────────────────────────────────────────────
-export function NextQuestionAgent({ nextQuestion, isProcessing, onSendToIntelliAgent }: { nextQuestion: string, isProcessing?: boolean, onSendToIntelliAgent?: (q: string) => void }) {
-  const [copied, setCopied] = useState(false);
+export function NextQuestionAgent({ nextQuestions, isProcessing, onSendToIntelliAgent }: { nextQuestions: string[], isProcessing?: boolean, onSendToIntelliAgent?: (q: string) => void }) {
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   return (
     <div className="bg-secondary-container border-border rounded-[24px] border p-3 min-h-[100px] flex flex-col">
@@ -216,39 +216,42 @@ export function NextQuestionAgent({ nextQuestion, isProcessing, onSendToIntelliA
         </h3>
       </div>
 
-      <div className="mt-1 flex-1 flex flex-col justify-center">
-        {nextQuestion ? (
-          <div
-            onClick={() => copyToClipboard(nextQuestion, () => { setCopied(true); setTimeout(() => setCopied(false), 2000); })}
-            className="p-4 rounded-[24px] bg-surface-container border border-border hover:brightness-110 text-[13px] text-text transition-all duration-300 group cursor-pointer"
-          >
-            <div className="flex justify-between items-start gap-3">
-              <span className="leading-relaxed font-medium active:opacity-70">{nextQuestion}</span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={(e) => { e.stopPropagation(); copyToClipboard(nextQuestion, () => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
-                  className="w-7 h-7 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-secondary-container text-text-muted hover:text-on-secondary-container active:opacity-80 transition-all"
-                  title="Copy"
-                >
-                  <i className={copied ? "ri-check-line text-success" : "ri-clipboard-line"}></i>
-                </button>
-                {onSendToIntelliAgent && (
+      <div className="mt-1 flex-1 flex flex-col gap-2 justify-center">
+        {nextQuestions && nextQuestions.length > 0 ? (
+          nextQuestions.map((q, idx) => (
+            <div
+              key={idx}
+              onClick={() => copyToClipboard(q, () => { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); })}
+              className="p-4 rounded-[24px] bg-surface-container border border-border hover:brightness-110 text-[13px] text-text transition-all duration-300 group cursor-pointer"
+            >
+              <div className="flex justify-between items-start gap-3">
+                <span className="leading-relaxed font-medium active:opacity-70">{q}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
-                    onClick={(e) => { e.stopPropagation(); onSendToIntelliAgent(nextQuestion); }}
-                    className="w-7 h-7 flex items-center justify-center rounded-xl bg-primary hover:brightness-110 text-on-primary active:opacity-80 transition-all shadow-sm"
-                    title="Send to AI Chat"
+                    onClick={(e) => { e.stopPropagation(); copyToClipboard(q, () => { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); }); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-secondary-container text-text-muted hover:text-on-secondary-container active:opacity-80 transition-all"
+                    title="Copy"
                   >
-                    <i className="ri-arrow-right-up-line"></i>
+                    <i className={copiedIdx === idx ? "ri-check-line text-success" : "ri-clipboard-line"}></i>
                   </button>
-                )}
+                  {onSendToIntelliAgent && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onSendToIntelliAgent(q); }}
+                      className="w-7 h-7 flex items-center justify-center rounded-xl bg-primary hover:brightness-110 text-on-primary active:opacity-80 transition-all shadow-sm"
+                      title="Send to AI Chat"
+                    >
+                      <i className="ri-arrow-right-up-line"></i>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          ))
         ) : isProcessing ? (
           <PulsePlaceholder lines={2} />
         ) : (
           <div className="text-xs text-text-variant italic text-center py-3 px-4 bg-surface-container rounded-[20px] border border-border w-full">
-            Click &ldquo;Generate AI Insights&rdquo; to formulate a question.
+            Click &ldquo;Generate AI Insights&rdquo; to formulate questions.
           </div>
         )}
       </div>

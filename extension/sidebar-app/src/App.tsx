@@ -10,7 +10,7 @@ import "./sidepanel.css";
 export default function App() {
   const {
     authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
-    nextQuestion, recap, errorMessage, isProcessing, poweredBy,
+    nextQuestions, recap, errorMessage, isProcessing, poweredBy,
     elapsedTime, triggerAction, clearTranscript, clearError
   } = useCopilot();
 
@@ -132,7 +132,7 @@ export default function App() {
                 </button>
                 
                 <SuggestionAgent suggestions={suggestions} isProcessing={isProcessing} />
-                <NextQuestionAgent nextQuestion={nextQuestion} isProcessing={isProcessing} onSendToIntelliAgent={(q) => { setActiveTab("rag"); setPendingQuery(q); }} />
+                <NextQuestionAgent nextQuestions={nextQuestions} isProcessing={isProcessing} onSendToIntelliAgent={(q) => { setActiveTab("rag"); setPendingQuery(q); }} />
             </div>
 
             <div className={activeTab === "rag" ? "flex flex-col flex-1 min-h-0" : "hidden"}>

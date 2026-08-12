@@ -12,7 +12,7 @@ export function useCopilot() {
   const [isEnded, setIsEnded] = useState<boolean>(false);
   const [transcriptLines, setTranscriptLines] = useState<TranscriptChunk[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [nextQuestion, setNextQuestion] = useState<string>("");
+  const [nextQuestions, setNextQuestions] = useState<string[]>([]);
   const [recap, setRecap] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [activeRequests, setActiveRequests] = useState<number>(0);
@@ -47,8 +47,10 @@ export function useCopilot() {
     if (data.error) setErrorMessage(data.error);
     else setErrorMessage("");
     if (data.suggestions && Array.isArray(data.suggestions)) setSuggestions(data.suggestions);
-    if (data.next_question) {
-      setNextQuestion(Array.isArray(data.next_question) ? data.next_question.join(" ") : String(data.next_question));
+    if (data.next_questions && Array.isArray(data.next_questions)) {
+      setNextQuestions(data.next_questions);
+    } else if (data.next_question) {
+      setNextQuestions(Array.isArray(data.next_question) ? data.next_question : [String(data.next_question)]);
     }
     if (data.recap) setRecap(data.recap);
   };
@@ -110,7 +112,7 @@ export function useCopilot() {
         if (!msg.reused) {
           setTranscriptLines([]);
           setSuggestions([]);
-          setNextQuestion("");
+          setNextQuestions([]);
           setRecap("");
         }
       } else if (msg.type === "MEETING_ENDED") {
@@ -148,7 +150,13 @@ export function useCopilot() {
           }
           if (res.copilot_state) {
             setSuggestions(res.copilot_state.suggestions || []);
-            setNextQuestion(res.copilot_state.next_question || "");
+            if (res.copilot_state.next_questions && Array.isArray(res.copilot_state.next_questions)) {
+              setNextQuestions(res.copilot_state.next_questions);
+            } else if (res.copilot_state.next_question) {
+              setNextQuestions(Array.isArray(res.copilot_state.next_question) ? res.copilot_state.next_question : [String(res.copilot_state.next_question)]);
+            } else {
+              setNextQuestions([]);
+            }
             setRecap(res.copilot_state.recap || "");
             if (res.copilot_state.error_message) setErrorMessage(res.copilot_state.error_message);
           }
@@ -250,7 +258,7 @@ export function useCopilot() {
     } catch (err: any) {
       const msg = `Backend unreachable: ${err.message}. Ensure backend is running.`;
       setErrorMessage(msg);
-      if (actionType === "ASK_NEXT_QUESTION" || actionType === "GENERATE_INSIGHTS") setNextQuestion(msg);
+      if (actionType === "ASK_NEXT_QUESTION" || actionType === "GENERATE_INSIGHTS") setNextQuestions([msg]);
       if (actionType === "REQUEST_RECAP" || actionType === "GENERATE_INSIGHTS") setRecap(msg);
     } finally {
       setActiveRequests(prev => Math.max(0, prev - 1));
@@ -267,7 +275,7 @@ export function useCopilot() {
   const clearError = () => setErrorMessage("");
 
   return { authToken,
-    meetingId, meetingTitle, isEnded, transcriptLines, suggestions, nextQuestion, recap,
+    meetingId, meetingTitle, isEnded, transcriptLines, suggestions, nextQuestions, recap,
     errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction, clearTranscript, clearError
   };
 }

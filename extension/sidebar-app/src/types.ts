@@ -10,6 +10,7 @@ export interface CopilotUpdate {
   suggestions?: string[];
   risks?: string[];
   next_question?: string | string[];
+  next_questions?: string[];
   recap?: string;
   error?: string;
   status?: string;
