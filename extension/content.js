@@ -534,13 +534,18 @@ function injectVisibilityButton() {
 
   // Poll to find the CC button and insert next to it
   const attachInterval = setInterval(() => {
-    const ccBtn = document.querySelector('button[aria-label*="caption" i], button[data-tooltip*="caption" i]');
+    // User explicitly stated .UTNHae is the CC button container/span
+    let ccBtn = document.querySelector('.UTNHae');
+    if (!ccBtn) {
+      ccBtn = document.querySelector('button[aria-label*="caption" i], button[data-tooltip*="caption" i]');
+    }
+    
     if (ccBtn) {
-      // Meet wraps buttons in a couple of divs/spans.
-      // Usually .UTNHae or similar container holds the button.
+      // If it's inside another wrapper, go up, otherwise use it directly
       const wrapper = ccBtn.closest('.UTNHae') || ccBtn.parentElement;
       if (wrapper && wrapper.parentElement) {
         if (!document.getElementById("mm-caption-visibility-btn")) {
+          // Insert after the wrapper so it sits right next to it
           wrapper.parentElement.insertBefore(btn, wrapper.nextSibling);
         }
         clearInterval(attachInterval);

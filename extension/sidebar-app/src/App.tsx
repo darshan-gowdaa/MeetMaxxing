@@ -97,17 +97,17 @@ export default function App() {
         <main>
           <div id="active-state" className="state-container">
             
-            <div className="flex bg-surface-container p-1.5 rounded-full border border-border shrink-0 sticky top-0 z-10 mb-3">
-              <button onClick={() => setActiveTab("live")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "live" ? "bg-primary-container text-on-primary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
+            <div className="flex bg-surface-container p-1.5 rounded-full border border-border shrink-0 sticky top-0 z-10 mb-3 shadow-sm">
+              <button onClick={() => setActiveTab("live")} className={`flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "live" ? "bg-primary-container text-on-primary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-sparkling-fill mr-1"></i>Copilot
               </button>
-              <button onClick={() => setActiveTab("rag")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "rag" ? "bg-secondary-container text-on-secondary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
+              <button onClick={() => setActiveTab("rag")} className={`flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "rag" ? "bg-primary-container text-on-primary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-robot-2-fill mr-1"></i>Chat
               </button>
-              <button onClick={() => setActiveTab("recap")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "recap" ? "bg-tertiary-container text-on-tertiary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
+              <button onClick={() => setActiveTab("recap")} className={`flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "recap" ? "bg-primary-container text-on-primary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-article-fill mr-1"></i>Recap
               </button>
-              <button onClick={() => setActiveTab("transcript")} className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "transcript" ? "bg-secondary-container text-on-secondary-container" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
+              <button onClick={() => setActiveTab("transcript")} className={`flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all duration-300 ${activeTab === "transcript" ? "bg-primary-container text-on-primary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-high active:opacity-80"}`}>
                 <i className="ri-chat-voice-fill mr-1"></i>Feed
               </button>
             </div>
