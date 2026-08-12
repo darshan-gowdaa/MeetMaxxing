@@ -27,9 +27,9 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
  <div className="flex flex-col gap-1 min-w-0">
  <h3 className="font-bold text-[16px] text-text tracking-tight truncate">{provider.name}</h3>
  {isFree ? (
- <span className="text-[12px] font-medium text-success-text">Free Tier</span>
+ <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-success/10 text-[11px] font-bold text-success capitalize border border-success/20 w-fit">Free Tier</span>
  ) : (
- <span className="text-[12px] text-text-muted capitalize">{provider.pricing}</span>
+ <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-variant text-[11px] font-bold text-text-muted capitalize border border-border w-fit">{provider.pricing}</span>
  )}
  </div>
  </div>
