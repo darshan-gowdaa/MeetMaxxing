@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getWebUrl } from "../config";
 
 export function IdleState() {
@@ -36,12 +36,23 @@ export function IdleState() {
 
 export function EndedState({ meetingId, meetingTitle }: { meetingId: string, meetingTitle: string }) {
   const [opened, setOpened] = useState(false);
+  const [countdown, setCountdown] = useState(5);
 
   const openDashboard = () => {
     if (!meetingId || opened) return;
     setOpened(true);
     window.open(`${getWebUrl()}/meetings/${meetingId}`, "_blank");
   };
+
+  useEffect(() => {
+    if (opened) return;
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      openDashboard();
+    }
+  }, [countdown, opened, meetingId]);
 
   const handleOpenClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -60,7 +71,11 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string, mee
 
       <div className="space-y-3">
         <h2 className="text-[32px] font-bold tracking-tighter text-text leading-none">Complete</h2>
-        <p className="text-[14px] font-medium text-text-muted max-w-[260px] leading-relaxed mx-auto">AI has processed your transcript into a full intelligence report.</p>
+        <p className="text-[14px] font-medium text-text-muted max-w-[260px] leading-relaxed mx-auto">
+          AI has processed your transcript into a full intelligence report.
+          <br/>
+          {!opened && countdown > 0 && <span className="text-primary font-bold mt-2 inline-block">Opening dashboard in {countdown}s...</span>}
+        </p>
       </div>
 
       <div className="flex flex-col items-center gap-4 w-full max-w-[260px] mt-4">
