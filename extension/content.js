@@ -488,13 +488,13 @@ function injectVisibilityButton() {
   if (document.getElementById("mm-caption-visibility-btn")) return;
   const btn = document.createElement("button");
   btn.id = "mm-caption-visibility-btn";
+  
+  // Style it to match Meet's bottom bar buttons (circular, dark gray, no border)
   btn.style.cssText = `
-    position: fixed; bottom: 18px; left: 240px; z-index: 999999;
     background: #3c4043; color: #e8eaed; width: 40px; height: 40px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; border: none;
-    box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
-    transition: background 0.2s;
+    border-radius: 100px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none; margin: 0 4px;
+    transition: background 0.2s; flex-shrink: 0;
   `;
   
   const eyeOpenSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c5.392 0 9.878 3.88 10.819 9-.94 5.12-5.427 9-10.819 9-5.392 0-9.878-3.88-10.819-9C2.121 6.88 6.608 3 12 3zm0 16a9.005 9.005 0 0 0 8.777-7A9.005 9.005 0 0 0 12 5a9.005 9.005 0 0 0-8.777 7A9.005 9.005 0 0 0 12 19zm0-2a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>`;
@@ -531,7 +531,22 @@ function injectVisibilityButton() {
       btn.title = "Captions Visible (MeetMaxxing)";
     }
   };
-  document.body.appendChild(btn);
+
+  // Poll to find the CC button and insert next to it
+  const attachInterval = setInterval(() => {
+    const ccBtn = document.querySelector('button[aria-label*="caption" i], button[data-tooltip*="caption" i]');
+    if (ccBtn) {
+      // Meet wraps buttons in a couple of divs/spans.
+      // Usually .UTNHae or similar container holds the button.
+      const wrapper = ccBtn.closest('.UTNHae') || ccBtn.parentElement;
+      if (wrapper && wrapper.parentElement) {
+        if (!document.getElementById("mm-caption-visibility-btn")) {
+          wrapper.parentElement.insertBefore(btn, wrapper.nextSibling);
+        }
+        clearInterval(attachInterval);
+      }
+    }
+  }, 2000);
 }
 
 function autoEnableCC() {

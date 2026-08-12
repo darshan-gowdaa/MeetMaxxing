@@ -50,21 +50,21 @@ export default function MeetingCard({
  const variant = colorVariants[index % colorVariants.length];
 
  return (
- <div className={`group relative rounded-[24px] border spring flex flex-col h-auto min-h-[200px] md:h-[220px] overflow-visible ${variant}`}>
+ <div className={`group relative rounded-[32px] border spring flex flex-col h-auto min-h-[200px] md:h-[220px] overflow-visible ${variant} hover:-translate-y-1 hover:shadow-xl transition-all duration-300`}>
  {/* Top glow accent removed to comply with MD3 tonal design */}
 
  {/* 3-Dots Menu (Top Right) */}
  <div className="absolute top-4 right-4 z-20"ref={menuRef}>
  <button
  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen((o) => !o); }}
- className="w-8 h-8 rounded-full bg-surface2 hover:bg-surface3 flex items-center justify-center spring-colors border border-border shadow-sm"
+ className="w-10 h-10 rounded-2xl bg-surface2 hover:bg-surface3 flex items-center justify-center spring-colors border border-border shadow-sm active:scale-[0.97]"
  aria-label="Meeting options"
  >
  <RiMoreLine className="w-4 h-4 text-text-muted"/>
  </button>
 
  {menuOpen && (
- <div className="absolute top-full right-0 mt-2 w-44 bg-surface-highest rounded-[16px] border border-border shadow-sm border border-border animate-fade-scale overflow-hidden">
+ <div className="absolute top-full right-0 mt-2 w-44 bg-surface-highest rounded-3xl border border-border shadow-sm animate-fade-scale overflow-hidden">
  {onSelect && (
  <>
  <button

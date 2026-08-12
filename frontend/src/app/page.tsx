@@ -55,7 +55,7 @@ export default function Dashboard() {
         <section className="flex flex-col gap-5 mt-2">
           <div className="min-h-[280px]">
             {error ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-4 rounded-[24px] border border-risk/30 bg-risk-container/20 text-center p-6">
+              <div className="h-72 flex flex-col items-center justify-center gap-4 rounded-[32px] border border-risk/30 bg-risk-container/20 text-center p-6">
                 <div className="w-14 h-14 rounded-full bg-risk-container flex items-center justify-center">
                   <RiCloseLine className="w-7 h-7 text-risk" />
                 </div>
@@ -68,8 +68,8 @@ export default function Dashboard() {
                 </button>
               </div>
             ) : !loading && filtered.length === 0 ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-border bg-surface-dim text-center p-6">
-                <div className="w-16 h-16 rounded-[20px] bg-surface2 border border-border flex items-center justify-center mb-1">
+              <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[32px] border border-dashed border-border bg-surface-dim text-center p-6">
+                <div className="w-16 h-16 rounded-[24px] bg-surface2 border border-border flex items-center justify-center mb-1">
                   <RiVideoChatLine className="w-8 h-8 text-text-muted" />
                 </div>
                 <p className="text-[15px] font-bold text-text">
@@ -108,7 +108,7 @@ export default function Dashboard() {
                             <select 
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value as "date" | "name" | "duration")}
-                              className="w-full h-9 bg-surface2 border border-border rounded-full pl-4 pr-8 text-[13px] text-text font-medium focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none"
+                              className="w-full h-10 md:h-12 bg-surface2 border border-border rounded-full pl-5 pr-10 text-[14px] text-text font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 spring-colors cursor-pointer appearance-none hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all"
                             >
                               <option value="date">Sort by Date</option>
                               <option value="name">Sort by Name</option>
@@ -119,7 +119,7 @@ export default function Dashboard() {
 
                           <button
                             onClick={() => setManualSelectionMode(true)}
-                            className="flex-1 sm:flex-none h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:opacity-80 flex items-center justify-center gap-2"
+                            className="flex-1 sm:flex-none h-10 md:h-12 px-6 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[14px] font-bold text-text transition-all active:scale-[0.97] hover:-translate-y-0.5 hover:shadow-sm flex items-center justify-center gap-2"
                           >
                             <RiCheckLine className="w-4 h-4" />
                             Select
@@ -133,7 +133,7 @@ export default function Dashboard() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search meetings…"
-                            className="h-9 w-full sm:w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
+                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 spring-colors hover:-translate-y-0.5 hover:shadow-sm transition-all"
                           />
                           {search && (
                             <button

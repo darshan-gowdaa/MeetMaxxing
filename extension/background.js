@@ -89,12 +89,15 @@ async function authFetch(url, options = {}) {
   return res;
 }
 
-// Configure side panel to open on action icon click by default across all tabs
 const _actionApi = chrome.action || chrome.browserAction;
 if (_actionApi && _actionApi.onClicked) {
   _actionApi.onClicked.addListener((tab) => {
     if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_PANEL" }).catch(() => {});
+      try {
+        chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_PANEL" }, () => {
+          let _ = chrome.runtime.lastError;
+        });
+      } catch (e) {}
     }
   });
 }
@@ -239,7 +242,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Enable side panel on meeting start
     const tabId = sender?.tab?.id || activeMeetTabId;
     if (tabId) {
-      chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }).catch(() => {});
+      try {
+        chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }, () => {
+          let _ = chrome.runtime.lastError;
+        });
+      } catch (e) {}
     }
 
     chrome.storage.local.get(["meetCodeMap"], (res) => {
@@ -296,7 +303,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "ENSURE_SIDE_PANEL_OPEN") {
     const tabId = sender?.tab?.id || activeMeetTabId;
     if (tabId) {
-      chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }).catch(() => {});
+      try {
+        chrome.tabs.sendMessage(tabId, { type: "TOGGLE_PANEL_OPEN" }, () => {
+          let _ = chrome.runtime.lastError;
+        });
+      } catch (e) {}
     }
     return false;
   }

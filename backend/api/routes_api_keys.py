@@ -7,6 +7,7 @@ import httpx
 from datetime import UTC, datetime
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from loguru import logger
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from ..core.auth import get_current_user

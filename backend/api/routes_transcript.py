@@ -8,6 +8,7 @@ import json
 import uuid
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from loguru import logger
 from pydantic import BaseModel
 
 from ..agents.orchestrator import AgentTrigger, dispatch

@@ -185,12 +185,12 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
 
       <AnimatePresence>
         {openState && (
-          <motion.div
+           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ type: "spring", stiffness: 500, damping: 40 }}
-            className="absolute top-full right-0 mt-3 w-72 bg-surface-container-highest rounded-[24px] shadow-sm flex flex-col p-2 z-50 origin-top-right"
+            className="absolute top-full right-0 mt-3 w-72 bg-surface-container-highest rounded-[32px] shadow-lg flex flex-col p-2 z-50 origin-top-right border border-border"
           >
             <div className="px-4 py-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex flex-shrink-0 items-center justify-center overflow-hidden font-medium text-xl">
@@ -204,11 +204,11 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
             
             <div className="h-[1px] bg-border mx-3 my-1" />
             
-            <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-[16px] text-[14px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none">
+            <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-3xl text-[14px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none hover:-translate-y-0.5 hover:shadow-sm">
               <RiSettings3Line className="w-5 h-5 text-text-muted" /> Settings
             </Link>
             
-            <button onClick={() => { setOpenState(false); signOut(); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-[14px] font-medium text-risk hover:bg-risk-container hover:text-on-risk-container transition-colors outline-none">
+            <button onClick={() => { setOpenState(false); signOut(); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-3xl text-[14px] font-medium text-risk hover:bg-risk-container hover:text-on-risk-container transition-colors outline-none hover:-translate-y-0.5 hover:shadow-sm">
               <RiLogoutBoxRLine className="w-5 h-5" /> Sign out
             </button>
           </motion.div>
