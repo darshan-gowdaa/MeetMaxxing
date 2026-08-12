@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "MeetMaxxing — AI Meeting Copilot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Real-time AI suggestions, risk flags, and auto-summaries for Google Meet",
   "browser_specific_settings": {
     "gecko": {
