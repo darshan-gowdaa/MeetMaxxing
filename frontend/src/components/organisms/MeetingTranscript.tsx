@@ -22,14 +22,20 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
  );
  const [copied, setCopied] = useState(false);
  const [isRefining, setIsRefining] = useState(false);
+ const [refineError, setRefineError] = useState("");
 
  const handleRefine = async (e: React.MouseEvent) => {
    e.stopPropagation();
    if (!onRefine) return;
    setIsRefining(true);
+   setRefineError("");
    try {
      await onRefine();
      setSourceFilter("refined");
+   } catch (e: unknown) {
+     console.error(e);
+     setRefineError((e as Error).message || "Failed to refine transcript.");
+     setSourceFilter("dom");
    } finally {
      setIsRefining(false);
    }
@@ -123,7 +129,17 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
       </div>
 
       {transcriptOpen && (
-        <div className="border-t border-border px-4 md:px-6 pb-4 md:pb-6 pt-4 md:pt-5 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar bg-surface">
+        <div className="border-t border-border px-4 md:px-6 pb-4 md:pb-6 pt-4 md:pt-5 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar bg-surface relative">
+          
+          {refineError && (
+            <div className="bg-risk-container/40 border border-risk/30 rounded-xl p-3 flex flex-col gap-1.5 mb-2">
+              <div className="flex items-center gap-2 text-risk font-semibold text-[13px]">
+                <i className="ri-error-warning-fill"></i> Refinement Failed
+              </div>
+              <p className="text-[12px] text-risk/80">{refineError}</p>
+            </div>
+          )}
+
           {isRefining && sourceFilter === "refined" ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 animate-fade-in">
               <div className="md3-loading-indicator md3-loading-indicator-lg text-primary"></div>
