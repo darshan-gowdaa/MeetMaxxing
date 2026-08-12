@@ -107,8 +107,8 @@ export default function ContextManagerPage() {
                   getDate={(f) => new Date(f.date)}
                   onDelete={handleMultiDelete}
                   renderHeader={({ setManualSelectionMode }) => (
-                    <div className="flex items-center justify-between gap-4 w-full overflow-x-auto hide-scrollbar pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-                      <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2 shrink-0 whitespace-nowrap">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                      <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
                         <RiFileLine className="w-5 h-5 text-text-muted" />
                         Uploaded Contexts
                         <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
@@ -116,9 +116,9 @@ export default function ContextManagerPage() {
                         </span>
                       </h2>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="flex items-center gap-2">
-                          <div className="relative w-[140px]">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <div className="relative flex-1 sm:flex-none sm:w-[140px]">
                             <select 
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value as "date" | "name" | "size")}
@@ -133,21 +133,21 @@ export default function ContextManagerPage() {
 
                           <button
                             onClick={() => setManualSelectionMode(true)}
-                            className="h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:opacity-80 flex items-center justify-center gap-2 whitespace-nowrap"
+                            className="flex-1 sm:flex-none h-9 px-4 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] font-bold text-text transition-colors active:opacity-80 flex items-center justify-center gap-2"
                           >
                             <RiCheckLine className="w-4 h-4" />
                             Select
                           </button>
                         </div>
 
-                        <div className="relative w-48 sm:w-56">
+                        <div className="relative w-full sm:w-auto">
                           <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                           <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search files…"
-                            className="h-9 w-full bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
+                            className="h-9 w-full sm:w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors"
                           />
                           {search && (
                             <button
