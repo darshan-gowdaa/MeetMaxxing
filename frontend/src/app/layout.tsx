@@ -34,7 +34,9 @@ export default function RootLayout({
  <ThemeProvider attribute="class"defaultTheme="system"enableSystem disableTransitionOnChange>
  <AuthProvider>
  <Topbar />
+ <main className="flex-1 pb-16 md:pb-0 flex flex-col w-full h-full">
  {children}
+ </main>
  </AuthProvider>
  </ThemeProvider>
  </body>
