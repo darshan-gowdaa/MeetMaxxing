@@ -244,6 +244,20 @@ Traditional AI meeting assistants rely on a **single prompt** to perform transcr
 
 ---
 
+## Security & Privacy
+
+MeetMaxxing is built with robust security measures to protect user data, API limits, and LLM safety:
+
+| Security Feature | Description |
+| :--- | :--- |
+| **Row Level Security (RLS)** | Supabase PostgreSQL enforces strict RLS policies, ensuring users can only access their own meeting data and context. |
+| **LLM Guardrails** | Built-in input/output validation (`guardrails.py`) protects against prompt injections and enforces safe AI responses. |
+| **API Rate Limiting** | Redis-backed rate limiting (`rate_limiter.py`) protects backend services from abuse and quota exhaustion. |
+| **Secure Authentication** | Seamless OAuth integration via Google for secure authentication without storing user passwords (`auth.py`). |
+| **BYOK Encryption** | Bring Your Own Key implementation securely handles user LLM API keys, avoiding centralized credential honeypots (`security.py`). |
+
+---
+
 ## Persistent Memory with Qdrant
 
 MeetMaxxing doesn't forget previous meetings. Conversations are transformed into **vector embeddings** and stored inside **Qdrant**, enabling semantic search across historical discussions.
