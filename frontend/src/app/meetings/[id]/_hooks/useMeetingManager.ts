@@ -102,22 +102,23 @@ export function useMeetingManager(id: string) {
         .join("\n");
       
       let summaryText = meeting.summary || "No summary.";
-      if (summaryText.length > 600) {
-        summaryText = summaryText.substring(0, 600) + "... (see link for more)";
+      if (summaryText.length > 300) {
+        summaryText = summaryText.substring(0, 300) + "... (see link)";
       }
       
-      const bodyStr = `Hi team,\n\nMeeting: ${meeting.title || ""}\n\nSummary:\n${summaryText}\n\n` +
+      let bodyStr = `Hi team,\n\nMeeting: ${meeting.title || ""}\n\nSummary:\n${summaryText}\n\n` +
         (actionList ? `Action Items:\n${actionList}\n\n` : "") +
         `Details: ${window.location.href}\n\nBest,\nMeetMaxxing AI Copilot`;
       
-      const body = encodeURIComponent(bodyStr.substring(0, 1500)); 
+      if (bodyStr.length > 1000) bodyStr = bodyStr.substring(0, 1000) + "...";
+      const body = encodeURIComponent(bodyStr); 
       
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
       } else {
         const w = window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank");
-        if (!w) window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        if (!w) window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
       }
       
       setGmailState("success");
@@ -135,7 +136,7 @@ export function useMeetingManager(id: string) {
       let detailsText = `Summary:\n${meeting.summary || ""}\n\n` +
         (meeting.action_items?.length ? `Actions:\n${meeting.action_items.map((a, i) => `${i + 1}. ${a.description}`).join("\n")}\n\n` : "") +
         `Dashboard: ${window.location.href}`;
-      if (detailsText.length > 1000) detailsText = detailsText.substring(0, 1000) + "...";
+      if (detailsText.length > 500) detailsText = detailsText.substring(0, 500) + "...";
       
       const details = encodeURIComponent(detailsText);
       const start = new Date(Date.now() + 86400000); start.setUTCHours(10, 0, 0, 0);
@@ -157,7 +158,7 @@ export function useMeetingManager(id: string) {
             const url = data.gcal_url || data.html_link;
             if (url) { 
               if (newWindow) newWindow.location.href = url;
-              else window.open(url, "_blank");
+              else window.location.href = url;
               setCalendarState("success"); 
               return; 
             }
@@ -167,7 +168,7 @@ export function useMeetingManager(id: string) {
       
       const fallbackUrl = buildGcalUrl();
       if (newWindow) newWindow.location.href = fallbackUrl;
-      else window.open(fallbackUrl, "_blank");
+      else window.location.href = fallbackUrl;
       setCalendarState("success");
     })();
   };
