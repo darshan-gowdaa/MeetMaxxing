@@ -112,7 +112,13 @@ export function useMeetingManager(id: string) {
       
       const body = encodeURIComponent(bodyStr.substring(0, 1500)); 
       
-      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank");
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      } else {
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank");
+      }
+      
       setGmailState("success");
     } catch { setGmailState("error"); }
   };
