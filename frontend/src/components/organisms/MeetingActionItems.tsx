@@ -156,7 +156,7 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
  key={item.id}
  role="button"
  onClick={() => toggleItemStatus(item.id)}
- className={`group w-full text-left rounded-[16px] border p-4 spring flex items-start gap-3 hover:shadow-sm border border-border active:opacity-80 ${
+ className={`group w-full text-left rounded-[16px] border border-border p-4 spring flex items-start gap-3 hover:shadow-sm active:opacity-80 ${
  isDone
  ?"bg-success/5 border-success/20 opacity-75"
  : isInProgress

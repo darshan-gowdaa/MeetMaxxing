@@ -41,6 +41,7 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string; mee
   const openDashboard = () => {
     if (!meetingId || opened) return;
     setOpened(true);
+    // May be blocked by popup blocker if auto-triggered
     window.open(`${getWebUrl()}/meetings/${meetingId}`, "_blank");
   };
 
@@ -73,7 +74,7 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string; mee
           href={`${getWebUrl()}/meetings/${meetingId}`}
           target="_blank"
           rel="noreferrer"
-          onClick={(e) => { e.preventDefault(); openDashboard(); }}
+          onClick={() => setOpened(true)}
           className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary hover:brightness-110 font-bold py-4 px-6 rounded-full transition-all active:opacity-80 text-[14.5px] no-underline"
         >
           <i className="ri-layout-masonry-fill" /> Open Dashboard <i className="ri-arrow-right-line ml-auto opacity-70" />

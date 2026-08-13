@@ -92,7 +92,7 @@ export function useMeetingManager(id: string) {
     }
   };
 
-  const handleGmail = async () => {
+  const handleGmail = () => {
     if (!meeting) return;
     setGmailState("loading");
     try {
@@ -116,14 +116,15 @@ export function useMeetingManager(id: string) {
       if (isMobile) {
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
       } else {
-        window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank");
+        const w = window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank");
+        if (!w) window.location.href = `mailto:?subject=${subject}&body=${body}`;
       }
       
       setGmailState("success");
     } catch { setGmailState("error"); }
   };
 
-  const handleCalendar = async () => {
+  const handleCalendar = () => {
     if (!meeting) return;
     setCalendarState("loading");
     
@@ -144,29 +145,31 @@ export function useMeetingManager(id: string) {
       return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${fmt(start)}/${fmt(end)}${add}`;
     };
     
-    try {
-      const token = await getAuthToken();
-      const res = await fetch(`${BACKEND_URL}/calendar/add-url?meeting_id=${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        try {
-          const data = await res.json();
-          const url = data.gcal_url || data.html_link;
-          if (url) { 
-            if (newWindow) newWindow.location.href = url;
-            else window.open(url, "_blank");
-            setCalendarState("success"); 
-            return; 
-          }
-        } catch {}
-      }
-    } catch { }
-    
-    const fallbackUrl = buildGcalUrl();
-    if (newWindow) newWindow.location.href = fallbackUrl;
-    else window.open(fallbackUrl, "_blank");
-    setCalendarState("success");
+    (async () => {
+      try {
+        const token = await getAuthToken();
+        const res = await fetch(`${BACKEND_URL}/calendar/add-url?meeting_id=${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          try {
+            const data = await res.json();
+            const url = data.gcal_url || data.html_link;
+            if (url) { 
+              if (newWindow) newWindow.location.href = url;
+              else window.open(url, "_blank");
+              setCalendarState("success"); 
+              return; 
+            }
+          } catch {}
+        }
+      } catch { }
+      
+      const fallbackUrl = buildGcalUrl();
+      if (newWindow) newWindow.location.href = fallbackUrl;
+      else window.open(fallbackUrl, "_blank");
+      setCalendarState("success");
+    })();
   };
 
   const refineTranscript = async () => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { format } from"date-fns";
 import {
  RiCalendarLine as Calendar,
@@ -33,6 +35,8 @@ export default function MeetingHeader({
  });
  }
  const participantsList = Array.from(set);
+
+ const [linkCopied, setLinkCopied] = useState(false);
 
  const handleExportTxt = () => {
  let content = `Meeting: ${meeting.title || 'Untitled'}\n`;
@@ -115,20 +119,21 @@ export default function MeetingHeader({
  <>
  <div className="flex flex-wrap gap-2">
  <button
- onClick={() => {
- navigator.clipboard.writeText(window.location.href);
- const btn = document.getElementById("copy-link-btn");
- if (btn) {
- btn.innerHTML ="Copied!";
- setTimeout(() => { btn.innerHTML = '<svg class="w-3.5 h-3.5"viewBox="0 0 24 24"fill="currentColor"><path d="M7 6V3C7 2.44772 7.44772 2 8 2H19C19.5523 2 20 2.44772 20 3V14C20 14.5523 19.5523 15 19 15H16V18C16 18.5523 15.5523 19 15 19H4C3.44772 19 3 18.5523 3 18V7C3 6.44772 3.44772 6 4 6H7ZM7 8H4V17H15V15H8C7.44772 15 7 14.5523 7 14V8ZM9 4V13H18V4H9Z"></path></svg> Copy Link'; }, 2000);
- }
- }}
- id="copy-link-btn"
- className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"
- >
- <svg className="w-3.5 h-3.5"viewBox="0 0 24 24"fill="currentColor"><path d="M7 6V3C7 2.44772 7.44772 2 8 2H19C19.5523 2 20 2.44772 20 3V14C20 14.5523 19.5523 15 19 15H16V18C16 18.5523 15.5523 19 15 19H4C3.44772 19 3 18.5523 3 18V7C3 6.44772 3.44772 6 4 6H7ZM7 8H4V17H15V15H8C7.44772 15 7 14.5523 7 14V8ZM9 4V13H18V4H9Z"></path></svg>
- Copy Link
- </button>
+    onClick={() => {
+      navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }}
+    id="copy-link-btn"
+    className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"
+  >
+    {linkCopied ? "Copied!" : (
+      <>
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 6V3C7 2.44772 7.44772 2 8 2H19C19.5523 2 20 2.44772 20 3V14C20 14.5523 19.5523 15 19 15H16V18C16 18.5523 15.5523 19 15 19H4C3.44772 19 3 18.5523 3 18V7C3 6.44772 3.44772 6 4 6H7ZM7 8H4V17H15V15H8C7.44772 15 7 14.5523 7 14V8ZM9 4V13H18V4H9Z"></path></svg>
+        Copy Link
+      </>
+    )}
+  </button>
  <ActionButton label="Send via Gmail"icon={GmailIcon} state={gmailState}
  successLabel="Gmail Opened"onClick={handleGmail} />
  <ActionButton label="Sync Calendar"icon={GoogleCalendarIcon} state={calendarState}
