@@ -24,7 +24,7 @@
 
 <br />
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f31f.png" /> Project Vision
+## Project Vision
 
 Modern meetings generate valuable discussions, decisions, and action items — but much of that information is quickly forgotten or scattered across notes, emails, and calendars. **MeetMaxxing** reimagines meeting intelligence through a **multi-agent architecture**, where specialized AI agents collaborate instead of relying on a single monolithic AI workflow. Built around **Google ADK**, **Lyzr**, **Agent-to-Agent (A2A) communication**, and **Qdrant semantic memory**, it demonstrates how modern AI systems can coordinate, remember context, automate follow-ups, and assist users throughout an online meeting.
 
@@ -32,22 +32,25 @@ Modern meetings generate valuable discussions, decisions, and action items — b
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2728.png" /> Core Features
+## Core Features
 
 | Feature | Description |
 | :--- | :--- |
-| 🤖 Multi-Agent Intelligence | Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM. |
-| ⚡ Real-Time Assistance | Contextual suggestions, meeting insights, and intelligent support while the meeting is in progress. |
-| 🧠 Semantic Memory | Store and retrieve meeting knowledge using vector embeddings powered by Qdrant. |
-| 📝 Smart Meeting Summaries | Automatically generate concise summaries, key discussion points, and actionable takeaways. |
-| ✉️ AI Follow-ups | Generate professional follow-up emails containing meeting highlights and action items. |
-| 📅 Intelligent Scheduling | Create reminders and follow-up meetings directly from extracted action items. |
-| 📄 Document Question Answering | Upload supporting documents and let AI agents answer questions using meeting context. |
-| ⏱️ Late Join Recaps | Users joining late receive an instant AI-generated summary of everything discussed so far. |
+| Multi-Agent Intelligence | Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM. |
+| Real-Time Assistance | Contextual suggestions, meeting insights, and intelligent support while the meeting is in progress. |
+| Semantic Memory | Store and retrieve meeting knowledge using vector embeddings powered by Qdrant. |
+| Smart Meeting Summaries | Automatically generate concise summaries, key discussion points, and actionable takeaways. |
+| AI Follow-ups | Generate professional follow-up emails containing meeting highlights and action items. |
+| Intelligent Scheduling | Create reminders and follow-up meetings directly from extracted action items. |
+| Document Question Answering | Upload supporting documents and let AI agents answer questions using meeting context. |
+| Late Join Recaps | Users joining late receive an instant AI-generated summary of everything discussed so far. |
+| Bring Your Own Key (BYOK) | Securely manage your own LLM API keys for complete control over usage and AI provider choices. |
+| Refined AI Transcripts | Advanced AI-refined transcripts with robust LLM fallback, error handling, and quotas. |
+| Cross-Browser Support | Fully supported extension for both Chrome and Firefox using isolated background routing. |
 
 ---
 
-# 🧩 Chrome Extension
+# Chrome Extension
 
 The Chrome Extension is the primary AI workspace inside Google Meet, providing contextual assistance without interrupting the meeting.
 
@@ -68,21 +71,21 @@ The Chrome Extension is the primary AI workspace inside Google Meet, providing c
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f310.png" /> AI Agent Ecosystem
+## AI Agent Ecosystem
 
 MeetMaxxing follows a **collaborative multi-agent architecture** where each agent has a clearly defined responsibility, instead of overloading a single model with every task.
 
 | Agent | Responsibility | Showcase |
 | :--- | :--- | :--- |
-| Transcription Agent 🎙️ | Streams and processes meeting transcripts live. | Live Transcript — rolling transcript generated during the meeting. |
-| Realtime Agent ⚡ | Generates contextual suggestions and live assistance during meetings. | Live AI Insights (Copilot) — real-time suggestions and meeting intelligence. |
-| Summary Agent 📝 | Produces concise meeting summaries, key points, and action items. | Meeting Summaries — AI-generated overview and detailed discussion points. |
-| Memory Agent 🧠 | Stores semantic embeddings inside Qdrant and retrieves historical meeting knowledge. | Semantic Search — retrieve information using similarity, not keywords. |
-| Email Agent ✉️ | Drafts professional follow-up emails using meeting context. | Mail Agent — generates follow-up emails from discussions. |
-| Scheduler Agent 📅 | Converts action items into calendar events and reminders. | Calendar Agent — turns action items into reminders/events. |
-| Docs QA Agent 📄 | Answers user questions using uploaded documents combined with meeting context. | RAG ChatBot — ask questions using uploaded docs and meeting knowledge. |
-| Late Join Agent ⏱️ | Instantly summarizes prior discussion for participants joining mid-meeting. | Recap Agent — instant summary for late joiners. |
-| Orchestrator Agent 🎭 | Coordinates communication between agents and routes tasks intelligently (A2A hub). | Core routing layer — no dedicated UI. |
+| Transcription Agent | Streams and processes meeting transcripts live. | Live Transcript — rolling transcript generated during the meeting. |
+| Realtime Agent | Generates contextual suggestions and live assistance during meetings. | Live AI Insights (Copilot) — real-time suggestions and meeting intelligence. |
+| Summary Agent | Produces concise meeting summaries, key points, and action items. | Meeting Summaries — AI-generated overview and detailed discussion points. |
+| Memory Agent | Stores semantic embeddings inside Qdrant and retrieves historical meeting knowledge. | Semantic Search — retrieve information using similarity, not keywords. |
+| Email Agent | Drafts professional follow-up emails using meeting context. | Mail Agent — generates follow-up emails from discussions. |
+| Scheduler Agent | Converts action items into calendar events and reminders. | Calendar Agent — turns action items into reminders/events. |
+| Docs QA Agent | Answers user questions using uploaded documents combined with meeting context. | RAG ChatBot — ask questions using uploaded docs and meeting knowledge. |
+| Late Join Agent | Instantly summarizes prior discussion for participants joining mid-meeting. | Recap Agent — instant summary for late joiners. |
+| Orchestrator Agent | Coordinates communication between agents and routes tasks intelligently (A2A hub). | Core routing layer — no dedicated UI. |
 
 <table style="border:none; border-collapse:collapse;">
 <tr>
@@ -105,7 +108,7 @@ The extension combines a Material 3 interface with all these agents, letting use
 
 ---
 
-# 🖥️ Frontend Dashboard
+# Frontend Dashboard
 
 The web dashboard provides centralized access to meetings, semantic memory, uploaded knowledge, analytics, and AI-generated outputs.
 
@@ -118,6 +121,10 @@ The web dashboard provides centralized access to meetings, semantic memory, uplo
 </td>
 </tr>
 </table>
+
+### Settings & BYOK (Bring Your Own Key)
+
+Take full control of your AI resources. Enter your own API keys to directly use models of your choice, ensuring transparent usage and custom cost management. Configure smart model routing, toggle LLM fallbacks, and manage general app preferences—all from the centralized settings dashboard.
 
 ### Meeting Management
 
@@ -217,7 +224,7 @@ Together, the dashboard extends MeetMaxxing beyond live meetings by organizing m
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f3d7.png" /> Architecture & Design Rationale
+## Architecture & Design Rationale
 
 Traditional AI meeting assistants rely on a **single prompt** to perform transcription, summarization, memory retrieval, scheduling, and follow-up generation. MeetMaxxing distributes these responsibilities across specialized agents that collaborate through **Google ADK** (independent, tool-specific reasoning per agent) and **A2A communication** (parallel execution and direct context sharing), instead of one monolithic workflow.
 
@@ -236,7 +243,7 @@ Traditional AI meeting assistants rely on a **single prompt** to perform transcr
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f9e0.png" /> Persistent Memory with Qdrant
+## Persistent Memory with Qdrant
 
 MeetMaxxing doesn't forget previous meetings. Conversations are transformed into **vector embeddings** and stored inside **Qdrant**, enabling semantic search across historical discussions.
 
@@ -259,7 +266,7 @@ This lets users ask contextual questions like *"What decisions were made regardi
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f504.png" /> End-to-End Workflow
+## End-to-End Workflow
 
 Every interaction inside MeetMaxxing follows an intelligent event-driven workflow:
 
@@ -288,23 +295,23 @@ flowchart TD
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f6e0.png" /> Technology Stack
+## Technology Stack
 
 | Layer | Technology | Purpose |
 | :--- | :--- | :--- |
-| AI Framework 🤖 | Google ADK, Lyzr | Core agent logic and orchestration |
-| Communication 📡 | <img height="20" src="https://img.shields.io/badge/A2A-FF6F00?style=flat-square" alt="A2A" /> <img height="20" src="https://img.shields.io/badge/gRPC-4285F4?style=flat-square&logo=grpc&logoColor=white" alt="gRPC" /> | Inter-agent messaging and RPC |
-| Memory 🧠 | <img height="20" src="https://img.shields.io/badge/Qdrant-DC244C?style=flat-square" alt="Qdrant" /> | Vector embeddings and semantic search |
-| Backend ⚙️ | <img height="20" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" /> <img height="20" src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" /> | High-performance API services |
-| Frontend 🖥️ | <img height="20" src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" /> <img height="20" src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" /> <img height="20" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /> <img height="20" src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /> | Dashboard and user interface |
-| Client 🔌 | <img height="20" src="https://img.shields.io/badge/Chrome%20Extension-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Extension" /> | Google Meet integration |
-| Database 🗄️ | <img height="20" src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" /> | Relational data and auth |
-| Cache ⚡ | <img height="20" src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" /> | State management and caching |
-| Observability 🔍 | <img height="20" src="https://img.shields.io/badge/Langfuse-000000?style=flat-square" alt="Langfuse" /> <img height="20" src="https://img.shields.io/badge/OpenTelemetry-F5A800?style=flat-square&logo=opentelemetry&logoColor=white" alt="OpenTelemetry" /> <img height="20" src="https://img.shields.io/badge/Jaeger-66CFE3?style=flat-square&logo=jaeger&logoColor=white" alt="Jaeger" /> | Monitoring and tracing |
+| AI Framework | Google ADK, Lyzr | Core agent logic and orchestration |
+| Communication | <img height="20" src="https://img.shields.io/badge/A2A-FF6F00?style=flat-square" alt="A2A" /> <img height="20" src="https://img.shields.io/badge/gRPC-4285F4?style=flat-square&logo=grpc&logoColor=white" alt="gRPC" /> | Inter-agent messaging and RPC |
+| Memory | <img height="20" src="https://img.shields.io/badge/Qdrant-DC244C?style=flat-square" alt="Qdrant" /> | Vector embeddings and semantic search |
+| Backend | <img height="20" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" /> <img height="20" src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" /> | High-performance API services |
+| Frontend | <img height="20" src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" /> <img height="20" src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" /> <img height="20" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /> <img height="20" src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /> | Dashboard and user interface |
+| Client | <img height="20" src="https://img.shields.io/badge/Chrome%20Extension-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Extension" /> | Google Meet integration |
+| Database | <img height="20" src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" /> | Relational data, Auth, and Server-Side Rendering (SSR) |
+| Cache | <img height="20" src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" /> | State management and caching |
+| Observability | <img height="20" src="https://img.shields.io/badge/Langfuse-000000?style=flat-square" alt="Langfuse" /> <img height="20" src="https://img.shields.io/badge/OpenTelemetry-F5A800?style=flat-square&logo=opentelemetry&logoColor=white" alt="OpenTelemetry" /> <img height="20" src="https://img.shields.io/badge/Jaeger-66CFE3?style=flat-square&logo=jaeger&logoColor=white" alt="Jaeger" /> | Monitoring and tracing |
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4c1.png" /> Repository Structure
+## Repository Structure
 
 ```bash
 MeetMaxxing/
@@ -521,7 +528,7 @@ MeetMaxxing/
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f680.png" /> Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -567,22 +574,22 @@ MeetMaxxing/
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f5fa.png" /> Roadmap
+## Roadmap
 
 | Item | Status |
 | :--- | :--- |
-| Smarter AI meeting coaching 🧠 | Planned |
-| Voice interaction 🎙️ | Planned |
-| Multi-language support 🌍 | Planned |
-| Mobile companion app 📱 | Planned |
-| Slack & Microsoft Teams integration 💬 | Planned |
-| Custom enterprise knowledge base 🏢 | Planned |
-| Fine-grained user personalization 👤 | Planned |
-| Multi-meeting analytics dashboard 📊 | Planned |
+| Smarter AI meeting coaching | Planned |
+| Voice interaction | Planned |
+| Multi-language support | Planned |
+| Mobile companion app | Planned |
+| Slack & Microsoft Teams integration | Planned |
+| Custom enterprise knowledge base | Planned |
+| Fine-grained user personalization | Planned |
+| Multi-meeting analytics dashboard | Planned |
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f465.png" /> Contributors
+## Contributors
 
 <div align="center">
 
@@ -593,6 +600,6 @@ MeetMaxxing/
 
 ---
 
-## <img width="20" height="20" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f31f.png" /> Support
+## Support
 
 If you found MeetMaxxing interesting, consider giving the repository a ⭐. It helps others discover the project and motivates us to continue improving it.
