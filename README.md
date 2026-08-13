@@ -47,6 +47,7 @@ Modern meetings generate valuable discussions, decisions, and action items — b
 | Bring Your Own Key (BYOK) | Securely manage your own LLM API keys for complete control over usage and AI provider choices. |
 | Refined AI Transcripts | Advanced AI-refined transcripts with robust LLM fallback, error handling, and quotas. |
 | Cross-Browser Support | Fully supported extension for both Chrome and Firefox using isolated background routing. |
+| Secure Authentication | Seamless signup, login, and logout flows powered by Google OAuth for secure, one-click access. |
 
 ---
 
