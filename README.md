@@ -123,9 +123,13 @@ The web dashboard provides centralized access to meetings, semantic memory, uplo
 </tr>
 </table>
 
-### Settings & BYOK (Bring Your Own Key)
+### Settings, Preferences & BYOK
 
-Take full control of your AI resources. Enter your own API keys to directly use models of your choice, ensuring transparent usage and custom cost management. Configure smart model routing, toggle LLM fallbacks, and manage general app preferences—all from the centralized settings dashboard.
+Take full control of your app experience and AI resources from a centralized settings dashboard:
+- **Appearance:** Seamlessly switch between Light and Dark mode to match your system or personal preferences.
+- **Bring Your Own Key (BYOK):** Enter your own API keys to directly use models of your choice, ensuring transparent usage and custom cost management.
+- **General Preferences:** Configure smart model routing, toggle LLM fallbacks, and customize your agent workflows.
+- **Account Management:** Full control over your data lifecycle, including secure options to delete your account and wipe all associated data.
 
 ### Meeting Management
 
