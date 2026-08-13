@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 @router.get("/")
 async def get_settings(user: dict = Depends(get_current_user)):
     supabase = get_supabase_admin()
-    res = supabase.table("users").select("theme, notifications").eq("id", user["id"]).execute()
+    res = supabase.table("users").select("theme, notifications").eq("id", user["user_id"]).execute()
     data = res.data[0] if res.data else {}
     notifs = data.get("notifications") or {}
     
@@ -31,7 +31,7 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
     supabase = get_supabase_admin()
     
     # Get current to merge JSONB
-    curr_res = supabase.table("users").select("notifications").eq("id", user["id"]).execute()
+    curr_res = supabase.table("users").select("notifications").eq("id", user["user_id"]).execute()
     curr_notifs = curr_res.data[0].get("notifications") or {} if curr_res.data else {}
     
     db_updates = {}
@@ -51,7 +51,7 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
     if not db_updates:
         raise HTTPException(400, "No valid fields")
         
-    res = supabase.table("users").update(db_updates).eq("id", user["id"]).execute()
+    res = supabase.table("users").update(db_updates).eq("id", user["user_id"]).execute()
     return res.data[0] if res.data else {}
 
 
