@@ -1,7 +1,7 @@
 import { RiAlertLine as ShieldAlert } from "@remixicon/react";
 import { getWebUrl } from "../../config";
 
-export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) {
+export function Header({ meetingId, isEnded, elapsedTime, triggerAction, isEnding }: any) {
   return (
     <header className="flex items-center justify-between px-4 py-3 mx-3 mt-3 mb-1 bg-surface-container border border-border shrink-0 shadow-lg z-10 rounded-[24px] box-border transition-all">
       <div className="flex items-center gap-2 shrink truncate">
@@ -18,11 +18,21 @@ export function Header({ meetingId, isEnded, elapsedTime, triggerAction }: any) 
         <div id="timer" className="text-xs font-mono font-bold tracking-wide text-text bg-surface-container-high px-2 py-1 rounded-full border border-border shadow-inner shrink-0">{elapsedTime}</div>
         {meetingId && !isEnded && (
           <button
-            className="inline-flex items-center justify-center gap-2 px-2.5 py-1 text-[11px] font-bold rounded-full cursor-pointer transition-colors whitespace-nowrap bg-risk-container text-on-risk-container border border-border hover:brightness-110 shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-2.5 py-1 text-[11px] font-bold rounded-full cursor-pointer transition-colors whitespace-nowrap bg-risk-container text-on-risk-container border border-border hover:brightness-110 shrink-0 disabled:opacity-75 disabled:cursor-not-allowed"
             title="End Meeting & Process Summary"
+            disabled={isEnding}
             onClick={() => triggerAction("REQUEST_END_MEETING")}
           >
-            <i className="ri-stop-mini-fill text-xs" /> Stop
+            {isEnding ? (
+              <span className="inline-flex items-center gap-1.5">
+                <div className="md3-loading-indicator md3-loading-indicator-sm text-on-risk-container" />
+                <span>Stopping...</span>
+              </span>
+            ) : (
+              <>
+                <i className="ri-stop-mini-fill text-xs" /> Stop
+              </>
+            )}
           </button>
         )}
       </div>

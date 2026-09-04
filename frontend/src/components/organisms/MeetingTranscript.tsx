@@ -1,70 +1,114 @@
 "use client";
 
-import { useState } from"react";
+import { useState, useEffect } from "react";
 import {
- RiChat1Line as MessageSquare,
- RiArrowDownSLine as ChevronDown,
- RiArrowUpSLine as ChevronUp,
- RiFileCopyLine as Copy,
- RiCheckLine as Check,
-} from"@remixicon/react";
-import type { Meeting } from"@/types";
+  RiChat1Line as MessageSquare,
+  RiArrowDownSLine as ChevronDown,
+  RiArrowUpSLine as ChevronUp,
+  RiFileCopyLine as Copy,
+  RiCheckLine as Check,
+} from "@remixicon/react";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import type { Meeting } from "@/types";
 
 interface MeetingTranscriptProps {
- transcriptData: Meeting["transcript_data"];
- onRefine?: () => Promise<void>;
+  transcriptData: Meeting["transcript_data"];
+  onRefine?: () => Promise<void>;
+}
+
+function LoadingPhrases() {
+  const phrases = [
+    "Connecting to Gemini API...",
+    "Cleaning raw transcript data...",
+    "Merging stutters and fixing diarization...",
+    "Perfecting sentences and structure...",
+  ];
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIdx((prev) => (prev + 1) % phrases.length);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [phrases.length]);
+
+  return (
+    <span className="text-sm font-medium text-text-muted transition-opacity duration-300">
+      {phrases[idx]}
+    </span>
+  );
 }
 
 export default function MeetingTranscript({ transcriptData, onRefine }: MeetingTranscriptProps) {
- const [transcriptOpen, setTranscriptOpen] = useState(false);
- const [sourceFilter, setSourceFilter] = useState<"dom"|"refined">(
-   () => transcriptData?.some(c => (c as Record<string, unknown>).source === "refined") ? "refined" : "dom"
- );
- const [copied, setCopied] = useState(false);
- const [isRefining, setIsRefining] = useState(false);
- const [refineError, setRefineError] = useState("");
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<"dom" | "refined">(
+    () => transcriptData?.some(c => (c as Record<string, unknown>).source === "refined") ? "refined" : "dom"
+  );
+  const [copied, setCopied] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
+  const [refineError, setRefineError] = useState("");
 
- const handleRefine = async (e?: React.MouseEvent) => {
-   if (e) e.stopPropagation();
-   if (!onRefine || isRefining) return;
-   setIsRefining(true);
-   setRefineError("");
-   setSourceFilter("refined");
-   setTranscriptOpen(true);
-   try {
-     await onRefine();
-   } catch (e: unknown) {
-     console.error(e);
-     setRefineError((e as Error).message || "Failed to refine transcript.");
-     setSourceFilter("dom");
-   } finally {
-     setIsRefining(false);
-   }
- };
- const handleCopy = async (e: React.MouseEvent) => {
- e.stopPropagation();
- if (!transcriptData) return;
- const text = transcriptData
- .filter(chunk => sourceFilter === "dom" ? ((chunk as Record<string, unknown>).source !== "refined") : ((chunk as Record<string, unknown>).source === "refined"))
- .map(chunk => {
- let content = typeof chunk.text ==="string"? chunk.text : JSON.stringify(chunk.text);
- if (typeof chunk.text ==="string"&& (chunk.text.trim().startsWith("{") || chunk.text.trim().startsWith("["))) {
- try {
- const parsed = JSON.parse(chunk.text);
- if (Array.isArray(parsed)) {
- content = parsed.map((item: {text?: string, utterance?: string, raw_text?: string, refined_text?: string} | string) => typeof item ==="string"? item : (item.text || item.utterance || item.raw_text || item.refined_text || JSON.stringify(item))).join(' ');
- } else if (parsed && typeof parsed ==="object"&& Array.isArray(parsed.dialog_turn)) {
- content = parsed.dialog_turn.map((t: {speaker?: string, refined_text?: string, raw_text?: string}) => `${t.speaker && t.speaker !== chunk.speaker ? t.speaker +":":""}${t.refined_text || t.raw_text}`).join(' ');
- }
- } catch {}
- }
- const time = chunk.timestamp_ms > 0 ? `[${String(Math.floor(chunk.timestamp_ms / 60000)).padStart(2,"0")}:${String(Math.floor((chunk.timestamp_ms % 60000) / 1000)).padStart(2,"0")}]` :"";
- return `${time} ${chunk.speaker ||"Unknown"}: ${content}`;
- }).join('\n');
- await navigator.clipboard.writeText(text);
- setCopied(true);
- setTimeout(() => setCopied(false), 2000);
- };
+  const rawChunks = (transcriptData || []).filter(
+    (chunk) => (chunk as Record<string, unknown>).source !== "refined"
+  );
+  const refinedChunks = (transcriptData || []).filter(
+    (chunk) => (chunk as Record<string, unknown>).source === "refined"
+  );
+  const hasRefinedData = refinedChunks.length > 0;
+
+  // Fall back to all transcript data if specific source not tagged yet
+  const visibleChunks =
+    sourceFilter === "dom"
+      ? (rawChunks.length > 0 ? rawChunks : transcriptData)
+      : (refinedChunks.length > 0 ? refinedChunks : transcriptData);
+
+  const handleRefine = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!onRefine || isRefining) return;
+    setIsRefining(true);
+    setRefineError("");
+    setSourceFilter("refined");
+    setTranscriptOpen(true);
+    try {
+      await onRefine();
+    } catch (e: unknown) {
+      console.error(e);
+      setRefineError((e as Error).message || "Failed to refine transcript.");
+      setSourceFilter("dom");
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!transcriptData) return;
+    const text = visibleChunks
+      .map(chunk => {
+        let content = typeof chunk.text === "string" ? chunk.text : JSON.stringify(chunk.text);
+        if (typeof chunk.text === "string" && (chunk.text.trim().startsWith("{") || chunk.text.trim().startsWith("["))) {
+          try {
+            const parsed = JSON.parse(chunk.text);
+            if (Array.isArray(parsed)) {
+              content = parsed.map((item: unknown) => {
+                const obj = item as Record<string, unknown>;
+                return typeof item === "string" ? item : (obj.text || obj.utterance || obj.raw_text || obj.refined_text || JSON.stringify(item));
+              }).join(' ');
+            } else if (parsed && typeof parsed === "object" && Array.isArray((parsed as Record<string, unknown>).dialog_turn)) {
+              content = ((parsed as Record<string, unknown>).dialog_turn as unknown[]).map((t: unknown) => {
+                const obj = t as Record<string, unknown>;
+                return `${obj.speaker && obj.speaker !== chunk.speaker ? (obj.speaker as string) + ":" : ""}${(obj.refined_text || obj.raw_text || "") as string}`;
+              }).join(' ');
+            }
+          } catch {}
+        }
+        const time = chunk.timestamp_ms > 0 ? `[${String(Math.floor(chunk.timestamp_ms / 60000)).padStart(2, "0")}:${String(Math.floor((chunk.timestamp_ms % 60000) / 1000)).padStart(2, "0")}]` : "";
+        return `${time} ${chunk.speaker || "Unknown"}: ${content}`;
+      }).join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (!transcriptData || transcriptData.length === 0) return null;
 
@@ -79,13 +123,12 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             <MessageSquare className="w-6 h-6 text-on-primary-container" />
           </div>
           <span className="text-[18px] font-extrabold tracking-tight text-text group-hover:text-primary transition-colors">
-            Full Transcript <span className="text-text-muted font-medium ml-1">({transcriptData.length} lines)</span>
+            Full Transcript <span className="text-text-muted font-medium ml-1">({visibleChunks.length} lines)</span>
           </span>
         </div>
         <div className="flex items-center gap-2 md:gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
             {(["refined", "dom"] as const).map((source) => {
-              const hasRefinedData = transcriptData.some(c => (c as Record<string, unknown>).source === "refined");
               const labels = { dom: "Raw Transcript", refined: "AI Refined Transcript" };
               const isActive = sourceFilter === source;
               const isLoading = source === "refined" && isRefining;
@@ -102,9 +145,9 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                       setTranscriptOpen(true);
                     }
                   }}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-[12px] font-bold rounded-full transition-colors ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-[12px] font-bold rounded-full transition-colors cursor-pointer ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
                 >
-                  {isLoading && <div className="md3-loading-indicator md3-loading-indicator-sm text-current"></div>}
+                  {isLoading && <Md3LoadingIndicator size="sm" className="text-current shrink-0" />}
                   <span>{labels[source as keyof typeof labels]}</span>
                 </button>
               );
@@ -143,16 +186,15 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
           )}
 
           {isRefining && sourceFilter === "refined" ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4 animate-fade-in">
-              <div className="md3-loading-indicator md3-loading-indicator-lg text-primary"></div>
-              <p className="text-[14px] text-text-muted font-bold">Connecting to Gemini API...</p>
+            <div className="flex flex-col items-center justify-center py-16 gap-4 animate-fade-in w-full">
+              <Md3LoadingIndicator size="lg" className="text-primary" />
+              <LoadingPhrases />
               <p className="text-[12px] text-text-variant italic max-w-sm text-center">
                 Processing your raw transcript to remove filler words, fix grammar, and perfect diarization. This may take up to a minute...
               </p>
             </div>
-          ) : transcriptData
-            .filter(chunk => sourceFilter === "dom" ? ((chunk as Record<string, unknown>).source !== "refined") : ((chunk as Record<string, unknown>).source === "refined"))
-            .map((chunk, idx) => (
+          ) : (
+            visibleChunks.map((chunk, idx) => (
               <div
                 key={idx}
                 className="flex flex-col gap-2 p-4 md:p-5 rounded-[24px] bg-surface-container border border-border hover:shadow-md hover:border-primary/30 transition-all duration-300 group/chunk"
@@ -207,7 +249,8 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                   })()}
                 </div>
               </div>
-            ))}
+            ))
+          )}
         </div>
       )}
     </div>

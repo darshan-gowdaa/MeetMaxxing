@@ -12,7 +12,7 @@ import { ContextAgent } from "./components/organisms/ContextAgent";
 export default function App() {
   const {
     authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
-    nextQuestions, recap, errorMessage, isProcessing, poweredBy, elapsedTime,
+    nextQuestions, recap, errorMessage, isProcessing, isEnding, poweredBy, elapsedTime,
     triggerAction, clearTranscript, clearError,
   } = useCopilot();
 
@@ -26,11 +26,12 @@ export default function App() {
 
   const getDynamicLabels = () => {
     const provider = (poweredBy || "").toLowerCase();
-    let connectingStr = "Connecting to AI...";
-    if (provider.includes("gemini")) connectingStr = "Connecting to Gemini API...";
-    else if (provider.includes("groq")) connectingStr = "Connecting to Groq API...";
+    let connectingStr = "Connecting to Gemini API...";
+    if (provider.includes("groq")) connectingStr = "Connecting to Groq API...";
     else if (provider.includes("openrouter")) connectingStr = "Connecting to OpenRouter...";
     else if (provider.includes("perplexity")) connectingStr = "Connecting to Perplexity...";
+    else if (provider.includes("gemini")) connectingStr = "Connecting to Gemini API...";
+    else if (poweredBy && !provider.includes("error")) connectingStr = `Connecting to ${poweredBy}...`;
     
     return [
       connectingStr,
@@ -57,6 +58,7 @@ export default function App() {
   const lastTriggerRef = useRef(0);
   const handleRef = useRef(() => {});
   const handleGenerateInsights = () => { 
+    if (isProcessing || isEnding) return;
     if (Date.now() - lastTriggerRef.current < 500) return;
     lastTriggerRef.current = Date.now();
     triggerAction("GENERATE_INSIGHTS"); 
@@ -65,26 +67,26 @@ export default function App() {
   useEffect(() => { handleRef.current = handleGenerateInsights; }, [handleGenerateInsights]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isProcessing && meetingId && !isEnded && activeTab === "live")
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isProcessing && !isEnding && meetingId && !isEnded && activeTab === "live")
         handleRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isProcessing, meetingId, isEnded, activeTab]);
+  }, [isProcessing, isEnding, meetingId, isEnded, activeTab]);
 
   const hasNewContext = transcriptLines.length > lastInsightsCount && !isProcessing;
 
   const GenerateButton = () => (
     <button
       onClick={handleGenerateInsights}
-      disabled={isProcessing}
-      className={`flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-3 rounded-full shadow hover:shadow-md transition-all duration-300 mt-1 mb-2 relative overflow-hidden group ${isProcessing ? 'opacity-80 cursor-not-allowed' : ''}`}
+      disabled={isProcessing || isEnding}
+      className={`flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-bold py-3 rounded-full shadow hover:shadow-md transition-all duration-300 mt-1 mb-2 relative overflow-hidden group ${isProcessing ? 'opacity-90 cursor-wait' : isEnding ? 'opacity-60 cursor-not-allowed' : ''}`}
     >
       {hasNewContext && !isProcessing && <span className="absolute top-2 right-2 w-2 h-2 bg-risk rounded-full animate-pulse" />}
       {isProcessing ? (
         <span className="flex items-center gap-2">
           <div className="md3-loading-indicator md3-loading-indicator-sm text-on-primary" />
-          <span className="transition-all duration-500">{getDynamicLabels()[insightLabelIdx]}</span>
+          <span className="transition-all duration-500 font-medium tracking-wide">{getDynamicLabels()[insightLabelIdx]}</span>
         </span>
       ) : (
         <><i className="ri-sparkling-fill text-[15px] group-hover:animate-pulse" /> Generate AI Insights <span className="text-[9px] opacity-70 ml-1">(Ctrl+Enter)</span></>
@@ -103,7 +105,7 @@ export default function App() {
 
   return (
     <>
-      <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} />
+      <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} isEnding={isEnding} />
       {!authToken ? (
         <main><LoginPrompt /></main>
       ) : !meetingId ? (

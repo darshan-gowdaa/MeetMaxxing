@@ -328,9 +328,9 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (activeMeetingId) {
       activeMeetingId = null;
-      fetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
+      authFetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [], max_participants: msg.maxParticipants || activeMeetingMaxParticipants || 1 }),
       }).then(finishEnd).catch(finishEnd);
       return true;
@@ -346,39 +346,99 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (["FORCE_TEST_UPDATE", "ASK_SUGGESTIONS", "ASK_NEXT_QUESTION", "REQUEST_RECAP", "GENERATE_INSIGHTS"].includes(msg.type)) {
-    const targetId = msg.meetingId || activeMeetingId;
+    // Need to resolve meeting id from message, memory, or local storage
+    const resolveTargetId = async () => {
+      if (msg.meetingId) return msg.meetingId;
+      if (activeMeetingId) return activeMeetingId;
+      const res = await ext.storage.get(["currentMeetingId"]);
+      return res?.currentMeetingId || null;
+    };
+
     if (msg.type === "GENERATE_INSIGHTS") {
-      Promise.all([
-        fetch(`${BASE}/ingest/realtime/${targetId}?force=true`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` } }),
-        fetch(`${BASE}/ingest/late-recap/${targetId}?force=true`, { method: "GET", headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` } })
-      ]).then(async ([realtimeRes, recapRes]) => {
-        const realtimeData = await realtimeRes.json();
-        const recapData = await recapRes.json();
-        let recapText = recapData.recap?.trim() ? `**Recap**\n${recapData.recap}` : "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
-        if (recapData.current_topic && recapData.current_topic !== "Unknown") recapText += `\n\n**Current Topic**\n${recapData.current_topic}`;
-        if (recapData.key_decisions_so_far?.length) recapText += `\n\n**Decisions**\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
-        if (recapData.who_said_what?.length) recapText += `\n\n**Who said what**\n- ${recapData.who_said_what.join("\n- ")}`;
-        realtimeData.recap = recapText;
-        pushUpdate(realtimeData, targetId);
-      }).catch(() => {});
-      sendResponse({ success: true });
+      (async () => {
+        const targetId = await resolveTargetId();
+        if (!targetId) {
+          sendResponse({ success: false, error: "No active meeting found" });
+          return;
+        }
+
+        try {
+          const [realtimeRes, recapRes] = await Promise.all([
+            authFetch(`${BASE}/ingest/realtime/${targetId}?force=true`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            }),
+            authFetch(`${BASE}/ingest/late-recap/${targetId}?force=true`, {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            }),
+          ]);
+
+          let realtimeData = {};
+          try {
+            if (realtimeRes && realtimeRes.ok) {
+              realtimeData = await realtimeRes.json();
+            }
+          } catch (e) {}
+
+          let recapData = {};
+          try {
+            if (recapRes && recapRes.ok) {
+              recapData = await recapRes.json();
+            }
+          } catch (e) {}
+
+          let recapText = recapData.recap?.trim()
+            ? `**Recap**\n${recapData.recap}`
+            : "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
+          if (recapData.current_topic && recapData.current_topic !== "Unknown") {
+            recapText += `\n\n**Current Topic**\n${recapData.current_topic}`;
+          }
+          if (recapData.key_decisions_so_far?.length) {
+            recapText += `\n\n**Decisions**\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
+          }
+          if (recapData.who_said_what?.length) {
+            recapText += `\n\n**Who said what**\n- ${recapData.who_said_what.join("\n- ")}`;
+          }
+
+          realtimeData.recap = recapText;
+          await pushUpdate(realtimeData, targetId);
+          sendResponse({ success: true, data: realtimeData });
+        } catch (err) {
+          sendResponse({ success: false, error: String(err) });
+        }
+      })();
       return true;
     }
 
-    if (targetId) {
-      if (ws?.readyState === WebSocket.OPEN) { try { ws.send(JSON.stringify({ type: "ping" })); } catch (e) {} }
-      else connectWebSocket(targetId);
+    (async () => {
+      const targetId = await resolveTargetId();
+      if (!targetId) {
+        sendResponse({ success: false, error: "No active meeting found" });
+        return;
+      }
+
+      if (ws?.readyState === WebSocket.OPEN) {
+        try { ws.send(JSON.stringify({ type: "ping" })); } catch (e) {}
+      } else {
+        connectWebSocket(targetId);
+      }
 
       const isRecap = msg.type === "REQUEST_RECAP";
       const endpoint = isRecap ? `/ingest/late-recap/${targetId}?force=true` : `/ingest/realtime/${targetId}?force=true`;
-      fetch(`${BASE}${endpoint}`, {
-        method: isRecap ? "GET" : "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
-      }).then((r) => r.json()).then((data) => {
-        pushUpdate(isRecap ? buildRecapText(data, targetId) : data, targetId);
-      }).catch(() => {});
-    }
-    sendResponse({ success: true });
+      try {
+        const res = await authFetch(`${BASE}${endpoint}`, {
+          method: isRecap ? "GET" : "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        const update = isRecap ? buildRecapText(data, targetId) : data;
+        await pushUpdate(update, targetId);
+        sendResponse({ success: true, data: update });
+      } catch (err) {
+        sendResponse({ success: false, error: String(err) });
+      }
+    })();
     return true;
   }
 

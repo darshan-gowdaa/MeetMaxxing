@@ -15,9 +15,9 @@ export function useCopilot() {
   const [nextQuestions, setNextQuestions] = useState<string[]>([]);
   const [recap, setRecap] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [activeRequests, setActiveRequests] = useState<number>(0);
-  const isProcessing = activeRequests > 0;
-  const [poweredBy, setPoweredBy] = useState<string>("OpenRouter API (Priority 1)");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isEnding, setIsEnding] = useState<boolean>(false);
+  const [poweredBy, setPoweredBy] = useState<string>("Google Gemini API");
   const [meetingStartTime, setMeetingStartTime] = useState<number>(Date.now());
   const [elapsedTime, setElapsedTime] = useState<string>("--:--");
 
@@ -182,19 +182,42 @@ export function useCopilot() {
   }, []);
 
   const triggerAction = async (actionType: string) => {
-    setActiveRequests(prev => prev + 1);
+    const isEndAction = actionType === "REQUEST_END_MEETING" || actionType === "END_MEETING";
+    if (isEndAction) {
+      setIsEnding(true);
+    } else {
+      setIsProcessing(true);
+    }
+
+    // Safety timeout in case background script loses connection
+    const safetyTimer = setTimeout(() => {
+      if (isEndAction) setIsEnding(false);
+      else setIsProcessing(false);
+    }, 25000);
+
     try {
       if (ext && ext.runtime?.sendMessage) {
-        ext.runtime.sendMessage({ type: actionType, meetingId }, () => {
+        ext.runtime.sendMessage({ type: actionType, meetingId }, (res: any) => {
+          clearTimeout(safetyTimer);
           void ext.runtime?.lastError;
-          // Decrement once the background script finishes processing the request
-          setActiveRequests(prev => Math.max(0, prev - 1));
+          if (isEndAction) {
+            setIsEnding(false);
+          } else {
+            setIsProcessing(false);
+            if (res?.data) {
+              handleCopilotUpdate(res.data);
+            }
+          }
         });
       } else {
-        setActiveRequests(prev => Math.max(0, prev - 1));
+        clearTimeout(safetyTimer);
+        if (isEndAction) setIsEnding(false);
+        else setIsProcessing(false);
       }
     } catch (e) {
-      setActiveRequests(prev => Math.max(0, prev - 1));
+      clearTimeout(safetyTimer);
+      if (isEndAction) setIsEnding(false);
+      else setIsProcessing(false);
     }
   };
 
@@ -207,8 +230,22 @@ export function useCopilot() {
 
   const clearError = () => setErrorMessage("");
 
-  return { authToken,
-    meetingId, meetingTitle, isEnded, transcriptLines, suggestions, nextQuestions, recap,
-    errorMessage, isProcessing, poweredBy, elapsedTime, triggerAction, clearTranscript, clearError
+  return {
+    authToken,
+    meetingId,
+    meetingTitle,
+    isEnded,
+    transcriptLines,
+    suggestions,
+    nextQuestions,
+    recap,
+    errorMessage,
+    isProcessing,
+    isEnding,
+    poweredBy,
+    elapsedTime,
+    triggerAction,
+    clearTranscript,
+    clearError,
   };
 }

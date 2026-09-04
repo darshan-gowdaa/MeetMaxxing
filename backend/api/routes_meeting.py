@@ -236,9 +236,15 @@ Raw transcript:
             for item in refined_list:
                 item["source"] = "refined"
             
-            # Combine with old or replace
-            supabase.table("meetings").update({"transcript_data": refined_list}).eq("id", target_id).execute()
-            return {"status": "success", "transcript_data": refined_list}
+            # Keep raw transcript chunks so users can toggle between Raw and Refined
+            raw_chunks = [t for t in transcript_data if t.get("source") != "refined"]
+            for r in raw_chunks:
+                if not r.get("source"):
+                    r["source"] = "dom"
+
+            combined = raw_chunks + refined_list
+            supabase.table("meetings").update({"transcript_data": combined}).eq("id", target_id).execute()
+            return {"status": "success", "transcript_data": combined}
         else:
             raise TypeError("LLM did not return a list inside transcript")
     except Exception as e:

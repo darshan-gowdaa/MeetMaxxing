@@ -185,10 +185,13 @@ export function useMeetingManager(id: string) {
         const data = await res.json();
         setMeeting(prev => {
           if (!prev) return prev;
-          const existing = prev.transcript_data.filter(c => (c as Record<string, unknown>).source !== "refined");
-          const refined = data.transcript_data.filter((c: Record<string, unknown>) => c.source === "refined");
-          const newRefined = refined.length > 0 ? refined : data.transcript_data.map((c: Record<string, unknown>) => ({ ...c, source: "refined" }));
-          return { ...prev, transcript_data: [...existing, ...newRefined] };
+          const prevRaw = prev.transcript_data.filter(c => (c as Record<string, unknown>).source !== "refined");
+          const incomingRaw = (data.transcript_data || []).filter((c: Record<string, unknown>) => c.source !== "refined");
+          const refined = (data.transcript_data || []).filter((c: Record<string, unknown>) => c.source === "refined");
+          
+          const finalRaw = prevRaw.length > 0 ? prevRaw : incomingRaw;
+          const newRefined = refined.length > 0 ? refined : (data.transcript_data || []).map((c: Record<string, unknown>) => ({ ...c, source: "refined" }));
+          return { ...prev, transcript_data: [...finalRaw, ...newRefined] };
         });
       } else {
         throw new Error("Failed to refine transcript");
