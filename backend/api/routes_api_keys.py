@@ -13,45 +13,15 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from ..core.auth import get_current_user
 from ..core.database import get_supabase_admin
 from ..core.config import settings
+from ..core.byok import (
+    get_kek as _get_kek,
+    encrypt_key as _encrypt_key,
+    decrypt_key as _decrypt_key,
+    resolve_user_byok,
+    invalidate_user_byok_cache,
+)
 
 router = APIRouter(prefix="/api-keys", tags=["api_keys"])
-
-def _get_kek() -> bytes:
-    try: return bytes.fromhex(settings.KEK_SECRET)
-    except Exception: return b"0" * 32
-
-def _encrypt_key(plaintext_key: str) -> dict:
-    dek = AESGCM.generate_key(bit_length=256)
-    aesgcm_dek = AESGCM(dek)
-    iv = os.urandom(12)
-    ct_with_tag = aesgcm_dek.encrypt(iv, plaintext_key.encode(), None)
-    
-    kek = _get_kek()
-    aesgcm_kek = AESGCM(kek)
-    iv_kek = os.urandom(12)
-    wrapped_dek_with_tag = aesgcm_kek.encrypt(iv_kek, dek, None)
-    
-    return {
-        "key_ciphertext": ct_with_tag[:-16].hex(),
-        "iv": iv.hex(),
-        "auth_tag": ct_with_tag[-16:].hex(),
-        "wrapped_dek": (iv_kek + wrapped_dek_with_tag).hex(),
-        "kms_key_id": "local_kek_v1",
-        "last4": plaintext_key[-4:] if len(plaintext_key) > 4 else plaintext_key
-    }
-
-def _decrypt_key(record: dict) -> str:
-    kek = _get_kek()
-    aesgcm_kek = AESGCM(kek)
-    wrapped_dek_full = bytes.fromhex(record["wrapped_dek"])
-    dek = aesgcm_kek.decrypt(wrapped_dek_full[:12], wrapped_dek_full[12:], None)
-    
-    aesgcm_dek = AESGCM(dek)
-    return aesgcm_dek.decrypt(
-        bytes.fromhex(record["iv"]),
-        bytes.fromhex(record["key_ciphertext"]) + bytes.fromhex(record["auth_tag"]),
-        None
-    ).decode()
 
 class ProviderAdapter:
     id: str = ""
@@ -167,6 +137,7 @@ async def add_key(data: dict, background_tasks: BackgroundTasks, user: dict = De
         res = get_supabase_admin().table("user_api_keys").upsert(enc_data, on_conflict="user_id,provider_id,label").execute()
         key_record = res.data[0]
         background_tasks.add_task(async_status_check, key_record["id"], provider_id, key)
+        invalidate_user_byok_cache(user["user_id"])
         return {"api_key": {k: v for k, v in key_record.items() if k not in ["key_ciphertext", "iv", "auth_tag", "wrapped_dek"]}}
     except Exception as e:
         logger.error("Error adding key: {}", e)
@@ -183,11 +154,13 @@ async def check_status(key_id: str, user: dict = Depends(get_current_user)):
     status, err = await provider.validate(pt) if provider and hasattr(provider, 'validate') else ("valid", "")
     
     supabase.table("user_api_keys").update({"status": status, "last_checked_at": datetime.now(UTC).isoformat(), "last_error_message_safe": err}).eq("id", key_id).execute()
+    invalidate_user_byok_cache(user["user_id"])
     return {"status": status, "error": err}
 
 @router.delete("/{key_id}")
 async def delete_key(key_id: str, user: dict = Depends(get_current_user)):
     get_supabase_admin().table("user_api_keys").delete().eq("id", key_id).eq("user_id", user["user_id"]).execute()
+    invalidate_user_byok_cache(user["user_id"])
     return {"status": "deleted"}
 
 @router.get("/providers")
@@ -198,7 +171,22 @@ async def get_providers():
 async def get_model_preferences(user: dict = Depends(get_current_user)):
     supabase = get_supabase_admin()
     res = supabase.table("user_model_preferences").select("*").eq("user_id", user["user_id"]).eq("feature_scope", "default_chat").execute()
-    return res.data[0] if res.data else {"mode": "manual", "model_id": ""}
+    data = dict(res.data[0]) if res.data else {"mode": "manual", "model_id": ""}
+    
+    byok_cfg = await resolve_user_byok(user["user_id"])
+    if byok_cfg:
+        data["active_label"] = f"BYOK: {byok_cfg['provider'].capitalize()} ({byok_cfg['model'] or 'default'})"
+        data["is_byok"] = True
+        data["resolved_provider"] = byok_cfg["provider"]
+    else:
+        m = data.get("mode", "manual")
+        if m == "smart":
+            data["active_label"] = "MeetMaxxing AI (Default)"
+        else:
+            data["active_label"] = "MeetMaxxing AI (No key connected)"
+        data["is_byok"] = False
+        data["resolved_provider"] = "default"
+    return data
 
 @router.patch("/model-preferences")
 async def update_model_preferences(updates: dict, user: dict = Depends(get_current_user)):
@@ -211,4 +199,6 @@ async def update_model_preferences(updates: dict, user: dict = Depends(get_curre
     if model_id is not None: data["model_id"] = model_id
     
     res = supabase.table("user_model_preferences").upsert(data, on_conflict="user_id,feature_scope").execute()
+    invalidate_user_byok_cache(user["user_id"])
     return res.data[0] if res.data else {}
+

@@ -340,7 +340,8 @@ async def _run_end_pipeline(
             "meeting_id": target_id or meeting_id,
             "title": final_title,
             "attendees": attendees,
-            "utterances": utterances
+            "utterances": utterances,
+            "user_id": user_id,
         })
         logger.info(f"Dispatch MEETING_END returned for {meeting_id}")
 
@@ -481,6 +482,7 @@ async def _run_end_pipeline(
                         "attendees": attendees,
                         "token": calendar_token,
                         "org_id": org_id,
+                        "user_id": user_id,
                     })
                     supabase.table("meetings").update(
                         {"scheduling_result": schedule_result}

@@ -55,11 +55,17 @@ def _format_window(chunks: list[dict]) -> str:
     return "\n".join(lines)
 
 
-async def run_realtime_agent(meeting_id: str, context: dict | None = None, force: bool = False) -> dict:
+async def run_realtime_agent(
+    meeting_id: str,
+    context: dict | None = None,
+    force: bool = False,
+    user_id: str | None = None,
+) -> dict:
     """
     Main entry point — fetch rolling window, call fallback pipeline, return suggestions.
     context: optional dict with meeting title, attendees, agenda for richer suggestions.
     """
+    user_id = user_id or (context or {}).get("user_id")
     raw_chunks = await get_transcript_window(
         meeting_id,
         last_n=settings.REALTIME_WINDOW_MINUTES * 20,
@@ -109,14 +115,14 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
     # Fetch uploaded context documents scoped to the meeting's org
     uploaded_context = ""
     try:
-        from ..memory.embeddings import embed_query
+        from ..memory.embeddings import embed_text
         from ..memory.qdrant_client import search_memories
         from ..memory.schemas import MemoryFilter, MemoryType
 
-        # Use org_id from context if available; otherwise search without org filter (limited results)
         org_id = (context or {}).get("org_id", "")
         if org_id:
-            q_vec = await embed_query("meeting context overview")
+            # use document embedding cache for meeting context overview query
+            q_vec = await embed_text("meeting context overview")
             mem_filter = MemoryFilter(
                 org_id=org_id,
                 meeting_id=meeting_id,
@@ -124,7 +130,7 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
                 topic="uploaded_context",
                 query_text="meeting context overview",
             )
-            context_res = await search_memories(query_vector=q_vec, memory_filter=mem_filter, limit=4)
+            context_res = await search_memories(query_vector=q_vec, memory_filter=mem_filter, limit=3)
             if context_res:
                 uploaded_context = "\n\nUploaded Meeting Context Documents:\n" + "\n".join(r.text for r in context_res)
     except Exception as e:
@@ -134,8 +140,16 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
-        raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
+        raw, powered_by = await generate_content_with_fallback(
+            prompt,
+            response_format_json=True,
+            bypass_cache=force,
+            max_tokens=600,
+            user_id=user_id,
+        )
         result = parse_json_clean(raw or "{}")
+        if not isinstance(result, dict):
+            result = {}
         result["powered_by"] = powered_by
     except Exception as e:
         logger.error("[Realtime Agent] LLM failed: {}", e)
@@ -144,26 +158,32 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
         return {
             "meeting_id": meeting_id,
             "error": "AI temporarily unavailable. Insights will auto-refresh shortly.",
-            "suggestions": ["AI temporarily unavailable. Insights will auto-refresh."],
+            "suggestions": ["Listening for conversation updates..."],
             "risks": [],
-            "next_questions": ["Waiting for AI..."],
+            "next_questions": ["Waiting for discussion context..."],
             "transcript_chunks": len(chunks),
             "powered_by": "Error",
         }
 
     from ..services.guardrails import validate_realtime_output
-    validated_suggs = validate_realtime_output(result.get("suggestions", []), transcript_text)
+    raw_suggs = result.get("suggestions") or []
+    if isinstance(raw_suggs, str):
+        raw_suggs = [raw_suggs]
+    validated_suggs = validate_realtime_output(raw_suggs, transcript_text)
 
-    # In case the model still returns a string
+    raw_risks = result.get("risks") or []
+    if isinstance(raw_risks, str):
+        raw_risks = [raw_risks]
+
     raw_nq = result.get("next_questions") or result.get("next_question") or []
     if isinstance(raw_nq, str):
         raw_nq = [raw_nq]
 
     res = {
         "meeting_id": meeting_id,
-        "suggestions": validated_suggs,
-        "risks": result.get("risks", []),
-        "next_questions": raw_nq,
+        "suggestions": [str(s) for s in validated_suggs if s],
+        "risks": [str(r) for r in raw_risks if r],
+        "next_questions": [str(q) for q in raw_nq if q],
         "transcript_chunks": len(chunks),
         "powered_by": result.get("powered_by", "Unknown API"),
     }
@@ -171,3 +191,4 @@ async def run_realtime_agent(meeting_id: str, context: dict | None = None, force
     _last_chunk_counts[meeting_id] = len(chunks)
     _last_results[meeting_id] = res
     return res
+

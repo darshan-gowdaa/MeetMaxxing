@@ -16,13 +16,16 @@ class ProviderHealth:
     failures: int = 0
     last_failure_time: float = 0
     is_degraded: bool = False
-    
-    def record_failure(self):
+    cooldown_seconds: float = 60.0
+
+    def record_failure(self, is_quota: bool = False):
+        # marks provider degraded if it fails repeatedly or hits quota limit
         self.failures += 1
         self.last_failure_time = time.time()
-        if self.failures >= 3:
+        if is_quota or self.failures >= 2:
             self.is_degraded = True
-            logger.warning(f"Provider marked as degraded after {self.failures} consecutive failures")
+            self.cooldown_seconds = 600.0 if is_quota else 60.0
+            logger.warning(f"Provider marked as degraded (quota={is_quota}) for {self.cooldown_seconds}s")
 
     def record_success(self):
         self.failures = 0
@@ -31,10 +34,13 @@ class ProviderHealth:
     def can_attempt(self) -> bool:
         if not self.is_degraded:
             return True
-        # Cooldown of 60 seconds if degraded
-        if time.time() - self.last_failure_time > 60:
+        # return true only after cooldown period has passed
+        if time.time() - self.last_failure_time > self.cooldown_seconds:
+            self.is_degraded = False
+            self.failures = 0
             return True
         return False
+
 
 
 class TokenBucket:
@@ -122,10 +128,11 @@ class IntelligentRateLimiter:
             
         return False
 
-    def record_failure(self, provider: str):
-        self._get_health(provider).record_failure()
+    def record_failure(self, provider: str, is_quota: bool = False):
+        self._get_health(provider).record_failure(is_quota=is_quota)
 
     def record_success(self, provider: str):
+
         self._get_health(provider).record_success()
 
     def is_degraded(self, provider: str) -> bool:

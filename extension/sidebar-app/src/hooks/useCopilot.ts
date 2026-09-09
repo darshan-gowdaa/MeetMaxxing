@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { TranscriptChunk, CopilotUpdate } from "../types";
+import { getBaseUrlBackend } from "../config";
 
 declare const chrome: any;
 declare const browser: any;
@@ -17,7 +18,7 @@ export function useCopilot() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isEnding, setIsEnding] = useState<boolean>(false);
-  const [poweredBy, setPoweredBy] = useState<string>("Google Gemini API");
+  const [poweredBy, setPoweredBy] = useState<string>("MeetMaxxing AI (Default)");
   const [meetingStartTime, setMeetingStartTime] = useState<number>(Date.now());
   const [elapsedTime, setElapsedTime] = useState<string>("--:--");
   const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous" | "expired">("loading");
@@ -147,6 +148,7 @@ export function useCopilot() {
         if (changes.authToken?.newValue) setAuthToken(changes.authToken.newValue);
         if (changes.authState?.newValue) setAuthState(changes.authState.newValue);
         if (changes.backendStarting) setBackendStarting(!!changes.backendStarting.newValue);
+        if (changes.poweredBy?.newValue) setPoweredBy(changes.poweredBy.newValue);
       }
     };
 
@@ -156,7 +158,7 @@ export function useCopilot() {
     // Fallback: Poll storage because Chrome blocks onChanged/onMessage in web-accessible iframes
     const pollInterval = setInterval(() => {
       if (ext && ext.storage?.local) {
-        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken", "authState", "backendStarting"], (res: any) => {
+        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken", "authState", "backendStarting", "poweredBy"], (res: any) => {
           if (res.transcript && Array.isArray(res.transcript)) {
             setTranscriptLines(prev => {
               if (prev.length === res.transcript.length && JSON.stringify(prev) === JSON.stringify(res.transcript)) return prev;
@@ -184,9 +186,12 @@ export function useCopilot() {
           }
           if (res.authState) setAuthState(res.authState);
           setBackendStarting(!!res.backendStarting);
+          if (res.poweredBy) {
+            setPoweredBy(res.poweredBy);
+          }
         });
       }
-    }, 1500);
+    }, 1000);
 
     return () => {
       if (ext && ext.runtime?.onMessage) ext.runtime.onMessage.removeListener(messageListener);
@@ -194,6 +199,30 @@ export function useCopilot() {
       clearInterval(pollInterval);
     };
   }, []);
+
+  // Proactively fetch active model preferences when authenticated
+  useEffect(() => {
+    if (!authToken) return;
+    let isMounted = true;
+    const fetchActiveEngine = async () => {
+      try {
+        const res = await fetch(`${getBaseUrlBackend()}/api/api-keys/model-preferences`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data && data.active_label) {
+            setPoweredBy(data.active_label);
+            if (ext && ext.storage?.local) {
+              ext.storage.local.set({ poweredBy: data.active_label });
+            }
+          }
+        }
+      } catch {}
+    };
+    fetchActiveEngine();
+    return () => { isMounted = false; };
+  }, [authToken]);
 
   const triggerAction = async (actionType: string) => {
     const isEndAction = actionType === "REQUEST_END_MEETING" || actionType === "END_MEETING";

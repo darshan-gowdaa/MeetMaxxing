@@ -59,7 +59,7 @@ def _build_context_block(results) -> tuple[str, list[dict]]:
 
 
 def _rerank_results(results):
-    """Rerank by score × memory-type priority weight. DECISION > ACTION_ITEM > rest."""
+    # weights different memory types so decisions and action items show up first
     priority_weights = {
         MemoryType.DECISION: 1.5,
         MemoryType.ACTION_ITEM: 1.3,
@@ -79,7 +79,7 @@ def _rerank_results(results):
         scored.append((r.score * weight, r))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    return [r for _, r in scored[:20]]
+    return [r for _, r in scored[:6]]
 
 
 async def run_memory_agent(
@@ -88,10 +88,7 @@ async def run_memory_agent(
     user_id: str,
     filters: dict | None = None,
 ) -> dict:
-    """
-    Answer a natural-language question about past meetings using Qdrant retrieval
-    + Supabase meeting summaries for full cross-meeting context.
-    """
+    # searches semantic memory in qdrant and pulls recent meeting summaries
     filters = filters or {}
 
     mem_filter = MemoryFilter(
@@ -112,7 +109,7 @@ async def run_memory_agent(
             pass
 
     query_vec = await embed_query(question)
-    raw_results = await search_memories(query_vector=query_vec, memory_filter=mem_filter, limit=40)
+    raw_results = await search_memories(query_vector=query_vec, memory_filter=mem_filter, limit=15)
     results = _rerank_results(raw_results)
 
     meetings_context = ""
@@ -126,7 +123,7 @@ async def run_memory_agent(
             .eq("org_id", org_id)
             .eq("status", "completed")
             .order("start_at", desc=True)
-            .limit(50)
+            .limit(8)
             .execute()
         )
         meetings_list = res.data or []
@@ -146,6 +143,7 @@ async def run_memory_agent(
             meetings_context = "\n\n".join(lines)
     except Exception as e:
         logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
+
 
     if not results and not meetings_context:
         return {
@@ -192,11 +190,19 @@ async def run_memory_agent(
     )
 
     try:
-        raw, powered_by = await run_lyzr_agent("Memory Agent - MeetMaxxing", prompt)
+        from ..core.llm_fallback import generate_content_with_fallback
+        raw, powered_by = await generate_content_with_fallback(
+            prompt,
+            response_format_json=True,
+            max_tokens=1024,
+            bypass_cache=False,
+            user_id=user_id,
+        )
         result = parse_json_clean(raw)
         if not result:
             result = {"answer": raw.strip(), "confidence": "low", "sources_used": []}
     except Exception as e:
+
         err_str = str(e)
         return {
             "answer": "An error occurred while querying memory. Please try again.",

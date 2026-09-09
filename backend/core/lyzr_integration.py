@@ -60,14 +60,18 @@ async def run_lyzr_agent(
     local_tools: list | None = None,
     knowledge_bases: list | None = None,
 ) -> tuple[str, str]:
-    """
-    Fetch agent from Lyzr Studio by name and execute it.
-    Falls back to Gemini/Groq chain on any failure.
-    Returns (response_text, powered_by_string).
-    """
+    # fetch the agent from studio and run it with a timeout so it does not hang
+    from .rate_limiter import rate_limiter
+    if rate_limiter.is_degraded("gemini"):
+        return await _llm_direct_fallback(prompt)
+
     try:
         loop = asyncio.get_running_loop()
-        agent = await loop.run_in_executor(None, get_lyzr_agent, name)
+        agent = await asyncio.wait_for(
+            loop.run_in_executor(None, get_lyzr_agent, name),
+            timeout=2.5,
+        )
+
 
         kwargs = {}
         if session_id:
@@ -82,11 +86,15 @@ async def run_lyzr_agent(
                 return agent.chat(prompt, **kwargs)
             return agent.run(message=prompt, **kwargs)
 
-        response = await loop.run_in_executor(None, _sync_call)
+        response = await asyncio.wait_for(
+            loop.run_in_executor(None, _sync_call),
+            timeout=6.0,
+        )
         text = response.response if hasattr(response, "response") else str(response)
         if text and text.strip():
             return text.strip(), "AI Synthesized Answer"
     except Exception as e:
-        logger.warning("[Lyzr Integration] Agent '{}' failed ({}). Falling back...", name, type(e).__name__)
+        logger.warning("[Lyzr Integration] Agent '{}' failed or timed out ({}). Falling back...", name, type(e).__name__)
 
     return await _llm_direct_fallback(prompt)
+

@@ -44,6 +44,7 @@ async def run_scheduler_agent(
     attendee_emails: list[str],
     calendar_token: dict,
     org_id: str,
+    user_id: str = "",
 ) -> dict:
     """
     Given summary agent output, schedule a follow-up calendar event.
@@ -54,42 +55,35 @@ async def run_scheduler_agent(
     if not follow_up.get("required", False):
         return {"scheduled": False, "reason": "No follow-up required per summary agent."}
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key", ""]:
-        return {"scheduled": False, "reason": "GEMINI_API_KEY not configured in .env."}
-
     suggested_topic = follow_up.get("suggested_topic", "Follow-up meeting")
     suggested_attendees = follow_up.get("suggested_attendees", attendee_emails)
     meeting_summary = summary_output.get("summary", "")
     action_items_text = json.dumps(summary_output.get("action_items", []), indent=2)
 
     today_utc = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     prompt = (
-        f"Current meeting summary: {meeting_summary}\n\n"
-        f"Follow-up topic: {suggested_topic}\n"
-        f"Attendees to include: {', '.join(suggested_attendees or attendee_emails)}\n"
-        f"Open action items from this meeting:\n{action_items_text}\n\n"
-        f"Today's date (UTC): {today_utc}\n\n"
-        "Determine optimal follow-up meeting details.\n"
-        "CRITICAL: Respond ONLY in valid JSON format matching this schema exactly:\n"
-        "{\n"
-        '  "title": "Follow-up: [topic]",\n'
-        '  "description": "Clear, professional calendar event description",\n'
-        '  "duration_minutes": 30,\n'
-        '  "start_datetime_iso": "YYYY-MM-DDTHH:MM:SSZ",\n'
-        '  "attendees": ["email1@example.com"],\n'
-        '  "reminder_minutes_before": [10, 1440],\n'
-        '  "has_explicit_date_time": true\n'
-        "}\n"
-        "Choose a reasonable business hour (e.g. 10:00 AM or 2:00 PM) for start_datetime_iso, "
-        "usually 3-5 days from today unless a specific date is mentioned. "
-        "Set has_explicit_date_time to false if the summary does NOT explicitly mention a date or time."
+        f"{_SYSTEM_PROMPT}\n\n"
+        f"Today is: {today_utc}\n"
+        f"Suggested topic: {suggested_topic}\n"
+        f"Meeting summary:\n{meeting_summary}\n\n"
+        f"Action items:\n{action_items_text}\n\n"
+        f"Attendees to include: {', '.join(suggested_attendees or attendee_emails)}\n\n"
+        "Determine optimal follow-up meeting details."
     )
 
     try:
-        raw, powered_by = await run_lyzr_agent("Scheduler Agent - MeetMaxxing", prompt)
+        from ..core.llm_fallback import generate_content_with_fallback
+        raw, powered_by = await generate_content_with_fallback(
+            prompt,
+            response_format_json=True,
+            bypass_cache=False,
+            max_tokens=600,
+            user_id=user_id,
+        )
         event_plan = parse_json_clean(raw or "{}")
     except Exception as e:
-        return {"scheduled": False, "reason": f"Fallback API error during scheduling: {str(e)[:150]}"}
+        return {"scheduled": False, "reason": f"AI error during scheduling: {str(e)[:150]}"}
 
     # Resolve event start datetime
     iso_start = event_plan.get("start_datetime_iso")
@@ -99,8 +93,14 @@ async def run_scheduler_agent(
         except (ValueError, TypeError):
             event_start = (datetime.now(UTC) + timedelta(days=5)).replace(hour=10, minute=0, second=0, microsecond=0)
     else:
-        offset_days = event_plan.get("suggested_date_offset_days", 5)
+        offset_days = int(event_plan.get("suggested_date_offset_days", 5) or 5)
         event_start = (datetime.now(UTC) + timedelta(days=offset_days)).replace(hour=10, minute=0, second=0, microsecond=0)
+
+    # ensure the meeting falls on a weekday (monday-friday)
+    if event_start.weekday() == 5:  # saturday -> monday
+        event_start += timedelta(days=2)
+    elif event_start.weekday() == 6:  # sunday -> monday
+        event_start += timedelta(days=1)
 
     event_end = event_start + timedelta(minutes=event_plan.get("duration_minutes", 30))
     final_attendees = list(set(event_plan.get("attendees", []) + (suggested_attendees or attendee_emails)))
@@ -119,6 +119,7 @@ async def run_scheduler_agent(
             ],
         },
     }
+
 
     if not event_plan.get("has_explicit_date_time", True):
         return {

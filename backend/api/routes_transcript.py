@@ -62,7 +62,15 @@ async def get_realtime_insights(
     """On-demand generation of suggestions, next question, and late-join recap."""
     _require_scoped_meeting(meeting_id, user["org_id"])
     logger.info("[MeetMaxxing REST] [ON-DEMAND] On-demand realtime insights requested for meeting {} (force={})...", meeting_id, force)
-    result = await dispatch(AgentTrigger.REALTIME_TICK, {"meeting_id": meeting_id, "force": force})
+    result = await dispatch(
+        AgentTrigger.REALTIME_TICK,
+        {
+            "meeting_id": meeting_id,
+            "force": force,
+            "user_id": user["user_id"],
+            "context": {"org_id": user["org_id"], "user_id": user["user_id"]},
+        },
+    )
     return result
 
 @router.get("/late-recap/{meeting_id}")
@@ -74,7 +82,14 @@ async def get_late_recap(
     """Generates an executive late join recap."""
     _require_scoped_meeting(meeting_id, user["org_id"])
     logger.info("[MeetMaxxing REST] [RECAP] Late join recap requested for {}", meeting_id)
-    result = await dispatch(AgentTrigger.LATE_JOIN_RECAP, {"meeting_id": meeting_id, "force": force})
+    result = await dispatch(
+        AgentTrigger.LATE_JOIN_RECAP,
+        {
+            "meeting_id": meeting_id,
+            "force": force,
+            "user_id": user["user_id"],
+        },
+    )
     return result
 
 

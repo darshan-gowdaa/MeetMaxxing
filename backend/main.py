@@ -121,6 +121,7 @@ app.include_router(calendar_router)
 app.include_router(dashboard_router)
 app.include_router(context_router)
 app.include_router(api_keys_router)
+app.include_router(api_keys_router, prefix="/api")
 app.include_router(settings_router)
 
 

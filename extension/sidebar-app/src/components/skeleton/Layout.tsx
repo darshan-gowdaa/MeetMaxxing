@@ -1,16 +1,32 @@
 import { RiAlertLine as ShieldAlert } from "@remixicon/react";
 import { getWebUrl } from "../../config";
 
-export function Header({ meetingId, isEnded, elapsedTime, triggerAction, isEnding }: any) {
+export function Header({ meetingId, isEnded, elapsedTime, triggerAction, isEnding, poweredBy }: any) {
+  const isByok = (poweredBy || "").toLowerCase().startsWith("byok");
+  const displayEngine = isByok
+    ? poweredBy.replace(/^byok:\s*/i, "")
+    : (poweredBy || "MeetMaxxing AI").replace(/^meetmaxxing ai\s*\(?/i, "").replace(/\)$/, "") || "Default";
+
   return (
-    <header className="flex items-center justify-between px-4 py-3 mx-3 mt-3 mb-1 bg-surface-container border border-border shrink-0 shadow-lg z-10 rounded-[24px] box-border transition-all">
-      <div className="flex items-center gap-2 shrink truncate">
-        <div className="flex items-center gap-1.5 font-bold text-[17px] tracking-tight text-primary truncate">
+    <header className="flex items-center justify-between px-3.5 py-2.5 mx-3 mt-3 mb-1 bg-surface-container border border-border shrink-0 shadow-lg z-10 rounded-[24px] box-border transition-all">
+      <div className="flex items-center gap-2 shrink min-w-0">
+        <div className="flex items-center gap-1.5 font-bold text-[16px] tracking-tight text-primary shrink-0">
           <span className="text-primary flex items-center justify-center text-lg shrink-0"><i className="ri-sparkling-2-fill" /></span>
           <span>MeetMaxxing</span>
         </div>
+        <div
+          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border truncate max-w-[130px] transition-all cursor-default ${
+            isByok
+              ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
+              : "bg-primary/10 text-primary border-primary/20"
+          }`}
+          title={isByok ? `Using Your API Key (BYOK): ${poweredBy}` : `Using MeetMaxxing AI: ${poweredBy || "Default pool"}`}
+        >
+          <i className={isByok ? "ri-key-2-fill text-[11px] shrink-0" : "ri-sparkling-fill text-[10px] shrink-0"} />
+          <span className="truncate">{isByok ? `BYOK: ${displayEngine}` : displayEngine}</span>
+        </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <div id="status-badge" className={`flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-extrabold tracking-[0.1em] uppercase transition-colors shrink-0 ${meetingId && !isEnded ? "bg-success-container text-on-success-container border border-border shadow-sm" : "bg-surface-container-high text-text-muted border border-border"}`}>
           <span className={`w-2 h-2 rounded-full ${meetingId && !isEnded ? "bg-success animate-pulse" : "bg-text-muted"}`} />
           <span>{meetingId && !isEnded ? "Live" : "Idle"}</span>
@@ -42,6 +58,8 @@ export function Header({ meetingId, isEnded, elapsedTime, triggerAction, isEndin
 
 export function Footer({ meetingId, isEnded, poweredBy }: any) {
   if (!meetingId || isEnded) return null;
+  const isByok = (poweredBy || "").toLowerCase().startsWith("byok");
+
   return (
     <footer className="p-3 mx-3 mb-3 mt-1 border border-border bg-surface-container flex flex-col justify-center shrink-0 shadow-xl rounded-[28px] transition-all gap-2">
       <a
@@ -55,8 +73,20 @@ export function Footer({ meetingId, isEnded, poweredBy }: any) {
         <i className="ri-arrow-right-up-line ml-auto opacity-50 group-hover:opacity-100 transition-opacity" />
       </a>
       {poweredBy && (
-        <div className="text-[9px] text-text-muted text-center font-medium tracking-wide uppercase flex items-center justify-center gap-1 opacity-70">
-          <i className="ri-server-line" /> {poweredBy}
+        <div className="flex items-center justify-center gap-1.5 py-1 px-3 rounded-full bg-surface-container-high/60 border border-border/50 text-[10px] font-medium tracking-wide">
+          {isByok ? (
+            <>
+              <i className="ri-key-2-fill text-amber-500 text-xs" />
+              <span className="font-bold text-amber-500">Active Engine:</span>
+              <span className="text-text truncate max-w-[200px]">{poweredBy}</span>
+            </>
+          ) : (
+            <>
+              <i className="ri-sparkling-fill text-primary text-xs" />
+              <span className="font-bold text-primary">Active Engine:</span>
+              <span className="text-text truncate max-w-[200px]">{poweredBy}</span>
+            </>
+          )}
         </div>
       )}
     </footer>

@@ -13,21 +13,27 @@ from ..memory.schemas import MemoryFilter
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT = """Role: Document Intelligence Specialist. You are a terse AI answering questions about uploaded documents in CAVEMAN MODE. Rules: (1) Answer with extreme brevity using rich Markdown. Drop articles (a, an, the), filler words, pleasantries, preamble, and postamble. Use short fragments. Keep technical accuracy. (2) If the provided context is relevant, use it. Do NOT include citations like [Context 0] in the text. (3) If context is NOT relevant, use your general knowledge to answer directly without hedging. (4) Output valid JSON. Escape newlines properly.
-
-Example:
-Input: Query="What is the project scope?" Context=...
-Output: {"answer": "Project scope covers **Phase 1** and **Phase 2**.\\n\\n- Phase 1: MVP\\n- Phase 2: Scale", "confidence": "high", "sources_used": [0]}"""
+_SYSTEM_PROMPT = """Role: Document Intelligence Specialist. You are an expert AI answering questions about uploaded documents with clarity and rich Markdown.
+Rules:
+1. Answer directly and concisely using structured Markdown with bullet points or tables where appropriate.
+2. If the provided context is relevant, use it. Do NOT include inline citations like [Context 0] in the text.
+3. If context is NOT relevant or insufficient, state clearly that the uploaded documents do not contain this information, then provide helpful general context if applicable.
+4. Output valid JSON matching this schema:
+{
+  "answer": "Structured markdown answer...",
+  "confidence": "high|medium|low",
+  "sources_used": [0, 1]
+}"""
 
 
 def _build_context_block(results) -> tuple[str, list[dict]]:
-    """Format retrieved memories as numbered context for the LLM, also return structured sources."""
+    # format retrieved document chunks with file name and excerpt
     context_lines = []
     sources = []
 
     for i, r in enumerate(results):
         context_lines.append(
-            f"[Context {i}] Document {r.speaker_name} (Meeting {r.meeting_id})\n{r.text}"
+            f"[Context {i}] File: {r.speaker_name or 'Document'} (Meeting {r.meeting_id})\n{r.text}"
         )
         sources.append({
             "index": i,
@@ -46,13 +52,14 @@ async def run_docs_qa_agent(
     user_id: str,
     filters: dict | None = None,
 ) -> dict:
-    """Answer a natural-language question about uploaded documents using Qdrant retrieval."""
+    # searches uploaded document embeddings in qdrant and answers user questions
     filters = filters or {}
 
     mem_filter = MemoryFilter(
         org_id=org_id,
         user_id=filters.get("user_id", ""),
         meeting_id=filters.get("meeting_id"),
+        speaker_name=filters.get("speaker_name"),
         topic="uploaded_context",
     )
 
@@ -63,15 +70,20 @@ async def run_docs_qa_agent(
 
     prompt = (
         f"{_SYSTEM_PROMPT}\n\nQuestion: {question}\n\n"
-        f"Retrieved context from documents:\n{context_block}\n\n"
-        "Answer the question conversationally. Use the context above if relevant, otherwise use your general knowledge.\n"
-        "You MUST format your response as a valid JSON object. Ensure all quotes inside strings are properly escaped. "
-        "Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:\n"
-        '{{\n  "answer": "...",\n  "confidence": "high|medium|low",\n  "sources_used": [0, 1, 2]\n}}'
+        f"Retrieved context from documents:\n{context_block if context_block else '(No relevant document context found)'}\n\n"
+        "Answer the question based on the document context above. Ensure valid JSON output:\n"
+        '{\n  "answer": "...",\n  "confidence": "high|medium|low",\n  "sources_used": [0, 1]\n}'
     )
 
     try:
-        raw, powered_by = await run_lyzr_agent("Docs QA Agent - MeetMaxxing", prompt)
+        from ..core.llm_fallback import generate_content_with_fallback
+        raw, powered_by = await generate_content_with_fallback(
+            prompt,
+            response_format_json=True,
+            max_tokens=1024,
+            bypass_cache=False,
+            user_id=user_id,
+        )
         result = parse_json_clean(raw)
         if not result:
             result = {"answer": raw.strip(), "confidence": "low", "sources_used": []}
@@ -102,3 +114,4 @@ async def run_docs_qa_agent(
         "guardrail_valid": guardrail_res.valid,
         "guardrail_violations": guardrail_res.violations,
     }
+

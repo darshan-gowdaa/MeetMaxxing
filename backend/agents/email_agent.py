@@ -19,10 +19,45 @@ from ..core.database import get_supabase_admin
 logger = logging.getLogger(__name__)
 
 
+def _format_decisions_html(decisions: list) -> str:
+    # renders decisions with owner and confidence in a clean table
+    if not decisions:
+        return "<p style='color:#718096;font-style:italic;'>No formal decisions recorded.</p>"
+
+    rows = ""
+    for item in decisions:
+        if isinstance(item, dict):
+            text = item.get("text", "")
+            decided_by = item.get("decided_by", "Team")
+            confidence = (item.get("confidence") or "high").capitalize()
+        else:
+            text = str(item)
+            decided_by = "Team"
+            confidence = "High"
+
+        rows += (
+            f"<tr>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{text}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{decided_by}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #e2e8f0'>{confidence}</td>"
+            f"</tr>"
+        )
+
+    return (
+        "<table style='width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;'>"
+        "<thead><tr style='background:#f8fafc'>"
+        "<th style='padding:8px;text-align:left'>Decision</th>"
+        "<th style='padding:8px;text-align:left'>Decided By</th>"
+        "<th style='padding:8px;text-align:left'>Confidence</th>"
+        "</tr></thead>"
+        f"<tbody>{rows}</tbody></table>"
+    )
+
+
 def _format_action_items_html(items: list) -> str:
-    """Format action items list into HTML for the email."""
+    # renders action items with owner, priority, and deadline
     if not items:
-        return "<p>No action items recorded.</p>"
+        return "<p style='color:#718096;font-style:italic;'>No action items recorded.</p>"
 
     rows = ""
     for item in items:
@@ -58,10 +93,11 @@ def _format_action_items_html(items: list) -> str:
     )
 
 
-def _build_email_html(meeting_title: str, summary: str, action_items: list, meeting_id: str) -> str:
-    """Build full HTML email body for meeting summary."""
+def _build_email_html(meeting_title: str, summary: str, action_items: list, decisions: list, meeting_id: str) -> str:
+    # assembles the complete branded email layout
     summary_html = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", summary or "No summary available.")
     summary_html = summary_html.replace("\n", "<br>")
+    decisions_html = _format_decisions_html(decisions)
     action_items_html = _format_action_items_html(action_items)
 
     dashboard_url = f"{settings.FRONTEND_URL}/meetings/{meeting_id}"
@@ -76,10 +112,15 @@ def _build_email_html(meeting_title: str, summary: str, action_items: list, meet
   <div style="padding:32px 40px">
     <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em">Summary</h2>
     <p style="color:#2d3748;line-height:1.7">{summary_html}</p>
-    <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em;margin-top:32px">Action Items</h2>
+    
+    <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em;margin-top:28px">Key Decisions</h2>
+    {decisions_html}
+
+    <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em;margin-top:28px">Action Items</h2>
     {action_items_html}
+    
     <div style="margin-top:32px;text-align:center">
-      <a href="{dashboard_url}" style="background:#667eea;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View Full Summary →</a>
+      <a href="{dashboard_url}" style="background:#667eea;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View Full Dashboard →</a>
     </div>
   </div>
   <div style="padding:16px 40px;background:#f7fafc;border-top:1px solid #e2e8f0;text-align:center">
@@ -96,26 +137,25 @@ async def run_email_agent(
     attendees: list[str] | None = None,
     summary: str = "",
     action_items: list | None = None,
+    decisions: list | None = None,
     send_immediately: bool = True,
     to_email: str = "",
     user_id: str = "",
     summary_output: dict | None = None,
 ) -> dict:
-    """
-    Draft and send a meeting summary email.
-
-    to_email is expected to be an actual email address.
-    Falls back to Supabase lookup if it looks like a UUID.
-    """
-    # Accept summary_output dict as alternative to explicit params
+    # formats and sends the meeting summary email via resend
     if summary_output and not summary:
         summary = summary_output.get("summary", "")
     if summary_output and not action_items:
         action_items = summary_output.get("action_items", [])
+    if summary_output and not decisions:
+        decisions = summary_output.get("decisions", [])
     if summary_output and not meeting_title:
         meeting_title = summary_output.get("title", "Meeting Summary")
 
     action_items = action_items or []
+    decisions = decisions or []
+
 
     # Resolve recipient email — to_email may be a UUID from pipeline
     recipient_email = to_email or ""
@@ -150,8 +190,10 @@ async def run_email_agent(
         meeting_title or "Meeting Summary",
         summary,
         action_items,
+        decisions,
         meeting_id,
     )
+
 
     if not send_immediately:
         return {

@@ -27,12 +27,23 @@ _last_recap_times: dict[str, float] = {}
 
 
 def _format_transcript(chunks: list[dict]) -> str:
+    # formats utterances and keeps the most recent parts in full detail
     if not chunks:
         return "No transcript yet."
+    if len(chunks) > 80:
+        older = chunks[:-40]
+        recent = chunks[-40:]
+        older_summary = f"[Earlier {len(older)} utterances summarized: Discussion occurred between {', '.join(set(c.get('speaker', 'Speaker') for c in older[:5]))}]"
+        recent_lines = [f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in recent]
+        return older_summary + "\n" + "\n".join(recent_lines)
     return "\n".join(f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in chunks)
 
 
-async def generate_late_join_recap(meeting_id: str, force: bool = False) -> dict:
+async def generate_late_join_recap(
+    meeting_id: str,
+    force: bool = False,
+    user_id: str | None = None,
+) -> dict:
     now = time.time()
 
     if not force and meeting_id in _last_recaps and (now - _last_recap_times.get(meeting_id, 0) < 120):
@@ -52,14 +63,20 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> dict
     prompt = f"{_SYSTEM_PROMPT}\n\nGenerate a late join recap for the following transcript:\n\n{transcript_text}"
 
     try:
-        raw, powered_by = await generate_content_with_fallback(prompt, bypass_cache=force)
+        raw, powered_by = await generate_content_with_fallback(
+            prompt,
+            response_format_json=True,
+            bypass_cache=force,
+            max_tokens=800,
+            user_id=user_id,
+        )
         result = parse_json_clean(raw)
 
         if not isinstance(result, dict) or not result.get("recap"):
             result = {
-                "recap": result.get("_raw") if isinstance(result, dict) and result.get("_raw") else "Error generating recap due to LLM output parsing failure.",
+                "recap": result.get("_raw") if isinstance(result, dict) and result.get("_raw") else "Meeting in progress.",
                 "key_decisions_so_far": [],
-                "current_topic": "Unknown",
+                "current_topic": "General Discussion",
                 "who_said_what": [],
             }
         else:
@@ -80,5 +97,6 @@ async def generate_late_join_recap(meeting_id: str, force: bool = False) -> dict
 
 
 async def run_late_join_agent(meeting_id: str) -> dict:
-    """gRPC task bus wrapper — always bypasses cache."""
+    # grpc task bus wrapper that always bypasses cache
     return await generate_late_join_recap(meeting_id, force=True)
+

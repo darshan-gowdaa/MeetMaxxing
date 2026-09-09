@@ -60,13 +60,17 @@ async def get_qdrant() -> AsyncQdrantClient:
     return _client
 
 
-async def ensure_collection() -> None:
-    """Create collection + payload indexes, updating indexes on existing collections."""
+async def ensure_collection(force: bool = False) -> None:
+    # creates collection and indexes only once to avoid repeated network roundtrips
+    global _collection_ensured
+    if _collection_ensured and not force:
+        return
     client = await get_qdrant()
     collection_name = settings.QDRANT_COLLECTION
 
     existing = await client.get_collections()
     names = [c.name for c in existing.collections]
+
 
     if collection_name not in names:
         # Create collection with named dense + sparse vectors for hybrid search
@@ -111,6 +115,8 @@ async def ensure_collection() -> None:
                 )
             except Exception:
                 pass
+    _collection_ensured = True
+
 
 
 async def upsert_memories(points: list[MemoryPoint]) -> None:

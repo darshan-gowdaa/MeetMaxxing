@@ -20,22 +20,24 @@ _SYSTEM_PROMPT = """You are MeetMaxxing's Summary Agent. You extract structured 
 
 Produce:
 1. SUMMARY: A clear 3-5 sentence executive summary of the meeting.
-2. DECISIONS: List of decisions made. Each must have: text, decided_by (speaker name from transcript), confidence (high/medium).
-3. ACTION_ITEMS: List of tasks assigned. Each must have: text, owner (exact speaker name from transcript or "Unassigned"), due_date (if mentioned, else null), priority (high/medium/low).
-4. FOLLOW_UP: A follow-up intent object — does this meeting imply a next meeting or follow-up? Include: required (bool), suggested_topic, suggested_attendees.
+2. KEY_TOPICS: List of 2-5 main topics or tags discussed.
+3. DECISIONS: List of decisions made. Each must have: text, decided_by (speaker name from transcript or "Team"), confidence (high/medium).
+4. ACTION_ITEMS: List of tasks assigned. Each must have: text, owner (exact speaker name from transcript or "Unassigned"), due_date (if mentioned in YYYY-MM-DD or relative string, else null), priority (high/medium/low).
+5. FOLLOW_UP: A follow-up intent object — does this meeting imply a next meeting or follow-up? Include: required (bool), suggested_topic, suggested_attendees.
 
 CRITICAL RULES:
 - EVEN IF THE MEETING IS EXTREMELY SHORT OR CONTAINS ONLY A FEW WORDS, YOU MUST PROVIDE A 'summary'. (e.g., 'The meeting was brief with limited context.').
-- Granularity: Break down grouped or list-like tasks into separate, individual action items. If multiple things need to be bought or done (e.g., "buy X, Y, and Z"), create separate action items for each (X, Y, Z) rather than consolidating them into a single "checklist" action.
+- Granularity: Break down grouped or list-like tasks into separate, individual action items.
 - Every decision must cite the exact speaker name from the transcript. If unclear, use "Team".
 - Every action item must cite an owner from the transcript. Never invent owners.
-- Dates/deadlines must be exactly as stated in transcript — never assume.
+- Dates/deadlines must be as stated in transcript — never assume.
 - If a decision is ambiguous or debated without conclusion, mark confidence "medium".
 - Do NOT fabricate commitments that aren't clearly stated.
 
 Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
   "summary": "...",
+  "key_topics": ["Topic 1", "Topic 2"],
   "decisions": [
     {"text": "...", "decided_by": "...", "confidence": "high|medium"}
   ],
@@ -48,6 +50,7 @@ Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or `
     "suggested_attendees": ["..."]
   }
 }"""
+
 
 
 def _format_full_transcript(utterances: list[dict]) -> str:
@@ -100,6 +103,7 @@ async def run_summary_agent(
     title: str = "",
     attendees: list[str] | None = None,
     utterances: list[dict] | None = None,
+    user_id: str | None = None,
 ) -> dict:
     """
     Main entry point — loads full transcript, generates structured summary.
@@ -125,6 +129,7 @@ async def run_summary_agent(
             response_format_json=True,
             max_tokens=4096,
             bypass_cache=True,
+            user_id=user_id,
         )
 
         result = parse_json_clean(raw or "{}")

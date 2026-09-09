@@ -1,16 +1,28 @@
 import { useState, useEffect } from "react";
 import { getWebUrl } from "../../config";
 
-export function IdleState() {
+export function IdleState({ poweredBy }: { poweredBy?: string }) {
+  const isByok = (poweredBy || "").toLowerCase().startsWith("byok");
+
   return (
-    <div id="idle-state" className="flex flex-col items-center justify-center flex-1 h-full w-full gap-5 text-center p-6 bg-surface rounded-[32px] border border-border box-border">
-      <div className="w-20 h-20 rounded-[24px] bg-surface-container border border-border flex items-center justify-center mb-2 transition-colors hover:bg-surface-container-high">
-        <i className="ri-vidicon-line text-4xl text-text-muted" />
+    <div id="idle-state" className="flex flex-col items-center justify-center flex-1 h-full w-full gap-4 text-center p-6 bg-surface rounded-[32px] border border-border box-border">
+      <div className="w-16 h-16 rounded-[22px] bg-surface-container border border-border flex items-center justify-center mb-1 transition-colors hover:bg-surface-container-high">
+        <i className="ri-vidicon-line text-3xl text-text-muted" />
       </div>
       <div className="space-y-1">
-        <p className="text-[22px] font-bold tracking-tight text-text leading-tight">Not in a Meeting</p>
+        <p className="text-[20px] font-bold tracking-tight text-text leading-tight">Not in a Meeting</p>
         <p className="text-[13px] text-text-muted max-w-[200px] leading-relaxed">Join a Google Meet call to activate MeetMaxxing AI Copilot</p>
       </div>
+
+      {poweredBy && (
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border ${
+          isByok ? "bg-amber-500/10 text-amber-500 border-amber-500/25" : "bg-primary/10 text-primary border-primary/20"
+        }`}>
+          <i className={isByok ? "ri-key-2-fill text-xs" : "ri-sparkling-fill text-xs"} />
+          <span className="truncate max-w-[220px]">Active: {poweredBy}</span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2 w-full max-w-[240px] mt-1">
         <a href="https://meet.google.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 bg-primary-container border border-border hover:brightness-110 active:opacity-80 transition-all rounded-xl p-2 text-xs font-semibold text-on-primary-container no-underline cursor-pointer group">
           <span className="w-5 h-5 rounded-full bg-surface text-primary flex items-center justify-center shrink-0">1</span>
@@ -25,8 +37,8 @@ export function IdleState() {
           Copilot auto activates
         </div>
       </div>
-      <div className="w-full mt-3">
-        <a href={getWebUrl()} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-text border border-border w-full no-underline py-3 px-4 rounded-full text-[13px] font-bold active:opacity-80 transition-colors">
+      <div className="w-full mt-2">
+        <a href={getWebUrl()} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-text border border-border w-full no-underline py-2.5 px-4 rounded-full text-[13px] font-bold active:opacity-80 transition-colors">
           <i className="ri-layout-masonry-line" /> Open Dashboard
         </a>
       </div>

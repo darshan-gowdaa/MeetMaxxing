@@ -26,8 +26,9 @@ export default function App() {
 
   const getDynamicLabels = () => {
     const provider = (poweredBy || "").toLowerCase();
-    let connectingStr = "Connecting to Gemini API...";
-    if (provider.includes("groq")) connectingStr = "Connecting to Groq API...";
+    let connectingStr = "Connecting to AI...";
+    if (provider.startsWith("byok")) connectingStr = `Routing to ${poweredBy}...`;
+    else if (provider.includes("groq")) connectingStr = "Connecting to Groq API...";
     else if (provider.includes("openrouter")) connectingStr = "Connecting to OpenRouter...";
     else if (provider.includes("perplexity")) connectingStr = "Connecting to Perplexity...";
     else if (provider.includes("gemini")) connectingStr = "Connecting to Gemini API...";
@@ -122,7 +123,7 @@ export default function App() {
 
   return (
     <>
-      <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} isEnding={isEnding} />
+      <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} isEnding={isEnding} poweredBy={poweredBy} />
       {backendStarting && <ColdStartBanner />}
       {authState === "loading" ? (
         <main className="flex-1 flex flex-col min-h-0"><LoadingState /></main>
@@ -131,7 +132,7 @@ export default function App() {
       ) : !authToken ? (
         <main><LoginPrompt /></main>
       ) : !meetingId ? (
-        <main><IdleState /></main>
+        <main><IdleState poweredBy={poweredBy} /></main>
       ) : isEnded ? (
         <main><EndedState meetingId={meetingId} meetingTitle={meetingTitle} /></main>
       ) : (
