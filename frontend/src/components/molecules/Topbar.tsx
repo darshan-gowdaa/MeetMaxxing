@@ -55,41 +55,51 @@ export default function Topbar() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-surface border-b border-border transition-colors">
+    <header className="sticky top-0 z-50 w-full bg-surface/95 backdrop-blur-md border-b border-border transition-colors">
       <div className="h-16 px-4 flex items-center justify-between gap-4 max-w-7xl mx-auto">
 
-        {/* Left: Logo or Back (Small Top App Bar styling) */}
-        <div className="flex items-center gap-2 flex-shrink-0 w-auto md:w-48">
-          <AnimatePresence mode="wait" initial={false}>
+        {/* Left: Stable Anchor for Logo / Back (Zero CLS) */}
+        <div className="w-36 sm:w-48 h-12 shrink-0 relative flex items-center">
+          <AnimatePresence initial={false}>
             {isMeetingDetail ? (
               <motion.div
                 key="back"
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ duration: 0.2, ease: [0.38, 1.21, 0.22, 1] }}
+                className="absolute inset-y-0 left-0 flex items-center"
               >
                 <Link
                   href="/"
-                  className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-surface-container-high transition-colors"
+                  className="flex items-center gap-2 h-10 px-2.5 -ml-1 rounded-full hover:bg-surface-container-high active:scale-[0.96] transition-all group text-text"
                   aria-label="Back to Dashboard"
                 >
-                  <RiArrowLeftLine className="w-6 h-6 text-text" />
+                  <span className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-highest transition-colors">
+                    <RiArrowLeftLine className="w-5 h-5 text-text group-hover:-translate-x-0.5 transition-transform" />
+                  </span>
+                  <span className="font-bold text-[14px] text-text tracking-tight">
+                    Dashboard
+                  </span>
                 </Link>
               </motion.div>
             ) : (
               <motion.div
                 key="logo"
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ duration: 0.2, ease: [0.38, 1.21, 0.22, 1] }}
+                className="absolute inset-y-0 left-0 flex items-center"
               >
-                <Link href="/" className="flex items-center gap-3 pr-4 h-12">
-                  <span className="text-on-primary-container bg-primary-container w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                    <RiSparkling2Fill className="w-6 h-6" aria-hidden="true" />
+                <Link
+                  href="/"
+                  className="flex items-center gap-2.5 h-10 group active:scale-[0.98] transition-transform"
+                >
+                  <span className="text-on-primary-container bg-primary-container w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                    <RiSparkling2Fill className="w-5 h-5" aria-hidden="true" />
                   </span>
-                  <span className="font-medium text-[22px] tracking-tight text-text whitespace-nowrap">
+                  <span className="font-bold text-[18px] sm:text-[20px] tracking-tight text-text whitespace-nowrap">
                     MeetMaxxing
                   </span>
                 </Link>
@@ -98,7 +108,7 @@ export default function Topbar() {
           </AnimatePresence>
         </div>
 
-        {/* Center/Bottom: MD3 Tabs */}
+        {/* Center/Bottom: MD3 Navigation Bar (Tonal active pill, zero underline jumps) */}
         <nav aria-label="Primary" className="fixed md:static bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:border-t-0 flex md:flex-1 items-center justify-around md:justify-center gap-1 md:gap-2 h-16 md:h-full pb-safe md:pb-0 px-2 md:px-0">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
@@ -110,37 +120,39 @@ export default function Topbar() {
                 key={tab.id}
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
-                className="relative flex flex-col md:flex-row items-center justify-center md:gap-2 h-full md:h-14 md:px-4 rounded-xl md:rounded-full group outline-none w-full md:w-auto"
+                className="relative flex flex-col md:flex-row items-center justify-center md:gap-2 h-full md:h-14 md:px-4 rounded-xl md:rounded-full group outline-none w-full md:w-auto active:scale-[0.97] transition-transform"
               >
                 <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 z-10 relative">
-                  <span className={`flex items-center justify-center w-14 md:w-12 h-8 rounded-full transition-colors ${isActive ? 'bg-secondary-container text-on-secondary-container' : 'text-text-muted group-hover:bg-surface-container-high group-hover:text-text'}`}>
+                  <span
+                    className={`flex items-center justify-center w-14 md:w-12 h-8 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? "bg-secondary-container text-on-secondary-container shadow-xs"
+                        : "text-text-muted group-hover:bg-surface-container-high group-hover:text-text"
+                    }`}
+                  >
                     <IconComponent className="w-5 h-5" aria-hidden="true" />
                   </span>
-                  <span className={`text-[11px] md:text-[14px] font-medium transition-colors ${isActive ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
+                  <span
+                    className={`text-[11px] md:text-[14px] font-medium transition-colors ${
+                      isActive ? "text-text font-bold" : "text-text-muted group-hover:text-text"
+                    }`}
+                  >
                     {label}
                   </span>
                 </div>
-                {/* Optional Active underline for Primary Tabs (desktop only) */}
-                {isActive && (
-                  <motion.div
-                    layoutId="md3-active-tab"
-                    className="hidden md:block absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"
-                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                  />
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Right side: User Profile or Login */}
-        <div className="flex items-center justify-end gap-3 flex-shrink-0 w-auto md:w-48">
+        {/* Right side: User Profile or Login (Symmetric anchor) */}
+        <div className="flex items-center justify-end gap-3 shrink-0 w-36 sm:w-48">
           {user ? (
             <ProfileDropdown user={user} signOut={signOut} />
           ) : (
             <Link
               href="/login"
-              className="h-10 px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[14px] font-medium spring-colors hover:bg-primary-container hover:text-on-primary-container"
+              className="h-10 px-5 sm:px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[14px] font-medium spring-colors hover:bg-primary-container hover:text-on-primary-container active:scale-[0.98] transition-all"
             >
               Sign In
             </Link>
