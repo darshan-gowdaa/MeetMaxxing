@@ -3,9 +3,8 @@ name: Keep Services Awake
 on:
   schedule:
     # Staggered cron entries to work around GitHub's scheduled-workflow
-    # throttling (GitHub skips/delays scheduled runs under load and only
-    # guarantees ~a subset of declared schedules). The two lines together
-    # fire ~every 7 minutes, for ~8 pings/hour total.
+    # throttling (GitHub skips/delays scheduled runs under load). The two
+    # lines together fire ~every 7 minutes, for ~8 pings/hour total.
     # NOTE: GitHub disables a repository's cron workflows entirely after 60
     # days of repo inactivity — push any commit periodically to keep this alive.
     - cron: '2,16,30,44 * * * *'
@@ -18,17 +17,27 @@ jobs:
     steps:
       - name: Ping Backend Health Endpoint
         run: |
-          if [ -z "${{ secrets.RENDER_API_URL }}" ]; then
+          RAW="${{ secrets.RENDER_API_URL }}"
+          if [ -z "$RAW" ]; then
             echo "RENDER_API_URL secret not set. Skipping."
             exit 0
           fi
+          # Normalize the secret into a clean base URL: trim whitespace and
+          # trailing slashes, drop a legacy "/api" suffix, default to https://.
+          BASE="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          BASE="${BASE%/}"
+          BASE="${BASE%/api}"
+          case "$BASE" in
+            http://*|https://*) ;;
+            *) BASE="https://$BASE" ;;
+          esac
+          echo "Pinging ${BASE}/health"  # GitHub masks the secret in logs.
           # Wake the sleeping Render free-tier service. Cold starts take 30-60s,
           # so the first request may legitimately time out — retry up to 3 times.
-          # /health is cheap (no Qdrant hit), unlike /api/diagnostics. --fail makes
-          # non-2xx (e.g. 503 during boot) count as failure so it triggers a retry,
-          # and a real failure now fails the step instead of being swallowed.
+          # /health is cheap (no Qdrant hit), unlike /api/diagnostics. --fail
+          # makes non-2xx count as failure; -L follows http->https redirects.
           for attempt in 1 2 3; do
-            if curl --fail --silent --show-error --max-time 90 "${{ secrets.RENDER_API_URL }}/health" > /dev/null 2>&1; then
+            if curl --fail --silent --show-error --location --max-time 90 "$BASE/health" > /dev/null; then
               echo "Health check OK (attempt ${attempt})"
               exit 0
             fi
