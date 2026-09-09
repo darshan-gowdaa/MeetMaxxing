@@ -65,7 +65,11 @@ export default function ExtensionAuthPage() {
 
  // Listen for confirmation from auth-capture.js
  const handleMessage = (e: MessageEvent) => {
- if (e.source === window && e.data?.type ==="MEETMAXXING_AUTH_SUCCESS") {
+ // Validate origin + shape strictly: only trust the confirmation from this
+ // same page, not a spoofed cross-origin frame.
+ if (e.origin !== window.location.origin) return;
+ if (e.source !== window || !e.data || typeof e.data !== "object") return;
+ if (e.data.type ==="MEETMAXXING_AUTH_SUCCESS") {
  setConnectState("connected");
  }
  };

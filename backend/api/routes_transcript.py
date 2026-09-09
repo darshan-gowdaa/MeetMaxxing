@@ -13,11 +13,17 @@ from loguru import logger
 from pydantic import BaseModel
 
 from ..agents.orchestrator import AgentTrigger, dispatch
-from ..core.auth import get_current_user
+from ..core.auth import get_current_user, get_user_from_token
 from ..core.database import get_meeting_record, get_supabase_admin
 from ..services.transcript import create_meeting_record, ingest_chunk
 
 router = APIRouter(prefix="/ingest", tags=["transcript"])
+
+# Application-level WebSocket close code for unauthenticated connections.
+# 4401 sits in the 4000-4999 app range (RFC 6455 reserves 1000-4999) and is a
+# widely-used convention for "unauthorized".
+WS_CLOSE_UNAUTHORIZED = 4401
+WS_PROTOCOL_NAME = "meetmaxxing"
 
 # Active WebSocket connections: meeting_id → set of WebSocket connections
 _active_connections: dict[str, set[WebSocket]] = {}
@@ -208,9 +214,41 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
     Client sends: JSON transcript chunks
     Server receives live audio/text chunks and broadcasts to connected clients.
     AI insights run ON DEMAND when explicitly requested via button click.
+
+    Authentication: the extension authenticates by sending the Supabase JWT as
+    a `?token=` query param (browsers cannot set an Authorization header on
+    WebSocket upgrades). As a fallback for clients that cannot append query
+    params, the token may also be supplied in a `Sec-WebSocket-Protocol`
+    subprotocol slot. Unauthenticated connections are rejected with a clean
+    close (code 4401) before `accept()`.
     """
-    await websocket.accept()
-    logger.info("[MeetMaxxing WS] [CONNECT] Client connected for meeting {}", meeting_id)
+    token = websocket.query_params.get("token")
+
+    # Fallback: token carried as a second `Sec-WebSocket-Protocol` subprotocol.
+    # Format negotiated by the client: "meetmaxxing, <token>".
+    if not token:
+        requested = websocket.headers.get("sec-websocket-protocol") or ""
+        for part in requested.split(","):
+            part = part.strip()
+            if part and part != WS_PROTOCOL_NAME:
+                token = part
+                break
+
+    try:
+        user = await get_user_from_token(token or "")
+    except HTTPException:
+        logger.warning("[MeetMaxxing WS] [AUTH] Rejected unauthenticated connection for meeting {}", meeting_id)
+        await websocket.close(code=WS_CLOSE_UNAUTHORIZED, reason="Unauthorized")
+        return
+
+    # Echo the harmless protocol name back (never the token) if the client
+    # requested the subprotocol handshake, so the upgrade succeeds cleanly.
+    requested_protocols = (websocket.headers.get("sec-websocket-protocol") or "").split(",")
+    if any(p.strip() == WS_PROTOCOL_NAME for p in requested_protocols):
+        await websocket.accept(subprotocol=WS_PROTOCOL_NAME)
+    else:
+        await websocket.accept()
+    logger.info("[MeetMaxxing WS] [CONNECT] Client connected for meeting {} (user={})", meeting_id, user["user_id"])
 
     # Register connection
     if meeting_id not in _active_connections:

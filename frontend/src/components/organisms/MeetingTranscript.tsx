@@ -9,6 +9,7 @@ import {
   RiCheckLine as Check,
 } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { copyToClipboard } from "@/lib/clipboard";
 import type { Meeting } from "@/types";
 
 interface MeetingTranscriptProps {
@@ -105,9 +106,11 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
         const time = chunk.timestamp_ms > 0 ? `[${String(Math.floor(chunk.timestamp_ms / 60000)).padStart(2, "0")}:${String(Math.floor((chunk.timestamp_ms % 60000) / 1000)).padStart(2, "0")}]` : "";
         return `${time} ${chunk.speaker || "Unknown"}: ${content}`;
       }).join('\n');
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   if (!transcriptData || transcriptData.length === 0) return null;

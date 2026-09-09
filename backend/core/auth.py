@@ -8,14 +8,15 @@ from .config import settings
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> dict:
-    """Validate Supabase JWT token and return user payload."""
-    if credentials is None:
-        raise HTTPException(status_code=401, detail="Authentication required")
+async def get_user_from_token(token: str) -> dict:
+    """Validate a Supabase JWT and return the user payload.
 
-    token = credentials.credentials
+    Shared by the REST dependency (`get_current_user`) and the WebSocket
+    endpoint, which cannot use the Bearer header and receives the token via
+    query param or `Sec-WebSocket-Protocol` subprotocol instead.
+    """
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
         from .database import get_supabase
@@ -43,3 +44,13 @@ async def get_current_user(
     except Exception as e:
         logger.warning("[Auth] JWT validation failed: {}", type(e).__name__)
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> dict:
+    """Validate Supabase JWT token and return user payload."""
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    return await get_user_from_token(credentials.credentials)

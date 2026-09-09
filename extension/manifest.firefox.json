@@ -21,6 +21,7 @@
     "activeTab",
     "tabs",
     "storage",
+    "alarms",
     "webRequest",
     "https://meet.google.com/*",
     "https://meetmaxxing-api.onrender.com/*"

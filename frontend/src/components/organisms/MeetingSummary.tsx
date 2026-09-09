@@ -2,6 +2,7 @@
 "use client";
 
 import { getAuthToken } from"@/lib/api";
+import { copyToClipboard } from "@/lib/clipboard";
 import { useState } from"react";
 import { RiSparklingLine as Sparkles, RiFileCopyLine as Copy, RiCheckLine as Check } from"@remixicon/react";
 import type { Meeting } from"@/types";
@@ -17,9 +18,11 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
 
  const handleCopy = async () => {
  if (!meeting.summary) return;
- await navigator.clipboard.writeText(meeting.summary);
- setCopied(true);
- setTimeout(() => setCopied(false), 2000);
+ const ok = await copyToClipboard(meeting.summary);
+ if (ok) {
+   setCopied(true);
+   setTimeout(() => setCopied(false), 2000);
+ }
  };
 
  const handleForceAction = async () => {

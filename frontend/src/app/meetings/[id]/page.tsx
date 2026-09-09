@@ -24,6 +24,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     loading,
     actionItems,
     errorMsg,
+    coldStart,
     gmailState,
     calendarState,
     loadMeeting,
@@ -44,7 +45,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
           {errorMsg ? (
             <div className="w-16 h-16 rounded-full bg-risk-container flex items-center justify-center mb-2">
-              <span className="text-risk font-bold text-2xl">!</span>
+              <span className="text-risk font-bold text-2xl">{coldStart ? "☕" : "!"}</span>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-2">
@@ -55,10 +56,19 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           )}
           <div className="flex flex-col items-center gap-2">
             <p className="text-[14px] text-text-muted font-medium tracking-wide">
-              {errorMsg ? "Failed to load meeting" : "AI is processing this meeting transcript"}
+              {coldStart
+                ? "Backend is starting up ☕ — this can take up to a minute"
+                : errorMsg
+                ? "Failed to load meeting"
+                : "AI is processing this meeting transcript"}
             </p>
-            {errorMsg && (
+            {errorMsg && !coldStart && (
               <p className="text-[11px] text-risk max-w-xs text-center">{errorMsg}</p>
+            )}
+            {coldStart && (
+              <p className="text-[11px] text-text-muted max-w-xs text-center">
+                This page will retry automatically once the backend wakes up.
+              </p>
             )}
           </div>
           <div className="flex items-center gap-3 mt-4">

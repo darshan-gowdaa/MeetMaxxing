@@ -8,6 +8,15 @@ declare const browser: any;
 const extApi = () =>
   typeof chrome !== "undefined" ? chrome : (typeof browser !== "undefined" ? browser : null);
 
+// Single source of truth for auth lives in the background worker — never write
+// tokens from the sidebar. Report 401s so the worker refreshes (or expires).
+const report401 = () => {
+  try {
+    const ext = extApi();
+    ext?.runtime?.sendMessage({ type: "REPORT_401" });
+  } catch (e) {}
+};
+
 export function ContextAgent({
   meetingId,
   authToken,
@@ -43,8 +52,7 @@ export function ContextAgent({
       const res = await fetch(`${getBaseUrlBackend()}/context/files`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      const ext = extApi();
-      if (res.status === 401) { ext?.storage?.local?.remove?.(["authToken"]); return; }
+      if (res.status === 401) { report401(); return; }
       if (res.ok) setAvailableFiles((await res.json()).files || []);
     } catch (e) {}
   };
@@ -99,8 +107,7 @@ export function ContextAgent({
           headers: { Authorization: `Bearer ${authToken}` },
           body: fd,
         });
-        const ext = extApi();
-        if (res.status === 401) { ext?.storage?.local?.remove?.(["authToken"]); setUploadError("Session expired."); anyFailed = true; break; }
+        if (res.status === 401) { report401(); setUploadError("Session expired."); anyFailed = true; break; }
         if (res.ok) uploaded.push(file.name);
         else anyFailed = true;
       } catch { anyFailed = true; }
@@ -125,8 +132,7 @@ export function ContextAgent({
         body: JSON.stringify({ meeting_id: meetingId, query: text, target_file: selectedTargetFiles.length ? selectedTargetFiles : null }),
         signal: abortRef.current.signal,
       });
-      const ext = extApi();
-      if (res.status === 401) { ext?.storage?.local?.remove?.(["authToken"]); setChatHistory((p) => [...p, { role: "agent", content: "Session expired. Please log in again." }]); return; }
+      if (res.status === 401) { report401(); setChatHistory((p) => [...p, { role: "agent", content: "Session expired. Please log in again." }]); return; }
       if (res.ok) {
         const data = await res.json();
         setChatHistory((p) => [...p, { role: "agent", content: data.answer, sources: data.sources }]);

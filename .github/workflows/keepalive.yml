@@ -2,18 +2,38 @@ name: Keep Services Awake
 
 on:
   schedule:
-    - cron: '*/14 * * * *'
+    # Staggered cron entries to work around GitHub's scheduled-workflow
+    # throttling (GitHub skips/delays scheduled runs under load and only
+    # guarantees ~a subset of declared schedules). The two lines together
+    # fire ~every 7 minutes, for ~8 pings/hour total.
+    # NOTE: GitHub disables a repository's cron workflows entirely after 60
+    # days of repo inactivity — push any commit periodically to keep this alive.
+    - cron: '2,16,30,44 * * * *'
+    - cron: '9,23,37,51 * * * *'
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Backend API
+      - name: Ping Backend Health Endpoint
         run: |
           if [ -z "${{ secrets.RENDER_API_URL }}" ]; then
             echo "RENDER_API_URL secret not set. Skipping."
             exit 0
           fi
-          # Ping diagnostics endpoint. Hits both Render and Qdrant.
-          curl -sS "${{ secrets.RENDER_API_URL }}/api/diagnostics" > /dev/null || echo "Ping failed"
+          # Wake the sleeping Render free-tier service. Cold starts take 30-60s,
+          # so the first request may legitimately time out — retry up to 3 times.
+          # /health is cheap (no Qdrant hit), unlike /api/diagnostics. --fail makes
+          # non-2xx (e.g. 503 during boot) count as failure so it triggers a retry,
+          # and a real failure now fails the step instead of being swallowed.
+          for attempt in 1 2 3; do
+            if curl --fail --silent --show-error --max-time 90 "${{ secrets.RENDER_API_URL }}/health" > /dev/null 2>&1; then
+              echo "Health check OK (attempt ${attempt})"
+              exit 0
+            fi
+            echo "Health check attempt ${attempt} failed; retrying in 5s..."
+            sleep 5
+          done
+          echo "Health check failed after 3 attempts."
+          exit 1

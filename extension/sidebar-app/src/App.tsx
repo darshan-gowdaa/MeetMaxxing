@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useCopilot } from "./hooks/useCopilot";
 import { Header, Footer, ErrorBanner } from "./components/skeleton/Layout";
-import { IdleState, EndedState } from "./components/skeleton/States";
+import { IdleState, EndedState, ExpiredState } from "./components/skeleton/States";
 import { LoginPrompt } from "./components/skeleton/LoginPrompt";
 import { LiveTranscript } from "./components/organisms/LiveTranscript";
 import { SuggestionAgent } from "./components/organisms/SuggestionAgent";
@@ -11,7 +11,7 @@ import { ContextAgent } from "./components/organisms/ContextAgent";
 
 export default function App() {
   const {
-    authToken, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
+    authToken, authState, backendStarting, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
     nextQuestions, recap, errorMessage, isProcessing, isEnding, poweredBy, elapsedTime,
     triggerAction, clearTranscript, clearError,
   } = useCopilot();
@@ -103,10 +103,32 @@ export default function App() {
     </button>
   );
 
+  const ColdStartBanner = () => (
+    <div className="mx-3 mt-2 mb-1 px-4 py-3 rounded-[24px] bg-surface-container border border-border flex items-center gap-3 shadow-sm">
+      <div className="md3-loading-indicator md3-loading-indicator-sm text-primary shrink-0" />
+      <div className="flex flex-col min-w-0">
+        <span className="text-[13px] font-bold text-text">Backend is starting up ☕</span>
+        <span className="text-[11px] text-text-muted">This can take up to a minute. We'll reconnect automatically.</span>
+      </div>
+    </div>
+  );
+
+  const LoadingState = () => (
+    <div className="flex flex-col items-center justify-center flex-1 h-full gap-4 text-text-muted">
+      <div className="md3-loading-indicator md3-loading-indicator-md text-primary" />
+      <span className="text-xs font-bold tracking-widest uppercase">Loading</span>
+    </div>
+  );
+
   return (
     <>
       <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} isEnding={isEnding} />
-      {!authToken ? (
+      {backendStarting && <ColdStartBanner />}
+      {authState === "loading" ? (
+        <main className="flex-1 flex flex-col min-h-0"><LoadingState /></main>
+      ) : authState === "expired" ? (
+        <main className="flex-1 flex flex-col min-h-0"><ExpiredState /></main>
+      ) : !authToken ? (
         <main><LoginPrompt /></main>
       ) : !meetingId ? (
         <main><IdleState /></main>

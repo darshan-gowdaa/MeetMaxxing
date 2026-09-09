@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchMeeting, updateActionItem, getAuthToken } from '@/lib/api';
+import { fetchMeeting, updateActionItem, getAuthToken, isColdStartError } from '@/lib/api';
 import type { Meeting } from '@/types';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -9,6 +9,7 @@ export function useMeetingManager(id: string) {
   const [loading, setLoading] = useState(true);
   const [actionItems, setActionItems] = useState<Meeting["action_items"]>([]);
   const [errorMsg, setErrorMsg] = useState("");
+  const [coldStart, setColdStart] = useState(false);
   const [gmailState, setGmailState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [calendarState, setCalendarState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -19,12 +20,14 @@ export function useMeetingManager(id: string) {
         setMeeting(data);
         setActionItems(data.action_items || []);
         setErrorMsg("");
+        setColdStart(false);
         if (data.email_result?.sent) setGmailState("success");
         if (data.scheduling_result && ["success", "scheduled", "gcal_url_generated"].includes(data.scheduling_result.status))
           setCalendarState("success");
       })
       .catch((err: Error) => {
         setMeeting(null);
+        setColdStart(isColdStartError(err));
         setErrorMsg(err.message || "Failed to fetch meeting from backend");
       })
       .finally(() => setLoading(false));
@@ -42,6 +45,7 @@ export function useMeetingManager(id: string) {
         setMeeting(data);
         setActionItems(data.action_items || []);
         setErrorMsg("");
+        setColdStart(false);
         if (data.email_result?.sent) setGmailState("success");
         if (data.scheduling_result && ["success", "scheduled", "gcal_url_generated"].includes(data.scheduling_result.status))
           setCalendarState("success");
@@ -52,6 +56,7 @@ export function useMeetingManager(id: string) {
       } catch (err: unknown) {
         if (!isMounted) return;
         setMeeting(null);
+        setColdStart(isColdStartError(err));
         setErrorMsg((err as Error).message || "Failed to fetch meeting from backend");
       } finally {
         if (isMounted) setLoading(false);
@@ -207,6 +212,7 @@ export function useMeetingManager(id: string) {
     loading,
     actionItems,
     errorMsg,
+    coldStart,
     gmailState,
     calendarState,
     loadMeeting,

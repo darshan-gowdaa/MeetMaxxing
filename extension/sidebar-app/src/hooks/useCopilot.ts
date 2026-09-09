@@ -20,6 +20,8 @@ export function useCopilot() {
   const [poweredBy, setPoweredBy] = useState<string>("Google Gemini API");
   const [meetingStartTime, setMeetingStartTime] = useState<number>(Date.now());
   const [elapsedTime, setElapsedTime] = useState<string>("--:--");
+  const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous" | "expired">("loading");
+  const [backendStarting, setBackendStarting] = useState<boolean>(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -92,7 +94,7 @@ export function useCopilot() {
 
   useEffect(() => {
     if (ext && ext.storage?.local) {
-      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime", "authToken"], (res: any) => {
+      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime", "authToken", "authState", "backendStarting"], (res: any) => {
         if (res.authToken) setAuthToken(res.authToken);
         if (res.currentMeetingId) setMeetingId(res.currentMeetingId);
         if (res.currentMeetingTitle) setMeetingTitle(res.currentMeetingTitle);
@@ -100,6 +102,8 @@ export function useCopilot() {
         if (res.poweredBy) setPoweredBy(res.poweredBy);
         if (res.meetingStartTime) setMeetingStartTime(res.meetingStartTime);
         if (res.copilot_state) handleCopilotUpdate(res.copilot_state);
+        if (res.authState) setAuthState(res.authState);
+        if (res.backendStarting) setBackendStarting(true);
       });
     }
 
@@ -107,7 +111,13 @@ export function useCopilot() {
       if (!msg || !msg.type) return;
       if (msg.type === "LIVE_CAPTION_CHUNK" && msg.chunk) appendTranscriptChunk(msg.chunk);
       else if (msg.type === "COPILOT_UPDATE" && msg.data) handleCopilotUpdate(msg.data);
-      else if (msg.type === "MEETING_STARTED") {
+      else if (msg.type === "AUTH_STATE_CHANGED") {
+        if (msg.state) setAuthState(msg.state);
+      } else if (msg.type === "BACKEND_STARTING") {
+        setBackendStarting(true);
+      } else if (msg.type === "BACKEND_READY") {
+        setBackendStarting(false);
+      } else if (msg.type === "MEETING_STARTED") {
         setIsEnded(false);
         if (msg.meetingId) setMeetingId(msg.meetingId);
         if (msg.title) setMeetingTitle(msg.title);
@@ -135,6 +145,8 @@ export function useCopilot() {
         }
         if (changes.meetingStartTime?.newValue) setMeetingStartTime(changes.meetingStartTime.newValue);
         if (changes.authToken?.newValue) setAuthToken(changes.authToken.newValue);
+        if (changes.authState?.newValue) setAuthState(changes.authState.newValue);
+        if (changes.backendStarting) setBackendStarting(!!changes.backendStarting.newValue);
       }
     };
 
@@ -144,7 +156,7 @@ export function useCopilot() {
     // Fallback: Poll storage because Chrome blocks onChanged/onMessage in web-accessible iframes
     const pollInterval = setInterval(() => {
       if (ext && ext.storage?.local) {
-        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken"], (res: any) => {
+        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken", "authState", "backendStarting"], (res: any) => {
           if (res.transcript && Array.isArray(res.transcript)) {
             setTranscriptLines(prev => {
               if (prev.length === res.transcript.length && JSON.stringify(prev) === JSON.stringify(res.transcript)) return prev;
@@ -170,6 +182,8 @@ export function useCopilot() {
           if (res.authToken !== undefined) {
             setAuthToken(res.authToken || "");
           }
+          if (res.authState) setAuthState(res.authState);
+          setBackendStarting(!!res.backendStarting);
         });
       }
     }, 1500);
@@ -232,6 +246,8 @@ export function useCopilot() {
 
   return {
     authToken,
+    authState,
+    backendStarting,
     meetingId,
     meetingTitle,
     isEnded,

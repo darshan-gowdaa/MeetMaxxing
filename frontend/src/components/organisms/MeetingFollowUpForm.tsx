@@ -42,6 +42,11 @@ export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFol
  setError("Please select a date and time.");
  return;
  }
+ const parsedDate = new Date(dateTime);
+ if (isNaN(parsedDate.getTime())) {
+ setError("Invalid date and time. Please pick a valid time.");
+ return;
+ }
  setLoading(true);
  setError("");
 
@@ -59,7 +64,9 @@ export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFol
       : meeting.attendees || [];
 
     const payload = {
-      start_datetime_iso: new Date(dateTime).toISOString(),
+      // datetime-local is a wall-clock value in the user's local timezone;
+      // toISOString() normalizes it to an unambiguous UTC ISO string.
+      start_datetime_iso: parsedDate.toISOString(),
       duration_minutes: result?.suggested_payload?.duration_minutes || 30,
       title: result?.suggested_payload?.title || `Follow-up: ${meeting.title || 'Meeting'}`,
       description: result?.suggested_payload?.description || "",

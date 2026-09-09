@@ -11,6 +11,7 @@ import {
  RiDownloadLine as Download,
 } from"@remixicon/react";
 import { ActionButton, GmailIcon, GoogleCalendarIcon, type BtnState } from"@/components/molecules/ActionButtons";
+import { copyToClipboard } from "@/lib/clipboard";
 import type { Meeting } from"@/types";
 
 interface MeetingHeaderProps {
@@ -119,10 +120,12 @@ export default function MeetingHeader({
  <>
  <div className="flex flex-wrap gap-2">
  <button
-    onClick={() => {
-      navigator.clipboard.writeText(window.location.href);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+    onClick={async () => {
+      const ok = await copyToClipboard(window.location.href);
+      if (ok) {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      }
     }}
     id="copy-link-btn"
     className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"

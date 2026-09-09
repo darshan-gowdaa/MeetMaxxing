@@ -23,29 +23,37 @@ export default function MeetingDecisions({ decisions }: MeetingDecisionsProps) {
  Key Decisions ({decisions.length})
  </h2>
  </div>
- <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
- {decisions.map((dec, idx) => (
- <div
- key={idx}
- className="bg-surface2 rounded-[16px] border border-border p-4 flex flex-col gap-3 spring hover:shadow-sm border border-border hover:border-border-strong"
- >
- <p className="text-[13px] text-text leading-relaxed font-medium">{dec.text}</p>
- <div className="flex items-center justify-between text-[11px] text-text-muted pt-2 border-t border-border">
- <span className="flex items-center gap-1.5">
- <span className="w-5 h-5 rounded-full bg-surface3 border border-border flex items-center justify-center">
- <UserIcon className="w-2.5 h-2.5"/>
- </span>
- <span className="text-text font-semibold">{dec.decided_by ||"Team"}</span>
- </span>
- {dec.confidence && (
- <span className="px-2 py-0.5 rounded-full bg-primary-dim text-primary text-[10px] font-bold capitalize border border-primary/20">
- {dec.confidence}
- </span>
- )}
- </div>
- </div>
- ))}
- </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {decisions.map((dec, idx) => {
+        // Null-safe: backend may return plain strings or objects with missing
+        // optional fields (decided_by/confidence).
+        const d = typeof dec === "string" ? { text: dec, decided_by: "", confidence: "" } : (dec || { text: "", decided_by: "", confidence: "" });
+        const text = typeof d.text === "string" ? d.text : JSON.stringify(d.text ?? "");
+        const decidedBy = d.decided_by || "Team";
+        const confidence = d.confidence || "";
+        return (
+        <div
+        key={idx}
+        className="bg-surface2 rounded-[16px] border border-border p-4 flex flex-col gap-3 spring hover:shadow-sm border border-border hover:border-border-strong"
+        >
+        <p className="text-[13px] text-text leading-relaxed font-medium">{text}</p>
+        <div className="flex items-center justify-between text-[11px] text-text-muted pt-2 border-t border-border">
+        <span className="flex items-center gap-1.5">
+        <span className="w-5 h-5 rounded-full bg-surface3 border border-border flex items-center justify-center">
+        <UserIcon className="w-2.5 h-2.5"/>
+        </span>
+        <span className="text-text font-semibold">{decidedBy}</span>
+        </span>
+        {confidence && (
+        <span className="px-2 py-0.5 rounded-full bg-primary-dim text-primary text-[10px] font-bold capitalize border border-primary/20">
+        {confidence}
+        </span>
+        )}
+        </div>
+        </div>
+        );
+      })}
+      </div>
  </div>
  );
 }

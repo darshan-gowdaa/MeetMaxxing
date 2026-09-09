@@ -34,6 +34,30 @@ export function IdleState() {
   );
 }
 
+export function ExpiredState() {
+  const openAuth = () => window.open(`${getWebUrl()}/extension-auth`, "_blank");
+
+  return (
+    <div className="flex flex-col items-center justify-center flex-1 h-full w-full gap-5 text-center p-6 bg-surface rounded-[32px] border border-border box-border">
+      <div className="w-20 h-20 rounded-[24px] bg-risk-container border border-border flex items-center justify-center mb-2">
+        <i className="ri-error-warning-line text-4xl text-risk" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-[20px] font-bold tracking-tight text-text leading-tight">Session expired</p>
+        <p className="text-[13px] text-text-muted max-w-[220px] leading-relaxed">
+          Please log in again to reactivate your AI meeting copilot.
+        </p>
+      </div>
+      <button
+        onClick={openAuth}
+        className="flex items-center justify-center gap-2 w-full max-w-[240px] bg-primary text-on-primary hover:brightness-110 font-bold py-3 rounded-full transition-all active:opacity-80 text-[13px]"
+      >
+        <i className="ri-login-box-line text-[15px]" /> Log in again
+      </button>
+    </div>
+  );
+}
+
 export function EndedState({ meetingId, meetingTitle }: { meetingId: string; meetingTitle: string }) {
   const [opened, setOpened] = useState(false);
   const [countdown, setCountdown] = useState(5);

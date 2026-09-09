@@ -17,6 +17,8 @@ let meetingStartTime = Date.now();
 let captionObserver = null;
 let authToken = null;
 let maxParticipants = 1;
+let endCheckInterval = null;        // meeting-end polling timer (cleared on end)
+let visibilityAttachInterval = null; // CC button attach timer (cleared on end)
 
 /**
  * Per-speaker utterance tracker.
@@ -533,7 +535,8 @@ function injectVisibilityButton() {
   };
 
   // Poll to find the CC button and insert next to it
-  const attachInterval = setInterval(() => {
+  if (visibilityAttachInterval) clearInterval(visibilityAttachInterval);
+  visibilityAttachInterval = setInterval(() => {
     // User explicitly stated .UTNHae is the CC button container/span
     let ccBtn = document.querySelector('.UTNHae');
     if (!ccBtn) {
@@ -548,7 +551,8 @@ function injectVisibilityButton() {
           // Insert after the wrapper so it sits right next to it
           wrapper.parentElement.insertBefore(btn, wrapper.nextSibling);
         }
-        clearInterval(attachInterval);
+        clearInterval(visibilityAttachInterval);
+        visibilityAttachInterval = null;
       }
     }
   }, 2000);
@@ -626,9 +630,11 @@ function startMeeting() {
   console.log("[MeetMaxxing] Meeting started:", meetingId, "(Code:", meetCode, ")");
 
   // Polling fallback to detect if user left the meeting but URL didn't change
-  const endCheckInterval = setInterval(() => {
+  if (endCheckInterval) clearInterval(endCheckInterval);
+  endCheckInterval = setInterval(() => {
     if (!meetingId) {
       clearInterval(endCheckInterval);
+      endCheckInterval = null;
       return;
     }
     
@@ -656,6 +662,7 @@ function startMeeting() {
     if (isEndScreen || (!hasControlBar && meetingStartTime && (Date.now() - meetingStartTime > 15000))) {
       console.log("[MeetMaxxing] Detected meeting end screen or missing controls.");
       clearInterval(endCheckInterval);
+      endCheckInterval = null;
       endMeeting();
     }
   }, 2000);
@@ -664,6 +671,9 @@ function startMeeting() {
 function endMeeting() {
   if (!meetingId) return;
   clearTimeout(scanDebounce);
+  // Clean up polling timers so they don't keep firing after the meeting ends.
+  if (endCheckInterval) { clearInterval(endCheckInterval); endCheckInterval = null; }
+  if (visibilityAttachInterval) { clearInterval(visibilityAttachInterval); visibilityAttachInterval = null; }
   // Flush all pending utterances before ending
   for (const sp of [...utteranceMap.keys()]) flushUtterance(sp);
   if (captionObserver) { try { captionObserver.disconnect(); } catch (e) {} captionObserver = null; }

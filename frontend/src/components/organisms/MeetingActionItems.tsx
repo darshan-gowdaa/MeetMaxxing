@@ -12,6 +12,7 @@ import {
  RiFileCopyLine as Copy,
 } from"@remixicon/react";
 import type { Meeting } from"@/types";
+import { copyToClipboard } from "@/lib/clipboard";
 
 interface MeetingActionItemsProps {
  actionItems: Meeting["action_items"];
@@ -63,9 +64,11 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
  const handleCopy = async () => {
  if (!actionItems) return;
  const text = actionItems.map(item => `- [${item.status === 'done' ? 'x' : ' '}] ${item.description} (Owner: ${item.owner_name || 'Unassigned'}, Due: ${item.due_date || 'None'}, Priority: ${item.priority || 'Medium'})`).join('\n');
- await navigator.clipboard.writeText(text);
- setCopied(true);
- setTimeout(() => setCopied(false), 2000);
+ const ok = await copyToClipboard(text);
+ if (ok) {
+   setCopied(true);
+   setTimeout(() => setCopied(false), 2000);
+ }
  };
 
  if (!actionItems) return null;

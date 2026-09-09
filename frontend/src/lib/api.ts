@@ -22,6 +22,39 @@ function safeParse(text: string, fallback: unknown = null) {
  }
 }
 
+/** Extract a human-readable message from a failed backend response. */
+async function apiError(res: Response, fallback: string): Promise<Error> {
+ let detail = fallback;
+ try {
+   const body = await res.text();
+   const parsed = safeParse(body, null) as { detail?: string; error?: string; msg?: string } | null;
+   detail = parsed?.detail || parsed?.error || parsed?.msg || fallback;
+ } catch {
+   // keep fallback
+ }
+ return new Error(detail);
+}
+
+/** Render free tier sleeps; boot returns 502/503/504 until the app is up. */
+export function isColdStartStatus(status: number): boolean {
+ return status === 502 || status === 503 || status === 504;
+}
+
+export class HttpError extends Error {
+ status: number;
+ constructor(status: number, message: string) {
+   super(message);
+   this.status = status;
+ }
+}
+
+/** True when the error is a Render cold-start (or a network failure/timeout). */
+export function isColdStartError(err: unknown): boolean {
+ if (err instanceof HttpError) return isColdStartStatus(err.status);
+ const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+ return /failed to fetch|load failed|networkerror|timeout|econnrefused|503|504|502/.test(msg);
+}
+
 export async function fetchMeetings() {
  const token = await getToken();
  const res = await fetch(`${BACKEND_URL}/dashboard/meetings`, {
@@ -39,7 +72,10 @@ export async function fetchMeeting(id: string) {
  headers: { Authorization: `Bearer ${token}` },
  cache:"no-store",
  });
- if (!res.ok) throw new Error("Failed to fetch meeting");
+ if (!res.ok) {
+   if (isColdStartStatus(res.status)) throw new HttpError(res.status, "Backend is starting up");
+   throw await apiError(res, "Failed to fetch meeting");
+ }
  const text = await res.text();
  return safeParse(text, null);
 }
@@ -70,7 +106,7 @@ export async function updateActionItem(id: string, updates: Record<string, strin
  },
  body: JSON.stringify(updates),
  });
- if (!res.ok) throw new Error(`Failed to update action item: ${res.status}`);
+ if (!res.ok) throw await apiError(res, `Failed to update action item: ${res.status}`);
  const text = await res.text();
  return safeParse(text);
 }
@@ -141,7 +177,7 @@ export async function scheduleFollowUp(meetingId: string, payload: Record<string
  },
  body: JSON.stringify(payload),
  });
- if (!res.ok) throw new Error("Failed to schedule follow-up");
+ if (!res.ok) throw await apiError(res, "Failed to schedule follow-up");
  const text = await res.text();
  return safeParse(text);
 }
