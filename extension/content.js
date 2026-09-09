@@ -810,6 +810,9 @@ function injectMeetMaxxingPanel() {
       if (pathEl) pathEl.setAttribute('d', 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'); // chevron_right
       document.documentElement.classList.remove('mm-panel-collapsed');
       document.documentElement.classList.add('mm-panel-open');
+      if (runtimeAPI?.runtime?.sendMessage) {
+        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
+      }
     }
     localStorage.setItem('mm_panel_collapsed', String(isCollapsed));
   }
@@ -840,6 +843,10 @@ function tryInjectPanel() {
   // Only inject if we're in an active meeting (URL has the meeting code)
   const onMeetCall = window.location.pathname.length > 1 && !window.location.pathname.startsWith('/landing');
   if (onMeetCall && !document.getElementById('mm-panel-root')) {
+    const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
+    if (runtimeAPI?.runtime?.sendMessage) {
+      try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
+    }
     injectMeetMaxxingPanel();
   }
 }

@@ -200,6 +200,45 @@ export function useCopilot() {
     };
   }, []);
 
+  // Ping Render server on extension mount to wake if idle/sleeping
+  useEffect(() => {
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let isMounted = true;
+
+    const wakeAndCheck = async () => {
+      try {
+        if (ext && ext.runtime?.sendMessage) {
+          ext.runtime.sendMessage({ type: "WAKE_SERVER" });
+        }
+        const res = await fetch(`${getBaseUrlBackend()}/health`, { cache: "no-store" });
+        if (res.ok) {
+          if (isMounted) {
+            setBackendStarting(false);
+            if (ext && ext.storage?.local) {
+              ext.storage.local.remove(["backendStarting"]);
+            }
+          }
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+        } else {
+          if (isMounted) setBackendStarting(true);
+        }
+      } catch {
+        if (isMounted) setBackendStarting(true);
+      }
+    };
+
+    wakeAndCheck();
+    pollTimer = setInterval(wakeAndCheck, 5000);
+
+    return () => {
+      isMounted = false;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, []);
+
   // Proactively fetch active model preferences when authenticated
   useEffect(() => {
     if (!authToken) return;

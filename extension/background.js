@@ -162,6 +162,24 @@ function isColdStartStatus(status) {
   return status === 502 || status === 503 || status === 504;
 }
 
+let isWakingServer = false;
+async function wakeServer() {
+  if (isWakingServer) return;
+  isWakingServer = true;
+  try {
+    const res = await fetch(`${BASE}/health`, { method: "GET", cache: "no-store" });
+    if (res.ok) {
+      notifyColdStartResolved();
+    } else if (isColdStartStatus(res.status)) {
+      notifyColdStart();
+    }
+  } catch (e) {
+    notifyColdStart();
+  } finally {
+    isWakingServer = false;
+  }
+}
+
 // ─── Auth-aware fetch with 401 auto-retry ────────────────────────────────────
 async function authFetch(url, options = {}) {
   if (!activeAuthToken) {
@@ -360,9 +378,10 @@ async function rehydrateState() {
 setupKeepaliveAlarm();
 ext.setRefreshAlarm(refreshAuthToken);
 rehydrateState();
+wakeServer();
 
-if (ext.runtime.onStartup) ext.runtime.onStartup.addListener(rehydrateState);
-if (ext.runtime.onInstalled) ext.runtime.onInstalled.addListener(rehydrateState);
+if (ext.runtime.onStartup) ext.runtime.onStartup.addListener(() => { rehydrateState(); wakeServer(); });
+if (ext.runtime.onInstalled) ext.runtime.onInstalled.addListener(() => { rehydrateState(); wakeServer(); });
 
 ext.storageOnChanged.addListener((changes, area) => {
   if (area !== "local") return;
@@ -377,6 +396,7 @@ ext.storageOnChanged.addListener((changes, area) => {
 });
 
 ext.onActionClicked((tab) => {
+  wakeServer();
   if (tab.id) ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
 });
 
@@ -407,6 +427,12 @@ async function ensureOffscreenDocument() {
 // ─── Message router ──────────────────────────────────────────────────────────
 ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || typeof msg.type !== "string") return false;
+
+  if (msg.type === "WAKE_SERVER") {
+    wakeServer();
+    sendResponse({ ok: true });
+    return false;
+  }
 
   // ── Auth messages (single source of truth) ────────────────────────────────
   if (msg.type === "GET_AUTH_STATE") {
