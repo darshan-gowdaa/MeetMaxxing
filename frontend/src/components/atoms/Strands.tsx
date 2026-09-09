@@ -90,10 +90,16 @@ void main() {
  col += strandColor(h) * g * env;
  }
 
- col *= 0.45 + 0.7 * e;
- col = 1.0 - exp(-col * uGlow);
+  col *= 0.45 + 0.7 * e;
+  col = 1.0 - exp(-col * uGlow);
 
- float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  // fade out near canvas edges so glow does not get cut off horizontally or on top/bottom
+  float vertFade = smoothstep(0.0, 0.20, gl_FragCoord.y / uResolution.y) * 
+                   smoothstep(1.0, 0.80, gl_FragCoord.y / uResolution.y);
+  float rightFade = smoothstep(1.0, 0.70, gl_FragCoord.x / uResolution.x);
+  col *= vertFade * rightFade;
+
+  float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
  col = max(mix(vec3(gray), col, uSaturation), 0.0);
 
  float lum = max(max(col.r, col.g), col.b);

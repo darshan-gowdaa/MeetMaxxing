@@ -87,15 +87,15 @@ export default function AboutPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-[320px] sm:w-[420px] lg:w-[520px] xl:w-[600px] aspect-square max-h-[calc(100dvh-7rem)] relative lg:-ml-12 xl:-ml-20 z-10 [mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)]"
+                className="w-[320px] sm:w-[420px] lg:w-[540px] xl:w-[620px] aspect-square max-h-[calc(100dvh-6rem)] relative lg:-ml-12 xl:-ml-20 z-10"
               >
                 <Strands
                   colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}
                   count={6}
                   speed={0.35}
-                  amplitude={1.0}
+                  amplitude={0.85}
                   thickness={0.7}
-                  glow={3.0}
+                  glow={2.6}
                   intensity={0.65}
                   scale={1.0}
                   glass={false}
