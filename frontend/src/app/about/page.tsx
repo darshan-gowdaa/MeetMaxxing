@@ -1,193 +1,271 @@
 "use client";
 
-import React from 'react';
-import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { SpotlightCard } from '@/components/atoms/SpotlightCard';
-import { BlurWord, CountUp } from './_components/animations';
-import { AUTHORS, STATS, FEATURES, AGENTS, getLogo } from './_constants/data';
-import { RiGithubFill, RiArrowRightLine, RiSparkling2Fill } from '@remixicon/react';
-
-// WebGL is heavy and client-only — code-split it out of the initial JS bundle.
-const Strands = dynamic(() => import('@/components/atoms/Strands'), { ssr: false });
+import React, { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  RiSparkling2Fill,
+  RiGithubFill,
+  RiArrowRightLine,
+  RiFlowChart,
+} from "@remixicon/react";
+import { BlurWord, CountUp } from "./_components/animations";
+import { AUTHORS, STATS, FEATURES, AGENTS, getLogo } from "./_constants/data";
 
 export default function AboutPage() {
-  const shapes = ['32px', '32px 8px 32px 8px', '8px 32px 8px 32px', '24px'];
+  const [agentFilter, setAgentFilter] = useState<string>("All");
+
+  const filteredAgents =
+    agentFilter === "All"
+      ? AGENTS
+      : AGENTS.filter((agent) => agent.pillar === agentFilter);
 
   return (
-    <div className="min-h-screen bg-[#141518] text-[#ffffff] font-sans overflow-x-hidden selection:bg-[rgba(168,199,250,0.3)]">
-      {/* HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center pt-28 pb-16 overflow-hidden">
-        <div className="relative z-10 mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 items-center">
-          <div className="flex flex-col items-start text-left max-w-2xl z-20 mt-12 lg:mt-0">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight drop-shadow-sm">
-              {'Multi-Agent AI '.split(' ').map((w, i) => (
-                <BlurWord key={'m' + i} word={w} index={i} />
-              ))}
-              <br />
-              <span className="text-[#a8c7fa]">
-                {'Meeting Copilot'.split(' ').map((w, i) => (
-                  <BlurWord key={'c' + i} word={w} index={i + 3} />
+    <div className="min-h-screen bg-bg text-text font-sans selection:bg-primary/20 overflow-x-hidden">
+      {/* ── HERO SECTION ────────────────────────────────────────────────────── */}
+      <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden">
+        {/* ambient background tonal glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/3 right-10 w-[300px] h-[300px] bg-tertiary/10 rounded-full blur-[80px] pointer-events-none" />
+
+        <div className="relative z-10 mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-7 flex flex-col items-start text-left">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container text-[12px] font-bold tracking-wider uppercase border border-primary/20 shadow-xs mb-6"
+              >
+                <RiSparkling2Fill className="w-4 h-4 text-primary shrink-0" />
+                <span>Autonomous Multi-Agent Architecture</span>
+              </motion.div>
+
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-text leading-[1.08] mb-6">
+                {"Autonomous AI ".split(" ").map((w, i) => (
+                  <BlurWord key={"h1-" + i} word={w} index={i} />
                 ))}
-              </span>
-            </h1>
+                <br />
+                <span className="text-primary">
+                  {"Meeting Copilot".split(" ").map((w, i) => (
+                    <BlurWord key={"h2-" + i} word={w} index={i + 2} />
+                  ))}
+                </span>
+              </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-xl text-[#868e96] max-w-lg mb-12 drop-shadow-sm"
-            >
-              An autonomous gRPC-based agent ecosystem that joins your meetings, understands context, and manages your workflow.
-            </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
+                className="text-lg sm:text-xl text-text-muted max-w-xl leading-relaxed mb-10"
+              >
+                An agent ecosystem built on an A2A gRPC message bus. Streams live meeting
+                audio, extracts decisions, retrieves episodic semantic memory, and orchestrates
+                follow-up actions without human intervention.
+              </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
-            >
-              <a href="https://github.com/darshan-gowdaa/MeetMaxxing" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                <div className="flex items-center justify-center gap-2 px-8 py-4 bg-[#a8c7fa] text-[#141518] rounded-full font-semibold hover:bg-white transition-colors">
-                  <RiGithubFill size={20} />
-                  <span>View on GitHub</span>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.35 }}
+                className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
+              >
+                <Link
+                  href="/"
+                  className="h-12 px-7 rounded-full bg-primary text-on-primary font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 shadow-md hover:shadow-lg active:scale-[0.98] transition-all w-full sm:w-auto"
+                >
+                  <span>Open Dashboard</span>
+                  <RiArrowRightLine className="w-5 h-5" />
+                </Link>
+
+                <a
+                  href="https://github.com/darshan-gowdaa/MeetMaxxing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-12 px-6 rounded-full bg-surface-container hover:bg-surface-container-high border border-border text-text font-bold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all w-full sm:w-auto"
+                >
+                  <RiGithubFill className="w-5 h-5" />
+                  <span>GitHub Repository</span>
+                </a>
+              </motion.div>
+            </div>
+
+            {/* Right Showcase Card (Interactive Architecture Visual) */}
+            <div className="lg:col-span-5">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="relative rounded-[32px] bg-surface-container/75 backdrop-blur-xl border border-border p-6 sm:p-8 shadow-xl overflow-hidden"
+              >
+                {/* Header status */}
+                <div className="flex items-center justify-between pb-5 border-b border-border/70 mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-success animate-pulse" />
+                    <span className="text-[13px] font-bold text-text">A2A gRPC Bus Live</span>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-surface-container-high text-[11px] font-bold text-text-muted border border-border">
+                    9 Agents Online
+                  </span>
                 </div>
-              </a>
-              <Link href="#architecture" className="w-full sm:w-auto">
-                <div className="flex items-center justify-center gap-2 px-8 py-4 bg-[rgba(168,199,250,0.1)] text-[#a8c7fa] rounded-full font-semibold border border-[rgba(168,199,250,0.2)] hover:bg-[rgba(168,199,250,0.15)] transition-colors">
-                  <span>Explore Ecosystem</span>
-                  <RiArrowRightLine size={20} />
+
+                {/* Telemetry rows */}
+                <div className="space-y-3.5 mb-6">
+                  <div className="p-3.5 rounded-[20px] bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                        TX
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-bold text-text">Live Transcription</div>
+                        <div className="text-[11px] text-text-muted">WebSocket · Zero loss</div>
+                      </div>
+                    </div>
+                    <span className="text-[12px] font-mono font-bold text-success">142ms</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-[20px] bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-tertiary/10 text-tertiary flex items-center justify-center font-bold text-xs">
+                        QM
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-bold text-text">Qdrant Semantic Memory</div>
+                        <div className="text-[11px] text-text-muted">Vector similarity RAG</div>
+                      </div>
+                    </div>
+                    <span className="text-[12px] font-mono font-bold text-primary">Synced</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-[20px] bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-xs">
+                        AO
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-bold text-text">Action Execution</div>
+                        <div className="text-[11px] text-text-muted">Calendar & Gmail drafts</div>
+                      </div>
+                    </div>
+                    <span className="text-[12px] font-mono font-bold text-text-muted">Ready</span>
+                  </div>
                 </div>
-              </Link>
-            </motion.div>
+
+                {/* Technology chips */}
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/70">
+                  <span className="px-3 py-1 rounded-full bg-primary-container/40 text-on-primary-container text-[11px] font-bold border border-primary/20">
+                    Gemini 2.5 Flash
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container text-[11px] font-bold border border-border">
+                    FastAPI
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary-container text-[11px] font-bold border border-tertiary/20">
+                    Qdrant Cloud
+                  </span>
+                </div>
+              </motion.div>
+            </div>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="w-full h-[300px] sm:h-[400px] lg:h-[600px] relative lg:translate-x-12 z-10 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
-          >
-            <Strands
-              colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}
-              count={6}
-              speed={0.4}
-              amplitude={1.4}
-              thickness={0.8}
-              glow={3.2}
-              intensity={0.65}
-              glass={false}
-            />
-          </motion.div>
         </div>
       </section>
 
-      {/* STATS STRIP */}
-      <section className="border-y border-[rgba(168,199,250,0.15)] bg-[rgba(14,15,18,0.6)] relative z-10 py-16">
-        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ── KEY METRICS STRIP ───────────────────────────────────────────────── */}
+      <section className="py-16 bg-surface-container-low/60 border-y border-border/80 relative z-10">
+        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STATS.map((stat, i) => (
-              <SpotlightCard
+              <motion.div
                 key={i}
-                borderRadius={shapes[i]}
-                className="flex flex-col items-center text-center justify-center"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="p-6 sm:p-7 rounded-[28px] sm:rounded-[32px] bg-surface-container border border-border/80 flex flex-col items-center text-center hover:bg-surface-container-high transition-all duration-300 shadow-xs"
               >
-                <div className="w-14 h-14 rounded-[16px] bg-[rgba(168,199,250,0.1)] text-[#a8c7fa] flex items-center justify-center mb-6 mx-auto shadow-inner">
-                  <stat.icon size={28} />
+                <div className="w-12 h-12 rounded-[20px] bg-primary-container text-on-primary-container flex items-center justify-center mb-5 shadow-inner">
+                  <stat.icon className="w-6 h-6" />
                 </div>
-                <div className="text-5xl font-black tracking-tight mb-2 text-[#ffffff] drop-shadow-sm">
+                <div className="text-4xl sm:text-5xl font-black tracking-tight text-text mb-2">
                   <CountUp to={stat.value} />
-                  {stat.suffix}
+                  <span>{stat.suffix}</span>
                 </div>
-                <div className="text-lg font-semibold text-[#a8c7fa] mb-2">{stat.label}</div>
-                <div className="text-sm text-[#868e96] leading-relaxed">{stat.desc}</div>
-              </SpotlightCard>
+                <div className="text-[15px] font-bold text-primary mb-1">{stat.label}</div>
+                <div className="text-[13px] text-text-muted leading-relaxed">{stat.desc}</div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* AUTHORS */}
-      <section className="py-24 relative z-10">
-        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 tracking-tight">The Architects</h2>
-            <p className="text-[#868e96] text-lg">Built by a specialized two-person team.</p>
+      {/* ── 9-AGENT ECOSYSTEM (CATEGORIZED ARCHITECTURE) ───────────────────── */}
+      <section id="architecture" className="py-24 relative z-10">
+        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary mb-2 block">
+                Distributed System
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text">
+                The 9-Agent Ecosystem
+              </h2>
+              <p className="text-text-muted text-base sm:text-lg mt-3 leading-relaxed">
+                Rather than one monolithic LLM, MeetMaxxing deploys 9 purpose-built micro-agents
+                communicating over high-throughput gRPC channels.
+              </p>
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              {["All", "Live Stream", "Intelligence", "Automation"].map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setAgentFilter(filter)}
+                  className={`h-9 px-4 rounded-full text-[13px] font-bold transition-all duration-200 active:scale-[0.96] ${
+                    agentFilter === filter
+                      ? "bg-primary text-on-primary shadow-xs"
+                      : "bg-surface-container hover:bg-surface-container-high text-text-muted hover:text-text border border-border"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {AUTHORS.map((author, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAgents.map((agent, i) => (
               <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
+                key={agent.name}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-                className="p-8 border rounded-3xl"
-                style={{ backgroundColor: author.containerBg, borderColor: author.containerBorder }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="p-6 rounded-[28px] bg-surface-container/70 border border-border/80 flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 hover:-translate-y-1 shadow-xs group"
               >
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-16 h-16 border flex items-center justify-center text-2xl font-bold text-[#a8c7fa] transition-all duration-300 hover:rounded-full"
-                      style={{ backgroundColor: author.avatarBg, borderColor: author.avatarBorder, borderRadius: '24px' }}
-                    >
-                      {author.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">{author.name}</h3>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span
-                          className="px-3 py-1 text-xs font-bold uppercase tracking-widest"
-                          style={{ backgroundColor: author.orderChipBg, color: author.orderChipText, borderRadius: '8px' }}
-                        >
-                          {author.order}
-                        </span>
-                        <span className="text-sm font-medium text-[#a8c7fa]">{author.role}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Link href={author.githubUrl} target="_blank" className="text-[#868e96] hover:text-[#a8c7fa] transition-colors">
-                    <RiGithubFill size={24} />
-                  </Link>
-                </div>
-
-                <p className="text-[#868e96] mb-10 h-16 leading-relaxed">{author.bio}</p>
-
-                <div className="mb-8">
-                  <h4 className="text-xs font-bold text-[#a8c7fa] mb-4 uppercase tracking-widest">Domains</h4>
-                  <div className="flex flex-wrap gap-2.5">
-                    {author.domains.map((d, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-2 px-3.5 py-2 border text-sm transition-colors hover:border-[#a8c7fa]/30"
-                        style={{ backgroundColor: author.focusChipBg, borderColor: author.focusChipBorder, borderRadius: '8px' }}
-                      >
-                        <d.icon size={16} className="text-[#a8c7fa]" />
-                        <span className="text-gray-200 font-medium">{d.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div>
-                  <h4 className="text-xs font-bold text-[#a8c7fa] mb-4 uppercase tracking-widest">Tech Stack</h4>
-                  <div className="flex flex-wrap gap-2.5">
-                    {author.stack.map((tech, idx) => {
-                      const Logo = getLogo(tech);
-                      return (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] text-xs text-[#868e96] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
-                          style={{ borderRadius: '8px' }}
-                        >
-                          {Logo && <span className="text-[#a8c7fa]">{Logo}</span>}
-                          {tech}
-                        </div>
-                      );
-                    })}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 rounded-[20px] bg-surface-container-high group-hover:bg-primary-container text-text-muted group-hover:text-on-primary-container flex items-center justify-center transition-colors">
+                      <agent.icon className="w-6 h-6" />
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-surface-container-lowest dark:bg-surface-container-low text-[11px] font-bold text-text-muted border border-border/70">
+                      {agent.pillar}
+                    </span>
                   </div>
+                  <h3 className="text-xl font-bold text-text mb-2.5 tracking-tight">
+                    {agent.name}
+                  </h3>
+                  <p className="text-[14px] text-text-muted leading-relaxed mb-6">
+                    {agent.desc}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-border/50 flex items-center justify-between text-[12px] font-medium text-text-muted">
+                  <span className="flex items-center gap-1.5">
+                    <RiFlowChart className="w-4 h-4 text-primary" /> gRPC Stream
+                  </span>
+                  <span className="text-success font-semibold">Active</span>
                 </div>
               </motion.div>
             ))}
@@ -195,81 +273,233 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* FEATURES & AGENT ECOSYSTEM */}
-      <section id="architecture" className="py-24 bg-[#0a0b0d] relative z-10 border-t border-[rgba(168,199,250,0.05)]">
-        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-6xl">
-          {/* Core Features */}
-          <div className="mb-32">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4 tracking-tight">Core Features</h2>
-              <p className="text-[#868e96] max-w-2xl mx-auto text-lg">
-                Everything you need to automate, remember, and manage your meetings without leaving the context.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {FEATURES.map((feature, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.5, delay: i * 0.05 }}
-                >
-                  <SpotlightCard className="flex flex-col h-full bg-[rgba(168,199,250,0.02)]">
-                    <div className="w-10 h-10 rounded-[12px] bg-[rgba(168,199,250,0.08)] flex items-center justify-center text-[#a8c7fa] mb-4 shadow-inner">
-                      <feature.icon size={20} />
-                    </div>
-                    <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                    <p className="text-[#868e96] text-sm leading-relaxed flex-grow">{feature.desc}</p>
-                  </SpotlightCard>
-                </motion.div>
-              ))}
-            </div>
+      {/* ── CORE CAPABILITIES ──────────────────────────────────────────────── */}
+      <section className="py-24 bg-surface-container-low/40 border-t border-border/80 relative z-10">
+        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary mb-2 block">
+              Core Capabilities
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text">
+              Engineered for Real-Time Execution
+            </h2>
+            <p className="text-text-muted text-base sm:text-lg mt-3 leading-relaxed">
+              Designed from first principles to turn unstructured voice conversations into
+              verifiable team velocity.
+            </p>
           </div>
 
-          {/* Agent Ecosystem */}
-          <div>
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4 tracking-tight">Agent Ecosystem</h2>
-              <p className="text-[#868e96] max-w-2xl mx-auto text-lg">
-                Our A2A (Agent-to-Agent) architecture uses gRPC for high-speed, isolated communication between specialized AI modules.
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {FEATURES.map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="p-6 rounded-[28px] bg-surface-container border border-border/80 flex flex-col hover:bg-surface-container-high transition-all duration-300 shadow-xs hover:-translate-y-1 group"
+              >
+                <div className="w-10 h-10 rounded-[16px] bg-primary/10 text-primary flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                  <feature.icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-[17px] font-bold text-text mb-2 tracking-tight">
+                  {feature.title}
+                </h3>
+                <p className="text-[13px] text-text-muted leading-relaxed">
+                  {feature.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {AGENTS.map((agent, i) => (
+      {/* ── THE ARCHITECTS (TEAM SECTION) ──────────────────────────────────── */}
+      <section className="py-24 relative z-10">
+        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary mb-2 block">
+              The Engineers
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text">
+              The Architects
+            </h2>
+            <p className="text-text-muted text-base sm:text-lg mt-3">
+              Built by an agile two-person engineering team for high-velocity execution.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+            {AUTHORS.map((author, i) => {
+              const isLead = i === 0;
+              return (
                 <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
+                  key={author.name}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.5, delay: i * 0.05 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="p-8 sm:p-10 rounded-[32px] bg-surface-container border border-border/80 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300"
                 >
-                  <SpotlightCard className="flex flex-col h-full">
-                    <div className="w-12 h-12 rounded-[14px] bg-[rgba(168,199,250,0.08)] flex items-center justify-center text-[#a8c7fa] mb-6 shadow-inner">
-                      <agent.icon size={24} />
+                  <div>
+                    {/* Header: Avatar, Name, Role */}
+                    <div className="flex items-start justify-between mb-6 gap-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-16 h-16 rounded-[24px] flex items-center justify-center font-black text-2xl shrink-0 shadow-xs ${
+                            isLead
+                              ? "bg-primary-container text-on-primary-container"
+                              : "bg-tertiary-container text-on-tertiary-container"
+                          }`}
+                        >
+                          {author.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-text tracking-tight">
+                            {author.name}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <span
+                              className={`px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                                isLead
+                                  ? "bg-primary/15 text-primary border border-primary/25"
+                                  : "bg-tertiary/15 text-tertiary border border-tertiary/25"
+                              }`}
+                            >
+                              {author.order}
+                            </span>
+                            <span className="text-[13px] font-medium text-text-muted">
+                              {author.focus}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link
+                        href={author.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-container-high transition-colors shrink-0"
+                        aria-label={`${author.name} GitHub profile`}
+                      >
+                        <RiGithubFill className="w-6 h-6" />
+                      </Link>
                     </div>
-                    <h3 className="text-xl font-bold mb-3">{agent.name}</h3>
-                    <p className="text-[#868e96] text-sm leading-relaxed flex-grow">{agent.desc}</p>
-                  </SpotlightCard>
+
+                    <p className="text-[14px] text-text-muted leading-relaxed mb-8">
+                      {author.bio}
+                    </p>
+
+                    {/* Domains */}
+                    <div className="mb-6">
+                      <h4 className="text-[11px] font-bold text-text-muted mb-3 uppercase tracking-wider">
+                        Core Domains
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {author.domains.map((d, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 text-[13px] font-medium text-text"
+                          >
+                            <d.icon className="w-4 h-4 text-primary shrink-0" />
+                            {d.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tech Stack */}
+                  <div className="pt-6 border-t border-border/60">
+                    <h4 className="text-[11px] font-bold text-text-muted mb-3 uppercase tracking-wider">
+                      Technical Stack
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {author.stack.map((tech, idx) => {
+                        const Logo = getLogo(tech);
+                        return (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-[12px] font-medium text-text-muted border border-border/60"
+                          >
+                            {Logo && <span className="text-primary">{Logo}</span>}
+                            <span>{tech}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </motion.div>
-              ))}
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BOTTOM CALL TO ACTION BANNER ───────────────────────────────────── */}
+      <section className="py-20 relative z-10">
+        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-5xl">
+          <div className="p-8 sm:p-12 rounded-[32px] bg-gradient-to-br from-primary-container/40 via-surface-container to-surface-container border border-primary/20 shadow-lg flex flex-col items-center text-center">
+            <span className="w-12 h-12 rounded-[20px] bg-primary text-on-primary flex items-center justify-center mb-5 shadow-sm">
+              <RiSparkling2Fill className="w-6 h-6" />
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-text tracking-tight mb-4 max-w-xl">
+              Ready to Upgrade Your Meeting Intelligence?
+            </h2>
+            <p className="text-text-muted text-base sm:text-lg max-w-lg leading-relaxed mb-8">
+              Experience zero-lag live capture, autonomous synthesis, and proactive workflows
+              with MeetMaxxing.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Link
+                href="/"
+                className="h-12 px-8 rounded-full bg-primary text-on-primary font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 shadow-md active:scale-[0.98] transition-all"
+              >
+                <span>Get Started Now</span>
+                <RiArrowRightLine className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/settings/api-keys"
+                className="h-12 px-6 rounded-full bg-surface-container hover:bg-surface-container-high border border-border text-text font-bold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              >
+                <span>Configure API Keys</span>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="py-12 border-t border-[rgba(168,199,250,0.1)] bg-[#0a0b0d] text-sm text-[#868e96] relative z-10">
-        <div className="container mx-auto px-6 max-w-6xl flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <RiSparkling2Fill className="text-[#a8c7fa]" size={20} />
-            <span className="font-bold text-[#ffffff] text-lg tracking-tight">MeetMaxxing</span>
+      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
+      <footer className="py-12 border-t border-border bg-surface-container-low text-[13px] text-text-muted relative z-10">
+        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+              <RiSparkling2Fill className="w-4 h-4" />
+            </span>
+            <span className="font-bold text-text text-base tracking-tight">MeetMaxxing</span>
           </div>
-          <div className="flex items-center gap-6">
-            <span>2024 MeetMaxxing. Open Source Project.</span>
+          <div className="flex flex-wrap items-center gap-6 text-text-muted">
+            <Link href="/" className="hover:text-text transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/context" className="hover:text-text transition-colors">
+              Context
+            </Link>
+            <Link href="/memory" className="hover:text-text transition-colors">
+              Memory
+            </Link>
+            <a
+              href="https://github.com/darshan-gowdaa/MeetMaxxing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-text transition-colors"
+            >
+              GitHub
+            </a>
           </div>
+          <p className="text-[12px] text-text-muted/80">
+            © 2026 MeetMaxxing. Built with Material Design 3 Expressive.
+          </p>
         </div>
       </footer>
     </div>
