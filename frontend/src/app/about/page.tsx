@@ -81,21 +81,21 @@ export default function AboutPage() {
               </motion.div>
             </div>
 
-            {/* Right Showcase: Animated Strands WebGL */}
-            <div className="lg:col-span-5 flex items-center justify-center">
+            {/* Right Showcase: Animated Strands WebGL with smooth radial fade mask */}
+            <div className="lg:col-span-5 flex items-center justify-center pointer-events-none">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-full h-[320px] sm:h-[420px] lg:h-[500px] relative rounded-[32px] overflow-hidden"
+                className="w-full h-[360px] sm:h-[460px] lg:h-[560px] relative lg:translate-x-6 z-10 [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)]"
               >
                 <Strands
                   colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}
                   count={6}
-                  speed={0.4}
-                  amplitude={1.4}
-                  thickness={0.8}
-                  glow={3.2}
+                  speed={0.35}
+                  amplitude={1.0}
+                  thickness={0.7}
+                  glow={3.0}
                   intensity={0.65}
                   glass={false}
                 />
@@ -166,74 +166,6 @@ export default function AboutPage() {
                   {filter}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Live Architecture Telemetry Card relocated to architecture section */}
-          <div className="mb-12">
-            <div className="rounded-[32px] bg-surface-container border border-border p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center justify-between pb-5 border-b border-border/70 mb-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-3 h-3 rounded-full bg-success animate-pulse" />
-                  <span className="text-[13px] font-bold text-text">A2A gRPC Bus Live</span>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-surface-container-high text-[11px] font-bold text-text-muted border border-border">
-                  9 Agents Online
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-6">
-                <div className="p-3.5 rounded-[20px] bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">
-                      TX
-                    </div>
-                    <div>
-                      <div className="text-[13px] font-bold text-text">Live Transcription</div>
-                      <div className="text-[11px] text-text-muted">WebSocket · Zero loss</div>
-                    </div>
-                  </div>
-                  <span className="text-[12px] font-mono font-bold text-success">142ms</span>
-                </div>
-
-                <div className="p-3.5 rounded-[20px] bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold text-xs">
-                      QM
-                    </div>
-                    <div>
-                      <div className="text-[13px] font-bold text-text">Qdrant Semantic Memory</div>
-                      <div className="text-[11px] text-text-muted">Vector similarity RAG</div>
-                    </div>
-                  </div>
-                  <span className="text-[12px] font-mono font-bold text-primary">Synced</span>
-                </div>
-
-                <div className="p-3.5 rounded-[20px] bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">
-                      AO
-                    </div>
-                    <div>
-                      <div className="text-[13px] font-bold text-text">Action Execution</div>
-                      <div className="text-[11px] text-text-muted">Calendar & Gmail drafts</div>
-                    </div>
-                  </div>
-                  <span className="text-[12px] font-mono font-bold text-text-muted">Ready</span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-4 border-t border-border/70">
-                <span className="px-3 py-1 rounded-full bg-primary-container text-on-primary-container text-[11px] font-bold border border-primary/20">
-                  Gemini 2.5 Flash
-                </span>
-                <span className="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-bold border border-border">
-                  FastAPI
-                </span>
-                <span className="px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[11px] font-bold border border-tertiary/20">
-                  Qdrant Cloud
-                </span>
-              </div>
             </div>
           </div>
 
@@ -310,7 +242,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* The Architects (Team Section) */}
+      {/* The Architects (Uniform Team Section) */}
       <section className="py-24 relative z-10">
         <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
@@ -325,113 +257,105 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-            {AUTHORS.map((author, i) => {
-              const isLead = i === 0;
-              return (
-                <motion.div
-                  key={author.name}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="p-8 sm:p-10 rounded-[32px] bg-surface-container border border-border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <div>
-                    {/* Header: GitHub Profile avatar, Name with username in brackets, Role */}
-                    <div className="flex items-start justify-between mb-6 gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-16 h-16 rounded-[24px] overflow-hidden shrink-0 border border-border bg-surface-container-high shadow-xs">
-                          <Image
-                            src={`https://github.com/${author.github}.png`}
-                            alt={author.name}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover"
-                            unoptimized
-                          />
-                        </div>
-                        <div>
-                          <h3 className="text-xl sm:text-2xl font-bold text-text tracking-tight flex flex-wrap items-baseline gap-2">
-                            <span>{author.name}</span>
-                            <span className="text-[14px] sm:text-[15px] font-normal text-text-muted">
-                              (@{author.github})
-                            </span>
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <span
-                              className={`px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                                isLead
-                                  ? "bg-primary/15 text-primary border border-primary/25"
-                                  : "bg-tertiary/15 text-tertiary border border-tertiary/25"
-                              }`}
-                            >
-                              {author.order}
-                            </span>
-                            <span className="text-[13px] font-medium text-text-muted">
-                              {author.focus}
-                            </span>
-                          </div>
-                        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-stretch">
+            {AUTHORS.map((author, i) => (
+              <motion.div
+                key={author.name}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="p-8 sm:p-10 rounded-[32px] bg-surface-container border border-border flex flex-col justify-between h-full shadow-sm hover:shadow-md transition-all duration-300"
+              >
+                <div>
+                  {/* Header: GitHub Profile avatar, Name with username in brackets, Role */}
+                  <div className="flex items-start justify-between mb-6 gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="relative w-16 h-16 rounded-[24px] overflow-hidden shrink-0 border border-border bg-surface-container-high shadow-xs">
+                        <Image
+                          src={`https://github.com/${author.github}.png`}
+                          alt={author.name}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
                       </div>
-
-                      <Link
-                        href={author.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-container-high transition-colors shrink-0 cursor-pointer"
-                        aria-label={`${author.name} GitHub profile`}
-                      >
-                        <RiGithubFill className="w-6 h-6" />
-                      </Link>
-                    </div>
-
-                    <p className="text-[14px] text-text-muted leading-relaxed mb-8">
-                      {author.bio}
-                    </p>
-
-                    {/* Domains */}
-                    <div className="mb-6">
-                      <h4 className="text-[11px] font-bold text-text-muted mb-3 uppercase tracking-wider">
-                        Core Domains
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {author.domains.map((d, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 text-[13px] font-medium text-text"
-                          >
-                            <d.icon className="w-4 h-4 text-primary shrink-0" />
-                            {d.label}
+                      <div className="min-w-0 flex flex-col justify-center">
+                        <h3 className="text-xl sm:text-2xl font-bold text-text tracking-tight flex flex-wrap items-baseline gap-2">
+                          <span className="truncate">{author.name}</span>
+                          <span className="text-[14px] sm:text-[15px] font-normal text-text-muted shrink-0">
+                            (@{author.github})
                           </span>
-                        ))}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className="px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25 shrink-0">
+                            {author.order}
+                          </span>
+                          <span className="text-[13px] font-medium text-text-muted truncate">
+                            {author.focus}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    <Link
+                      href={author.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-container-high transition-colors shrink-0 cursor-pointer"
+                      aria-label={`${author.name} GitHub profile`}
+                    >
+                      <RiGithubFill className="w-6 h-6" />
+                    </Link>
                   </div>
 
-                  {/* Tech Stack */}
-                  <div className="pt-6 border-t border-border/60">
+                  {/* Uniform bio height */}
+                  <p className="text-[14px] text-text-muted leading-relaxed mb-8 sm:h-16 flex items-center">
+                    {author.bio}
+                  </p>
+
+                  {/* Domains with uniform min-height */}
+                  <div className="mb-6">
                     <h4 className="text-[11px] font-bold text-text-muted mb-3 uppercase tracking-wider">
-                      Technical Stack
+                      Core Domains
                     </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {author.stack.map((tech, idx) => {
-                        const Logo = getLogo(tech);
-                        return (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-[12px] font-medium text-text-muted border border-border/60"
-                          >
-                            {Logo && <span className="text-primary">{Logo}</span>}
-                            <span>{tech}</span>
-                          </span>
-                        );
-                      })}
+                    <div className="flex flex-wrap gap-2 min-h-[84px] content-start">
+                      {author.domains.map((d, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-surface-container-low border border-border/70 text-[13px] font-medium text-text h-fit"
+                        >
+                          <d.icon className="w-4 h-4 text-primary shrink-0" />
+                          {d.label}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
+                </div>
+
+                {/* Tech Stack with uniform min-height */}
+                <div className="pt-6 border-t border-border/60">
+                  <h4 className="text-[11px] font-bold text-text-muted mb-3 uppercase tracking-wider">
+                    Technical Stack
+                  </h4>
+                  <div className="flex flex-wrap gap-2 min-h-[72px] content-start">
+                    {author.stack.map((tech, idx) => {
+                      const Logo = getLogo(tech);
+                      return (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-[12px] font-medium text-text-muted border border-border/60 h-fit"
+                        >
+                          {Logo && <span className="text-primary">{Logo}</span>}
+                          <span>{tech}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
