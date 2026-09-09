@@ -65,26 +65,78 @@ export const STATS = [
 ] as const;
 
 export const AGENTS = [
-  { name: 'Transcription', desc: 'Streams and processes live meeting audio with zero latency.', icon: RiVideoChatLine, pillar: 'Live Stream' },
-  { name: 'Realtime Copilot', desc: 'Generates proactive suggestions and context cues mid-meeting.', icon: RiLightbulbLine, pillar: 'Live Stream' },
-  { name: 'Late Join Catch-up', desc: 'Instant 30-second context catch-up for late attendees.', icon: RiTimerLine, pillar: 'Live Stream' },
-  { name: 'Structured Summary', desc: 'Produces executive briefs, discussion points, and decisions.', icon: RiFileTextLine, pillar: 'Intelligence' },
-  { name: 'Semantic Memory', desc: 'Stores episodic embeddings in Qdrant for semantic recall.', icon: RiBrainLine, pillar: 'Intelligence' },
-  { name: 'Document QA', desc: 'Answers questions grounded in uploaded meeting documents.', icon: RiCodeSSlashLine, pillar: 'Intelligence' },
-  { name: 'Commitments & Actions', desc: 'Extracts action items with owner assignments and deadlines.', icon: RiCalendarEventLine, pillar: 'Automation' },
-  { name: 'Follow-Up Email', desc: 'Drafts professional follow-up emails ready for Gmail review.', icon: RiMailSendLine, pillar: 'Automation' },
-  { name: 'gRPC Orchestrator', desc: 'High-speed A2A message routing and fallback resilience.', icon: RiFlowChart, pillar: 'Automation' },
-] as const;
-
-export const FEATURES = [
-  { title: 'Multi-Agent Intelligence', desc: 'Specialized AI agents collaborate to perform dedicated tasks instead of relying on a single monolithic LLM.', icon: RiRobot2Line },
-  { title: 'Real-Time Assistance', desc: 'Contextual suggestions, meeting insights, and intelligent support while the meeting is still in progress.', icon: RiLightbulbLine },
-  { title: 'Semantic Memory', desc: 'Store and retrieve meeting knowledge using vector embeddings powered by Qdrant.', icon: RiBrainLine },
-  { title: 'Smart Meeting Summaries', desc: 'Automatically generate concise summaries, key discussion points, and actionable takeaways.', icon: RiFileTextLine },
-  { title: 'AI Follow-ups', desc: 'Generate professional follow-up emails containing meeting highlights and action items.', icon: RiMailSendLine },
-  { title: 'Intelligent Scheduling', desc: 'Create reminders and follow-up meetings directly from extracted action items.', icon: RiCalendarEventLine },
-  { title: 'Document Question Answering', desc: 'Upload supporting documents and let AI agents answer questions using meeting context.', icon: RiCodeSSlashLine },
-  { title: 'Late Join Recaps', desc: 'Users joining late receive an instant AI-generated summary of everything discussed so far.', icon: RiTimerLine },
+  {
+    name: 'Transcription Stream',
+    capability: 'Live Audio Ingestion',
+    desc: 'Streams and processes live meeting audio with zero latency using persistent WebSocket connections and high-accuracy speech models.',
+    icon: RiVideoChatLine,
+    pillar: 'Live Stream',
+    tag: 'WebSocket · Zero Loss',
+  },
+  {
+    name: 'Realtime Copilot',
+    capability: 'In-Meeting Assistance',
+    desc: 'Generates proactive suggestions, speaker cues, and contextual insights mid-meeting while conversations are still underway.',
+    icon: RiLightbulbLine,
+    pillar: 'Live Stream',
+    tag: 'Proactive Context Cues',
+  },
+  {
+    name: 'Late Join Catch-up',
+    capability: 'Instant Context Recaps',
+    desc: 'Delivers instant 30-second synthesized recaps of prior discussion so late arrivals catch up seamlessly without disrupting active flow.',
+    icon: RiTimerLine,
+    pillar: 'Live Stream',
+    tag: 'Instant 30s Catch-Up',
+  },
+  {
+    name: 'Structured Summary',
+    capability: 'Executive Synthesis',
+    desc: 'Produces executive briefs, discussion highlights, core decisions, and verifiable takeaways automatically after each session.',
+    icon: RiFileTextLine,
+    pillar: 'Intelligence',
+    tag: 'Executive Briefs',
+  },
+  {
+    name: 'Semantic Memory',
+    capability: 'Vector Knowledge Base',
+    desc: 'Indexes episodic embeddings in Qdrant vector database for semantic recall across organizational history and previous meetings.',
+    icon: RiBrainLine,
+    pillar: 'Intelligence',
+    tag: 'Qdrant Vector DB',
+  },
+  {
+    name: 'Document QA',
+    capability: 'Context-Grounded Answers',
+    desc: 'Ingests supporting files and docs, answering deep queries grounded directly in meeting context with strict factual citations.',
+    icon: RiCodeSSlashLine,
+    pillar: 'Intelligence',
+    tag: 'Factual Citations',
+  },
+  {
+    name: 'Commitments & Actions',
+    capability: 'Task Extraction & Scheduling',
+    desc: 'Identifies deliverables with owner assignments and deadlines, generating reminders and calendar events directly from discussion.',
+    icon: RiCalendarEventLine,
+    pillar: 'Automation',
+    tag: 'Owner Assignments',
+  },
+  {
+    name: 'Follow-Up Email',
+    capability: 'Automated Communication',
+    desc: 'Drafts comprehensive, professional follow-up emails highlighting takeaways and assigned items ready for one-click Gmail review.',
+    icon: RiMailSendLine,
+    pillar: 'Automation',
+    tag: 'Gmail Ready Drafts',
+  },
+  {
+    name: 'gRPC Orchestrator',
+    capability: 'Multi-Agent Intelligence',
+    desc: 'Routes high-speed agent-to-agent (A2A) message traffic with fallback resilience, coordinating isolated workers instead of one monolithic LLM.',
+    icon: RiFlowChart,
+    pillar: 'Automation',
+    tag: 'A2A Protocol Bus',
+  },
 ] as const;
 
 export const Logos = {

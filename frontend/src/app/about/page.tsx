@@ -11,7 +11,7 @@ import {
   RiArrowRightLine,
 } from "@remixicon/react";
 import { BlurWord, CountUp } from "./_components/animations";
-import { AUTHORS, STATS, FEATURES, AGENTS, getLogo } from "./_constants/data";
+import { AUTHORS, STATS, AGENTS, getLogo } from "./_constants/data";
 
 /* We load the WebGL strands animation dynamically so it runs only in the browser */
 const Strands = dynamic(() => import("@/components/atoms/Strands"), { ssr: false });
@@ -133,20 +133,19 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 9-Agent Ecosystem section */}
-      <section id="architecture" className="py-24 relative z-10">
+      {/* Ecosystem & Core Capabilities section */}
+      <section id="architecture" className="py-24 relative z-10 border-t border-border bg-surface-container-low/40">
         <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div className="max-w-2xl">
               <span className="text-xs font-bold uppercase tracking-wider text-primary mb-2 block">
-                Distributed System
+                Ecosystem & Core Capabilities
               </span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text">
-                The 9-Agent Ecosystem
+                Engineered for Real-Time Execution
               </h2>
               <p className="text-text-muted text-base sm:text-lg mt-3 leading-relaxed">
-                Rather than one monolithic LLM, MeetMaxxing deploys 9 purpose-built micro-agents
-                communicating over high-throughput gRPC channels.
+                Rather than relying on a single monolithic LLM, MeetMaxxing coordinates 9 specialized micro-agents over an A2A gRPC bus to turn unstructured audio into structured team velocity.
               </p>
             </div>
 
@@ -188,54 +187,24 @@ export default function AboutPage() {
                       {agent.pillar}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-text mb-2.5 tracking-tight">
-                    {agent.name}
-                  </h3>
-                  <p className="text-[14px] text-text-muted leading-relaxed">
+                  <div className="mb-2.5">
+                    <h3 className="text-xl font-bold text-text tracking-tight">
+                      {agent.name}
+                    </h3>
+                    <span className="text-[12px] font-semibold text-primary block mt-0.5">
+                      {agent.capability}
+                    </span>
+                  </div>
+                  <p className="text-[14px] text-text-muted leading-relaxed mb-6">
                     {agent.desc}
                   </p>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Core capabilities */}
-      <section className="py-24 bg-surface-container-low border-t border-border relative z-10">
-        <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary mb-2 block">
-              Core Capabilities
-            </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text">
-              Engineered for Real-Time Execution
-            </h2>
-            <p className="text-text-muted text-base sm:text-lg mt-3 leading-relaxed">
-              Designed from first principles to turn unstructured voice conversations into
-              verifiable team velocity.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="p-6 rounded-[28px] bg-surface-container border border-border flex flex-col hover:bg-surface-container-high transition-all duration-300 shadow-xs hover:-translate-y-1 group"
-              >
-                <div className="w-10 h-10 rounded-[16px] bg-primary/10 text-primary flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-                  <feature.icon className="w-5 h-5" />
+                <div className="pt-4 border-t border-border/60 flex items-center justify-between">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-surface-container-lowest dark:bg-surface-container-low border border-border/60 text-[11px] font-mono text-text-muted">
+                    {agent.tag}
+                  </span>
                 </div>
-                <h3 className="text-[17px] font-bold text-text mb-2 tracking-tight">
-                  {feature.title}
-                </h3>
-                <p className="text-[13px] text-text-muted leading-relaxed">
-                  {feature.desc}
-                </p>
               </motion.div>
             ))}
           </div>
