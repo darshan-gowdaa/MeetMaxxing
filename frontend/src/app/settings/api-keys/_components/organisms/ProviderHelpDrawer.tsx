@@ -1,13 +1,25 @@
 "use client";
 
-import { motion } from"framer-motion";
-import { RiKey2Line, RiCloseLine, RiExternalLinkLine } from"@remixicon/react";
-import { Provider } from"../../types";
-import { useDialogA11y } from"@/hooks/useDialogA11y";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
+import { RiKey2Line, RiCloseLine, RiExternalLinkLine } from "@remixicon/react";
+import { Provider } from "../../types";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, onClose: () => void }) {
-	 const panelRef = useDialogA11y<HTMLDivElement>({ onClose, autoFocus: false });
-	 const titleId ="provider-help-title";
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
+  const panelRef = useDialogA11y<HTMLDivElement>({ onClose, autoFocus: false, enabled: mounted });
+  const titleId = "provider-help-title";
  const getInstructions = (id: string) => {
  switch(id) {
  case 'google': return (
@@ -85,34 +97,59 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
  }
  };
 
- return (
- <div className="fixed inset-0 z-[60] flex justify-end">
- <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-surface-container-high"onClick={onClose} aria-hidden="true" />
- <motion.div
- ref={panelRef}
- role="dialog"
- aria-modal="true"
- aria-labelledby={titleId}
- tabIndex={-1}
- initial={{ x:"100%"}}
- animate={{ x: 0 }}
- exit={{ x:"100%"}}
- transition={{ type:"spring", damping: 25, stiffness: 200 }}
- className="relative w-full max-w-sm h-full bg-surface border-l border-border shadow-sm p-6 flex flex-col focus:outline-none"
- >
- <div className="flex items-center justify-between mb-6">
- <h3 id={titleId} className="text-lg font-bold flex items-center gap-2"><RiKey2Line className="w-5 h-5 text-primary" aria-hidden="true"/> {provider.name} Setup</h3>
- <button onClick={onClose} aria-label="Close setup help" className="w-8 h-8 rounded-full hover:bg-surface2 flex items-center justify-center"><RiCloseLine className="w-5 h-5" aria-hidden="true"/></button>
- </div>
- <div className="flex-1 overflow-y-auto">
- <ol className="list-decimal pl-5 space-y-4 text-sm text-text-muted mb-6 marker:text-text-muted/50 marker:font-medium">
- {getInstructions(provider.id)}
- </ol>
- <a href={provider.docs_url} target="_blank"rel="noreferrer"className="w-full h-10 rounded-full border border-border flex items-center justify-center gap-2 text-sm font-semibold hover:bg-surface2 transition-colors">
- Open Dashboard <RiExternalLinkLine className="w-4 h-4"/>
- </a>
- </div>
- </motion.div>
- </div>
- );
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex justify-end">
+      {/* backdrop with surrounding blur */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 bg-black/60 dark:bg-black/75 backdrop-blur-md"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <motion.div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="relative z-10 w-full max-w-sm h-full bg-surface/95 dark:bg-surface-container-high/95 backdrop-blur-xl border-l border-border shadow-2xl p-6 flex flex-col focus:outline-none"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3 id={titleId} className="text-lg font-bold flex items-center gap-2">
+            <RiKey2Line className="w-5 h-5 text-primary" aria-hidden="true" /> {provider.name} Setup
+          </h3>
+          <button
+            onClick={onClose}
+            aria-label="Close setup help"
+            className="w-8 h-8 rounded-full hover:bg-surface2 flex items-center justify-center"
+          >
+            <RiCloseLine className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <ol className="list-decimal pl-5 space-y-4 text-sm text-text-muted mb-6 marker:text-text-muted/50 marker:font-medium">
+            {getInstructions(provider.id)}
+          </ol>
+          <a
+            href={provider.docs_url}
+            target="_blank"
+            rel="noreferrer"
+            className="w-full h-10 rounded-full border border-border flex items-center justify-center gap-2 text-sm font-semibold hover:bg-surface2 transition-colors"
+          >
+            Open Dashboard <RiExternalLinkLine className="w-4 h-4" />
+          </a>
+        </div>
+      </motion.div>
+    </div>,
+    document.body
+  );
 }

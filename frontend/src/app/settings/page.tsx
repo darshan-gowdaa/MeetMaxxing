@@ -63,7 +63,7 @@ export default function GeneralPreferences() {
   ];
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl animate-in fade-in duration-300">
+    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl">
       <div className="flex flex-col gap-2">
         <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
           General Preferences

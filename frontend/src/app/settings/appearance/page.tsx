@@ -23,7 +23,7 @@ export default function AppearancePage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-3xl animate-fade-scale">
+    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl">
       <h1 className="text-[28px] sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text">Appearance</h1>
       
       <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">

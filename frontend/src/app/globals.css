@@ -456,7 +456,8 @@ summary:focus-visible,
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-page-enter {
-  animation: md3-page-enter 0.3s var(--m3e-spatial-default) both;
+  animation: md3-page-enter var(--m3e-spatial-fast) both;
+  will-change: transform, opacity;
 }
 
 /* ── Snackbar exit (SnackbarProvider) — quick effects fade, no framer-motion ─ */

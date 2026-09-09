@@ -21,7 +21,7 @@ export default function ProfilePage() {
  }
 
  return (
- <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl animate-in fade-in duration-300">
+ <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl">
  <h1 className="text-[28px] sm:text-3xl font-bold text-text">Profile</h1>
  
  <div className="flex flex-col gap-6">

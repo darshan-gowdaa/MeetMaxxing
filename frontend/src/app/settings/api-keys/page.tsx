@@ -91,18 +91,28 @@ export default function ApiKeysPage() {
  });
  };
 
- return (
- <div className="flex flex-col gap-8 w-full max-w-3xl animate-in fade-in duration-300">
- <ApiKeysHero onAdd={() => setAddDialog(providers[0])} />
+  // scroll down to providers section smoothly
+  const handleScrollToProviders = () => {
+    const hasConfigured = providers.some((p) => keys.some((k) => k.provider_id === p.id));
+    const targetId = hasConfigured ? "configured-providers" : "available-providers";
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
- <ModelSelection keys={keys} onAddKey={() => setAddDialog(providers[0])} />
+ return (
+ <div className="flex flex-col gap-8 w-full max-w-3xl">
+ <ApiKeysHero onAdd={handleScrollToProviders} />
+
+ <ModelSelection keys={keys} onAddKey={handleScrollToProviders} />
 
  {loading ? (
  <ProviderListSkeleton />
  ) : (
  <div className="flex flex-col gap-8">
  {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
- <div className="flex flex-col gap-3">
+ <div id="configured-providers" className="flex flex-col gap-3 scroll-mt-24">
  <h2 className="text-[15px] font-bold text-text px-2">Configured Providers</h2>
  <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
  {[...providers]
@@ -126,7 +136,7 @@ export default function ApiKeysPage() {
  </div>
  )}
 
- <div className="flex flex-col gap-3">
+ <div id="available-providers" className="flex flex-col gap-3 scroll-mt-24">
  <h2 className="text-[15px] font-bold text-text px-2">Available Providers</h2>
  <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
  {[...providers]

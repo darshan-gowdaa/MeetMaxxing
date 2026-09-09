@@ -65,7 +65,7 @@ export default function NotificationsPage() {
  };
 
  return (
- <div className="flex flex-col gap-6 sm:gap-8 max-w-3xl animate-fade-scale">
+ <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl">
  <h1 className="text-[28px] sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text">Notifications</h1>
  
  {loading ? (
