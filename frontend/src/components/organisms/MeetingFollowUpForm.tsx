@@ -45,20 +45,30 @@ export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFol
  setLoading(true);
  setError("");
 
- try {
- // payload properties
- const payload = {
- ...result?.suggested_payload,
- start_time: new Date(dateTime).toISOString(),
- duration_minutes: result?.suggested_payload?.duration_minutes || 30,
- title: result?.suggested_payload?.title || `Follow-up: ${meeting.title || 'Meeting'}`,
- description: result?.suggested_payload?.description ||"",
- attendees: result?.suggested_payload?.attendees || meeting.attendees || [],
- };
+  try {
+    // The backend expects `start_datetime_iso` and a list of plain email
+    // strings for `attendees` (ScheduleFollowupRequest). The scheduler's
+    // suggested_payload uses `{email}` objects and `start`/`end`, so normalize.
+    const rawAttendees = result?.suggested_payload?.attendees;
+    const attendees = Array.isArray(rawAttendees)
+      ? rawAttendees
+          .map((a: unknown) =>
+            typeof a === "string" ? a : (a as { email?: string } | null)?.email || ""
+          )
+          .filter(Boolean)
+      : meeting.attendees || [];
 
- await scheduleFollowUp(meeting.id, payload);
- onScheduled();
- } catch (err: unknown) {
+    const payload = {
+      start_datetime_iso: new Date(dateTime).toISOString(),
+      duration_minutes: result?.suggested_payload?.duration_minutes || 30,
+      title: result?.suggested_payload?.title || `Follow-up: ${meeting.title || 'Meeting'}`,
+      description: result?.suggested_payload?.description || "",
+      attendees,
+    };
+
+    await scheduleFollowUp(meeting.id, payload);
+    onScheduled();
+  } catch (err: unknown) {
  setError((err as Error).message ||"Failed to schedule follow-up.");
  } finally {
  setLoading(false);

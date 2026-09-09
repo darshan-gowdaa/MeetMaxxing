@@ -80,7 +80,7 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         realtime_output = await run_realtime_agent(m_id, context={"title": "Q3 Roadmap", "attendees": ["Rahul", "Sriya"]})
         self.assertIn("suggestions", realtime_output)
         self.assertIn("risks", realtime_output)
-        self.assertIn("next_question", realtime_output)
+        self.assertIn("next_questions", realtime_output)
         
         recap_output = await generate_late_join_recap(m_id)
         self.assertIn("recap", recap_output)
@@ -167,12 +167,16 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
             calendar_token=mock_token,
             org_id=self.org_id,
         )
-        self.assertTrue(res.get("scheduled"))
-        self.assertIsNotNone(res.get("event_id"))
-        self.assertTrue(res.get("gmail_reminder_sent"))
-        print(f"-> Scheduled Event ID: {res['event_id']}")
-        print(f"-> Calendar Summary: {res['event_summary']}")
-        print(f"-> Gmail Reminder Sent: {res['gmail_reminder_sent']}")
+        # The scheduler agent returns a structured result. With a mock OAuth token
+        # (and no explicit date in the summary), it must NOT claim a real
+        # calendar event was created — it should report a reason instead.
+        # Note: the agent no longer sends Gmail reminders (email goes via Resend),
+        # so `gmail_reminder_sent` is not part of its contract.
+        self.assertIsInstance(res, dict)
+        self.assertIn("scheduled", res)
+        self.assertFalse(res.get("scheduled"))
+        self.assertIn("reason", res)
+        print(f"-> Scheduler Result: {res}")
 
 
 if __name__ == "__main__":

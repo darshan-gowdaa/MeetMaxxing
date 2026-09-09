@@ -10,12 +10,16 @@ from .rate_limiter import rate_limiter
 
 # Shared connection-pooled client — closed at process exit
 _http_client: httpx.AsyncClient | None = None
+_http_client_loop: asyncio.AbstractEventLoop | None = None
 
 
 def get_http_client() -> httpx.AsyncClient:
-    global _http_client
-    if _http_client is None or _http_client.is_closed:
+    global _http_client, _http_client_loop
+    loop = asyncio.get_running_loop()
+    if _http_client is None or _http_client.is_closed or _http_client_loop is not loop:
+        # httpx.AsyncClient is loop-bound; recreate if the running loop changed.
         _http_client = httpx.AsyncClient(timeout=20.0)
+        _http_client_loop = loop
     return _http_client
 
 

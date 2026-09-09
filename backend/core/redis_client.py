@@ -1,4 +1,5 @@
 import json
+import time
 
 import redis.asyncio as aioredis
 
@@ -7,8 +8,12 @@ from .config import settings
 _pool: aioredis.ConnectionPool | None = None
 _memory_store: dict[str, list[str]] = {}
 _is_fallback: bool = False
+_fallback_since: float = 0.0
 
 TRANSCRIPT_TTL = 60 * 60 * 8  # 8 hours
+# Retry a real Redis connection this long after a failed ping, instead of
+# latching onto the in-memory fallback for the whole process lifetime.
+_FALLBACK_RETRY_SECONDS = 30
 
 
 class MemoryRedis:
@@ -60,15 +65,19 @@ def _get_pool() -> aioredis.ConnectionPool:
 
 async def _get_redis() -> aioredis.Redis | MemoryRedis:
     """Return a Redis client, falling back to MemoryRedis on connection failure."""
-    global _is_fallback
-    if _is_fallback or settings.REDIS_URL in ["memory", "local", ""]:
+    global _is_fallback, _fallback_since
+    if settings.REDIS_URL in ["memory", "local", ""]:
+        return MemoryRedis()
+    if _is_fallback and (time.time() - _fallback_since) < _FALLBACK_RETRY_SECONDS:
         return MemoryRedis()
     r = aioredis.Redis(connection_pool=_get_pool())
     try:
         await r.ping()
+        _is_fallback = False
         return r
     except Exception:
         _is_fallback = True
+        _fallback_since = time.time()
         return MemoryRedis()
 
 

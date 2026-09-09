@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 
 from google import genai
@@ -47,7 +48,10 @@ async def embed_text(text: str) -> list[float]:
         return vec
         
     client = _get_client()
-    result = client.models.embed_content(
+    # embed_content is a synchronous network call — offload it so it doesn't
+    # block the FastAPI event loop.
+    result = await asyncio.to_thread(
+        client.models.embed_content,
         model=settings.GEMINI_EMBEDDING_MODEL,
         contents=text,
         config=genai_types.EmbedContentConfig(
@@ -66,7 +70,8 @@ async def embed_query(text: str) -> list[float]:
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key"]:
         return await _fallback_vector(text)
     client = _get_client()
-    result = client.models.embed_content(
+    result = await asyncio.to_thread(
+        client.models.embed_content,
         model=settings.GEMINI_EMBEDDING_MODEL,
         contents=text,
         config=genai_types.EmbedContentConfig(
@@ -114,7 +119,8 @@ async def embed_batch(texts: list[str]) -> list[list[float]]:
             batch = uncached_texts[i:i+batch_size]
             batch_indices = uncached_indices[i:i+batch_size]
             
-            result = client.models.embed_content(
+            result = await asyncio.to_thread(
+                client.models.embed_content,
                 model=settings.GEMINI_EMBEDDING_MODEL,
                 contents=batch,
                 config=genai_types.EmbedContentConfig(

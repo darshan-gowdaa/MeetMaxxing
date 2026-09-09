@@ -3,16 +3,18 @@ WebSocket + REST endpoint for live transcript ingestion from Chrome extension.
 Handles both text chunks and base64 audio chunks (transcribed via Gemini multimodal).
 """
 
+import asyncio
 import base64
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from loguru import logger
 from pydantic import BaseModel
 
 from ..agents.orchestrator import AgentTrigger, dispatch
 from ..core.auth import get_current_user
+from ..core.database import get_meeting_record, get_supabase_admin
 from ..services.transcript import create_meeting_record, ingest_chunk
 
 router = APIRouter(prefix="/ingest", tags=["transcript"])
@@ -36,6 +38,14 @@ class StartMeetingRequest(BaseModel):
     google_meet_link: str | None = None
 
 
+def _require_scoped_meeting(meeting_id: str, org_id: str) -> dict:
+    """Ensure the meeting exists and belongs to the caller's org before dispatching."""
+    meeting = get_meeting_record(get_supabase_admin(), meeting_id, org_id)
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    return meeting
+
+
 @router.get("/realtime/{meeting_id}")
 @router.post("/realtime/{meeting_id}")
 async def get_realtime_insights(
@@ -44,6 +54,7 @@ async def get_realtime_insights(
     user: dict = Depends(get_current_user),
 ):
     """On-demand generation of suggestions, next question, and late-join recap."""
+    _require_scoped_meeting(meeting_id, user["org_id"])
     logger.info("[MeetMaxxing REST] [ON-DEMAND] On-demand realtime insights requested for meeting {} (force={})...", meeting_id, force)
     result = await dispatch(AgentTrigger.REALTIME_TICK, {"meeting_id": meeting_id, "force": force})
     return result
@@ -55,6 +66,7 @@ async def get_late_recap(
     user: dict = Depends(get_current_user),
 ):
     """Generates an executive late join recap."""
+    _require_scoped_meeting(meeting_id, user["org_id"])
     logger.info("[MeetMaxxing REST] [RECAP] Late join recap requested for {}", meeting_id)
     result = await dispatch(AgentTrigger.LATE_JOIN_RECAP, {"meeting_id": meeting_id, "force": force})
     return result
@@ -119,7 +131,9 @@ async def ingest_audio_chunk(
     try:
         audio_bytes = base64.b64decode(req.audio_base64)
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        response = client.models.generate_content(
+        # generate_content is synchronous — offload so it doesn't block the event loop.
+        response = await asyncio.to_thread(
+            client.models.generate_content,
             model=settings.GEMINI_FLASH_MODEL,
             contents=[
                 genai_types.Part.from_bytes(data=audio_bytes, mime_type=req.mime_type),

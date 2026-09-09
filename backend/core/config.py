@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
@@ -32,9 +33,13 @@ class Settings(BaseSettings):
     GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
     EMBEDDING_DIM: int = 768
 
-    # Fallback LLM API Keys — use OPENROUTER_API_KEY as canonical name
+    # Fallback LLM API Keys — use OPENROUTER_API_KEY as canonical name.
+    # Also accept the legacy OPEN_ROUTER_API_KEY spelling seen in some .env files.
     GROQ_API_KEY: str = ""
-    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("OPENROUTER_API_KEY", "OPEN_ROUTER_API_KEY"),
+    )
     PERPLEXITY_API_KEY: str = ""
 
     # Resend

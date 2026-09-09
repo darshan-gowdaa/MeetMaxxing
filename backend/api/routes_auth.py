@@ -21,17 +21,17 @@ class RefreshRequest(BaseModel):
 @router.post("/refresh")
 async def refresh_token(body: RefreshRequest):
     """Exchange a Supabase refresh_token for a new access_token."""
-    import httpx
+    from ..core.llm_fallback import get_http_client
+
     url = f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
-    async with httpx.AsyncClient() as client:
-        res = await client.post(
-            url,
-            json={"refresh_token": body.refresh_token},
-            headers={
-                "apikey": settings.SUPABASE_ANON_KEY,
-                "Content-Type": "application/json",
-            },
-        )
+    res = await get_http_client().post(
+        url,
+        json={"refresh_token": body.refresh_token},
+        headers={
+            "apikey": settings.SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+        },
+    )
     if res.status_code != 200:
         raise HTTPException(status_code=401, detail="Token refresh failed")
     data = res.json()

@@ -3,6 +3,7 @@ Google Calendar API service wrapper.
 Handles OAuth2 token management and event CRUD.
 """
 
+from fastapi.concurrency import run_in_threadpool
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -53,13 +54,16 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
     if not token_data or not token_data.get("access_token"):
         raise ValueError("Missing OAuth token data")
 
-    try:
+    def _create() -> dict:
         service = _build_service(token_data)
         return service.events().insert(
             calendarId="primary",
             body=event_body,
             sendUpdates="all",
         ).execute()
+
+    try:
+        return await run_in_threadpool(_create)
     except HttpError as e:
         raise RuntimeError(f"Calendar API error: {e.status_code} — {e.reason}")
     except Exception as e:
@@ -68,7 +72,7 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
 
 async def update_calendar_event(event_id: str, updates: dict, token_data: dict) -> dict:
     """Partial update of an existing calendar event."""
-    try:
+    def _update() -> dict:
         service = _build_service(token_data)
         return service.events().patch(
             calendarId="primary",
@@ -76,6 +80,9 @@ async def update_calendar_event(event_id: str, updates: dict, token_data: dict) 
             body=updates,
             sendUpdates="all",
         ).execute()
+
+    try:
+        return await run_in_threadpool(_update)
     except HttpError as e:
         raise RuntimeError(f"Calendar update error: {e.status_code} — {e.reason}")
 
@@ -93,12 +100,15 @@ async def get_calendar_auth_url() -> str:
 
 async def exchange_calendar_code(code: str) -> dict:
     """Exchange OAuth2 authorization code for tokens."""
-    flow = _build_flow()
-    flow.fetch_token(code=code)
-    creds = flow.credentials
-    return {
-        "access_token": creds.token,
-        "refresh_token": creds.refresh_token,
-        "token_uri": creds.token_uri,
-        "scopes": list(creds.scopes or []),
-    }
+    def _exchange() -> dict:
+        flow = _build_flow()
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+        return {
+            "access_token": creds.token,
+            "refresh_token": creds.refresh_token,
+            "token_uri": creds.token_uri,
+            "scopes": list(creds.scopes or []),
+        }
+
+    return await run_in_threadpool(_exchange)

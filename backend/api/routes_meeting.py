@@ -141,11 +141,19 @@ async def schedule_followup(
         
     event_end = event_start + timedelta(minutes=req.duration_minutes)
 
+    # Normalize to UTC and emit a clean RFC3339 "Z" timestamp. Using
+    # `isoformat() + "Z"` on an aware datetime previously produced an invalid
+    # double-offset value like "2026-01-01T10:00:00+00:00Z".
+    start_utc = event_start if event_start.tzinfo else event_start.replace(tzinfo=UTC)
+    end_utc = event_end if event_end.tzinfo else event_end.replace(tzinfo=UTC)
+    start_ts = start_utc.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    end_ts = end_utc.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     calendar_payload = {
         "summary": req.title,
         "description": req.description,
-        "start": {"dateTime": event_start.isoformat() + "Z", "timeZone": "UTC"},
-        "end": {"dateTime": event_end.isoformat() + "Z", "timeZone": "UTC"},
+        "start": {"dateTime": start_ts, "timeZone": "UTC"},
+        "end": {"dateTime": end_ts, "timeZone": "UTC"},
         "attendees": [{"email": e} for e in req.attendees if "@" in e],
     }
 

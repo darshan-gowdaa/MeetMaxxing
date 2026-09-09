@@ -7,6 +7,7 @@ Collection: meetmaxxing_memories
   for fast metadata filtering without relying solely on vector similarity
 """
 
+import asyncio
 import collections
 import hashlib
 import warnings
@@ -21,10 +22,19 @@ from .schemas import MemoryFilter, MemoryPoint, MemoryResult
 
 _client: AsyncQdrantClient | None = None
 _collection_ensured = False
+_client_loop: asyncio.AbstractEventLoop | None = None
 
 async def get_qdrant() -> AsyncQdrantClient:
-    global _client, _collection_ensured
-    if _client is None:
+    global _client, _collection_ensured, _client_loop
+    loop = asyncio.get_running_loop()
+    if _client is None or _client_loop is not loop:
+        # Async clients are bound to the event loop that created them. When the
+        # loop changes (per-test event loops, or the gRPC worker thread's own
+        # loop), recreate the client instead of reusing a loop-bound one — which
+        # would otherwise raise "Event loop is closed".
+        _client = None
+        _collection_ensured = False
+        _client_loop = loop
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             if settings.QDRANT_URL in [":memory:", "memory"]:
@@ -38,7 +48,7 @@ async def get_qdrant() -> AsyncQdrantClient:
                     check_compatibility=False,
                 )
                 await _client.get_collections()
-                
+
     if not _collection_ensured:
         _collection_ensured = True
         try:

@@ -1,13 +1,16 @@
 "use client";
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Strands from '@/components/atoms/Strands';
 import { SpotlightCard } from '@/components/atoms/SpotlightCard';
 import { BlurWord, CountUp } from './_components/animations';
 import { AUTHORS, STATS, FEATURES, AGENTS, getLogo } from './_constants/data';
 import { RiGithubFill, RiArrowRightLine, RiSparkling2Fill } from '@remixicon/react';
+
+// WebGL is heavy and client-only — code-split it out of the initial JS bundle.
+const Strands = dynamic(() => import('@/components/atoms/Strands'), { ssr: false });
 
 export default function AboutPage() {
   const shapes = ['32px', '32px 8px 32px 8px', '8px 32px 8px 32px', '24px'];
