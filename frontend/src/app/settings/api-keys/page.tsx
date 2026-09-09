@@ -95,6 +95,8 @@ export default function ApiKeysPage() {
  <div className="flex flex-col gap-8 w-full max-w-3xl animate-in fade-in duration-300">
  <ApiKeysHero onAdd={() => setAddDialog(providers[0])} />
 
+ <ModelSelection keys={keys} onAddKey={() => setAddDialog(providers[0])} />
+
  {loading ? (
  <ProviderListSkeleton />
  ) : (
@@ -172,8 +174,6 @@ export default function ApiKeysPage() {
  <ProviderHelpDrawer provider={helpDrawer} onClose={() => setHelpDrawer(null)} />
  )}
  </AnimatePresence>
-
- <ModelSelection keys={keys} />
  </div>
  );
 }
