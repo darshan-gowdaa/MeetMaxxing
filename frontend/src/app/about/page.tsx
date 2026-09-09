@@ -81,23 +81,23 @@ export default function AboutPage() {
               </motion.div>
             </div>
 
-            {/* Right Showcase: Animated Strands WebGL overlapping and fading on right end */}
-            <div className="lg:col-span-5 relative flex items-center justify-center lg:justify-end pointer-events-none overflow-visible">
+            {/* Right Showcase: Animated Strands WebGL normal natural size, overlapping, fading gently on right end */}
+            <div className="lg:col-span-5 relative flex items-center justify-center lg:justify-end pointer-events-none">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-[340px] sm:w-[500px] lg:w-[660px] xl:w-[760px] h-[260px] sm:h-[340px] lg:h-[440px] xl:h-[480px] relative lg:-ml-24 xl:-ml-32 lg:-mr-16 xl:-mr-24 z-10 [mask-image:radial-gradient(ellipse_95%_80%_at_35%_50%,black_45%,transparent_98%)] [-webkit-mask-image:radial-gradient(ellipse_95%_80%_at_35%_50%,black_45%,transparent_98%)]"
+                className="w-[320px] sm:w-[420px] lg:w-[520px] xl:w-[600px] aspect-square max-h-[calc(100dvh-7rem)] relative lg:-ml-12 xl:-ml-20 z-10 [mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)]"
               >
                 <Strands
                   colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}
                   count={6}
                   speed={0.35}
-                  amplitude={0.9}
+                  amplitude={1.0}
                   thickness={0.7}
                   glow={3.0}
                   intensity={0.65}
-                  scale={1.2}
+                  scale={1.0}
                   glass={false}
                 />
               </motion.div>
