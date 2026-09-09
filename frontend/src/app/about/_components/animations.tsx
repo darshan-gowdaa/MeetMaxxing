@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
+import { motion, useInView } from 'framer-motion';
 
 export const BlurWord = ({ word, index }: { word: string; index: number }) => {
   return (
@@ -16,42 +16,45 @@ export const BlurWord = ({ word, index }: { word: string; index: number }) => {
   );
 };
 
-export const CountUp = ({ to }: { to: number }) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
+export const RollingNumber = ({ value }: { value: number }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  /* Triggers strictly when the user has scrolled this section into view */
+  const isInView = useInView(ref, { once: true, amount: 0.3, margin: "0px 0px -40px 0px" });
+  const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    if (!isInView) return;
 
-    let startTime: number;
-    const duration = 1500;
+    let start: number | null = null;
+    const duration = 1600;
+    let reqId: number;
 
-    let frameId: number;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          const animate = (timestamp: number) => {
-            if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / duration, 1);
-            const easeOutQuint = 1 - Math.pow(1 - progress, 5);
-            setCount(Math.floor(easeOutQuint * to));
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp;
+      const elapsed = timestamp - start;
+      const progress = Math.min(elapsed / duration, 1);
+      /* Eased curve makes the numbers roll fast initially and decelerate cleanly into place */
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setDisplay(Math.round(ease * value));
 
-            if (progress < 1) frameId = requestAnimationFrame(animate);
-          };
-          frameId = requestAnimationFrame(animate);
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      if (frameId) cancelAnimationFrame(frameId);
+      if (progress < 1) {
+        reqId = requestAnimationFrame(step);
+      } else {
+        setDisplay(value);
+      }
     };
-  }, [to]);
 
-  return <span ref={ref}>{count}</span>;
+    reqId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(reqId);
+  }, [isInView, value]);
+
+  return (
+    <span ref={ref} className="tabular-nums inline-block">
+      {display}
+    </span>
+  );
 };
+
+/* Keep CountUp as backwards-compatible alias */
+export const CountUp = ({ to }: { to: number }) => <RollingNumber value={to} />;
+

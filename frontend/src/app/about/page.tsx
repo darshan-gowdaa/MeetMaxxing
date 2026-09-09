@@ -10,7 +10,7 @@ import {
   RiGithubFill,
   RiArrowRightLine,
 } from "@remixicon/react";
-import { BlurWord, CountUp } from "./_components/animations";
+import { BlurWord, RollingNumber } from "./_components/animations";
 import { AUTHORS, STATS, AGENTS, getLogo } from "./_constants/data";
 
 /* We load the WebGL strands animation dynamically so it runs only in the browser */
@@ -27,12 +27,12 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-bg text-text font-sans selection:bg-primary/20 overflow-x-hidden">
       {/* Hero section */}
-      <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden">
+      <section className="relative min-h-[calc(100dvh-8rem)] md:min-h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem)] flex items-center justify-center overflow-hidden py-6 sm:py-8 lg:py-0">
         <div className="relative z-10 mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 items-center">
             {/* Left Content */}
-            <div className="lg:col-span-7 flex flex-col items-start text-left">
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-text leading-[1.08] mb-6">
+            <div className="lg:col-span-7 flex flex-col items-start text-left z-20">
+              <h1 className="text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight text-text leading-[1.08] mb-4 sm:mb-6">
                 {"Autonomous AI ".split(" ").map((w, i) => (
                   <BlurWord key={"h1-" + i} word={w} index={i} />
                 ))}
@@ -48,7 +48,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.25 }}
-                className="text-lg sm:text-xl text-text-muted max-w-xl leading-relaxed mb-10"
+                className="text-base sm:text-lg text-text-muted max-w-xl leading-relaxed mb-6 sm:mb-8"
               >
                 An agent ecosystem built on an A2A gRPC message bus. Streams live meeting
                 audio, extracts decisions, retrieves episodic semantic memory, and orchestrates
@@ -59,11 +59,11 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.35 }}
-                className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
+                className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto"
               >
                 <Link
                   href="/"
-                  className="h-12 px-7 rounded-full bg-primary text-on-primary font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 shadow-md hover:shadow-lg active:scale-[0.98] transition-all w-full sm:w-auto cursor-pointer"
+                  className="h-11 sm:h-12 px-6 sm:px-7 rounded-full bg-primary text-on-primary font-bold text-[14px] sm:text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 shadow-md hover:shadow-lg active:scale-[0.98] transition-all w-full sm:w-auto cursor-pointer"
                 >
                   <span>Open Dashboard</span>
                   <RiArrowRightLine className="w-5 h-5" />
@@ -73,7 +73,7 @@ export default function AboutPage() {
                   href="https://github.com/darshan-gowdaa/MeetMaxxing"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-12 px-6 rounded-full bg-surface-container hover:bg-surface-container-high border border-border text-text font-bold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all w-full sm:w-auto cursor-pointer"
+                  className="h-11 sm:h-12 px-5 sm:px-6 rounded-full bg-surface-container hover:bg-surface-container-high border border-border text-text font-bold text-[14px] sm:text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all w-full sm:w-auto cursor-pointer"
                 >
                   <RiGithubFill className="w-5 h-5" />
                   <span>GitHub Repository</span>
@@ -81,22 +81,23 @@ export default function AboutPage() {
               </motion.div>
             </div>
 
-            {/* Right Showcase: Animated Strands WebGL with smooth radial fade mask */}
-            <div className="lg:col-span-5 flex items-center justify-center pointer-events-none">
+            {/* Right Showcase: Animated Strands WebGL overlapping and fading on right end */}
+            <div className="lg:col-span-5 relative flex items-center justify-center lg:justify-end pointer-events-none overflow-visible">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-full h-[360px] sm:h-[460px] lg:h-[560px] relative lg:translate-x-6 z-10 [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)]"
+                className="w-[340px] sm:w-[500px] lg:w-[660px] xl:w-[760px] h-[260px] sm:h-[340px] lg:h-[440px] xl:h-[480px] relative lg:-ml-24 xl:-ml-32 lg:-mr-16 xl:-mr-24 z-10 [mask-image:radial-gradient(ellipse_95%_80%_at_35%_50%,black_45%,transparent_98%)] [-webkit-mask-image:radial-gradient(ellipse_95%_80%_at_35%_50%,black_45%,transparent_98%)]"
               >
                 <Strands
                   colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}
                   count={6}
                   speed={0.35}
-                  amplitude={1.0}
+                  amplitude={0.9}
                   thickness={0.7}
                   glow={3.0}
                   intensity={0.65}
+                  scale={1.2}
                   glass={false}
                 />
               </motion.div>
@@ -106,23 +107,23 @@ export default function AboutPage() {
       </section>
 
       {/* Key metrics strip */}
-      <section className="py-16 bg-surface-container-low border-y border-border relative z-10">
+      <section className="py-16 sm:py-20 bg-surface-container-low border-y border-border relative z-10">
         <div className="mx-auto w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-w-6xl">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STATS.map((stat, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.5, delay: i * 0.08, ease: [0.2, 0, 0, 1] }}
                 className="p-6 sm:p-7 rounded-[28px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col items-center text-center hover:bg-surface-container-high transition-all duration-300 shadow-xs"
               >
                 <div className="w-12 h-12 rounded-[20px] bg-primary-container text-on-primary-container flex items-center justify-center mb-5 shadow-inner">
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className="text-4xl sm:text-5xl font-black tracking-tight text-text mb-2">
-                  <CountUp to={stat.value} />
+                <div className="text-4xl sm:text-5xl font-black tracking-tight text-text mb-2 flex items-center justify-center">
+                  <RollingNumber value={stat.value} />
                   <span>{stat.suffix}</span>
                 </div>
                 <div className="text-[15px] font-bold text-primary mb-1">{stat.label}</div>
