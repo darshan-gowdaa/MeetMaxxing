@@ -1,15 +1,18 @@
 "use client";
 import { useState } from"react";
 import { supabase } from"@/lib/supabase";
-import { RiLockPasswordLine, RiSparkling2Fill, RiCheckLine } from"@remixicon/react";
+import { RiLockPasswordLine, RiSparkling2Fill, RiCheckLine, RiEyeLine, RiEyeOffLine } from"@remixicon/react";
 import Link from"next/link";
+import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
 
 export default function ResetPasswordPage() {
- const [password, setPassword] = useState("");
- const [confirm, setConfirm] = useState("");
- const [loading, setLoading] = useState(false);
- const [error, setError] = useState("");
- const [success, setSuccess] = useState(false);
+	 const [password, setPassword] = useState("");
+	 const [confirm, setConfirm] = useState("");
+	 const [showPassword, setShowPassword] = useState(false);
+	 const [showConfirm, setShowConfirm] = useState(false);
+	 const [loading, setLoading] = useState(false);
+	 const [error, setError] = useState("");
+	 const [success, setSuccess] = useState(false);
 
  const handleReset = async (e: React.FormEvent) => {
  e.preventDefault();
@@ -48,22 +51,41 @@ export default function ResetPasswordPage() {
  <h2 className="text-2xl font-black text-text mb-2 text-center">Reset Password</h2>
  <p className="text-text-muted mb-8 text-center text-sm font-medium">Set a new password for your account</p>
  
- <form onSubmit={handleReset} className="space-y-4">
- <div className="relative">
- <RiLockPasswordLine className="absolute left-4 top-1/2 /2 w-5 h-5 text-text-variant"/>
- <input type="password"required value={password} onChange={e => setPassword(e.target.value)} placeholder="New password"className="w-full h-14 bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm"/>
- </div>
- <div className="relative">
- <RiLockPasswordLine className="absolute left-4 top-1/2 /2 w-5 h-5 text-text-variant"/>
- <input type="password"required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirm new password"className="w-full h-14 bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm"/>
- </div>
- 
- {error && <div className="text-on-risk bg-risk-container text-sm text-center py-3 rounded-[16px] font-medium">{error}</div>}
- 
- <button type="submit"disabled={loading} className="w-full h-14 bg-primary text-on-primary font-bold rounded-full hover:bg-primary-container hover:text-on-primary-container transition-colors disabled:opacity-50 mt-4 spring">
- {loading ?"Updating...":"Update Password"}
- </button>
- </form>
+	 <form onSubmit={handleReset} className="space-y-4">
+	 <div className="relative">
+	 <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" aria-hidden="true"/>
+	 <label htmlFor="new-password" className="sr-only">New password</label>
+	 <input id="new-password" type={showPassword ?"text":"password"} required autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="New password" aria-describedby={error ?"reset-error": undefined} aria-invalid={!!error} className="w-full h-14 bg-surface border border-border rounded-[16px] pl-12 pr-12 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm"/>
+	 <button
+	 type="button"
+	 onClick={() => setShowPassword(s => !s)}
+	 aria-label={showPassword ?"Hide password":"Show password"}
+	 className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text spring-colors"
+	 >
+	 {showPassword ? <RiEyeOffLine className="w-5 h-5" aria-hidden="true"/> : <RiEyeLine className="w-5 h-5" aria-hidden="true"/>}
+	 </button>
+	 </div>
+	 <div className="relative">
+	 <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" aria-hidden="true"/>
+	 <label htmlFor="confirm-password" className="sr-only">Confirm new password</label>
+	 <input id="confirm-password" type={showConfirm ?"text":"password"} required autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirm new password" aria-describedby={error ?"reset-error": undefined} aria-invalid={!!error} className="w-full h-14 bg-surface border border-border rounded-[16px] pl-12 pr-12 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm"/>
+	 <button
+	 type="button"
+	 onClick={() => setShowConfirm(s => !s)}
+	 aria-label={showConfirm ?"Hide password":"Show password"}
+	 className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text spring-colors"
+	 >
+	 {showConfirm ? <RiEyeOffLine className="w-5 h-5" aria-hidden="true"/> : <RiEyeLine className="w-5 h-5" aria-hidden="true"/>}
+	 </button>
+	 </div>
+
+	 {error && <div id="reset-error" role="alert" className="text-on-risk bg-risk-container text-sm text-center py-3 rounded-[16px] font-medium">{error}</div>}
+
+	 <button type="submit"disabled={loading} className="w-full h-14 bg-primary text-on-primary font-bold rounded-full hover:bg-primary-container hover:text-on-primary-container transition-colors disabled:opacity-50 mt-4 spring flex items-center justify-center gap-2">
+	 {loading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
+	 {loading ?"Updating…":"Update Password"}
+	 </button>
+	 </form>
  
  <div className="mt-8 text-center">
  <Link href="/login"className="text-primary hover:text-primary-container text-sm font-bold transition-colors">

@@ -1,8 +1,13 @@
+"use client";
+
 import { motion } from"framer-motion";
 import { RiKey2Line, RiCloseLine, RiExternalLinkLine } from"@remixicon/react";
 import { Provider } from"../../types";
+import { useDialogA11y } from"@/hooks/useDialogA11y";
 
 export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, onClose: () => void }) {
+	 const panelRef = useDialogA11y<HTMLDivElement>({ onClose, autoFocus: false });
+	 const titleId ="provider-help-title";
  const getInstructions = (id: string) => {
  switch(id) {
  case 'google': return (
@@ -82,11 +87,22 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
 
  return (
  <div className="fixed inset-0 z-[60] flex justify-end">
- <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-surface-container-high"onClick={onClose} />
- <motion.div initial={{ x:"100%"}} animate={{ x: 0 }} exit={{ x:"100%"}} transition={{ type:"spring", damping: 25, stiffness: 200 }} className="relative w-full max-w-sm h-full bg-surface border-l border-border shadow-sm border border-border p-6 flex flex-col">
+ <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-surface-container-high"onClick={onClose} aria-hidden="true" />
+ <motion.div
+ ref={panelRef}
+ role="dialog"
+ aria-modal="true"
+ aria-labelledby={titleId}
+ tabIndex={-1}
+ initial={{ x:"100%"}}
+ animate={{ x: 0 }}
+ exit={{ x:"100%"}}
+ transition={{ type:"spring", damping: 25, stiffness: 200 }}
+ className="relative w-full max-w-sm h-full bg-surface border-l border-border shadow-sm p-6 flex flex-col focus:outline-none"
+ >
  <div className="flex items-center justify-between mb-6">
- <h3 className="text-lg font-bold flex items-center gap-2"><RiKey2Line className="w-5 h-5 text-primary"/> {provider.name} Setup</h3>
- <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-surface2 flex items-center justify-center"><RiCloseLine className="w-5 h-5"/></button>
+ <h3 id={titleId} className="text-lg font-bold flex items-center gap-2"><RiKey2Line className="w-5 h-5 text-primary" aria-hidden="true"/> {provider.name} Setup</h3>
+ <button onClick={onClose} aria-label="Close setup help" className="w-8 h-8 rounded-full hover:bg-surface2 flex items-center justify-center"><RiCloseLine className="w-5 h-5" aria-hidden="true"/></button>
  </div>
  <div className="flex-1 overflow-y-auto">
  <ol className="list-decimal pl-5 space-y-4 text-sm text-text-muted mb-6 marker:text-text-muted/50 marker:font-medium">

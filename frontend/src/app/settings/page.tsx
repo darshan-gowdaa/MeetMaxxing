@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { RiFileTextLine, RiFileList3Line, RiFlashlightLine, RiTranslate2 } from '@remixicon/react';
 
 import { useAuth } from '@/lib/auth-context';
+import { useSnackbar } from '@/components/providers/SnackbarProvider';
 import { SelectionCard } from "@/components/molecules/SelectionCard";
 
 export default function GeneralPreferences() {
   const { session } = useAuth();
   const token = session?.access_token;
+  const { showMessage } = useSnackbar();
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
   const [lang, setLang] = useState('en');
   const [style, setStyle] = useState('concise');
-  const [snackbar, setSnackbar] = useState<{ message: string } | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -35,11 +35,9 @@ export default function GeneralPreferences() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ language: v })
       });
-      setSnackbar({ message: "Language updated" });
-      setTimeout(() => setSnackbar(null), 3000);
+      showMessage("Language updated", { variant: "success" });
     } catch {
-      setSnackbar({ message: "Failed to update language" });
-      setTimeout(() => setSnackbar(null), 3000);
+      showMessage("Failed to update language", { variant: "error" });
     }
   };
 
@@ -52,11 +50,9 @@ export default function GeneralPreferences() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ summary_style: v })
       });
-      setSnackbar({ message: "Summary style updated" });
-      setTimeout(() => setSnackbar(null), 3000);
+      showMessage("Summary style updated", { variant: "success" });
     } catch {
-      setSnackbar({ message: "Failed to update summary style" });
-      setTimeout(() => setSnackbar(null), 3000);
+      showMessage("Failed to update summary style", { variant: "error" });
     }
   };
 
@@ -77,9 +73,10 @@ export default function GeneralPreferences() {
         <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
           <RiTranslate2 className="w-4 h-4 text-primary"/> Default Meeting Language
         </h2>
-        <select 
-          value={lang} 
+        <select
+          value={lang}
           onChange={e => saveLang(e.target.value)}
+          aria-label="Default meeting language"
           className="w-full bg-surface2 border border-border rounded-[20px] px-5 py-4 text-[14px] font-medium focus:outline-none focus:border-primary text-text transition-all appearance-none cursor-pointer"
         >
           <option value="en">English</option>
@@ -106,14 +103,6 @@ export default function GeneralPreferences() {
           ))}
         </div>
       </section>
-
-      <AnimatePresence>
-        {snackbar && (
-          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-highest text-text px-4 py-3 rounded-xl shadow-sm border border-border flex items-center gap-4 z-50">
-            <span className="text-sm font-medium">{snackbar.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

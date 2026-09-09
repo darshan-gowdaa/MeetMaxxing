@@ -29,7 +29,7 @@ export default function MemoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-bg">
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <div className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* ── Hero ──────────────────────────────────────────────────────── */}
         <div className="relative rounded-[32px] bg-surface-container border border-border overflow-hidden p-8 text-center">
@@ -55,22 +55,24 @@ export default function MemoryPage() {
 
         {/* ── Search box ────────────────────────────────────────────────── */}
         <div className="relative">
-          <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+          <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" aria-hidden="true" />
           <input
             type="text"
             placeholder="Ask your meeting memory…"
+            aria-label="Ask your meeting memory"
             value={query}
             autoFocus
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleQuery(); }}
-            className="w-full h-14 bg-surface2 border border-border rounded-2xl pl-11 pr-32 text-[14px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors shadow-sm border border-border"
+            className="w-full h-14 bg-surface2 border border-border rounded-2xl pl-11 pr-32 text-[14px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors shadow-sm"
           />
           {query && (
             <button
               onClick={() => { setQuery(""); setResult(null); }}
-              className="absolute right-24 top-1/2 -translate-y-1/2 text-text-muted hover:text-text spring-sm"
+              aria-label="Clear query"
+              className="absolute right-24 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text hover:bg-surface-container spring-sm"
             >
-              <RiCloseLine className="w-4 h-4" />
+              <RiCloseLine className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
           <button
@@ -78,7 +80,7 @@ export default function MemoryPage() {
             disabled={loading || !query.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-5 bg-primary-container text-on-primary-container rounded-xl text-[13px] font-semibold flex items-center gap-2 spring hover:brightness-125 active:opacity-80 disabled:opacity-40"
           >
-            <RiSparklingLine className="w-4 h-4" />
+            <RiSparklingLine className="w-4 h-4" aria-hidden="true" />
             Ask
           </button>
         </div>
@@ -128,7 +130,7 @@ export default function MemoryPage() {
             setSourcesOpen={setSourcesOpen}
           />
         )}
-      </main>
+      </div>
     </div>
   );
 }

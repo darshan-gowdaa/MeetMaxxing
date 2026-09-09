@@ -37,15 +37,22 @@ export default function MeetingCard({
  setMenuOpen(false);
  }
  };
+ const keyHandler = (e: KeyboardEvent) => {
+ if (e.key ==="Escape") setMenuOpen(false);
+ };
  document.addEventListener("mousedown", handler);
- return () => document.removeEventListener("mousedown", handler);
+ document.addEventListener("keydown", keyHandler);
+ return () => {
+ document.removeEventListener("mousedown", handler);
+ document.removeEventListener("keydown", keyHandler);
+ };
  }, [menuOpen]);
 
  const colorVariants = [
 "bg-primary-container/10 border-primary/20 hover:border-primary/50 md3-glow-primary",
 "bg-secondary-container/10 border-secondary/20 hover:border-secondary/50 md3-glow-secondary",
 "bg-tertiary-container/10 border-tertiary/20 hover:border-tertiary/50 md3-glow-tertiary",
-"bg-[#2c2d34] hover:border-primary/40 md3-glow-primary",
+"bg-surface-container-high hover:border-primary/40 md3-glow-primary",
  ];
  const variant = colorVariants[index % colorVariants.length];
 

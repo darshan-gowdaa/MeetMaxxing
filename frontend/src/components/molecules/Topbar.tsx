@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   RiVideoChatLine,
   RiBrainLine,
@@ -57,7 +57,7 @@ export default function Topbar() {
   return (
     <header className="sticky top-0 z-50 w-full bg-surface border-b border-border transition-colors">
       <div className="h-16 px-4 flex items-center justify-between gap-4 max-w-7xl mx-auto">
-        
+
         {/* Left: Logo or Back (Small Top App Bar styling) */}
         <div className="flex items-center gap-2 flex-shrink-0 w-auto md:w-48">
           <AnimatePresence mode="wait" initial={false}>
@@ -87,7 +87,7 @@ export default function Topbar() {
               >
                 <Link href="/" className="flex items-center gap-3 pr-4 h-12">
                   <span className="text-on-primary-container bg-primary-container w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                    <RiSparkling2Fill className="w-6 h-6" />
+                    <RiSparkling2Fill className="w-6 h-6" aria-hidden="true" />
                   </span>
                   <span className="font-medium text-[22px] tracking-tight text-text whitespace-nowrap">
                     MeetMaxxing
@@ -99,7 +99,7 @@ export default function Topbar() {
         </div>
 
         {/* Center/Bottom: MD3 Tabs */}
-        <nav className="fixed md:static bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:border-t-0 flex md:flex-1 items-center justify-around md:justify-center gap-1 md:gap-2 h-16 md:h-full pb-safe md:pb-0 px-2 md:px-0">
+        <nav aria-label="Primary" className="fixed md:static bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:border-t-0 flex md:flex-1 items-center justify-around md:justify-center gap-1 md:gap-2 h-16 md:h-full pb-safe md:pb-0 px-2 md:px-0">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
             const label = tab.label();
@@ -109,11 +109,12 @@ export default function Topbar() {
               <Link
                 key={tab.id}
                 href={tab.href}
+                aria-current={isActive ? "page" : undefined}
                 className="relative flex flex-col md:flex-row items-center justify-center md:gap-2 h-full md:h-14 md:px-4 rounded-xl md:rounded-full group outline-none w-full md:w-auto"
               >
                 <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 z-10 relative">
                   <span className={`flex items-center justify-center w-14 md:w-12 h-8 rounded-full transition-colors ${isActive ? 'bg-secondary-container text-on-secondary-container' : 'text-text-muted group-hover:bg-surface-container-high group-hover:text-text'}`}>
-                    <IconComponent className="w-5 h-5" />
+                    <IconComponent className="w-5 h-5" aria-hidden="true" />
                   </span>
                   <span className={`text-[11px] md:text-[14px] font-medium transition-colors ${isActive ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
                     {label}
@@ -139,7 +140,7 @@ export default function Topbar() {
           ) : (
             <Link
               href="/login"
-              className="h-10 px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[14px] font-medium transition-colors hover:opacity-90"
+              className="h-10 px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[14px] font-medium spring-colors hover:bg-primary-container hover:text-on-primary-container"
             >
               Sign In
             </Link>
@@ -150,9 +151,18 @@ export default function Topbar() {
   );
 }
 
+const MENU_ITEM_SELECTOR = '[role="menuitem"]';
+
 function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metadata?: { name?: string; avatar_url?: string } }; signOut: () => void }) {
   const [openState, setOpenState] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const reduced = useReducedMotion();
+
+  const close = useCallback((refocusTrigger = false) => {
+    setOpenState(false);
+    if (refocusTrigger) triggerRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -164,52 +174,99 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Menu keyboard behaviour: Escape closes + returns focus, Tab closes,
+  // ArrowUp/ArrowDown cycle the items (M3 menu pattern).
+  useEffect(() => {
+    if (!openState) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        close(true);
+        return;
+      }
+      if (e.key === "Tab") {
+        close(false);
+        return;
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const items = Array.from(
+          ref.current?.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR) ?? []
+        );
+        if (items.length === 0) return;
+        e.preventDefault();
+        const activeIndex = items.indexOf(document.activeElement as HTMLElement);
+        const next =
+          e.key === "ArrowDown"
+            ? items[(activeIndex + 1) % items.length]
+            : items[(activeIndex - 1 + items.length) % items.length];
+        next?.focus();
+      }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [openState, close]);
+
   const avatarUrl = user?.user_metadata?.avatar_url;
   const initial = user?.email?.[0].toUpperCase() || "U";
-  
+
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={triggerRef}
         onClick={() => setOpenState(o => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" && !openState) {
+            e.preventDefault();
+            setOpenState(true);
+            requestAnimationFrame(() => {
+              ref.current?.querySelector<HTMLElement>(MENU_ITEM_SELECTOR)?.focus();
+            });
+          }
+        }}
+        aria-haspopup="menu"
+        aria-expanded={openState}
+        aria-label={openState ? "Close account menu" : "Open account menu"}
         className="flex items-center gap-2 p-1 pr-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest transition-colors outline-none"
       >
-        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary-container text-on-primary-container font-medium text-sm">
+        <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary-container text-on-primary-container font-medium text-sm" aria-hidden="true">
           {avatarUrl ? (
-            <Image src={avatarUrl} alt="Avatar" width={32} height={32} />
+            <Image src={avatarUrl} alt="" width={32} height={32} />
           ) : (
             initial
           )}
-        </div>
-        <RiArrowDownSLine className="w-5 h-5 text-text-muted" />
+        </span>
+        <RiArrowDownSLine className="w-5 h-5 text-text-muted" aria-hidden="true" />
       </button>
 
       <AnimatePresence>
         {openState && (
            <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: reduced ? 0 : -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ type: "spring", stiffness: 500, damping: 40 }}
+            exit={{ opacity: 0, y: reduced ? 0 : -10 }}
+            transition={reduced ? { duration: 0.01 } : { type: "spring", stiffness: 500, damping: 40 }}
+            role="menu"
+            aria-label="Account"
             className="absolute top-full right-0 mt-3 w-72 bg-surface-container-highest rounded-[32px] shadow-lg flex flex-col p-2 z-50 origin-top-right border border-border"
           >
             <div className="px-4 py-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex flex-shrink-0 items-center justify-center overflow-hidden font-medium text-xl">
-                {avatarUrl ? <Image src={avatarUrl} alt="Avatar" width={48} height={48} /> : initial}
+              <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex flex-shrink-0 items-center justify-center overflow-hidden font-medium text-xl" aria-hidden="true">
+                {avatarUrl ? <Image src={avatarUrl} alt="" width={48} height={48} /> : initial}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-base font-medium text-text truncate">{user.user_metadata?.name || "User"}</span>
                 <span className="text-sm text-text-muted truncate">{user.email}</span>
               </div>
             </div>
-            
-            <div className="h-[1px] bg-border mx-3 my-1" />
-            
-            <Link onClick={() => setOpenState(false)} href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-3xl text-[14px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none hover:-translate-y-0.5 hover:shadow-sm">
-              <RiSettings3Line className="w-5 h-5 text-text-muted" /> Settings
+
+            <div className="h-[1px] bg-border mx-3 my-1" aria-hidden="true" />
+
+            <Link onClick={() => close(false)} href="/settings" role="menuitem" className="flex items-center gap-3 px-4 py-3 rounded-3xl text-[14px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none hover:-translate-y-0.5 hover:shadow-sm">
+              <RiSettings3Line className="w-5 h-5 text-text-muted" aria-hidden="true" /> Settings
             </Link>
-            
-            <button onClick={() => { setOpenState(false); signOut(); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-3xl text-[14px] font-medium text-risk hover:bg-risk-container hover:text-on-risk-container transition-colors outline-none hover:-translate-y-0.5 hover:shadow-sm">
-              <RiLogoutBoxRLine className="w-5 h-5" /> Sign out
+
+            <button onClick={() => { close(false); signOut(); }} role="menuitem" className="w-full flex items-center gap-3 px-4 py-3 rounded-3xl text-[14px] font-medium text-risk hover:bg-risk-container hover:text-on-risk-container transition-colors outline-none hover:-translate-y-0.5 hover:shadow-sm">
+              <RiLogoutBoxRLine className="w-5 h-5" aria-hidden="true" /> Sign out
             </button>
           </motion.div>
         )}

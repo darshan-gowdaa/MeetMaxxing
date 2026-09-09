@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchMeetings, deleteMeeting, updateMeeting } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useSnackbar } from '@/components/providers/SnackbarProvider';
 import type { Meeting } from '@/types';
 
 export function useDashboardManager() {
@@ -16,6 +17,7 @@ export function useDashboardManager() {
   const [editBusy, setEditBusy] = useState(false);
 
   const { session, loading: authLoading } = useAuth();
+  const { showMessage } = useSnackbar();
 
   const load = () => {
     setLoading(true);
@@ -54,6 +56,12 @@ export function useDashboardManager() {
       const results = await Promise.allSettled(selectedMeetings.map(m => deleteMeeting(m.id)));
       const succeededIds = selectedMeetings.filter((_, i) => results[i].status === 'fulfilled').map(m => m.id);
       setMeetings(prev => prev.filter(m => !succeededIds.includes(m.id)));
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+      if (failedCount > 0) {
+        showMessage(`Deleted ${succeededIds.length} meeting(s) · ${failedCount} failed`, { variant: failedCount === selectedMeetings.length ? "error" : "default" });
+      } else if (succeededIds.length > 0) {
+        showMessage(`Deleted ${succeededIds.length} meeting${succeededIds.length > 1 ? "s" : ""}`, { variant: "success" });
+      }
     } catch (e) {
       console.error(e);
     }
@@ -65,6 +73,7 @@ export function useDashboardManager() {
     try {
       await deleteMeeting(deleteTarget.id);
       setMeetings((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      showMessage(`Deleted "${deleteTarget.title || "meeting"}"`, { variant: "success" });
     } catch (e: unknown) {
       setError((e as Error).message || "Failed to delete meeting");
     } finally {
@@ -81,6 +90,7 @@ export function useDashboardManager() {
       setMeetings((prev) =>
         prev.map((m) => (m.id === editTarget.id ? { ...m, title } : m))
       );
+      showMessage("Meeting renamed", { variant: "success" });
     } catch (e: unknown) {
       setError((e as Error).message || "Failed to update meeting");
     } finally {

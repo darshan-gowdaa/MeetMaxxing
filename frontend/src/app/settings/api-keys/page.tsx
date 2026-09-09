@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from"react";
-import { AnimatePresence, motion } from"framer-motion";
+import { AnimatePresence } from"framer-motion";
 import { useAuth } from"@/lib/auth-context";
 import { Provider, ApiKey } from"./types";
+import { useSnackbar } from"@/components/providers/SnackbarProvider";
 
 import { ApiKeysHero } from"./_components/organisms/ApiKeysHero";
 import { ProviderCard } from"./_components/organisms/ProviderCard";
@@ -15,16 +16,16 @@ import { ProviderListSkeleton } from "../../../components/organisms/skeletons/Pr
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"http://localhost:8000";
 
 export default function ApiKeysPage() {
- const { session } = useAuth();
- const token = session?.access_token;
- 
- const [providers, setProviders] = useState<Provider[]>([]);
- const [keys, setKeys] = useState<ApiKey[]>([]);
- const [loading, setLoading] = useState(true);
- 
- const [addDialog, setAddDialog] = useState<Provider | null>(null);
- const [helpDrawer, setHelpDrawer] = useState<Provider | null>(null);
- const [snackbar, setSnackbar] = useState<{ message: string; action?: () => void } | null>(null);
+	 const { session } = useAuth();
+	 const token = session?.access_token;
+	 const { showMessage } = useSnackbar();
+
+	 const [providers, setProviders] = useState<Provider[]>([]);
+	 const [keys, setKeys] = useState<ApiKey[]>([]);
+	 const [loading, setLoading] = useState(true);
+
+	 const [addDialog, setAddDialog] = useState<Provider | null>(null);
+	 const [helpDrawer, setHelpDrawer] = useState<Provider | null>(null);
 
  const fetchKeys = async () => {
  if (!token) return;
@@ -65,11 +66,11 @@ export default function ApiKeysPage() {
  const handleDelete = async (keyId: string) => {
  const keyToDelete = keys.find(k => k.id === keyId);
  if (!keyToDelete) return;
- 
+
  // Optimistic UI + Undo
  const previousKeys = [...keys];
  setKeys(keys.filter(k => k.id !== keyId));
- 
+
  let deleted = false;
  const timeout = setTimeout(async () => {
  deleted = true;
@@ -79,12 +80,13 @@ export default function ApiKeysPage() {
  });
  }, 4000);
 
- setSnackbar({
- message:"API key removed",
- action: () => {
+ showMessage("API key removed", {
+ action: {
+ label:"Undo",
+ onClick: () => {
  clearTimeout(timeout);
  if (!deleted) setKeys(previousKeys);
- setSnackbar(null);
+ }
  }
  });
  };
@@ -156,12 +158,11 @@ export default function ApiKeysPage() {
  {/* Dialogs & Drawers */}
  <AnimatePresence>
  {addDialog && (
- <AddKeyDialog 
- provider={addDialog} 
- token={token} 
- onAdded={() => { fetchKeys(); setAddDialog(null); }} 
+ <AddKeyDialog
+ provider={addDialog}
+ token={token}
+ onAdded={() => { fetchKeys(); setAddDialog(null); }}
  onCancel={() => setAddDialog(null)}
- setSnackbar={setSnackbar}
  />
  )}
  </AnimatePresence>
@@ -172,16 +173,7 @@ export default function ApiKeysPage() {
  )}
  </AnimatePresence>
 
- <ModelSelection keys={keys} setSnackbar={setSnackbar} />
-
- <AnimatePresence>
- {snackbar && (
- <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-highest text-text px-4 py-3 rounded-xl shadow-sm border border-border border border-border flex items-center gap-4 z-50">
- <span className="text-sm font-medium">{snackbar.message}</span>
- {snackbar.action && <button onClick={snackbar.action} className="text-primary text-sm font-bold uppercase tracking-wide hover:bg-primary/10 px-2 py-1 rounded">Undo</button>}
- </motion.div>
- )}
- </AnimatePresence>
+ <ModelSelection keys={keys} />
  </div>
  );
 }

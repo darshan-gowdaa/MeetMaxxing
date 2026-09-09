@@ -43,7 +43,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-bg text-text font-sans flex flex-col">
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
         
         <DashboardHero 
           loading={loading} 
@@ -107,10 +107,11 @@ export default function Dashboard() {
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                           <div className="relative flex-1 sm:flex-none sm:w-[160px]">
-                            <select 
+                            <select
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value as "date" | "name" | "duration")}
-                              className="w-full h-10 md:h-12 bg-surface2 border border-border rounded-full pl-5 pr-10 text-[14px] text-text font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 spring-colors cursor-pointer appearance-none hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all"
+                              aria-label="Sort meetings"
+                              className="w-full h-10 md:h-12 bg-surface2 border border-border rounded-full pl-5 pr-10 text-[14px] text-text font-bold focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all"
                             >
                               <option value="date">Sort by Date</option>
                               <option value="name">Sort by Name</option>
@@ -129,20 +130,22 @@ export default function Dashboard() {
                         </div>
 
                         <div className="relative w-full sm:w-auto group/search">
-                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" />
+                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" aria-hidden="true" />
                           <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search meetings…"
-                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 spring-colors transition-all"
+                            aria-label="Search meetings"
+                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors transition-all"
                           />
                           {search && (
                             <button
                               onClick={() => setSearch("")}
+                              aria-label="Clear search"
                               className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-surface-dim hover:bg-surface3 text-text-muted hover:text-text spring-colors"
                             >
-                              <RiCloseLine className="w-4 h-4" />
+                              <RiCloseLine className="w-4 h-4" aria-hidden="true" />
                             </button>
                           )}
                         </div>
@@ -174,7 +177,7 @@ export default function Dashboard() {
             )}
           </div>
         </section>
-      </main>
+      </div>
 
       {deleteTarget && (
         <DeleteDialog

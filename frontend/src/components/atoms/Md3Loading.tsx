@@ -11,6 +11,8 @@ import {
 /**
  * MD3 Expressive Loading Indicator.
  * Shape-morphing and motion to capture attention.
+ * With `prefers-reduced-motion: reduce` it renders a single static frame
+ * (the shape still communicates "loading" without continuous motion).
  */
 export function Md3LoadingIndicator({
   size = "md",
@@ -24,7 +26,7 @@ export function Md3LoadingIndicator({
     md: 48,
     lg: 64,
   };
-  
+
   const pxSize = sizeMap[size];
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -36,10 +38,31 @@ export function Md3LoadingIndicator({
     const animator = new M3Animator();
     let animationFrameId: number;
 
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const drawStatic = () => {
+      const computedColor = getComputedStyle(canvas).color || "#6750A4";
+      try {
+        drawIndicator(ctx, pxSize, getMorphedShape(0), 0, {
+          color: computedColor,
+          sizeRatio: 0.79,
+          contained: false,
+        });
+      } catch {
+        // If a static frame can't be drawn, the empty container still
+        // announces "Loading" via role="status".
+      }
+    };
+
+    if (reduced) {
+      drawStatic();
+      return;
+    }
+
     const render = (timestamp: number) => {
       animator.update(timestamp);
       const shape = getMorphedShape(animator.morph);
-      
+
       const computedColor = getComputedStyle(canvas).color || "#6750A4";
       drawIndicator(ctx, pxSize, shape, animator.rotation, {
         color: computedColor,

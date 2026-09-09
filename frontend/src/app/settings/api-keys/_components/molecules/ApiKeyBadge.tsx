@@ -4,9 +4,9 @@ import { ApiKey } from"../../types";
 export function ApiKeyBadge({ apiKey: key, onCheck, onDelete }: { apiKey: ApiKey, onCheck: (id: string) => void, onDelete: (id: string) => void }) {
  const getStatusColor = () => {
  switch (key.status) {
- case 'valid': return 'bg-success/15 text-success-text border-success/20';
+ case 'valid': return 'bg-success/15 text-success border-success/20';
  case 'invalid': return 'bg-risk/15 text-risk border-risk/20';
- default: return 'bg-warning/15 text-warning-text border-warning/20';
+ default: return 'bg-warning/15 text-warning border-warning/20';
  }
  };
 
@@ -32,11 +32,11 @@ export function ApiKeyBadge({ apiKey: key, onCheck, onDelete }: { apiKey: ApiKey
  <span className="text-[13px] font-mono tracking-widest opacity-80 shrink-0 ml-1">••••{key.last4}</span>
  
  <div className="flex items-center gap-0.5 border-l border-current/20 pl-1.5 ml-1 shrink-0">
- <button onClick={() => onCheck(key.id)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors focus:outline-none"title="Check status">
- <RiRefreshLine className={`w-4 h-4 ${key.status ==="unchecked"?"animate-spin":""}`} />
+ <button onClick={() => onCheck(key.id)} aria-label={`Check status of ${key.label || "API key"} ending ${key.last4}`} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors focus:outline-none"title="Check status">
+ <RiRefreshLine className={`w-4 h-4 ${key.status ==="unchecked"?"animate-spin":""}`} aria-hidden="true"/>
  </button>
- <button onClick={() => onDelete(key.id)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-risk/20 text-risk transition-colors focus:outline-none"title="Delete">
- <RiDeleteBinLine className="w-4 h-4"/>
+ <button onClick={() => onDelete(key.id)} aria-label={`Delete ${key.label || "API key"} ending ${key.last4}`} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-risk/20 text-risk transition-colors focus:outline-none"title="Delete">
+ <RiDeleteBinLine className="w-4 h-4" aria-hidden="true"/>
  </button>
  </div>
  </div>

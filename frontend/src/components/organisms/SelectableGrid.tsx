@@ -82,12 +82,13 @@ export function SelectableGrid<T>({
           {/* Contextual Action Bar */}
           <div className={`col-start-1 row-start-1 flex items-center justify-between transition-all duration-300 bg-surface-highest/95 border border-border rounded-full shadow-sm border border-border px-2 py-1 ${selectionMode ? 'opacity-100 ' : 'opacity-0 pointer-events-none'}`}>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={clearSelection}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-text transition-all active:scale-[0.97]"
+                aria-label="Cancel selection"
                 title="Cancel Selection"
               >
-                <RiCloseLine className="w-5 h-5"/>
+                <RiCloseLine className="w-5 h-5" aria-hidden="true"/>
               </button>
               <span className="text-[15px] font-bold text-text whitespace-nowrap min-w-[80px]">
                 {selectedKeys.size} selected
@@ -128,20 +129,34 @@ export function SelectableGrid<T>({
             return (
               <div key={group.title || "all"} className="flex flex-col gap-4 group-section" data-group={group.title}>
                 {group.title && (
-                  <div className="flex items-center gap-3 group/header cursor-pointer w-fit" onClick={() => toggleGroup(group.items)}>
-                    <div 
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                        allSelected 
-                          ? "bg-primary border-primary text-bg"
-                          : someSelected 
-                          ? "bg-primary/50 border-primary text-bg"
-                          : "border-border/50 text-primary opacity-0 group-hover/header:opacity-100 group-hover/header:border-primary/50"
-                      } ${selectionMode && !allSelected && !someSelected ? "opacity-100" : ""}`}
-                    >
-                      <RiCheckLine className="w-3.5 h-3.5"/>
-                    </div>
-                    <h3 className="text-[13px] font-bold text-text-muted tracking-wider select-none">{group.title}</h3>
-                  </div>
+              <div
+                className="flex items-center gap-3 group/header cursor-pointer w-fit"
+                role="checkbox"
+                aria-checked={allSelected ? true : someSelected ? "mixed" : false}
+                tabIndex={0}
+                aria-label={`Select all ${group.title || "items"}`}
+                onClick={() => toggleGroup(group.items)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleGroup(group.items);
+                  }
+                }}
+              >
+                <div
+                  aria-hidden="true"
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                    allSelected
+                      ? "bg-primary border-primary text-bg"
+                      : someSelected
+                      ? "bg-primary/50 border-primary text-bg"
+                      : "border-border/50 text-primary opacity-0 group-hover/header:opacity-100 group-hover/header:border-primary/50"
+                  } ${selectionMode && !allSelected && !someSelected ? "opacity-100" : ""}`}
+                >
+                  <RiCheckLine className="w-3.5 h-3.5" aria-hidden="true"/>
+                </div>
+                <h3 className="text-[13px] font-bold text-text-muted tracking-wider select-none">{group.title}</h3>
+              </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {group.items.map((item) => {

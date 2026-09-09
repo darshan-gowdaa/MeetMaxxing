@@ -50,8 +50,8 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
  <button onClick={onAdd} className="flex-1 md:flex-none h-10 px-4 rounded-full bg-primary-container text-on-primary-container text-[14px] font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center md:justify-start gap-1.5 shadow-sm">
  <RiAddLine className="w-4 h-4"/> {apiKeys.length > 0 ?"Add":"Connect"}
  </button>
- <button onClick={onHelp} className="w-10 h-10 rounded-full flex items-center justify-center text-text hover:bg-surface3 transition-colors focus:ring-2 focus:ring-primary/20 outline-none"title="Setup docs">
- <RiQuestionLine className="w-5 h-5 text-text-muted"/>
+ <button onClick={onHelp} aria-label={`${provider.name} setup docs`} className="w-10 h-10 rounded-full flex items-center justify-center text-text hover:bg-surface3 transition-colors focus:ring-2 focus:ring-primary/20 outline-none"title="Setup docs">
+ <RiQuestionLine className="w-5 h-5 text-text-muted" aria-hidden="true"/>
  </button>
  </div>
  </div>

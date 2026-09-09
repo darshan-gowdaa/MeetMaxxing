@@ -3,7 +3,7 @@
 import {
   RiFolderOpenFill, RiSearchLine, RiCloseLine,
   RiCheckLine, RiArrowDropDownLine, RiFileLine,
-  RiCheckboxCircleFill, RiErrorWarningFill
+  RiErrorWarningFill
 } from "@remixicon/react";
 
 import DeleteDialog from "@/components/organisms/DeleteDialog";
@@ -37,7 +37,6 @@ export default function ContextManagerPage() {
     uploadBusy,
     viewTarget,
     setViewTarget,
-    toast,
     load,
     handleMultiDelete,
     handleDelete,
@@ -48,7 +47,7 @@ export default function ContextManagerPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text font-sans flex flex-col">
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
         
         <ContextHero 
           loading={loading}
@@ -112,12 +111,13 @@ export default function ContextManagerPage() {
 
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <div className="relative flex-1 sm:flex-none sm:w-[160px]">
-                            <select 
-                              value={sortBy}
-                              onChange={(e) => setSortBy(e.target.value as "date" | "name" | "size")}
-                              className="w-full h-9 bg-surface2 border border-border rounded-full pl-4 pr-8 text-[13px] text-text font-medium focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none"
-                            >
+          <div className="relative flex-1 sm:flex-none sm:w-[160px]">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "date" | "name" | "size")}
+              aria-label="Sort files"
+              className="w-full h-9 bg-surface2 border border-border rounded-full pl-4 pr-8 text-[13px] text-text font-medium focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none"
+            >
                               <option value="date">Sort by Date</option>
                               <option value="name">Sort by Name</option>
                               <option value="size">Sort by Size</option>
@@ -135,20 +135,22 @@ export default function ContextManagerPage() {
                         </div>
 
                         <div className="relative w-full sm:w-auto group/search">
-                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" />
+                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" aria-hidden="true" />
                           <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search files…"
+                            aria-label="Search files"
                             className="h-9 w-full sm:w-56 bg-surface2 border border-border rounded-full pl-9 pr-4 text-[13px] text-text placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors transition-all"
                           />
                           {search && (
                             <button
                               onClick={() => setSearch("")}
+                              aria-label="Clear search"
                               className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-surface-dim hover:bg-surface3 text-text-muted hover:text-text spring-colors"
                             >
-                              <RiCloseLine className="w-3.5 h-3.5" />
+                              <RiCloseLine className="w-3.5 h-3.5" aria-hidden="true" />
                             </button>
                           )}
                         </div>
@@ -181,7 +183,7 @@ export default function ContextManagerPage() {
             )}
           </div>
         </section>
-      </main>
+      </div>
 
       {/* Dialogs */}
       {viewTarget && (
@@ -214,25 +216,11 @@ export default function ContextManagerPage() {
       )}
 
       {showUpload && (
-        <UploadDialog 
+        <UploadDialog
           onUpload={handleUpload}
           onCancel={() => setShowUpload(false)}
           busy={uploadBusy}
         />
-      )}
-
-      {/* Toast notifications */}
-      {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] flex items-center gap-3 px-5 py-3 rounded-full shadow-sm border border-border border text-[13px] font-semibold animate-fade-scale ${
-          toast.type === "success"
-            ? "bg-success-container border-success/30 text-success"
-            : "bg-risk-container border-risk/30 text-risk"
-        }`}>
-          {toast.type === "success"
-            ? <RiCheckboxCircleFill className="w-4 h-4 shrink-0" />
-            : <RiErrorWarningFill className="w-4 h-4 shrink-0" />}
-          {toast.msg}
-        </div>
       )}
     </div>
   );

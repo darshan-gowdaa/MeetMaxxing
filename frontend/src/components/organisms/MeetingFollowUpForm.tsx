@@ -2,21 +2,24 @@
 
 import { useState, useEffect } from"react";
 import { scheduleFollowUp } from"@/lib/api";
+import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
+import { useSnackbar } from"@/components/providers/SnackbarProvider";
 import type { Meeting } from"@/types";
 
 interface MeetingFollowUpFormProps {
- meeting: Meeting;
- onScheduled: () => void;
+	 meeting: Meeting;
+	 onScheduled: () => void;
 }
 
 export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFollowUpFormProps) {
- const result = meeting.scheduling_result;
- const needsUserInput = result?.needs_user_input === true;
- const isScheduled = result?.scheduled === true || result?.status ==="scheduled"|| result?.status ==="success"|| result?.status ==="gcal_url_generated";
- 
- const [dateTime, setDateTime] = useState("");
- const [loading, setLoading] = useState(false);
- const [error, setError] = useState("");
+	 const result = meeting.scheduling_result;
+	 const needsUserInput = result?.needs_user_input === true;
+	 const isScheduled = result?.scheduled === true || result?.status ==="scheduled"|| result?.status ==="success"|| result?.status ==="gcal_url_generated";
+
+	 const [dateTime, setDateTime] = useState("");
+	 const [loading, setLoading] = useState(false);
+	 const [error, setError] = useState("");
+	 const { showMessage } = useSnackbar();
 
  useEffect(() => {
  if (result?.suggested_payload?.start?.dateTime) {
@@ -75,47 +78,50 @@ export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFol
 
     await scheduleFollowUp(meeting.id, payload);
     onScheduled();
+    showMessage("Follow-up scheduled", { variant: "success" });
   } catch (err: unknown) {
- setError((err as Error).message ||"Failed to schedule follow-up.");
- } finally {
- setLoading(false);
- }
- };
+	 setError((err as Error).message ||"Failed to schedule follow-up.");
+	 } finally {
+	 setLoading(false);
+	 }
+	 };
 
- return (
- <div className="bg-surface-container rounded-[32px] p-5 md:p-6 mb-5 border border-outline-variant/30 flex flex-col gap-4 shadow-sm">
- <div className="flex flex-col gap-1">
- <h3 className="text-[18px] font-semibold text-text">Follow-up Needed</h3>
- <p className="text-[14px] text-text-muted">
- Please confirm the date and time to schedule the follow-up meeting.
- </p>
- </div>
+	 return (
+	 <div className="bg-surface-container rounded-[32px] p-5 md:p-6 mb-5 border border-outline-variant/30 flex flex-col gap-4 shadow-sm">
+	 <div className="flex flex-col gap-1">
+	 <h3 className="text-[18px] font-semibold text-text">Follow-up Needed</h3>
+	 <p className="text-[14px] text-text-muted">
+	 Please confirm the date and time to schedule the follow-up meeting.
+	 </p>
+	 </div>
 
- <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
- <div className="flex flex-col gap-1.5 flex-1 w-full">
- <label className="text-[12px] font-medium text-text-muted ml-1">
- Date & Time
- </label>
- <input
- type="datetime-local"
- value={dateTime}
- onChange={(e) => setDateTime(e.target.value)}
- className="w-full h-12 bg-surface2 border border-outline-variant/50 rounded-2xl px-4 text-[14px] text-text focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary spring transition-colors"
- />
- </div>
- 
- <button
- onClick={handleSchedule}
- disabled={loading}
- className="h-12 px-6 bg-primary hover:bg-primary-hover text-on-primary rounded-2xl text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap spring"
- >
- {loading ?"Scheduling...":"Schedule Event"}
- </button>
- </div>
+	 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+	 <div className="flex flex-col gap-1.5 flex-1 w-full">
+	 <label htmlFor="followup-datetime" className="text-[12px] font-medium text-text-muted ml-1">
+	 Date & Time
+	 </label>
+	 <input
+	 id="followup-datetime"
+	 type="datetime-local"
+	 value={dateTime}
+	 onChange={(e) => setDateTime(e.target.value)}
+	 className="w-full h-12 bg-surface2 border border-outline-variant/50 rounded-2xl px-4 text-[14px] text-text focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary spring transition-colors"
+	 />
+	 </div>
 
- {error && (
- <p className="text-[12px] text-risk ml-1 mt-1">{error}</p>
- )}
- </div>
- );
+	 <button
+	 onClick={handleSchedule}
+	 disabled={loading}
+	 className="h-12 px-6 bg-primary hover:bg-primary-container hover:text-on-primary-container text-on-primary rounded-2xl text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap spring flex items-center justify-center gap-2"
+	 >
+	 {loading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
+	 {loading ?"Scheduling…":"Schedule Event"}
+	 </button>
+	 </div>
+
+	 {error && (
+	 <p className="text-[12px] text-risk ml-1 mt-1" role="alert">{error}</p>
+	 )}
+	 </div>
+	 );
 }

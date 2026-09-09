@@ -24,14 +24,14 @@ export const SpotlightCard = ({
     <div
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative overflow-hidden border border-[rgba(168,199,250,0.15)] bg-[rgba(168,199,250,0.04)] transition-colors hover:border-[rgba(168,199,250,0.3)] hover:bg-[rgba(168,199,250,0.08)] ${className}`}
+      className={`relative overflow-hidden border border-border bg-primary-glow transition-colors spring-colors hover:border-border-strong hover:bg-primary-dim ${className}`}
       style={{ borderRadius }}
     >
       {pos && (
         <div
           className="pointer-events-none absolute inset-0 z-0"
           style={{
-            background: `radial-gradient(250px circle at ${pos.x}px ${pos.y}px, rgba(168,199,250,0.15) 0%, transparent 100%)`,
+            background: `radial-gradient(250px circle at ${pos.x}px ${pos.y}px, var(--primary-glow-hover) 0%, transparent 100%)`,
           }}
         />
       )}

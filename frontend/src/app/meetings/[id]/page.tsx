@@ -83,8 +83,9 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               onClick={loadMeeting}
               className="w-10 h-10 rounded-full bg-surface2 hover:bg-surface3 text-text flex items-center justify-center spring"
               title="Refresh"
+              aria-label="Refresh meeting"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

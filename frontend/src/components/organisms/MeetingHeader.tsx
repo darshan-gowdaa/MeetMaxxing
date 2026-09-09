@@ -12,6 +12,7 @@ import {
 } from"@remixicon/react";
 import { ActionButton, GmailIcon, GoogleCalendarIcon, type BtnState } from"@/components/molecules/ActionButtons";
 import { copyToClipboard } from "@/lib/clipboard";
+import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import type { Meeting } from"@/types";
 
 interface MeetingHeaderProps {
@@ -38,6 +39,7 @@ export default function MeetingHeader({
  const participantsList = Array.from(set);
 
  const [linkCopied, setLinkCopied] = useState(false);
+ const { showMessage } = useSnackbar();
 
  const handleExportTxt = () => {
  let content = `Meeting: ${meeting.title || 'Untitled'}\n`;
@@ -73,6 +75,7 @@ export default function MeetingHeader({
  a.click();
  document.body.removeChild(a);
  URL.revokeObjectURL(url);
+ showMessage("Meeting notes exported", { variant: "success" });
  };
 
  return (
@@ -124,7 +127,10 @@ export default function MeetingHeader({
       const ok = await copyToClipboard(window.location.href);
       if (ok) {
         setLinkCopied(true);
+        showMessage("Meeting link copied to clipboard", { variant: "success" });
         setTimeout(() => setLinkCopied(false), 2000);
+      } else {
+        showMessage("Couldn't copy the link", { variant: "error" });
       }
     }}
     id="copy-link-btn"

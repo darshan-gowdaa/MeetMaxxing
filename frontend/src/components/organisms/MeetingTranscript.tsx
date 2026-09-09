@@ -7,9 +7,11 @@ import {
   RiArrowUpSLine as ChevronUp,
   RiFileCopyLine as Copy,
   RiCheckLine as Check,
+  RiErrorWarningFill,
 } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { copyToClipboard } from "@/lib/clipboard";
+import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import type { Meeting } from "@/types";
 
 interface MeetingTranscriptProps {
@@ -48,6 +50,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
   const [copied, setCopied] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [refineError, setRefineError] = useState("");
+  const { showMessage } = useSnackbar();
 
   const rawChunks = (transcriptData || []).filter(
     (chunk) => (chunk as Record<string, unknown>).source !== "refined"
@@ -109,7 +112,10 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
     const ok = await copyToClipboard(text);
     if (ok) {
       setCopied(true);
+      showMessage("Transcript copied to clipboard", { variant: "success" });
       setTimeout(() => setCopied(false), 2000);
+    } else {
+      showMessage("Couldn't copy the transcript", { variant: "error" });
     }
   };
 
@@ -157,22 +163,26 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             })}
           </div>
 
-          <div
+          <button
+            type="button"
             className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
             onClick={handleCopy}
-            title="Copy Transcript"
+            aria-label="Copy transcript"
           >
-            {copied ? <Check className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
-          </div>
-          <div 
+            {copied ? <Check className="w-5 h-5 text-success" aria-hidden="true" /> : <Copy className="w-5 h-5" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
             className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
             onClick={() => setTranscriptOpen((o) => !o)}
+            aria-label={transcriptOpen ? "Collapse transcript" : "Expand transcript"}
+            aria-expanded={transcriptOpen}
           >
             {transcriptOpen
-              ? <ChevronUp className="w-5 h-5 text-text transition-colors" />
-              : <ChevronDown className="w-5 h-5 text-text transition-colors" />
+              ? <ChevronUp className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
+              : <ChevronDown className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
             }
-          </div>
+          </button>
         </div>
       </div>
 
@@ -182,14 +192,14 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
           {refineError && (
             <div className="bg-risk-container/40 border border-risk/30 rounded-xl p-3 flex flex-col gap-1.5 mb-2">
               <div className="flex items-center gap-2 text-risk font-semibold text-[13px]">
-                <i className="ri-error-warning-fill"></i> Refinement Failed
+                <RiErrorWarningFill className="w-4 h-4" aria-hidden="true" /> Refinement Failed
               </div>
               <p className="text-[12px] text-risk/80">{refineError}</p>
             </div>
           )}
 
           {isRefining && sourceFilter === "refined" ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4 animate-fade-in w-full">
+            <div className="flex flex-col items-center justify-center py-16 gap-4 animate-fade-scale w-full">
               <Md3LoadingIndicator size="lg" className="text-primary" />
               <LoadingPhrases />
               <p className="text-[12px] text-text-variant italic max-w-sm text-center">

@@ -65,6 +65,17 @@
 
   --grad-primary:              #0b57d029;
   --grad-tertiary:             #7252a31f;
+
+  /* ── M3 Expressive motion tokens (spring approximations) ───────────────
+     Spatial springs overshoot (position/size) · Effects springs do not
+     (color/opacity). See .gemini_rules/material3-expressive-meet-extension.md */
+  --m3e-spatial-fast:     0.35s cubic-bezier(0.42, 1.67, 0.21, 0.90);
+  --m3e-spatial-default:  0.50s cubic-bezier(0.38, 1.21, 0.22, 1.00);
+  --m3e-spatial-slow:     0.65s cubic-bezier(0.39, 1.29, 0.35, 0.98);
+
+  --m3e-effects-fast:     0.15s cubic-bezier(0.31, 0.94, 0.34, 1.00);
+  --m3e-effects-default:  0.20s cubic-bezier(0.34, 0.80, 0.34, 1.00);
+  --m3e-effects-slow:     0.30s cubic-bezier(0.34, 0.88, 0.34, 1.00);
 }
 
 .dark {
@@ -387,4 +398,114 @@ md-circular-progress {
 md-linear-progress {
   --md-linear-progress-active-indicator-color: var(--primary);
   --md-linear-progress-track-color: var(--surface-container-high);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REFINEMENT LAYER · M3 focus, motion tokens, safe areas, reduced motion
+   (kept unlayered on purpose — unlayered rules win over Tailwind's layered
+   utilities, so component-level `focus:outline-none` can't hide keyboard
+   focus anywhere in the app)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── M3 Focus Ring — consistent 2px primary outline w/ offset ─────────────── */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="option"]:focus-visible,
+[role="switch"]:focus-visible,
+[role="checkbox"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Safe-area helper (used by the mobile bottom nav) ─────────────────────── */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Skip to content — first focusable element, hidden until focused ─────── */
+.skip-to-content {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 10000;
+  transform: translate(-50%, calc(-100% - 24px));
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px -12px var(--primary-glow-hover);
+  transition: transform var(--m3e-effects-default);
+}
+.skip-to-content:focus-visible {
+  transform: translate(-50%, 0);
+}
+
+/* ── Page enter (template.tsx) — subtle spatial appear per navigation ─────── */
+@keyframes md3-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-page-enter {
+  animation: md3-page-enter 0.3s var(--m3e-spatial-default) both;
+}
+
+/* ── Snackbar exit (SnackbarProvider) — quick effects fade, no framer-motion ─ */
+@keyframes md3-snackbar-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(8px); }
+}
+.snackbar-exit {
+  animation: md3-snackbar-exit var(--m3e-effects-fast) both;
+}
+
+/* ── Slim scroll container (opt-in; matches the global scrollbar styling) ─── */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--text-variant); }
+
+/* ── Reduced motion — flatten spatial/transform motion globally ──────────────
+   Color/opacity (effects) motion is kept: it is not vestibular-triggering.
+   Per design bible: swap spatial springs to instant, stop looping
+   transform animations, disable smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --m3e-spatial-fast:     0.01ms linear;
+    --m3e-spatial-default:  0.01ms linear;
+    --m3e-spatial-slow:     0.01ms linear;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* Appear/enter animations jump to their final frame */
+  .animate-slide-up,
+  .animate-fade-scale,
+  .animate-page-enter,
+  .animate-spin-once,
+  .animate-bounce,
+  .animate-ping,
+  .animate-spin,
+  .snackbar-exit {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+
+  /* Looping transform/paint animations stop */
+  .md3-circular-circle,
+  .md3-skeleton,
+  .md3-float {
+    animation: none;
+  }
 }

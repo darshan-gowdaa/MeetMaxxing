@@ -4,6 +4,7 @@ import"./globals.css";
 import Topbar from"@/components/molecules/Topbar";
 import { AuthProvider } from"@/lib/auth-context";
 import { ThemeProvider } from"@/components/theme-provider";
+import { SnackbarProvider } from"@/components/providers/SnackbarProvider";
 
 export const metadata: Metadata = {
  title:"MeetMaxxing — AI Meeting Copilot",
@@ -33,10 +34,13 @@ export default function RootLayout({
  <body className="min-h-full flex flex-col bg-bg text-text">
  <ThemeProvider attribute="class"defaultTheme="system"enableSystem disableTransitionOnChange>
  <AuthProvider>
+ <SnackbarProvider>
+ <a href="#main-content"className="skip-to-content">Skip to content</a>
  <Topbar />
- <main className="flex-1 pb-16 md:pb-0 flex flex-col w-full h-full">
+ <main id="main-content"tabIndex={-1}className="flex-1 pb-16 md:pb-0 flex flex-col w-full h-full focus:outline-none">
  {children}
  </main>
+ </SnackbarProvider>
  </AuthProvider>
  </ThemeProvider>
  </body>

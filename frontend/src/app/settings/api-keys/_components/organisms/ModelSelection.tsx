@@ -1,11 +1,15 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { RiInformationLine, RiArrowDownSLine, RiFlashlightLine, RiSparklingLine, RiRobot2Line } from "@remixicon/react";
 import { ApiKey } from "../../types";
 import { useAuth } from "@/lib/auth-context";
+import { useSnackbar } from "@/components/providers/SnackbarProvider";
 
-export function ModelSelection({ keys, setSnackbar }: { keys: ApiKey[], setSnackbar: (s: { message: string, action?: () => void } | null) => void }) {
+export function ModelSelection({ keys }: { keys: ApiKey[] }) {
   const { session } = useAuth();
   const token = session?.access_token;
+  const { showMessage } = useSnackbar();
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
   const [mode, setMode] = useState("manual");
@@ -25,7 +29,7 @@ export function ModelSelection({ keys, setSnackbar }: { keys: ApiKey[], setSnack
   const updatePrefs = async (updates: { mode?: string, model_id?: string }) => {
     if (updates.mode) setMode(updates.mode);
     if (updates.model_id !== undefined) setModelId(updates.model_id);
-    
+
     if (!token) return;
     try {
       await fetch(`${API_URL}/api-keys/model-preferences`, {
@@ -33,11 +37,9 @@ export function ModelSelection({ keys, setSnackbar }: { keys: ApiKey[], setSnack
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(updates)
       });
-      setSnackbar({ message: "Preferences saved" });
-      setTimeout(() => setSnackbar(null), 3000);
+      showMessage("Preferences saved", { variant: "success" });
     } catch {
-      setSnackbar({ message: "Failed to save preferences" });
-      setTimeout(() => setSnackbar(null), 3000);
+      showMessage("Failed to save preferences", { variant: "error" });
     }
   };
 
@@ -51,23 +53,23 @@ export function ModelSelection({ keys, setSnackbar }: { keys: ApiKey[], setSnack
  <div className="bg-surface border border-border rounded-[24px] p-5 sm:p-6 shadow-sm flex flex-col gap-6 sm:gap-8">
  <div className="flex flex-col gap-4">
  <h3 className="font-medium text-[15px] text-text">Routing Mode</h3>
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <label className={`relative flex flex-col p-4 border-2 rounded-[16px] cursor-pointer transition-all ${mode === 'manual' ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border/50 bg-surface hover:bg-surface2/50'}`}>
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" role="radiogroup" aria-label="Routing mode">
+ <label className={`relative flex flex-col p-4 border-2 rounded-[16px] cursor-pointer transition-all has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary has-[:focus-visible]:outline-offset-2 ${mode === 'manual' ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border/50 bg-surface hover:bg-surface2/50'}`}>
  <div className="flex items-center justify-between mb-2">
  <span className="font-bold text-[15px] text-text">Use my keys</span>
- <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${mode === 'manual' ? 'border-[5px] border-primary' : 'border-2 border-text-muted'}`}></div>
+ <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${mode === 'manual' ? 'border-[5px] border-primary' : 'border-2 border-text-muted'}`} aria-hidden="true"></div>
  </div>
  <span className="text-sm text-text-muted leading-relaxed">Route requests directly to your connected API providers.</span>
- <input type="radio"name="routing"value="manual"checked={mode === "manual"} onChange={() => updatePrefs({ mode: "manual" })} className="hidden"/>
+ <input type="radio" name="routing" value="manual" checked={mode === "manual"} onChange={() => updatePrefs({ mode: "manual" })} className="sr-only"/>
  </label>
- 
- <label className={`relative flex flex-col p-4 border-2 rounded-[16px] cursor-pointer transition-all ${mode === 'smart' ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border/50 bg-surface hover:bg-surface2/50'}`}>
+
+ <label className={`relative flex flex-col p-4 border-2 rounded-[16px] cursor-pointer transition-all has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary has-[:focus-visible]:outline-offset-2 ${mode === 'smart' ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border/50 bg-surface hover:bg-surface2/50'}`}>
  <div className="flex items-center justify-between mb-2">
  <span className="font-bold text-[15px] text-text">App default</span>
- <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${mode === 'smart' ? 'border-[5px] border-primary' : 'border-2 border-text-muted'}`}></div>
+ <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${mode === 'smart' ? 'border-[5px] border-primary' : 'border-2 border-text-muted'}`} aria-hidden="true"></div>
  </div>
  <span className="text-sm text-text-muted leading-relaxed">Use the standard models provided by MeetMaxxing.</span>
- <input type="radio"name="routing"value="smart"checked={mode === "smart"} onChange={() => updatePrefs({ mode: "smart" })} className="hidden"/>
+ <input type="radio" name="routing" value="smart" checked={mode === "smart"} onChange={() => updatePrefs({ mode: "smart" })} className="sr-only"/>
  </label>
  </div>
  </div>
@@ -83,7 +85,7 @@ export function ModelSelection({ keys, setSnackbar }: { keys: ApiKey[], setSnack
  </div>
  ) : (
  <div className="relative max-w-md">
- <select value={modelId} disabled={mode === "smart"} onChange={(e) => updatePrefs({ model_id: e.target.value })} className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+ <select aria-label="Preferred model" value={modelId} disabled={mode === "smart"} onChange={(e) => updatePrefs({ model_id: e.target.value })} className="appearance-none w-full bg-surface border-2 border-border rounded-[12px] px-4 pt-6 pb-2 text-[15px] font-medium text-text focus:outline-none focus:border-primary transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
  <option value=""disabled>{mode === 'smart' ? 'Auto-selected by MeetMaxxing' : 'Choose a model'}</option>
  {keys.some(k => k.provider_id === 'openrouter') && <option value="openrouter/auto">OpenRouter Auto (Auto-select best model)</option>}
  {keys.some(k => k.provider_id === 'anthropic') && <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (Higher quality, more tokens)</option>}

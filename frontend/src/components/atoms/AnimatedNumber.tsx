@@ -7,15 +7,20 @@ export default function AnimatedNumber({ value, formatFn }: { value: number, for
 
  useEffect(() => {
  const end = value;
+ // Reduced motion: skip the count-up, show the final value immediately
+ if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+ setDisplayValue(end);
+ return;
+ }
  if (0 === end) {
  setDisplayValue(0);
  return;
  }
- 
+
  const duration = 1000;
  let startTime: number | null = null;
  let animationFrameId: number;
- 
+
  const animate = (timestamp: number) => {
  if (!startTime) startTime = timestamp;
  const progress = Math.min((timestamp - startTime) / duration, 1);
@@ -27,7 +32,7 @@ export default function AnimatedNumber({ value, formatFn }: { value: number, for
  }
  };
  animationFrameId = requestAnimationFrame(animate);
- 
+
  return () => {
  if (animationFrameId) cancelAnimationFrame(animationFrameId);
  };

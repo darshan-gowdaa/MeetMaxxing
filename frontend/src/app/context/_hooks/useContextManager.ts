@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getAuthToken } from '@/lib/api';
+import { useSnackbar } from '@/components/providers/SnackbarProvider';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
@@ -29,12 +30,7 @@ export function useContextManager() {
   const [uploadBusy, setUploadBusy] = useState(false);
 
   const [viewTarget, setViewTarget] = useState<ContextFile | null>(null);
-  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
-
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
+  const { showMessage } = useSnackbar();
 
   const load = async () => {
     setLoading(true);
@@ -107,12 +103,12 @@ export function useContextManager() {
       setFiles(prev => prev.filter(f => !toDelete.has(`${f.meeting_id}-${f.filename}`)));
 
       if (failedCount > 0) {
-        showToast(`${failedCount} file(s) could not be deleted`, "error");
+        showMessage(`${failedCount} file(s) could not be deleted`, { variant: "error" });
       } else {
-        showToast(`Deleted ${successfulFiles.length} file(s)`);
+        showMessage(`Deleted ${successfulFiles.length} file(s)`, { variant: "success" });
       }
     } catch (e) {
-      showToast("Delete failed", "error");
+      showMessage("Delete failed", { variant: "error" });
       console.error(e);
     }
   };
@@ -132,12 +128,12 @@ export function useContextManager() {
       });
       if (res.ok) {
         setFiles(prev => prev.filter(f => !(f.meeting_id === deleteTarget.meeting_id && f.filename === deleteTarget.filename)));
-        showToast(`Deleted "${deleteTarget.filename}"`);
+        showMessage(`Deleted "${deleteTarget.filename}"`, { variant: "success" });
       } else {
-        showToast("Failed to delete file", "error");
+        showMessage("Failed to delete file", { variant: "error" });
       }
     } catch (e) {
-      showToast("Delete failed", "error");
+      showMessage("Delete failed", { variant: "error" });
       console.error(e);
     } finally {
       setDeleteBusy(false);
@@ -173,17 +169,17 @@ export function useContextManager() {
       if (res.ok) {
         await load();
         setEditTarget(null);
-        showToast(`Renamed to "${finalName}"`);
+        showMessage(`Renamed to "${finalName}"`, { variant: "success" });
       } else {
         const errData = await res.json().catch(() => ({}));
         const msg = errData?.detail || `Rename failed (${res.status})`;
         setEditError(msg);
-        showToast(msg, "error");
+        showMessage(msg, { variant: "error" });
       }
     } catch (e) {
       const msg = "Network error during rename";
       setEditError(msg);
-      showToast(msg, "error");
+      showMessage(msg, { variant: "error" });
       console.error(e);
     } finally {
       setEditBusy(false);
@@ -209,13 +205,13 @@ export function useContextManager() {
       const failed = results.filter(r => !r.ok);
       await load();
       if (failed.length > 0) {
-        showToast(`${failed.length} file(s) failed to upload`, "error");
+        showMessage(`${failed.length} file(s) failed to upload`, { variant: "error" });
       } else {
-        showToast(`${uploadFiles.length} file(s) uploaded successfully`);
+        showMessage(`${uploadFiles.length} file(s) uploaded successfully`, { variant: "success" });
         setShowUpload(false);
       }
     } catch (e) {
-      showToast("Upload failed", "error");
+      showMessage("Upload failed", { variant: "error" });
       console.error(e);
     } finally {
       setUploadBusy(false);
@@ -245,7 +241,6 @@ export function useContextManager() {
     uploadBusy,
     viewTarget,
     setViewTarget,
-    toast,
     load,
     handleMultiDelete,
     handleDelete,

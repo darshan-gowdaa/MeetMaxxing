@@ -4,69 +4,85 @@ import { useEffect, useState, useRef } from"react";
 import { createPortal } from"react-dom";
 import { RiEditLine, RiCheckLine } from"@remixicon/react";
 import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
+import { useDialogA11y } from"@/hooks/useDialogA11y";
 
 export default function EditDialog({
- initialTitle,
- itemName ="Meeting",
- onSave,
- onCancel,
- busy,
- error,
+	 initialTitle,
+	 itemName ="Meeting",
+	 onSave,
+	 onCancel,
+	 busy,
+	 error,
 }: {
- initialTitle: string;
- itemName?: string;
- onSave: (title: string) => void;
- onCancel: () => void;
- busy: boolean;
- error?: string;
+	 initialTitle: string;
+	 itemName?: string;
+	 onSave: (title: string) => void;
+	 onCancel: () => void;
+	 busy: boolean;
+	 error?: string;
 }) {
- const [title, setTitle] = useState(initialTitle ||"");
- const inputRef = useRef<HTMLInputElement>(null);
+	 const [title, setTitle] = useState(initialTitle ||"");
+	 const inputRef = useRef<HTMLInputElement>(null);
 
- const [mounted, setMounted] = useState(false);
+	 const [mounted, setMounted] = useState(false);
 
- useEffect(() => {
- // eslint-disable-next-line
- setMounted(true);
- document.body.style.overflow ="hidden";
- return () => { document.body.style.overflow ="unset"; };
- }, []);
+	 useEffect(() => {
+	 // eslint-disable-next-line
+	 setMounted(true);
+	 document.body.style.overflow ="hidden";
+	 return () => { document.body.style.overflow ="unset"; };
+	 }, []);
 
- // Focus input after portal renders (can't focus before mounted)
- useEffect(() => {
- if (mounted) {
- const id = setTimeout(() => inputRef.current?.focus(), 0);
- return () => clearTimeout(id);
- }
- }, [mounted]);
+	 // Focus input after portal renders (can't focus before mounted)
+	 useEffect(() => {
+	 if (mounted) {
+	 const id = setTimeout(() => inputRef.current?.focus(), 0);
+	 return () => clearTimeout(id);
+	 }
+	 }, [mounted]);
 
- if (!mounted) return null;
+	 // autoFocus=false — the dialog manages its own initial focus (title input)
+	 const panelRef = useDialogA11y<HTMLDivElement>({ onClose: onCancel, enabled: mounted, autoFocus: false });
+	 const titleId ="edit-dialog-title";
+	 const errorId ="edit-dialog-error";
 
- return createPortal(
- <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
- <div className="absolute inset-0 bg-bg/80"onClick={onCancel} />
- <div className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm border border-border">
- <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
- <RiEditLine className="w-6 h-6 text-primary"/>
- </div>
- <h2 className="text-[18px] font-bold text-text text-center tracking-tight mb-4">
- Rename {itemName}
- </h2>
- <input
- ref={inputRef}
- type="text"
- value={title}
- onChange={(e) => setTitle(e.target.value)}
- onKeyDown={(e) => { if (e.key ==="Enter"&& title.trim()) { e.preventDefault(); onSave(title.trim()); } }}
- className={`w-full h-12 bg-surface2 border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none spring-colors mb-1 ${
- error ?"border-risk focus:border-risk":"border-border focus:border-primary"
- }`}
- placeholder={`${itemName} title…`}
- maxLength={120}
- />
- {error && (
- <p className="text-[11.5px] text-risk font-medium px-1 mb-3">{error}</p>
- )}
+	 if (!mounted) return null;
+
+	 return createPortal(
+	 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+	 <div className="absolute inset-0 bg-bg/80"onClick={onCancel} aria-hidden="true" />
+	 <div
+	 ref={panelRef}
+	 role="dialog"
+	 aria-modal="true"
+	 aria-labelledby={titleId}
+	 tabIndex={-1}
+	 className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm focus:outline-none"
+	 >
+	 <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
+	 <RiEditLine className="w-6 h-6 text-primary"/>
+	 </div>
+	 <h2 id={titleId} className="text-[18px] font-bold text-text text-center tracking-tight mb-4">
+	 Rename {itemName}
+	 </h2>
+	 <input
+	 ref={inputRef}
+	 type="text"
+	 value={title}
+	 onChange={(e) => setTitle(e.target.value)}
+	 onKeyDown={(e) => { if (e.key ==="Enter"&& title.trim()) { e.preventDefault(); onSave(title.trim()); } }}
+	 aria-label={`${itemName} title`}
+	 aria-invalid={!!error}
+	 aria-describedby={error ? errorId : undefined}
+	 className={`w-full h-12 bg-surface2 border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none spring-colors mb-1 ${
+	 error ?"border-risk focus:border-risk":"border-border focus:border-primary"
+	 }`}
+	 placeholder={`${itemName} title…`}
+	 maxLength={120}
+	 />
+	 {error && (
+	 <p id={errorId} className="text-[11.5px] text-risk font-medium px-1 mb-3">{error}</p>
+	 )}
  {!error && <div className="mb-3"/>}
  <div className="flex gap-3">
  <button

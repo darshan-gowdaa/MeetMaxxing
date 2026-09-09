@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { RiMailLine, RiLockPasswordLine, RiSparkling2Fill, RiUserLine } from "@remixicon/react";
+import { RiMailLine, RiLockPasswordLine, RiSparkling2Fill, RiUserLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { PasswordStrength, isValidPassword } from "@/components/molecules/PasswordStrength";
 
 type Mode = "signin" | "signup" | "forgot";
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -85,7 +87,6 @@ export default function LoginPage() {
         <p className="text-xl text-text-muted max-w-md">
           Join MeetMaxxing to instantly summarize, transcribe, and remember everything from your calls.
         </p>
-        <div className="mt-16 md3-loading-indicator md3-loading-indicator-lg"></div>
       </div>
 
       {/* Auth Section */}
@@ -118,29 +119,41 @@ export default function LoginPage() {
           <form onSubmit={handleEmailAuth} className="flex flex-col">
             <div className="flex flex-col gap-4">
               <div className="relative h-14 shrink-0">
-                <RiMailLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" />
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
+                <RiMailLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" aria-hidden="true" />
+                <label htmlFor="auth-email" className="sr-only">Email address</label>
+                <input id="auth-email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" aria-describedby={error ? "auth-status" : undefined} aria-invalid={!!error} className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
               </div>
 
               <div className={`relative overflow-hidden transition-all duration-300 ease-in-out shrink-0 ${mode === 'signup' ? 'h-14 opacity-100' : 'h-0 opacity-0 -mt-4'}`}>
-                <RiUserLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" />
-                <input type="text" required={mode === "signup"} value={name} onChange={(e) => setName(e.target.value)} placeholder="Display name" className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
+                <RiUserLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" aria-hidden="true" />
+                <label htmlFor="auth-name" className="sr-only">Display name</label>
+                <input id="auth-name" type="text" required={mode === "signup"} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Display name" aria-invalid={!!error} aria-describedby={error ? "auth-status" : undefined} className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
               </div>
 
               <div className={`relative overflow-hidden transition-all duration-300 ease-in-out shrink-0 ${mode !== 'forgot' ? 'h-14 opacity-100' : 'h-0 opacity-0 -mt-4'}`}>
-                <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" />
-                <input type="password" required={mode !== "forgot"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-4 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
+                <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-variant" aria-hidden="true" />
+                <label htmlFor="auth-password" className="sr-only">Password</label>
+                <input id="auth-password" type={showPassword ? "text" : "password"} required={mode !== "forgot"} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" aria-invalid={!!error} aria-describedby={error ? "auth-status" : undefined} className="w-full h-full bg-surface border border-border rounded-[16px] pl-12 pr-12 text-text placeholder:text-text-variant focus:outline-none focus:border-primary focus:bg-surface-container-high transition-colors spring-sm" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(s => !s)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text spring-colors"
+                >
+                  {showPassword ? <RiEyeOffLine className="w-5 h-5" aria-hidden="true" /> : <RiEyeLine className="w-5 h-5" aria-hidden="true" />}
+                </button>
               </div>
               <PasswordStrength password={password} visible={mode === 'signup' && password.length > 0} />
             </div>
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out w-full flex items-center justify-center shrink-0 ${error || success ? 'h-14 mt-4 opacity-100' : 'h-0 mt-0 opacity-0'}`}>
-              {error && <div className="w-full h-full flex items-center justify-center text-on-risk bg-risk-container text-sm text-center px-4 rounded-[16px] font-medium">{error}</div>}
-              {success && <div className="w-full h-full flex items-center justify-center text-on-success-container bg-success-container text-sm text-center px-4 rounded-[16px] font-medium">{success}</div>}
+              {error && <div id="auth-status" role="alert" className="w-full h-full flex items-center justify-center text-on-risk bg-risk-container text-sm text-center px-4 rounded-[16px] font-medium">{error}</div>}
+              {success && <div id="auth-status" role="status" className="w-full h-full flex items-center justify-center text-on-success-container bg-success-container text-sm text-center px-4 rounded-[16px] font-medium">{success}</div>}
             </div>
 
-            <button type="submit" disabled={loading} className="w-full h-14 shrink-0 bg-primary text-on-primary font-bold rounded-full hover:bg-primary-container hover:text-on-primary-container active:opacity-80 transition-colors disabled:opacity-50 mt-6 spring">
-              {loading ? "Please wait..." : (mode === "signin" ? "Sign in" : mode === "signup" ? "Sign up" : "Send reset link")}
+            <button type="submit" disabled={loading} className="w-full h-14 shrink-0 bg-primary text-on-primary font-bold rounded-full hover:bg-primary-container hover:text-on-primary-container active:opacity-80 transition-colors disabled:opacity-50 mt-6 spring flex items-center justify-center gap-2">
+              {loading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
+              {loading ? (mode === "signin" ? "Signing in…" : mode === "signup" ? "Creating account…" : "Sending…") : (mode === "signin" ? "Sign in" : mode === "signup" ? "Sign up" : "Send reset link")}
             </button>
           </form>
 
