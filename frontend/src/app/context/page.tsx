@@ -159,7 +159,7 @@ export default function ContextManagerPage() {
                   )}
                   renderItem={(f, selected, selectionMode, onToggle) => (
                     <div 
-                      className={`transition-transform duration-300 ${selected ? "opacity-80" : "opacity-100"}`}
+                      className={`transition-transform duration-300 ${selected ? "opacity-80" : "opacity-100"} ${selectionMode ? "cursor-pointer" : ""}`}
                       onClick={(e) => {
                         if (selectionMode) {
                           e.preventDefault();

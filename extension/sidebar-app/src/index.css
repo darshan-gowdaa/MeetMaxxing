@@ -251,3 +251,98 @@ main::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 .recap-markdown code { background: var(--surface-container-high); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 11px; color: var(--tertiary); }
 .recap-markdown blockquote { border-left: 2px solid var(--tertiary); padding-left: 10px; color: var(--text-muted); margin: 4px 0; }
 .recap-markdown hr { border-color: var(--border); margin: 8px 0; }
+
+/* We need pointer cursor for buttons because tailwind reset makes them look like normal text cursor */
+button:not(:disabled):not([aria-disabled="true"]):not([disabled]),
+[role="button"]:not(:disabled):not([aria-disabled="true"]):not([disabled]),
+[type="button"]:not(:disabled):not([aria-disabled="true"]):not([disabled]),
+[type="reset"]:not(:disabled):not([aria-disabled="true"]):not([disabled]),
+[type="submit"]:not(:disabled):not([aria-disabled="true"]):not([disabled]),
+summary,
+a[href],
+select:not(:disabled):not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]),
+[role="link"]:not([aria-disabled="true"]),
+[role="switch"]:not([aria-disabled="true"]),
+[role="checkbox"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([aria-disabled="true"]),
+[role="option"]:not([aria-disabled="true"]),
+[role="radio"]:not([aria-disabled="true"]),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+label[for],
+label:has(input[type="checkbox"]:not(:disabled)),
+label:has(input[type="radio"]:not(:disabled)),
+label:has(input[type="file"]:not(:disabled)) {
+  cursor: pointer;
+}
+
+/* Disabled elements should show the not-allowed red circle cursor so users know they cannot click it */
+button:disabled,
+button[aria-disabled="true"],
+button[disabled],
+[role="button"][aria-disabled="true"],
+[role="button"]:disabled,
+[role="button"][disabled],
+[type="button"]:disabled,
+[type="reset"]:disabled,
+[type="submit"]:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[role="tab"][aria-disabled="true"],
+[role="link"][aria-disabled="true"],
+[role="switch"][aria-disabled="true"],
+[role="checkbox"][aria-disabled="true"],
+[role="menuitem"][aria-disabled="true"],
+[role="option"][aria-disabled="true"],
+[role="radio"][aria-disabled="true"],
+[aria-disabled="true"],
+[disabled] {
+  cursor: not-allowed !important;
+}
+
+/* Also make sure icons and text inside disabled buttons get not-allowed cursor */
+button:disabled *:not(.cursor-wait):not(.cursor-progress),
+button[aria-disabled="true"] *:not(.cursor-wait):not(.cursor-progress),
+button[disabled] *:not(.cursor-wait):not(.cursor-progress),
+[role="button"][aria-disabled="true"] *:not(.cursor-wait):not(.cursor-progress),
+[type="button"]:disabled *:not(.cursor-wait):not(.cursor-progress),
+[type="submit"]:disabled *:not(.cursor-wait):not(.cursor-progress),
+[aria-disabled="true"] *:not(.cursor-wait):not(.cursor-progress),
+[disabled] *:not(.cursor-wait):not(.cursor-progress) {
+  cursor: not-allowed !important;
+}
+
+/* Keep pointer events on so the browser still shows the not-allowed cursor when hovering */
+button:disabled,
+button[aria-disabled="true"],
+button[disabled],
+[role="button"][aria-disabled="true"],
+[type="button"]:disabled,
+[type="submit"]:disabled {
+  pointer-events: auto !important;
+}
+
+/* Add dim opacity if the button doesn't already have an opacity class */
+button:disabled:not([class*="opacity-"]),
+button[aria-disabled="true"]:not([class*="opacity-"]),
+[role="button"][aria-disabled="true"]:not([class*="opacity-"]) {
+  opacity: 0.55;
+}
+
+/* Utility overrides for loading wait and pointer helpers */
+.cursor-wait,
+[aria-busy="true"],
+.cursor-wait * {
+  cursor: wait !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}
+

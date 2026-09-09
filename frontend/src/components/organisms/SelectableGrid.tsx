@@ -105,7 +105,7 @@ export function SelectableGrid<T>({
               <button
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={selectedKeys.size === 0}
-                className="px-4 h-10 flex items-center justify-center gap-2 rounded-full bg-risk text-bg text-[13px] font-bold transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none disabled:transform-none"
+                className="px-4 h-10 flex items-center justify-center gap-2 rounded-full bg-risk text-bg text-[13px] font-bold transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <RiDeleteBinLine className="w-4 h-4"/>
                 Delete

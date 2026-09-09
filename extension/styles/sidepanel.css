@@ -4,6 +4,19 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Ensure all buttons and interactive elements have pointer cursors */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, a[href] {
+  cursor: pointer;
+}
+
+button:disabled, button[aria-disabled="true"], [role="button"][aria-disabled="true"], input:disabled {
+  cursor: not-allowed !important;
+}
+
+button:disabled *, button[aria-disabled="true"] * {
+  cursor: not-allowed !important;
+}
+
 :root {
   --bg:             #141518;
   --surface:        #27292c;

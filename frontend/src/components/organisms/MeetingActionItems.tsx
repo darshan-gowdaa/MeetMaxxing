@@ -207,11 +207,11 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
 
  {/* Priority badge — click to cycle if onPriorityChange provided */}
  <span
- onClick={onPriorityChange ? (e) => handlePriorityClick(e, item) : undefined}
+ onClick={!isCycling && onPriorityChange ? (e) => handlePriorityClick(e, item) : undefined}
  title={onPriorityChange ?"Click to change priority": pStyle.label}
  className={`flex items-center gap-1.5 text-[10px] font-bold border rounded-full px-2.5 py-1 tracking-wide shrink-0 select-none ${pStyle.chip} ${
  onPriorityChange ?"cursor-pointer hover:brightness-110 active:opacity-80 spring":""
- } ${isCycling ?"opacity-60 pointer-events-none":""}`}
+ } ${isCycling ?"opacity-60 cursor-wait":""}`}
  >
  {pStyle.icon}
  {pStyle.label}

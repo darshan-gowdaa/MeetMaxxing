@@ -154,7 +154,7 @@ export default function Dashboard() {
                   )}
                   renderItem={(meeting, selected, selectionMode, onToggle) => (
                     <div 
-                      className={`transition-transform duration-300 ${selected ? "opacity-80" : "opacity-100"}`}
+                      className={`transition-transform duration-300 ${selected ? "opacity-80" : "opacity-100"} ${selectionMode ? "cursor-pointer" : ""}`}
                       onClick={(e) => {
                         if (selectionMode) {
                           e.preventDefault();
