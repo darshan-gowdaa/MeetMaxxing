@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchMeeting, updateActionItem, getAuthToken, isColdStartError } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import {
+  fetchMeeting,
+  updateActionItem,
+  updateMeeting,
+  deleteMeeting,
+  getAuthToken,
+  isColdStartError,
+} from '@/lib/api';
 import type { Meeting } from '@/types';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -207,6 +215,20 @@ export function useMeetingManager(id: string) {
     }
   };
 
+  const router = useRouter();
+
+  const handleRename = async (newTitle: string) => {
+    if (!meeting) return;
+    await updateMeeting(id, { title: newTitle });
+    setMeeting((prev) => (prev ? { ...prev, title: newTitle } : null));
+  };
+
+  const handleDelete = async () => {
+    if (!meeting) return;
+    await deleteMeeting(id);
+    router.push("/");
+  };
+
   return {
     meeting,
     loading,
@@ -220,6 +242,8 @@ export function useMeetingManager(id: string) {
     changePriority,
     handleGmail,
     handleCalendar,
-    refineTranscript
+    refineTranscript,
+    handleRename,
+    handleDelete,
   };
 }

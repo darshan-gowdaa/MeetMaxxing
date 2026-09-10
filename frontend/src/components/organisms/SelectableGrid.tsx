@@ -21,6 +21,7 @@ export interface SelectableGridProps<T> {
   renderHeader?: (args: {
     selectionMode: boolean;
     setManualSelectionMode: (val: boolean) => void;
+    activeGroup?: string;
   }) => React.ReactNode;
   onDelete: (selectedItems: T[]) => Promise<void> | void;
   emptyState?: React.ReactNode;
@@ -49,6 +50,7 @@ export function SelectableGrid<T>({
     isDeleting,
     showDeleteDialog,
     setShowDeleteDialog,
+    activeGroup,
     setManualSelectionMode,
     selectionMode,
     groups,
@@ -73,7 +75,7 @@ export function SelectableGrid<T>({
         <div className="relative min-h-[44px] grid items-center">
           {/* Default Header */}
           <div className={`col-start-1 row-start-1 transition-all duration-200 ${selectionMode ? 'opacity-0 pointer-events-none scale-[0.99]' : 'opacity-100 scale-100'}`}>
-            {renderHeader?.({ selectionMode, setManualSelectionMode })}
+            {renderHeader?.({ selectionMode, setManualSelectionMode, activeGroup })}
           </div>
           
           {/* Contextual Action Bar (Floating Pill) */}

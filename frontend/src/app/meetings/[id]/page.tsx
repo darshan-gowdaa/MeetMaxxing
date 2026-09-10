@@ -32,7 +32,9 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     changePriority,
     handleGmail,
     handleCalendar,
-    refineTranscript
+    refineTranscript,
+    handleRename,
+    handleDelete,
   } = useMeetingManager(id);
 
   if (loading) {
@@ -102,7 +104,9 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           gmailState={gmailState} 
           calendarState={calendarState} 
           handleGmail={handleGmail} 
-          handleCalendar={handleCalendar} 
+          handleCalendar={handleCalendar}
+          onRename={handleRename}
+          onDelete={handleDelete}
         />
 
         <MeetingFollowUpForm meeting={meeting} onScheduled={loadMeeting} />

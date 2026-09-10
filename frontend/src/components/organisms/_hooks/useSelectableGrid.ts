@@ -27,6 +27,7 @@ export function useSelectableGrid<T>({
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string>("");
   
   const [manualSelectionMode, setManualSelectionMode] = useState(() => {
     if (typeof sessionStorage !== "undefined" && storeKey) {
@@ -43,6 +44,49 @@ export function useSelectableGrid<T>({
       sessionStorage.setItem(`selection-mode-${storeKey}`, manualSelectionMode.toString());
     }
   }, [selectedKeys, manualSelectionMode, storeKey]);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const sections = document.querySelectorAll<HTMLElement>(".group-section");
+          if (sections.length === 0) {
+            setActiveGroup("");
+            ticking = false;
+            return;
+          }
+
+          const TRIGGER_OFFSET = 160;
+          const firstSection = sections[0];
+          const firstRect = firstSection.getBoundingClientRect();
+          if (firstRect.top > TRIGGER_OFFSET) {
+            setActiveGroup("");
+            ticking = false;
+            return;
+          }
+
+          let current = "";
+          sections.forEach((sec) => {
+            const rect = sec.getBoundingClientRect();
+            if (rect.top <= TRIGGER_OFFSET && rect.bottom > TRIGGER_OFFSET - 40) {
+              const group = sec.getAttribute("data-group");
+              if (group) current = group;
+            }
+          });
+
+          setActiveGroup(current);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [items]);
 
   useEffect(() => {
     const validKeys = new Set(items.map(getKey));
@@ -134,6 +178,7 @@ export function useSelectableGrid<T>({
     isDeleting,
     showDeleteDialog,
     setShowDeleteDialog,
+    activeGroup,
     manualSelectionMode,
     setManualSelectionMode,
     selectionMode,
