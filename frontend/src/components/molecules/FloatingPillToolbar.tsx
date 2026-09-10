@@ -59,7 +59,7 @@ export default function FloatingPillToolbar<T extends string>({
     sortOptions.find((opt) => opt.value === sortBy)?.label || "Sort";
 
   return (
-    <div className="flex items-center bg-surface-container-high/90 backdrop-blur-xl border border-border/70 rounded-full shadow-sm p-1 gap-1 w-full sm:w-auto">
+    <div className="flex items-center bg-surface-container-high/90 backdrop-blur-xl border border-border/70 rounded-full shadow-sm p-1 gap-1 w-full sm:w-auto transition-all focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary">
       {/* Integrated Search Input */}
       <div className="relative flex-1 sm:flex-none flex items-center min-w-0">
         <RiSearchLine
@@ -72,7 +72,7 @@ export default function FloatingPillToolbar<T extends string>({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={searchPlaceholder}
           aria-label={searchPlaceholder}
-          className="w-full sm:w-44 md:w-52 h-8 sm:h-9 bg-transparent border-0 pl-2 pr-7 text-[16px] sm:text-[13px] md:text-[14px] text-text placeholder:text-text-muted focus:outline-none"
+          className="w-full sm:w-44 md:w-52 h-8 sm:h-9 bg-transparent border-0 border-none outline-none ring-0 shadow-none pl-2 pr-7 text-[16px] sm:text-[13px] md:text-[14px] text-text placeholder:text-text-muted focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0"
         />
         {search && (
           <button

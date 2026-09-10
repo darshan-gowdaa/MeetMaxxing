@@ -124,12 +124,12 @@ export default function ContextManagerPage() {
 
                     return (
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 w-full">
-                        <div className="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
-                          <h2 className="text-[17px] sm:text-[19px] font-bold tracking-tight flex items-center gap-2 text-text truncate">
-                            <HeaderIcon className="w-5 h-5 text-primary shrink-0 transition-transform duration-200" />
+                        <div className="inline-flex items-center justify-between sm:justify-start gap-2.5 px-3.5 py-1.5 rounded-full bg-surface-container/70 border border-border/60 shadow-xs min-w-0 w-fit">
+                          <h2 className="text-[14px] sm:text-[16px] font-bold tracking-tight flex items-center gap-2 text-text truncate">
+                            <HeaderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0 transition-transform duration-200" />
                             <span className="truncate transition-opacity duration-200">{title}</span>
                           </h2>
-                          <span className="text-[12px] font-semibold text-text-muted bg-surface-container-high border border-border rounded-full px-2.5 py-0.5 shrink-0">
+                          <span className="text-[11px] sm:text-[12px] font-semibold text-text-muted bg-surface-container-highest border border-border rounded-full px-2.5 py-0.5 shrink-0">
                             {filtered.length}
                           </span>
                         </div>

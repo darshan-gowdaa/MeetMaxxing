@@ -70,8 +70,8 @@ export function SelectableGrid<T>({
 
   return (
     <div className="relative pb-24">
-      {/* Sticky Header with Floating Pill Controls */}
-      <div className="sticky top-16 md:top-[76px] z-30 pt-1 pb-3">
+      {/* Sticky Header with Floating Pill Controls (Backdrop prevents card scroll overlap) */}
+      <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 sm:py-3 bg-bg/95 backdrop-blur-md border-b border-border/40 transition-colors shadow-xs">
         <div className="relative min-h-[44px] grid items-center">
           {/* Default Header */}
           <div className={`col-start-1 row-start-1 transition-all duration-200 ${selectionMode ? 'opacity-0 pointer-events-none scale-[0.99]' : 'opacity-100 scale-100'}`}>
