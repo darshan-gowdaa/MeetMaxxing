@@ -81,23 +81,23 @@ export default function AboutPage() {
               </motion.div>
             </div>
 
-            {/* Right Showcase: Animated Strands WebGL normal natural size, overlapping, fading gently on right end */}
+            {/* Right Showcase: Animated Strands WebGL enlarged and cinematic */}
             <div className="lg:col-span-5 relative flex items-center justify-center lg:justify-end pointer-events-none">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-[280px] sm:w-[420px] lg:w-[540px] xl:w-[620px] max-w-full aspect-square max-h-[calc(100dvh-6rem)] relative lg:-ml-12 xl:-ml-20 z-10"
+                className="w-[340px] sm:w-[500px] md:w-[580px] lg:w-[680px] xl:w-[780px] 2xl:w-[860px] max-w-none aspect-square max-h-[calc(100dvh-4rem)] relative lg:-ml-16 xl:-ml-24 z-10"
               >
                 <Strands
                   colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}
                   count={6}
                   speed={0.35}
-                  amplitude={0.85}
-                  thickness={0.7}
-                  glow={2.6}
-                  intensity={0.65}
-                  scale={1.0}
+                  amplitude={0.95}
+                  thickness={0.8}
+                  glow={2.8}
+                  intensity={0.75}
+                  scale={1.25}
                   glass={false}
                 />
               </motion.div>

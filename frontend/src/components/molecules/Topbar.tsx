@@ -71,27 +71,27 @@ export default function Topbar() {
       <header className="sticky top-0 z-50 w-full bg-surface/95 backdrop-blur-md border-b border-border transition-colors">
         <div className="h-16 px-3 sm:px-4 flex items-center justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
 
-          {/* Left: Stable Anchor for Logo / Back (Zero CLS) */}
-          <div className="min-w-0 md:w-48 h-12 shrink-0 relative flex items-center">
-            <AnimatePresence initial={false}>
+          {/* Left: Fixed Dimension Anchor for Logo / Back (0 CLS) */}
+          <div className="w-[164px] sm:w-48 h-10 shrink-0 relative overflow-visible">
+            <AnimatePresence initial={false} mode="wait">
               {isMeetingDetail ? (
                 <motion.div
                   key="back"
-                  initial={{ opacity: 0, x: -6 }}
+                  initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  transition={{ duration: 0.2, ease: [0.38, 1.21, 0.22, 1] }}
-                  className="flex items-center"
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="absolute inset-y-0 left-0 flex items-center"
                 >
                   <Link
                     href="/"
-                    className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-2.5 -ml-1 rounded-full hover:bg-surface-container-high active:scale-[0.96] transition-all group text-text"
+                    className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 rounded-full hover:bg-surface-container-high active:scale-[0.96] transition-all group text-text"
                     aria-label="Back to Dashboard"
                   >
                     <span className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-highest transition-colors shrink-0">
                       <RiArrowLeftLine className="w-5 h-5 text-text group-hover:-translate-x-0.5 transition-transform" />
                     </span>
-                    <span className="font-bold text-[13px] sm:text-[14px] text-text tracking-tight">
+                    <span className="font-bold text-[13.5px] sm:text-[14px] text-text tracking-tight whitespace-nowrap">
                       Dashboard
                     </span>
                   </Link>
@@ -99,11 +99,11 @@ export default function Topbar() {
               ) : (
                 <motion.div
                   key="logo"
-                  initial={{ opacity: 0, x: -6 }}
+                  initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  transition={{ duration: 0.2, ease: [0.38, 1.21, 0.22, 1] }}
-                  className="flex items-center"
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="absolute inset-y-0 left-0 flex items-center"
                 >
                   <Link
                     href="/"
