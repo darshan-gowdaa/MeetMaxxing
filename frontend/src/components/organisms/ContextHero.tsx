@@ -26,7 +26,7 @@ export default function ContextHero({ loading, filesCount, totalSizeKB, setShowU
       action={
         <button 
           onClick={() => setShowUpload(true)}
-          className="flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-primary-container text-on-primary-container hover:brightness-125 transition-all duration-300 active:opacity-80 border border-primary/20 shadow-sm"
+          className="flex flex-col items-center justify-center w-full sm:w-auto min-w-0 sm:min-w-[6rem] px-4 h-16 sm:h-20 rounded-[20px] bg-primary-container text-on-primary-container hover:brightness-125 transition-all duration-300 active:opacity-80 border border-primary/20 shadow-sm"
         >
           <RiUploadCloud2Line className="w-6 h-6 mb-1"/>
           <span className="text-[12px] font-bold">Upload</span>

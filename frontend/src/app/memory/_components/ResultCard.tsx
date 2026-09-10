@@ -25,12 +25,12 @@ export function ResultCard({
       {/* Answer card */}
       <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden shadow-sm border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border">
           <div className="flex items-center gap-2 text-[13px] font-bold text-text">
             <RiSparklingLine className="w-4 h-4 text-tertiary" />
             AI Synthesized Answer
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {result.powered_by && (
               <span className="flex items-center gap-1 text-[11px] font-semibold text-secondary bg-secondary-container rounded-full px-2.5 py-1">
                 <RiFlashlightLine className="w-3 h-3" />
@@ -102,7 +102,7 @@ export function ResultCard({
                   className="bg-surface2 hover:bg-surface3 rounded-[16px] border border-border hover:border-primary/50 p-4 flex flex-col gap-3 animate-slide-up transition-colors group cursor-pointer"
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-primary-container text-on-primary-container text-[11px] font-bold flex items-center justify-center">
                         {src.speaker_name ? src.speaker_name.charAt(0).toUpperCase() : "?"}

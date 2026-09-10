@@ -71,7 +71,7 @@ export function SelectableGrid<T>({
   return (
     <div className="relative pb-24">
       {/* Sticky Header with Overlay Action Bar */}
-      <div className="sticky top-0 md:top-[76px] z-40 pt-2 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="sticky top-16 md:top-[76px] z-30 pt-2 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="absolute inset-x-0 bottom-4 top-0 sm:top-1 bg-surface2/85 backdrop-blur-xl sm:rounded-[20px] border-b sm:border border-border/40 shadow-sm z-[-1]" />
         <div className="relative min-h-[48px] px-2 sm:px-4 py-2 grid items-center">
           {/* Default Header */}
@@ -80,34 +80,34 @@ export function SelectableGrid<T>({
           </div>
           
           {/* Contextual Action Bar */}
-          <div className={`col-start-1 row-start-1 flex items-center justify-between transition-all duration-300 bg-surface-highest/95 border border-border rounded-full shadow-sm border border-border px-2 py-1 ${selectionMode ? 'opacity-100 ' : 'opacity-0 pointer-events-none'}`}>
-            <div className="flex items-center gap-3">
+          <div className={`col-start-1 row-start-1 flex items-center justify-between gap-1 sm:gap-3 transition-all duration-300 bg-surface-highest/95 border border-border rounded-full shadow-sm px-2 sm:px-3 py-1 ${selectionMode ? 'opacity-100 ' : 'opacity-0 pointer-events-none'}`}>
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
               <button
                 onClick={clearSelection}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-text transition-all active:scale-[0.97]"
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-text transition-all active:scale-[0.97] shrink-0"
                 aria-label="Cancel selection"
                 title="Cancel Selection"
               >
                 <RiCloseLine className="w-5 h-5" aria-hidden="true"/>
               </button>
-              <span className="text-[15px] font-bold text-text whitespace-nowrap min-w-[80px]">
+              <span className="text-[13px] sm:text-[15px] font-bold text-text whitespace-nowrap truncate">
                 {selectedKeys.size} selected
               </span>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={toggleAll}
-                className="px-4 h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-[13px] font-bold text-text transition-all active:scale-[0.97] whitespace-nowrap"
+                className="px-2.5 sm:px-4 h-9 sm:h-10 flex items-center justify-center rounded-full hover:bg-surface-dim text-[12px] sm:text-[13px] font-bold text-text transition-all active:scale-[0.97] whitespace-nowrap"
               >
-                {selectedKeys.size === items.length && items.length > 0 ? "Deselect All" : "Select All"}
+                {selectedKeys.size === items.length && items.length > 0 ? "Deselect" : "Select All"}
               </button>
               <button
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={selectedKeys.size === 0}
-                className="px-4 h-10 flex items-center justify-center gap-2 rounded-full bg-risk text-bg text-[13px] font-bold transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="px-3 sm:px-4 h-9 sm:h-10 flex items-center justify-center gap-1.5 sm:gap-2 rounded-full bg-risk text-bg text-[12px] sm:text-[13px] font-bold transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <RiDeleteBinLine className="w-4 h-4"/>
+                <RiDeleteBinLine className="w-3.5 h-3.5 sm:w-4 sm:h-4"/>
                 Delete
               </button>
             </div>

@@ -104,14 +104,14 @@ export default function Dashboard() {
                         </span>
                       </h2>
 
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                           <div className="relative flex-1 sm:flex-none sm:w-[160px]">
                             <select
                               value={sortBy}
                               onChange={(e) => setSortBy(e.target.value as "date" | "name" | "duration")}
                               aria-label="Sort meetings"
-                              className="w-full h-10 md:h-12 bg-surface2 border border-border rounded-full pl-5 pr-10 text-[14px] text-text font-bold focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all"
+                              className="w-full h-10 md:h-12 bg-surface2 border border-border rounded-full pl-4 sm:pl-5 pr-9 sm:pr-10 text-[16px] sm:text-[14px] text-text font-bold focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all"
                             >
                               <option value="date">Sort by Date</option>
                               <option value="name">Sort by Name</option>
@@ -122,7 +122,7 @@ export default function Dashboard() {
 
                           <button
                             onClick={() => setManualSelectionMode(true)}
-                            className="flex-1 sm:flex-none h-10 md:h-12 px-6 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[14px] font-bold text-text transition-all active:scale-[0.97] hover:-translate-y-0.5 hover:shadow-sm flex items-center justify-center gap-2"
+                            className="flex-1 sm:flex-none h-10 md:h-12 px-4 sm:px-6 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] sm:text-[14px] font-bold text-text transition-all active:scale-[0.97] hover:-translate-y-0.5 hover:shadow-sm flex items-center justify-center gap-2"
                           >
                             <RiCheckLine className="w-4 h-4" />
                             Select
@@ -137,7 +137,7 @@ export default function Dashboard() {
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search meetings…"
                             aria-label="Search meetings"
-                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors transition-all"
+                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[16px] sm:text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors transition-all"
                           />
                           {search && (
                             <button

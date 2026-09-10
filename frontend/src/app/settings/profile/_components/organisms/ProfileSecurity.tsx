@@ -86,7 +86,7 @@ export const ProfileSecurity = () => {
 	 value={password}
 	 autoComplete="new-password"
 	 onChange={(e) => setPassword(e.target.value)}
-	 className="w-full px-4 py-3 pr-12 rounded-xl bg-surface border border-outline-variant text-text focus:outline-none focus:border-primary transition-colors"
+	 className="w-full px-4 py-3 pr-12 rounded-xl bg-surface border border-outline-variant text-text focus:outline-none focus:border-primary text-[16px] sm:text-sm transition-colors"
 	 required
 	 />
 	 <button
@@ -121,7 +121,7 @@ export const ProfileSecurity = () => {
 	 <button
 	 onClick={handleDeleteAccount}
 	 disabled={loading}
-	 className="px-6 py-3 bg-risk text-on-risk rounded-xl text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2"
+	 className="w-full sm:w-auto px-6 py-3 bg-risk text-on-risk rounded-xl text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2"
 	 >
 	 {loading && <Md3LoadingIndicator size="sm" className="text-on-risk" />}
 	 {loading ?"Deleting…":"Delete Account"}

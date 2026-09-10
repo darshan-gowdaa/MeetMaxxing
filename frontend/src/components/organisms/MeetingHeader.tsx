@@ -118,10 +118,10 @@ export default function MeetingHeader({
  </div>
 
  {/* buttons for gmail and cal */}
- <div className="flex flex-col items-start md:items-end gap-3 shrink-0">
+ <div className="flex flex-col items-start md:items-end gap-3 shrink-0 w-full md:w-auto">
  {meeting.summary && (
  <>
- <div className="flex flex-wrap gap-2">
+ <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
  <button
     onClick={async () => {
       const ok = await copyToClipboard(window.location.href);
@@ -134,7 +134,7 @@ export default function MeetingHeader({
       }
     }}
     id="copy-link-btn"
-    className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"
+    className="flex items-center gap-2 px-3.5 sm:px-4 h-10 sm:h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring active:scale-[0.97]"
   >
     {linkCopied ? "Copied!" : (
       <>
@@ -143,13 +143,13 @@ export default function MeetingHeader({
       </>
     )}
   </button>
- <ActionButton label="Send via Gmail"icon={GmailIcon} state={gmailState}
- successLabel="Gmail Opened"onClick={handleGmail} />
- <ActionButton label="Sync Calendar"icon={GoogleCalendarIcon} state={calendarState}
- successLabel="Calendar Synced"errorLabel="Authorize Calendar"onClick={handleCalendar} />
+ <ActionButton label="Send via Gmail" icon={GmailIcon} state={gmailState}
+ successLabel="Gmail Opened" onClick={handleGmail} />
+ <ActionButton label="Sync Calendar" icon={GoogleCalendarIcon} state={calendarState}
+ successLabel="Calendar Synced" errorLabel="Authorize Calendar" onClick={handleCalendar} />
  <button
  onClick={handleExportTxt}
- className="flex items-center gap-2 px-4 h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring"
+ className="flex items-center gap-2 px-3.5 sm:px-4 h-10 sm:h-9 rounded-full bg-surface2 hover:bg-primary-container border border-border hover:border-primary/30 text-[12px] font-medium text-text hover:text-on-primary-container spring active:scale-[0.97]"
  title="Export meeting notes as TXT"
  >
  <Download className="w-3.5 h-3.5"/>

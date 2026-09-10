@@ -56,10 +56,10 @@ export default function Topbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-surface/95 backdrop-blur-md border-b border-border transition-colors">
-      <div className="h-16 px-4 flex items-center justify-between gap-4 max-w-7xl mx-auto">
+      <div className="h-16 px-3 sm:px-4 flex items-center justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
 
         {/* Left: Stable Anchor for Logo / Back (Zero CLS) */}
-        <div className="w-36 sm:w-48 h-12 shrink-0 relative flex items-center">
+        <div className="w-32 sm:w-48 h-12 shrink-0 relative flex items-center">
           <AnimatePresence initial={false}>
             {isMeetingDetail ? (
               <motion.div
@@ -72,13 +72,13 @@ export default function Topbar() {
               >
                 <Link
                   href="/"
-                  className="flex items-center gap-2 h-10 px-2.5 -ml-1 rounded-full hover:bg-surface-container-high active:scale-[0.96] transition-all group text-text"
+                  className="flex items-center gap-1.5 sm:gap-2 h-10 px-2 sm:px-2.5 -ml-1 rounded-full hover:bg-surface-container-high active:scale-[0.96] transition-all group text-text"
                   aria-label="Back to Dashboard"
                 >
-                  <span className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-highest transition-colors">
+                  <span className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-surface-container-highest transition-colors shrink-0">
                     <RiArrowLeftLine className="w-5 h-5 text-text group-hover:-translate-x-0.5 transition-transform" />
                   </span>
-                  <span className="font-bold text-[14px] text-text tracking-tight">
+                  <span className="font-bold text-[13px] sm:text-[14px] text-text tracking-tight">
                     Dashboard
                   </span>
                 </Link>
@@ -94,12 +94,12 @@ export default function Topbar() {
               >
                 <Link
                   href="/"
-                  className="flex items-center gap-2.5 h-10 group active:scale-[0.98] transition-transform"
+                  className="flex items-center gap-2 sm:gap-2.5 h-10 group active:scale-[0.98] transition-transform"
                 >
                   <span className="text-on-primary-container bg-primary-container w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
                     <RiSparkling2Fill className="w-5 h-5" aria-hidden="true" />
                   </span>
-                  <span className="font-bold text-[18px] sm:text-[20px] tracking-tight text-text whitespace-nowrap">
+                  <span className="font-bold text-[17px] sm:text-[20px] tracking-tight text-text whitespace-nowrap">
                     MeetMaxxing
                   </span>
                 </Link>
@@ -109,7 +109,7 @@ export default function Topbar() {
         </div>
 
         {/* Center/Bottom: MD3 Navigation Bar (Tonal active pill, zero underline jumps) */}
-        <nav aria-label="Primary" className="fixed md:static bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:border-t-0 flex md:flex-1 items-center justify-around md:justify-center gap-1 md:gap-2 h-16 md:h-full pb-safe md:pb-0 px-2 md:px-0">
+        <nav aria-label="Primary" className="fixed md:static bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-border md:border-t-0 flex md:flex-1 items-center justify-around md:justify-center gap-1 md:gap-2 min-h-[4rem] md:h-full pb-safe md:pb-0 px-2 md:px-0">
           {NAV_TABS.filter((tab) => user || tab.id === "about").map((tab) => {
             const isActive = tab.match(pathname);
             const label = tab.label();
@@ -120,7 +120,7 @@ export default function Topbar() {
                 key={tab.id}
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
-                className="relative flex flex-col md:flex-row items-center justify-center md:gap-2 h-full md:h-14 md:px-4 rounded-xl md:rounded-full group outline-none w-full md:w-auto active:scale-[0.97] transition-transform"
+                className="relative flex flex-col md:flex-row items-center justify-center md:gap-2 h-full py-1 md:py-0 md:h-14 md:px-4 rounded-xl md:rounded-full group outline-none w-full md:w-auto active:scale-[0.97] transition-transform"
               >
                 <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 z-10 relative">
                   <span
@@ -146,13 +146,13 @@ export default function Topbar() {
         </nav>
 
         {/* Right side: User Profile or Login (Symmetric anchor) */}
-        <div className="flex items-center justify-end gap-3 shrink-0 w-36 sm:w-48">
+        <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 w-32 sm:w-48">
           {user ? (
             <ProfileDropdown user={user} signOut={signOut} />
           ) : (
             <Link
               href="/login"
-              className="h-10 px-5 sm:px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[14px] font-medium spring-colors hover:bg-primary-container hover:text-on-primary-container active:scale-[0.98] transition-all"
+              className="h-9 sm:h-10 px-4 sm:px-6 flex items-center justify-center rounded-full bg-primary text-on-primary text-[13px] sm:text-[14px] font-medium spring-colors hover:bg-primary-container hover:text-on-primary-container active:scale-[0.98] transition-all"
             >
               Sign In
             </Link>
@@ -259,7 +259,7 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
             transition={reduced ? { duration: 0.01 } : { type: "spring", stiffness: 500, damping: 40 }}
             role="menu"
             aria-label="Account"
-            className="absolute top-full right-0 mt-3 w-72 bg-surface-container-highest rounded-[32px] shadow-lg flex flex-col p-2 z-50 origin-top-right border border-border"
+            className="absolute top-full right-0 mt-3 w-72 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[32px] shadow-lg flex flex-col p-2 z-50 origin-top-right border border-border"
           >
             <div className="px-4 py-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex flex-shrink-0 items-center justify-center overflow-hidden font-medium text-xl" aria-hidden="true">

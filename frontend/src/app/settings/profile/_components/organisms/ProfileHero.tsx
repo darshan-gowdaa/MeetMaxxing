@@ -71,19 +71,19 @@ export const ProfileHero = () => {
 
 	 <div className="flex-1 flex flex-col gap-3 w-full">
 	 <label htmlFor="display-name"className="text-[13px] font-bold text-text">Display Name</label>
-	 <div className="flex gap-2">
+	 <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-2">
 	 <input
 	 id="display-name"
 	 type="text"
 	 value={name}
 	 autoComplete="name"
 	 onChange={(e) => setName(e.target.value)}
-	 className="flex-1 bg-surface2 text-text px-4 py-3 rounded-xl border border-border focus:outline-none focus:border-primary text-sm transition-colors"
+	 className="flex-1 bg-surface2 text-text px-4 py-3 rounded-xl border border-border focus:outline-none focus:border-primary text-[16px] sm:text-sm transition-colors"
 	 />
 	 <button
 	 onClick={handleUpdateName}
 	 disabled={loading}
-	 className="px-6 py-3 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80"
+	 className="w-full sm:w-auto px-6 py-3 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center"
 	 >
 	 {loading ?"Saving…":"Save"}
 	 </button>

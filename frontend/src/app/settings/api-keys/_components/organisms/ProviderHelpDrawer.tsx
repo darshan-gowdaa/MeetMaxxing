@@ -20,82 +20,82 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
 
   const panelRef = useDialogA11y<HTMLDivElement>({ onClose, autoFocus: false, enabled: mounted });
   const titleId = "provider-help-title";
- const getInstructions = (id: string) => {
- switch(id) {
- case 'google': return (
- <>
- <li>Go to <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">Google AI Studio</a>.</li>
- <li>Sign in with your Google account.</li>
- <li>Click &quot;Get API Key&quot; on the left navigation bar.</li>
- <li>Click &quot;Create API Key in new project&quot; and copy it.</li>
- </>
- );
- case 'openai': return (
- <>
- <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">OpenAI platform</a>.</li>
- <li>Navigate to Settings &gt; API Keys in the left sidebar.</li>
- <li>Click &quot;Create new secret key&quot;.</li>
- <li>Give it a name and copy the key immediately (you won&apos;t see it again).</li>
- </>
- );
- case 'anthropic': return (
- <>
- <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">Anthropic API Console</a>.</li>
- <li>Navigate to &quot;Settings&quot; &gt; &quot;API Keys&quot;.</li>
- <li>Click &quot;Create Key&quot;.</li>
- <li>Copy your <code className="bg-surface3 px-1 rounded text-xs">sk-ant-...</code> key.</li>
- </>
- );
- case 'openrouter': return (
- <>
- <li>Go to <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">OpenRouter.ai</a> and sign in.</li>
- <li>Click on &quot;Keys&quot; in the top navigation bar.</li>
- <li>Click &quot;Create Key&quot;.</li>
- <li>Name your key, optionally set a credit limit, and copy it.</li>
- </>
- );
- case 'groq': return (
- <>
- <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">GroqCloud Console</a>.</li>
- <li>Navigate to &quot;API Keys&quot; in the left sidebar.</li>
- <li>Click &quot;Create API Key&quot;.</li>
- <li>Copy your <code className="bg-surface3 px-1 rounded text-xs">gsk_...</code> key.</li>
- </>
- );
- case 'mistral': return (
- <>
- <li>Go to <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">La Plateforme Mistral</a>.</li>
- <li>Navigate to &quot;API Keys&quot; under Workspace.</li>
- <li>Click &quot;Create new key&quot;.</li>
- <li>Copy the generated key.</li>
- </>
- );
- case 'deepseek': return (
- <>
- <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">DeepSeek Platform</a>.</li>
- <li>Go to the &quot;API Keys&quot; section.</li>
- <li>Click &quot;Create new API key&quot;.</li>
- <li>Copy your generated key.</li>
- </>
- );
- case 'perplexity': return (
- <>
- <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">Perplexity Settings</a>.</li>
- <li>Scroll down to the API Keys section.</li>
- <li>Click &quot;Generate&quot; to create a new key.</li>
- <li>Copy your key (starts with <code className="bg-surface3 px-1 rounded text-xs">pplx-</code>).</li>
- </>
- );
- default: return (
- <>
- <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">provider&apos;s dashboard</a>.</li>
- <li>Sign in or create an account.</li>
- <li>Navigate to API Keys or Settings.</li>
- <li>Create a new secret key and copy it.</li>
- </>
- );
- }
- };
+  const getInstructions = (id: string) => {
+    switch(id) {
+      case 'google': return (
+        <>
+          <li>Go to <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">Google AI Studio</a>.</li>
+          <li>Sign in with your Google account.</li>
+          <li>Click &quot;Get API Key&quot; on the left navigation bar.</li>
+          <li>Click &quot;Create API Key in new project&quot; and copy it.</li>
+        </>
+      );
+      case 'openai': return (
+        <>
+          <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">OpenAI platform</a>.</li>
+          <li>Navigate to Settings &gt; API Keys in the left sidebar.</li>
+          <li>Click &quot;Create new secret key&quot;.</li>
+          <li>Give it a name and copy the key immediately (you won&apos;t see it again).</li>
+        </>
+      );
+      case 'anthropic': return (
+        <>
+          <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">Anthropic API Console</a>.</li>
+          <li>Navigate to &quot;Settings&quot; &gt; &quot;API Keys&quot;.</li>
+          <li>Click &quot;Create Key&quot;.</li>
+          <li>Copy your <code className="bg-surface3 px-1 rounded text-xs">sk-ant-...</code> key.</li>
+        </>
+      );
+      case 'openrouter': return (
+        <>
+          <li>Go to <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">OpenRouter.ai</a> and sign in.</li>
+          <li>Click on &quot;Keys&quot; in the top navigation bar.</li>
+          <li>Click &quot;Create Key&quot;.</li>
+          <li>Name your key, optionally set a credit limit, and copy it.</li>
+        </>
+      );
+      case 'groq': return (
+        <>
+          <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">GroqCloud Console</a>.</li>
+          <li>Navigate to &quot;API Keys&quot; in the left sidebar.</li>
+          <li>Click &quot;Create API Key&quot;.</li>
+          <li>Copy your <code className="bg-surface3 px-1 rounded text-xs">gsk_...</code> key.</li>
+        </>
+      );
+      case 'mistral': return (
+        <>
+          <li>Go to <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">La Plateforme Mistral</a>.</li>
+          <li>Navigate to &quot;API Keys&quot; under Workspace.</li>
+          <li>Click &quot;Create new key&quot;.</li>
+          <li>Copy the generated key.</li>
+        </>
+      );
+      case 'deepseek': return (
+        <>
+          <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">DeepSeek Platform</a>.</li>
+          <li>Go to the &quot;API Keys&quot; section.</li>
+          <li>Click &quot;Create new API key&quot;.</li>
+          <li>Copy your generated key.</li>
+        </>
+      );
+      case 'perplexity': return (
+        <>
+          <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">Perplexity Settings</a>.</li>
+          <li>Scroll down to the API Keys section.</li>
+          <li>Click &quot;Generate&quot; to create a new key.</li>
+          <li>Copy your key (starts with <code className="bg-surface3 px-1 rounded text-xs">pplx-</code>).</li>
+        </>
+      );
+      default: return (
+        <>
+          <li>Go to the <a href={provider.docs_url} target="_blank"rel="noreferrer"className="text-primary hover:underline">provider&apos;s dashboard</a>.</li>
+          <li>Sign in or create an account.</li>
+          <li>Navigate to API Keys or Settings.</li>
+          <li>Create a new secret key and copy it.</li>
+        </>
+      );
+    }
+  };
 
   if (!mounted) return null;
 
@@ -121,7 +121,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="relative z-10 w-full max-w-sm h-full bg-surface/95 dark:bg-surface-container-high/95 backdrop-blur-xl border-l border-border shadow-2xl p-6 flex flex-col focus:outline-none"
+        className="relative z-10 w-full max-w-[85vw] sm:max-w-sm h-full bg-surface/95 dark:bg-surface-container-high/95 backdrop-blur-xl border-l border-border shadow-2xl p-5 sm:p-6 flex flex-col focus:outline-none ml-auto"
       >
         <div className="flex items-center justify-between mb-6">
           <h3 id={titleId} className="text-lg font-bold flex items-center gap-2">

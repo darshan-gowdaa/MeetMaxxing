@@ -124,21 +124,21 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
   return (
     <div className={`bg-surface-container rounded-[32px] overflow-hidden shadow-sm border border-border transition-all duration-300 ${transcriptOpen ? 'shadow-md shadow-primary/5' : ''}`}>
       <div 
-        className="w-full flex items-center justify-between px-4 md:px-6 py-4 md:py-5 hover:bg-surface-container-high transition-colors cursor-pointer group flex-wrap gap-4"
+        className="w-full flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 md:py-5 hover:bg-surface-container-high transition-colors cursor-pointer group gap-3 sm:gap-4"
         onClick={() => setTranscriptOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-[20px] bg-primary-container border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
-            <MessageSquare className="w-6 h-6 text-on-primary-container" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[18px] sm:rounded-[20px] bg-primary-container border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300 shrink-0">
+            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-on-primary-container" />
           </div>
-          <span className="text-[18px] font-extrabold tracking-tight text-text group-hover:text-primary transition-colors">
+          <span className="text-[16px] sm:text-[18px] font-extrabold tracking-tight text-text group-hover:text-primary transition-colors">
             Full Transcript <span className="text-text-muted font-medium ml-1">({visibleChunks.length} lines)</span>
           </span>
         </div>
-        <div className="flex items-center gap-2 md:gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between sm:justify-end gap-2 md:gap-3 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
             {(["refined", "dom"] as const).map((source) => {
-              const labels = { dom: "Raw Transcript", refined: "AI Refined Transcript" };
+              const labels = { dom: "Raw", refined: "AI Refined" };
               const isActive = sourceFilter === source;
               const isLoading = source === "refined" && isRefining;
               
@@ -154,7 +154,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                       setTranscriptOpen(true);
                     }
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 text-[12px] font-bold rounded-full transition-colors cursor-pointer ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
+                  className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-[11px] sm:text-[12px] font-bold rounded-full transition-colors cursor-pointer ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
                 >
                   {isLoading && <Md3LoadingIndicator size="sm" className="text-current shrink-0" />}
                   <span>{labels[source as keyof typeof labels]}</span>
@@ -163,26 +163,28 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             })}
           </div>
 
-          <button
-            type="button"
-            className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
-            onClick={handleCopy}
-            aria-label="Copy transcript"
-          >
-            {copied ? <Check className="w-5 h-5 text-success" aria-hidden="true" /> : <Copy className="w-5 h-5" aria-hidden="true" />}
-          </button>
-          <button
-            type="button"
-            className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
-            onClick={() => setTranscriptOpen((o) => !o)}
-            aria-label={transcriptOpen ? "Collapse transcript" : "Expand transcript"}
-            aria-expanded={transcriptOpen}
-          >
-            {transcriptOpen
-              ? <ChevronUp className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
-              : <ChevronDown className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
-            }
-          </button>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
+              onClick={handleCopy}
+              aria-label="Copy transcript"
+            >
+              {copied ? <Check className="w-4 h-4 sm:w-5 sm:h-5 text-success" aria-hidden="true" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
+              onClick={() => setTranscriptOpen((o) => !o)}
+              aria-label={transcriptOpen ? "Collapse transcript" : "Expand transcript"}
+              aria-expanded={transcriptOpen}
+            >
+              {transcriptOpen
+                ? <ChevronUp className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
+                : <ChevronDown className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
+              }
+            </button>
+          </div>
         </div>
       </div>
 
@@ -232,7 +234,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                     )}
                   </div>
                 </div>
-                <div className="text-[14px] text-text-muted leading-relaxed pl-[42px] group-hover/chunk:text-text transition-colors">
+                <div className="text-[13.5px] sm:text-[14px] text-text-muted leading-relaxed pl-0 sm:pl-[42px] group-hover/chunk:text-text transition-colors">
                   {(() => {
                     let content = chunk.text;
                     if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {

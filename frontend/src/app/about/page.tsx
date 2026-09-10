@@ -87,7 +87,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-[320px] sm:w-[420px] lg:w-[540px] xl:w-[620px] aspect-square max-h-[calc(100dvh-6rem)] relative lg:-ml-12 xl:-ml-20 z-10"
+                className="w-[280px] sm:w-[420px] lg:w-[540px] xl:w-[620px] max-w-full aspect-square max-h-[calc(100dvh-6rem)] relative lg:-ml-12 xl:-ml-20 z-10"
               >
                 <Strands
                   colors={["#a8c7fa", "#8cb1f3", "#6f9be8", "#ffffff"]}

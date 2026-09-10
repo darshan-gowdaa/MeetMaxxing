@@ -74,7 +74,7 @@ export default function EditDialog({
 	 aria-label={`${itemName} title`}
 	 aria-invalid={!!error}
 	 aria-describedby={error ? errorId : undefined}
-	 className={`w-full h-12 bg-surface2 border rounded-2xl px-4 text-sm text-text placeholder:text-text-muted focus:outline-none spring-colors mb-1 ${
+	 className={`w-full h-12 bg-surface2 border rounded-2xl px-4 text-[16px] sm:text-sm text-text placeholder:text-text-muted focus:outline-none spring-colors mb-1 ${
 	 error ?"border-risk focus:border-risk":"border-border focus:border-primary"
 	 }`}
 	 placeholder={`${itemName} title…`}

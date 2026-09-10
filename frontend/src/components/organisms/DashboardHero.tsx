@@ -25,7 +25,7 @@ export default function DashboardHero({ loading, meetingsCount, totalMinutes, fo
         { loading, value: <AnimatedNumber value={totalMinutes} formatFn={formatTime} />, label: "Recorded" }
       ]}
       action={
-        <div className="relative flex flex-col items-center justify-center w-full sm:w-[110px] md:min-w-[6rem] h-20 rounded-[20px] bg-primary-container/30 border border-primary/30 overflow-hidden group shadow-sm transition-all duration-300">
+        <div className="relative flex flex-col items-center justify-center w-full sm:w-[110px] md:min-w-[6rem] h-16 sm:h-20 rounded-[20px] bg-primary-container/30 border border-primary/30 overflow-hidden group shadow-sm transition-all duration-300">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] z-0">
             <div className="w-full h-full animate-spin-once bg-[conic-gradient(from_0deg,transparent_0_340deg,var(--primary)_360deg)] opacity-0"/>
           </div>

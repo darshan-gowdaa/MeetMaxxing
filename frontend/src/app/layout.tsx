@@ -37,7 +37,7 @@ export default function RootLayout({
  <SnackbarProvider>
  <a href="#main-content"className="skip-to-content">Skip to content</a>
  <Topbar />
- <main id="main-content"tabIndex={-1}className="flex-1 pb-16 md:pb-0 flex flex-col w-full h-full focus:outline-none">
+ <main id="main-content"tabIndex={-1}className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0 flex flex-col w-full h-full focus:outline-none">
  {children}
  </main>
  </SnackbarProvider>

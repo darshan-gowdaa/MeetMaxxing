@@ -519,9 +519,21 @@ summary:focus-visible,
   outline-offset: 2px;
 }
 
-/* ── Safe-area helper (used by the mobile bottom nav) ─────────────────────── */
+/* ── Safe-area helper (used by the mobile bottom nav and headers) ─────────── */
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Hide scrollbar while preserving scroll functionality ─────────────────── */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Skip to content — first focusable element, hidden until focused ─────── */
