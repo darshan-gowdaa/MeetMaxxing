@@ -2,11 +2,8 @@
 
 import {
   RiVideoChatLine,
-  RiSearchLine,
   RiTimeLine,
-  RiCheckLine,
   RiCloseLine,
-  RiArrowDropDownLine,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
 
@@ -15,6 +12,7 @@ import EditDialog from "@/components/organisms/EditDialog";
 import MeetingCard from "@/components/molecules/MeetingCard";
 import { SelectableGrid } from "@/components/organisms/SelectableGrid";
 import DashboardHero from "@/components/organisms/DashboardHero";
+import FloatingPillToolbar from "@/components/molecules/FloatingPillToolbar";
 import { useDashboardManager } from "./_hooks/useDashboardManager";
 
 export default function Dashboard() {
@@ -76,7 +74,7 @@ export default function Dashboard() {
                   loading={loading}
                   skeletonCount={6}
                   getKey={(m) => m.id}
-                  getDate={(m) => (m.start_at ? new Date(m.start_at) : new Date())}
+                  getDate={(m) => (m.start_at && !isNaN(new Date(m.start_at).getTime()) ? new Date(m.start_at) : new Date(0))}
                   groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
                   emptyState={
@@ -94,62 +92,31 @@ export default function Dashboard() {
                       </p>
                     </div>
                   }
-                  renderHeader={({ setManualSelectionMode, activeGroup }) => (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
-                      <h2 className="text-[17px] font-bold tracking-tight flex items-center gap-2">
-                        <RiTimeLine className="w-5 h-5 text-text-muted" />
-                        {activeGroup || "Recent Meetings"}
-                        <span className="text-[12px] font-semibold text-text-muted bg-surface2 border border-border rounded-full px-2.5 py-0.5 ml-1">
+                  renderHeader={({ setManualSelectionMode }) => (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 w-full">
+                      <div className="flex items-center justify-between sm:justify-start gap-2.5">
+                        <h2 className="text-[17px] sm:text-[19px] font-bold tracking-tight flex items-center gap-2 text-text">
+                          <RiTimeLine className="w-5 h-5 text-primary" />
+                          Recent Meetings
+                        </h2>
+                        <span className="text-[12px] font-semibold text-text-muted bg-surface-container-high border border-border rounded-full px-2.5 py-0.5">
                           {filtered.length}
                         </span>
-                      </h2>
-
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <div className="relative flex-1 sm:flex-none sm:w-[160px]">
-                            <select
-                              value={sortBy}
-                              onChange={(e) => setSortBy(e.target.value as "date" | "name" | "duration")}
-                              aria-label="Sort meetings"
-                              className="w-full h-10 md:h-12 bg-surface2 border border-border rounded-full pl-4 sm:pl-5 pr-9 sm:pr-10 text-[16px] sm:text-[14px] text-text font-bold focus:outline-none focus:border-primary spring-colors cursor-pointer appearance-none hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all"
-                            >
-                              <option value="date">Sort by Date</option>
-                              <option value="name">Sort by Name</option>
-                              <option value="duration">Sort by Duration</option>
-                            </select>
-                            <RiArrowDropDownLine className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
-                          </div>
-
-                          <button
-                            onClick={() => setManualSelectionMode(true)}
-                            className="flex-1 sm:flex-none h-10 md:h-12 px-4 sm:px-6 rounded-full bg-surface2 hover:bg-surface3 border border-border text-[13px] sm:text-[14px] font-bold text-text transition-all active:scale-[0.97] hover:-translate-y-0.5 hover:shadow-sm flex items-center justify-center gap-2"
-                          >
-                            <RiCheckLine className="w-4 h-4" />
-                            Select
-                          </button>
-                        </div>
-
-                        <div className="relative w-full sm:w-auto group/search">
-                          <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-focus-within/search:text-primary transition-colors z-10" aria-hidden="true" />
-                          <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search meetings…"
-                            aria-label="Search meetings"
-                            className="h-10 md:h-12 w-full sm:w-64 bg-surface2 border border-border rounded-full pl-10 pr-4 text-[16px] sm:text-[14px] text-text font-medium placeholder:text-text-muted focus:outline-none focus:border-primary spring-colors transition-all"
-                          />
-                          {search && (
-                            <button
-                              onClick={() => setSearch("")}
-                              aria-label="Clear search"
-                              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-surface-dim hover:bg-surface3 text-text-muted hover:text-text spring-colors"
-                            >
-                              <RiCloseLine className="w-4 h-4" aria-hidden="true" />
-                            </button>
-                          )}
-                        </div>
                       </div>
+
+                      <FloatingPillToolbar
+                        search={search}
+                        onSearchChange={setSearch}
+                        searchPlaceholder="Search meetings…"
+                        sortBy={sortBy}
+                        onSortChange={setSortBy}
+                        sortOptions={[
+                          { value: "date", label: "Date" },
+                          { value: "name", label: "Name" },
+                          { value: "duration", label: "Duration" },
+                        ]}
+                        onSelectClick={() => setManualSelectionMode(true)}
+                      />
                     </div>
                   )}
                   renderItem={(meeting, selected, selectionMode, onToggle) => (

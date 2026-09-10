@@ -116,14 +116,16 @@ export default function MeetingCard({
  {/* Date chip */}
  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-primary-dim border border-primary/20 rounded-full px-3 py-1 w-fit mt-1">
  <RiCalendarLine className="w-3 h-3"/>
- {meeting.start_at ? (
- <span>
- {format(new Date(meeting.start_at),"MMM d, yyyy • h:mm a")}
- {meeting.end_at ? ` – ${format(new Date(meeting.end_at),"h:mm a")}` :""}
- </span>
- ) : (
-"Recent Call"
- )}
+ {(() => {
+   if (!meeting.start_at) return <span>Recent Call</span>;
+   const startD = new Date(meeting.start_at);
+   if (isNaN(startD.getTime())) return <span>Recent Call</span>;
+   const startStr = format(startD, "MMM d, yyyy • h:mm a");
+   if (!meeting.end_at) return <span>{startStr}</span>;
+   const endD = new Date(meeting.end_at);
+   if (isNaN(endD.getTime())) return <span>{startStr}</span>;
+   return <span>{startStr} – {format(endD, "h:mm a")}</span>;
+ })()}
  </div>
 
  {/* Title */}

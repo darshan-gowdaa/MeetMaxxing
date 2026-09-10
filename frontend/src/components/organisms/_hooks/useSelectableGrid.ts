@@ -27,7 +27,6 @@ export function useSelectableGrid<T>({
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [activeGroup, setActiveGroup] = useState<string>("");
   
   const [manualSelectionMode, setManualSelectionMode] = useState(() => {
     if (typeof sessionStorage !== "undefined" && storeKey) {
@@ -37,24 +36,6 @@ export function useSelectableGrid<T>({
   });
 
   const selectionMode = manualSelectionMode || selectedKeys.size > 0;
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let maxVisible = null;
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            maxVisible = entry.target.getAttribute("data-group");
-          }
-        });
-        if (maxVisible) setActiveGroup(maxVisible);
-      },
-      { rootMargin: "-124px 0px -60% 0px" }
-    );
-    const elements = document.querySelectorAll(".group-section");
-    elements.forEach(el => observer.observe(el));
-    return () => observer.disconnect();
-  }, [items]);
 
   useEffect(() => {
     if (typeof sessionStorage !== "undefined" && storeKey) {
@@ -84,7 +65,15 @@ export function useSelectableGrid<T>({
         k = groupBy(item);
       } else {
         const d = getDate(item);
-        k = isToday(d) ? "Today" : isYesterday(d) ? "Yesterday" : format(d, "MMMM d, yyyy");
+        if (!d || isNaN(d.getTime()) || d.getTime() === 0) {
+          k = "Earlier";
+        } else if (isToday(d)) {
+          k = "Today";
+        } else if (isYesterday(d)) {
+          k = "Yesterday";
+        } else {
+          k = format(d, "MMMM d, yyyy");
+        }
       }
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(item);
@@ -145,7 +134,6 @@ export function useSelectableGrid<T>({
     isDeleting,
     showDeleteDialog,
     setShowDeleteDialog,
-    activeGroup,
     manualSelectionMode,
     setManualSelectionMode,
     selectionMode,
