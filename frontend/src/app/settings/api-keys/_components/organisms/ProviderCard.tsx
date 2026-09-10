@@ -18,7 +18,7 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
  <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative transition-transform duration-300">
  {(domain && !imgError) ? (
  /* eslint-disable-next-line @next/next/no-img-element */
- <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-7 h-7 rounded-sm"onError={() => setImgError(true)} />
+ <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={provider.name} className="w-7 h-7 rounded-md" onError={() => setImgError(true)} />
  ) : (
  <div className="w-full h-full bg-primary-container flex items-center justify-center text-primary"><RiPlugLine className="w-6 h-6"/></div>
  )}
@@ -46,7 +46,7 @@ export function ProviderCard({ provider, apiKeys, onAdd, onCheck, onDelete, onHe
  </div>
 
  {/* Column 3: Trailing Actions */}
- <div className="flex items-center justify-end w-full md:w-auto gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 mt-2 md:mt-0">
+ <div className="flex items-center justify-end w-full md:w-auto gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200 mt-2 md:mt-0">
  <button onClick={onAdd} className="flex-1 md:flex-none h-10 px-4 rounded-full bg-primary-container text-on-primary-container text-[14px] font-bold hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center md:justify-start gap-1.5 shadow-sm">
  <RiAddLine className="w-4 h-4"/> {apiKeys.length > 0 ?"Add":"Connect"}
  </button>

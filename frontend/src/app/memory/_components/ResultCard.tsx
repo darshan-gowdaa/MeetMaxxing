@@ -23,7 +23,7 @@ export function ResultCard({
   return (
     <div className="flex flex-col gap-4">
       {/* Answer card */}
-      <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden shadow-sm border border-border">
+      <div className="bg-surface-container rounded-[24px] border border-border overflow-hidden shadow-sm">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border">
           <div className="flex items-center gap-2 text-[13px] font-bold text-text">

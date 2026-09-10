@@ -165,7 +165,7 @@ export default function ExtensionAuthPage() {
         {/* Token display — last-resort manual fallback only */}
         <div className="bg-surface2 border border-border rounded-2xl p-4 text-left">
           <p className="text-text-muted font-mono text-xs break-all line-clamp-2">
-            {session.access_token}
+            {session.access_token ? `${session.access_token.slice(0, 12)}••••••••••••••••` : ""}
           </p>
         </div>
         <button

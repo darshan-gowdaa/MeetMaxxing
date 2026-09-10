@@ -5,7 +5,7 @@ import { useAuth } from"@/lib/auth-context";
 import { Switch } from"@/components/atoms/Switch";
 import { SettingsListSkeleton } from "@/components/organisms/skeletons/SettingsListSkeleton";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 type Notifications = {
  email: boolean;

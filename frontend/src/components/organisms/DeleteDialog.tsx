@@ -6,7 +6,7 @@ import { RiDeleteBinLine } from"@remixicon/react";
 import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
 import { useDialogA11y } from"@/hooks/useDialogA11y";
 
-export default function DeleteDialog({
+export function DeleteDialog({
 	 title,
 	 itemName ="Meeting",
 	 onConfirm,
@@ -67,18 +67,18 @@ export default function DeleteDialog({
  >
  Cancel
  </button>
- <button
- onClick={onConfirm}
- disabled={busy}
- className="flex-1 h-11 rounded-full bg-risk-container text-risk text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:opacity-80 disabled:opacity-60"
- >
- {busy ? <Md3LoadingIndicator size="sm"/> : <RiDeleteBinLine className="w-4 h-4"/>}
- {busy ?"Deleting…":"Delete"}
- </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            className="flex-1 h-11 rounded-full bg-risk text-on-risk text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-110 active:opacity-80 disabled:opacity-60"
+          >
+            {busy ? <Md3LoadingIndicator size="sm" /> : <RiDeleteBinLine className="w-4 h-4" />}
+            {busy ? "Deleting…" : "Delete"}
+          </button>
  </div>
  </div>
  </div>,
  document.body
  );
 }
-
+export default DeleteDialog;

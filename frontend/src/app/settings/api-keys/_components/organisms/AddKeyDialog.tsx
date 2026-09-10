@@ -45,7 +45,7 @@ export function AddKeyDialog({
     openrouter: "openrouter.ai",
   };
   const domain = domains[provider.id];
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
   const panelRef = useDialogA11y<HTMLDivElement>({ onClose: onCancel, enabled: mounted });
   const titleId = "add-key-dialog-title";
@@ -60,7 +60,7 @@ export function AddKeyDialog({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 bg-black/60 dark:bg-black/75 backdrop-blur-md"
+        className="fixed inset-0 bg-bg/80 backdrop-blur-md"
         onClick={onCancel}
         aria-hidden="true"
       />
@@ -76,7 +76,7 @@ export function AddKeyDialog({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.2, ease: [0.38, 1.21, 0.22, 1] }}
-        className="relative z-10 bg-surface/95 dark:bg-surface-container-high/95 backdrop-blur-xl rounded-[28px] sm:rounded-[32px] shadow-2xl border border-border/80 w-full max-w-md p-6 sm:p-7 focus:outline-none my-auto"
+        className="relative z-10 bg-surface-container-highest/95 backdrop-blur-xl rounded-[28px] sm:rounded-[32px] shadow-2xl border border-border/80 w-full max-w-md p-6 sm:p-7 focus:outline-none my-auto"
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -85,11 +85,11 @@ export function AddKeyDialog({
               <img
                 src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
                 alt=""
-                className="w-7 h-7 rounded-md"
+                className="w-7 h-7 rounded-xl"
                 aria-hidden="true"
               />
             ) : (
-              <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+              <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <RiPlugLine className="w-4 h-4" aria-hidden="true" />
               </div>
             )}

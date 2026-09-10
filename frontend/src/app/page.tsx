@@ -10,9 +10,11 @@ import {
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
 
-import DeleteDialog from "@/components/organisms/DeleteDialog";
-import EditDialog from "@/components/organisms/EditDialog";
+import dynamic from "next/dynamic";
 import MeetingCard from "@/components/molecules/MeetingCard";
+
+const DeleteDialog = dynamic(() => import("@/components/organisms/DeleteDialog"), { ssr: false });
+const EditDialog = dynamic(() => import("@/components/organisms/EditDialog"), { ssr: false });
 import { SelectableGrid } from "@/components/organisms/SelectableGrid";
 import DashboardHero from "@/components/organisms/DashboardHero";
 import FloatingPillToolbar from "@/components/molecules/FloatingPillToolbar";

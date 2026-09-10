@@ -69,9 +69,9 @@ export default function MeetingSummary({ meeting }: MeetingSummaryProps) {
  ) : meeting.status ==="active"|| meeting.status ==="processing"? (
  <div className="flex flex-col items-center justify-center py-5 md:py-6 gap-4">
  <div className="flex items-center justify-center gap-2">
- <div className="w-3 h-3 bg-white rounded-full animate-bounce"style={{ animationDelay:"-0.3s"}}></div>
- <div className="w-3 h-3 bg-white rounded-full animate-bounce"style={{ animationDelay:"-0.15s"}}></div>
- <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
+ <div className="w-3 h-3 bg-primary rounded-full animate-bounce"style={{ animationDelay:"-0.3s"}}></div>
+ <div className="w-3 h-3 bg-primary rounded-full animate-bounce"style={{ animationDelay:"-0.15s"}}></div>
+ <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
  </div>
  <p className="text-[13px] text-text-muted font-medium animate-pulse tracking-wide">
  {meeting.status ==="active"?"Meeting is currently active...":"AI is processing executive summary..."}

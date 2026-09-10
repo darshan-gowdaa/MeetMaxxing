@@ -11,26 +11,27 @@ export default function GeneralPreferences() {
   const { session } = useAuth();
   const token = session?.access_token;
   const { showMessage } = useSnackbar();
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
   const [lang, setLang] = useState('en');
   const [style, setStyle] = useState('concise');
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/api/settings`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL}/api/settings/`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => {
         setLang(data.language || 'en');
         setStyle(data.summary_style || 'concise');
-      });
+      })
+      .catch(() => {});
   }, [token, API_URL]);
 
   const saveLang = async (v: string) => {
     setLang(v);
     if (!token) return;
     try {
-      await fetch(`${API_URL}/api/settings`, {
+      await fetch(`${API_URL}/api/settings/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ language: v })
@@ -45,7 +46,7 @@ export default function GeneralPreferences() {
     setStyle(v);
     if (!token) return;
     try {
-      await fetch(`${API_URL}/api/settings`, {
+      await fetch(`${API_URL}/api/settings/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ summary_style: v })

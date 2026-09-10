@@ -26,6 +26,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
  const router = useRouter();
 
  useEffect(() => {
+ // Fast initial check directly from local cache
+ supabase.auth.getSession().then(({ data: { session } }) => {
+ if (session) {
+ setSession(session);
+ setUser(session.user);
+ }
+ setLoading(false);
+ }).catch(() => {
+ setLoading(false);
+ });
+
  // Listen for auth changes
  const { data: { subscription } } = supabase.auth.onAuthStateChange(
  async (event, session) => {
@@ -34,8 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
  setLoading(false);
  if (event ==="SIGNED_OUT") {
  router.push("/login");
- } else if (session?.access_token && (event ==="SIGNED_IN"|| event ==="INITIAL_SESSION")) {
- // Ensure user is provisioned in the backend (creates public.users record)
+ } else if (session?.access_token && event ==="SIGNED_IN") {
+ // Provision in background only on explicit sign in
  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ||"https://meetmaxxing-api.onrender.com";
  fetch(`${backendUrl}/api/auth/provision`, {
  method:"POST",

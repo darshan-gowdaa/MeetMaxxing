@@ -34,7 +34,7 @@ export default function MeetingDecisions({ decisions }: MeetingDecisionsProps) {
         return (
         <div
         key={idx}
-        className="bg-surface2 rounded-[16px] border border-border p-4 flex flex-col gap-3 spring hover:shadow-sm border border-border hover:border-border-strong"
+        className="bg-surface2 rounded-[16px] border border-border p-4 flex flex-col gap-3 spring hover:shadow-sm hover:border-border-strong"
         >
         <p className="text-[13px] text-text leading-relaxed font-medium">{text}</p>
         <div className="flex items-center justify-between text-[11px] text-text-muted pt-2 border-t border-border">

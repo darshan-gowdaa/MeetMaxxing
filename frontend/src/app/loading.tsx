@@ -17,11 +17,11 @@ export default function DashboardLoading() {
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border gap-2">
-              <div className="md3-skeleton w-10 h-6 rounded-md" />
+              <div className="md3-skeleton w-10 h-6 rounded-xl" />
               <div className="md3-skeleton w-12 h-2.5 rounded-full" />
             </div>
             <div className="flex flex-col items-center justify-center min-w-[6rem] px-4 h-20 rounded-[20px] bg-surface2 border border-border gap-2">
-              <div className="md3-skeleton w-10 h-6 rounded-md" />
+              <div className="md3-skeleton w-10 h-6 rounded-xl" />
               <div className="md3-skeleton w-12 h-2.5 rounded-full" />
             </div>
           </div>

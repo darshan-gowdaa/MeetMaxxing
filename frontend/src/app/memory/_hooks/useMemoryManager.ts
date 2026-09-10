@@ -27,7 +27,11 @@ export function useMemoryManager() {
     import("@/lib/api").then(({ fetchMeetings }) => {
       fetchMeetings()
         .then((data) => {
-          const list: Meeting[] = Array.isArray(data) ? data : data.meetings || [];
+          const list: Meeting[] = Array.isArray(data)
+            ? data
+            : data && "meetings" in data && Array.isArray(data.meetings)
+            ? data.meetings
+            : [];
           if (list.length > 0) {
             const recentTitles = list.slice(0, 4).map(m => m.title || "Untitled Meeting");
             const dynamicQueries = [

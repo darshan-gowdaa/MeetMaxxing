@@ -8,7 +8,7 @@ import {
   RiMoreLine,
   RiEditLine,
   RiDeleteBinLine,
-  RiDownloadLine,
+  RiFilePdfLine,
   RiFileTextLine,
   RiLinkM,
   RiExternalLinkLine,
@@ -27,6 +27,7 @@ import EditDialog from "@/components/organisms/EditDialog";
 import DeleteDialog from "@/components/organisms/DeleteDialog";
 import { copyToClipboard } from "@/lib/clipboard";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
+import { exportMeetingPdf } from "@/lib/pdfExport";
 import type { Meeting } from "@/types";
 
 interface MeetingHeaderProps {
@@ -89,58 +90,27 @@ export default function MeetingHeader({
   }, [menuOpen]);
 
   const handleCopyLink = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const ok = await copyToClipboard(url);
     setMenuOpen(false);
-    const ok = await copyToClipboard(window.location.href);
     if (ok) {
       setLinkCopied(true);
       showMessage("Meeting link copied to clipboard", { variant: "success" });
       setTimeout(() => setLinkCopied(false), 2000);
     } else {
-      showMessage("Couldn't copy link", { variant: "error" });
+      showMessage("Failed to copy link to clipboard", { variant: "error" });
     }
   };
 
-  const handleExportTxt = () => {
-    let content = `Meeting: ${meeting.title || "Untitled"}\n`;
-    content += `Date: ${
-      meeting.start_at && !isNaN(new Date(meeting.start_at).getTime())
-        ? format(new Date(meeting.start_at), "EEEE, MMMM d, yyyy • h:mm a")
-        : "Unknown"
-    }\n\n`;
-
-    if (meeting.summary) {
-      content += `=== SUMMARY ===\n${meeting.summary}\n\n`;
+  const handleExportPdf = () => {
+    setMenuOpen(false);
+    try {
+      exportMeetingPdf(meeting);
+      showMessage("Meeting notes exported as PDF", { variant: "success" });
+    } catch (err) {
+      console.error("PDF export error:", err);
+      showMessage("Failed to generate PDF", { variant: "error" });
     }
-
-    if (meeting.action_items && meeting.action_items.length > 0) {
-      content += `=== ACTION ITEMS ===\n`;
-      meeting.action_items.forEach((item) => {
-        content += `- [${item.status === "done" ? "x" : " "}] ${item.description} (Owner: ${
-          item.owner_name || "Unassigned"
-        })\n`;
-      });
-      content += `\n`;
-    }
-
-    if (meeting.decisions && meeting.decisions.length > 0) {
-      content += `=== DECISIONS ===\n`;
-      meeting.decisions.forEach((d) => {
-        const text = typeof d === "string" ? d : d.text || JSON.stringify(d);
-        content += `- ${text}\n`;
-      });
-      content += `\n`;
-    }
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(meeting.title || "meeting").replace(/[^a-zA-Z0-9_-]/g, "_")}-notes.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showMessage("Meeting notes exported (TXT)", { variant: "success" });
   };
 
   const handleExportMarkdown = () => {
@@ -262,13 +232,17 @@ export default function MeetingHeader({
 
   return (
     <>
-      <div className="relative bg-surface-container rounded-[28px] border border-border overflow-hidden p-5 md:p-8">
-        {/* Ambient tonal accent */}
+      <div className="relative z-20 bg-surface-container rounded-[28px] border border-border p-5 md:p-8">
+        {/* Ambient tonal accent with contained overflow */}
         <div
-          className="absolute top-0 right-0 w-72 h-72 rounded-full blur-[100px] pointer-events-none"
-          style={{ background: "radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)" }}
+          className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none"
           aria-hidden="true"
-        />
+        >
+          <div
+            className="absolute top-0 right-0 w-72 h-72 rounded-full blur-[100px]"
+            style={{ background: "radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)" }}
+          />
+        </div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-start gap-5 justify-between">
           <div className="flex flex-col gap-2.5 max-w-2xl">
@@ -314,7 +288,7 @@ export default function MeetingHeader({
             )}
 
             {/* MD3 Expressive More Options Menu */}
-            <div className="relative" ref={menuRef}>
+            <div className="relative z-50" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((o) => !o)}
@@ -340,7 +314,7 @@ export default function MeetingHeader({
                     }
                     role="menu"
                     aria-label="Meeting options"
-                    className="absolute top-full right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[24px] border border-border shadow-xl flex flex-col p-1.5 z-50 origin-top-right backdrop-blur-xl"
+                    className="absolute top-full right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[24px] border border-border shadow-2xl flex flex-col p-1.5 z-[100] origin-top-right backdrop-blur-xl"
                   >
                     {/* Edit Title */}
                     {onRename && (
@@ -372,18 +346,15 @@ export default function MeetingHeader({
                     {/* Separator */}
                     <div className="h-[1px] bg-border mx-2 my-1" aria-hidden="true" />
 
-                    {/* Export TXT */}
+                    {/* Export PDF */}
                     <button
                       type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        handleExportTxt();
-                      }}
+                      onClick={handleExportPdf}
                       role="menuitem"
                       className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98]"
                     >
-                      <RiDownloadLine className="w-4 h-4 text-text-muted" aria-hidden="true" />
-                      <span>Export Notes (TXT)</span>
+                      <RiFilePdfLine className="w-4 h-4 text-risk" aria-hidden="true" />
+                      <span>Export as PDF</span>
                     </button>
 
                     {/* Export Markdown */}

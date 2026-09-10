@@ -24,6 +24,8 @@ export default function RootLayout({
  return (
  <html lang="en"className="h-full antialiased"data-scroll-behavior="smooth"suppressHydrationWarning>
  <head>
+ <link rel="preconnect" href="https://meetmaxxing-api.onrender.com" crossOrigin="anonymous" />
+ <link rel="dns-prefetch" href="https://meetmaxxing-api.onrender.com" />
  <link rel="preconnect"href="https://fonts.googleapis.com"/>
  <link rel="preconnect"href="https://fonts.gstatic.com"crossOrigin="anonymous"/>
  <link

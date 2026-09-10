@@ -1,15 +1,16 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"https://meetmaxxing-api.onrender.com";
 
-import { supabase } from"./supabase";
+import { supabase } from "./supabase";
+import type { Meeting } from "@/types";
 
-async function getToken() {
- let { data: { session } } = await supabase.auth.getSession();
- if (!session) {
- await new Promise(r => setTimeout(r, 500));
- const res = await supabase.auth.getSession();
- session = res.data.session;
- }
- return session?.access_token ??"";
+async function getToken(providedToken?: string): Promise<string> {
+  if (providedToken) return providedToken;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? "";
+  } catch {
+    return "";
+  }
 }
 
 function safeParse(text: string, fallback: unknown = null) {
@@ -55,15 +56,30 @@ export function isColdStartError(err: unknown): boolean {
  return /failed to fetch|load failed|networkerror|timeout|econnrefused|503|504|502/.test(msg);
 }
 
-export async function fetchMeetings() {
- const token = await getToken();
- const res = await fetch(`${BACKEND_URL}/dashboard/meetings`, {
- headers: { Authorization: `Bearer ${token}` },
- cache:"no-store",
- });
- if (!res.ok) throw new Error("Failed to fetch meetings");
- const text = await res.text();
- return safeParse(text, []);
+export type MeetingsApiResponse = Meeting[] | { meetings?: Meeting[] } | null;
+
+let activeMeetingsPromise: Promise<MeetingsApiResponse> | null = null;
+
+export async function fetchMeetings(token?: string): Promise<MeetingsApiResponse> {
+  if (activeMeetingsPromise) return activeMeetingsPromise;
+
+  activeMeetingsPromise = (async () => {
+    try {
+      const authToken = await getToken(token);
+      if (!authToken) return [];
+      const res = await fetch(`${BACKEND_URL}/dashboard/meetings`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Failed to fetch meetings");
+      const text = await res.text();
+      return safeParse(text, []);
+    } finally {
+      activeMeetingsPromise = null;
+    }
+  })();
+
+  return activeMeetingsPromise;
 }
 
 export async function fetchMeeting(id: string) {

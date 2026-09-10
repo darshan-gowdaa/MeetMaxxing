@@ -86,16 +86,16 @@
 
   /* ── Surface Hierarchy (tonal elevation via lightness steps) ────────────
      lowest → highest maps to depth: deepest card layer → topmost overlay.  */
-  --surface-container-lowest:  #27292c;
-  --surface-container-low:     #27292c;
-  --surface:                   #27292c;
-  --surface-container:         #27292c;
+  --surface-container-lowest:  #16171b;
+  --surface-container-low:     #1d1f24;
+  --surface:                   #222429;
+  --surface-container:         #27292e;
   --surface-container-high:    #33353c;
   --surface-container-highest: #3b3d46;
 
   /* surface-dim: used for empty/disabled inset areas — must be DARKER than
      surface, not lighter.      */
-  --surface-dim:               #27292c;
+  --surface-dim:               #1a1b20;
 
   /* Tailwind shorthand aliases used in components */
   --surface2:                  var(--surface-container-high);
@@ -178,6 +178,7 @@
   --color-surface2:                     var(--surface2);
   --color-surface3:                     var(--surface3);
   --color-surface-highest:              var(--surface-highest);
+  --color-surface-variant:              var(--surface-container-highest);
 
   /* Primary */
   --color-primary:                      var(--primary);

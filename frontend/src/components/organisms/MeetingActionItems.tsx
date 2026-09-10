@@ -158,8 +158,15 @@ export default function MeetingActionItems({ actionItems, toggleItemStatus, onPr
  <div
  key={item.id}
  role="button"
+ tabIndex={0}
  onClick={() => toggleItemStatus(item.id)}
- className={`group w-full text-left rounded-[16px] border border-border p-4 spring flex items-start gap-3 hover:shadow-sm active:opacity-80 ${
+ onKeyDown={(e) => {
+   if (e.key === "Enter" || e.key === " ") {
+     e.preventDefault();
+     toggleItemStatus(item.id);
+   }
+ }}
+ className={`group w-full text-left rounded-[16px] border border-border p-4 spring flex items-start gap-3 hover:shadow-sm active:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
  isDone
  ?"bg-success/5 border-success/20 opacity-75"
  : isInProgress

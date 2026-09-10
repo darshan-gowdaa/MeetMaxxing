@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
  </div>
  <h2 className="text-2xl font-black text-text mb-2">Password updated!</h2>
  <p className="text-text-muted mb-8">You can now sign in with your new password.</p>
- <Link href="/login"className="block w-full h-14 bg-primary text-on-primary font-bold rounded-full flex items-center justify-center hover:bg-primary-container hover:text-on-primary-container transition-colors spring">
+ <Link href="/login" className="w-full h-14 bg-primary text-on-primary font-bold rounded-full flex items-center justify-center hover:bg-primary-container hover:text-on-primary-container transition-colors spring">
  Go to Sign In
  </Link>
  </div>

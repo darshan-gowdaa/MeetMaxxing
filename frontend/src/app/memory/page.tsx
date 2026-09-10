@@ -41,7 +41,7 @@ export default function MemoryPage() {
           </div>
 
           <div className="relative z-10 flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-[20px] bg-tertiary-container border border-tertiary/20 flex items-center justify-center shadow-sm border border-border spring">
+            <div className="w-14 h-14 rounded-[20px] bg-tertiary-container border border-tertiary/20 flex items-center justify-center shadow-sm spring">
               <RiBrainLine className="w-7 h-7 text-tertiary" />
             </div>
             <div>

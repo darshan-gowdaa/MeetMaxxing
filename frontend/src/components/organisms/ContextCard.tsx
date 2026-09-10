@@ -88,7 +88,7 @@ export default function ContextCard({
  </button>
 
  {menuOpen && (
- <div className="absolute top-full right-0 mt-2 w-44 bg-surface-highest rounded-[16px] border border-border shadow-sm border border-border animate-fade-scale overflow-hidden z-30">
+ <div className="absolute top-full right-0 mt-2 w-44 bg-surface-highest rounded-[16px] border border-border shadow-sm animate-fade-scale overflow-hidden z-30">
  <button
  onClick={(e) => {
  e.preventDefault();
@@ -151,7 +151,15 @@ export default function ContextCard({
  {/* Card Body */}
  <div
  onClick={() => onView(file)}
- className="flex flex-col gap-3 p-5 flex-1 relative z-10 h-full cursor-pointer"
+ onKeyDown={(e) => {
+ if (e.key === "Enter" || e.key === " ") {
+ e.preventDefault();
+ onView(file);
+ }
+ }}
+ tabIndex={0}
+ role="button"
+ className="flex flex-col gap-3 p-5 flex-1 relative z-10 h-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-[20px]"
  >
  {/* Date / Type chip */}
  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-primary-dim border border-primary/20 rounded-full px-3 py-1 w-fit mt-1">

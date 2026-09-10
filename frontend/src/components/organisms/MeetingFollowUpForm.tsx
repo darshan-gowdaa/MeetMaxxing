@@ -112,7 +112,7 @@ export default function MeetingFollowUpForm({ meeting, onScheduled }: MeetingFol
 	 <button
 	 onClick={handleSchedule}
 	 disabled={loading}
-	 className="w-full sm:w-auto h-12 px-6 bg-primary hover:bg-primary-container hover:text-on-primary-container text-on-primary rounded-2xl text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap spring flex items-center justify-center gap-2 active:scale-[0.98]"
+	 className="w-full sm:w-auto h-12 px-6 bg-primary hover:bg-primary-container hover:text-on-primary-container text-on-primary rounded-full text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap spring flex items-center justify-center gap-2 active:scale-[0.98]"
 	 >
 	 {loading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
 	 {loading ?"Scheduling…":"Schedule Event"}

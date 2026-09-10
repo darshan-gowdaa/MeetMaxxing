@@ -13,7 +13,7 @@ import { AddKeyDialog } from"./_components/organisms/AddKeyDialog";
 import { ProviderHelpDrawer } from"./_components/organisms/ProviderHelpDrawer";
 import { ProviderListSkeleton } from "../../../components/organisms/skeletons/ProviderListSkeleton";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 export default function ApiKeysPage() {
 	 const { session } = useAuth();

@@ -228,7 +228,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                       </span>
                     )}
                     {chunk.timestamp_ms > 0 && (
-                      <span className="text-[11px] font-mono font-bold text-text-variant bg-surface-container-high px-2 py-1 rounded-lg border border-border shadow-sm">
+                      <span className="text-[11px] font-mono font-bold text-text-variant bg-surface-container-high px-2.5 py-1 rounded-full border border-border shadow-sm">
                         {`${String(Math.floor(chunk.timestamp_ms / 60000)).padStart(2, "0")}:${String(Math.floor((chunk.timestamp_ms % 60000) / 1000)).padStart(2, "0")}`}
                       </span>
                     )}
