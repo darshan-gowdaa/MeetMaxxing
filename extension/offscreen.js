@@ -75,6 +75,7 @@ async function startCapture(streamId, meetingId) {
     console.log("[MeetMaxxing Offscreen] Recording started — capturing all participants.");
   } catch (err) {
     console.error("[MeetMaxxing Offscreen] Failed to start capture:", err.message);
+    chrome.runtime.sendMessage({ type: "MIC_ERROR", message: err.message }).catch(() => {});
   }
 }
 

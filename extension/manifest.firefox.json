@@ -18,9 +18,9 @@
     "128": "assets/icons/icon128.png"
   },
   "permissions": [
-    "activeTab",
     "tabs",
     "storage",
+    "unlimitedStorage",
     "alarms",
     "webRequest",
     "https://meet.google.com/*",

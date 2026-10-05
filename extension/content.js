@@ -855,12 +855,20 @@ function injectMeetMaxxingPanel() {
 function tryInjectPanel() {
   // Only inject if we're in an active meeting (URL has the meeting code)
   const onMeetCall = window.location.pathname.length > 1 && !window.location.pathname.startsWith('/landing');
-  if (onMeetCall && !document.getElementById('mm-panel-root')) {
-    const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
-    if (runtimeAPI?.runtime?.sendMessage) {
-      try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
+  const panel = document.getElementById('mm-panel-root');
+  
+  if (onMeetCall) {
+    if (!panel) {
+      const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
+      if (runtimeAPI?.runtime?.sendMessage) {
+        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
+      }
+      injectMeetMaxxingPanel();
+    } else {
+      panel.style.display = 'block';
     }
-    injectMeetMaxxingPanel();
+  } else if (panel) {
+    panel.style.display = 'none';
   }
 }
 

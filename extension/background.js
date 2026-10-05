@@ -479,9 +479,10 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       if (existing?.id && now - existing.timestamp < 43200000) {
         activeMeetingId = existing.id;
-        ext.storage.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: now });
+        const preservedStartTime = existing.timestamp; // Start time when first joined
+        ext.storage.set({ currentMeetingId: activeMeetingId, meetingTitle: title, meetCode, meetingStartTime: preservedStartTime });
         connectWebSocket(activeMeetingId);
-        ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now, reused: true });
+        ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: preservedStartTime, reused: true });
         sendResponse({ success: true, meetingId: activeMeetingId });
         return;
       }
@@ -490,7 +491,7 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (data?.meeting_id) {
           activeMeetingId = data.meeting_id;
           meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
-          ext.storage.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
+          ext.storage.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now, transcript: [], copilot_state: null });
           connectWebSocket(activeMeetingId);
         }
         ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now });
@@ -499,7 +500,7 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       const onFail = () => {
         meetCodeMap[meetCode] = { id: activeMeetingId, timestamp: now };
-        ext.storage.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now });
+        ext.storage.set({ meetCodeMap, currentMeetingId: activeMeetingId, meetingTitle: title, meetingStartTime: now, transcript: [], copilot_state: null });
         connectWebSocket(activeMeetingId);
         ext.broadcast({ type: "MEETING_STARTED", meetingId: activeMeetingId, title, startTime: now });
         sendResponse({ success: true, meetingId: activeMeetingId });
@@ -601,6 +602,11 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "UPDATE_PARTICIPANTS") {
     activeMeetingMaxParticipants = msg.maxParticipants;
     sendResponse({ success: true });
+    return false;
+  }
+
+  if (msg.type === "MIC_ERROR") {
+    ext.broadcast({ type: "MIC_ERROR", message: msg.message });
     return false;
   }
 

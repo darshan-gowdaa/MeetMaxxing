@@ -131,6 +131,8 @@ export function useCopilot() {
         }
       } else if (msg.type === "MEETING_ENDED") {
         setIsEnded(true);
+      } else if (msg.type === "MIC_ERROR") {
+        setErrorMessage("Tab audio capture failed (Mic permission missing or blocked). Please allow it in Chrome Settings.");
       }
     };
 

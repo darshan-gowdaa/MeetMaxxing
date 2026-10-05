@@ -9,11 +9,12 @@
     "128": "assets/icons/icon128.png"
   },
   "permissions": [
-    "activeTab",
     "tabs",
     "storage",
+    "unlimitedStorage",
     "alarms",
-    "offscreen"
+    "offscreen",
+    "tabCapture"
   ],
   "host_permissions": [
     "https://meet.google.com/*",
