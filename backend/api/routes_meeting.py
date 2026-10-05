@@ -61,7 +61,9 @@ async def end_meeting(
         supabase = get_supabase_admin()
         rec = get_meeting_record(supabase, meeting_id, user["org_id"])
         if rec and rec.get("id"):
-            supabase.table("meetings").update({"status": "processing"}).eq("id", rec["id"]).execute()
+            supabase.table("meetings").update({"status": "processing"}).eq(
+                "id", rec["id"]
+            ).execute()
     except Exception:
         pass
 
@@ -91,7 +93,9 @@ async def reprocess_meeting(
         raise HTTPException(status_code=404, detail="Meeting not found")
 
     target_id = rec.get("id") or meeting_id
-    supabase.table("meetings").update({"status": "processing"}).eq("id", target_id).execute()
+    supabase.table("meetings").update({"status": "processing"}).eq(
+        "id", target_id
+    ).execute()
 
     background_tasks.add_task(
         _run_end_pipeline,
@@ -114,17 +118,29 @@ async def schedule_followup(
 ):
     """Explicitly schedule a follow-up meeting using user's calendar token."""
     supabase = get_supabase_admin()
-    user_res = supabase.table("users").select("calendar_token").eq("id", user["user_id"]).single().execute()
+    user_res = (
+        supabase.table("users")
+        .select("calendar_token")
+        .eq("id", user["user_id"])
+        .single()
+        .execute()
+    )
     if not user_res.data or not user_res.data.get("calendar_token"):
-        raise HTTPException(status_code=400, detail="No Google Calendar OAuth token provided.")
-    
+        raise HTTPException(
+            status_code=400, detail="No Google Calendar OAuth token provided."
+        )
+
     calendar_token = user_res.data.get("calendar_token")
 
     try:
-        event_start = datetime.fromisoformat(req.start_datetime_iso.replace("Z", "+00:00"))
+        event_start = datetime.fromisoformat(
+            req.start_datetime_iso.replace("Z", "+00:00")
+        )
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid ISO format for start_datetime_iso.")
-        
+        raise HTTPException(
+            status_code=400, detail="Invalid ISO format for start_datetime_iso."
+        )
+
     event_end = event_start + timedelta(minutes=req.duration_minutes)
 
     # Normalize to UTC and emit a clean RFC3339 "Z" timestamp. Using
@@ -144,6 +160,7 @@ async def schedule_followup(
     }
 
     from ..services.calendar_service import create_calendar_event
+
     try:
         result = await create_calendar_event(calendar_payload, calendar_token)
     except Exception as e:
@@ -159,9 +176,9 @@ async def schedule_followup(
         "attendees": req.attendees,
     }
 
-    supabase.table("meetings").update(
-        {"scheduling_result": schedule_result}
-    ).eq("id", meeting_id).execute()
+    supabase.table("meetings").update({"scheduling_result": schedule_result}).eq(
+        "id", meeting_id
+    ).execute()
 
     return {"status": "success", "scheduling_result": schedule_result}
 
@@ -179,14 +196,20 @@ async def refine_transcript(
 
     target_id = meeting.get("id") or meeting_id
     transcript_data = meeting.get("transcript_data") or []
-    
+
     if not transcript_data:
         raise HTTPException(status_code=400, detail="No transcript data found")
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
-        raw_text = "\n".join([f"[{t.get('timestamp_ms', 0)}ms] {t.get('speaker', 'Unknown')}: {t.get('text', '')}" for t in transcript_data])
-        
+
+        raw_text = "\n".join(
+            [
+                f"[{t.get('timestamp_ms', 0)}ms] {t.get('speaker', 'Unknown')}: {t.get('text', '')}"
+                for t in transcript_data
+            ]
+        )
+
         prompt = f"""You are an expert transcription editor. Review the following raw meeting transcript.
 Your task is to produce a CLEARED, REFINED, and HIGHLY READABLE transcript. 
 CRITICAL RULES:
@@ -203,10 +226,13 @@ Output ONLY a JSON object with a single key "transcript" containing an array of 
 
 Raw transcript:
 {raw_text}"""
-        
+
         import json
-        refined_json_str, _ = await generate_content_with_fallback(prompt, response_format_json=True, bypass_cache=True, max_tokens=8192)
-        
+
+        refined_json_str, _ = await generate_content_with_fallback(
+            prompt, response_format_json=True, bypass_cache=True, max_tokens=8192
+        )
+
         if not refined_json_str:
             raise ValueError("Failed to get response from AI providers")
 
@@ -215,9 +241,9 @@ Raw transcript:
         refined_json_str = refined_json_str.removeprefix("```json")
         refined_json_str = refined_json_str.removeprefix("```")
         refined_json_str = refined_json_str.removesuffix("```")
-            
+
         refined_data = json.loads(refined_json_str.strip())
-        
+
         # Ensure format
         if isinstance(refined_data, dict) and "transcript" in refined_data:
             refined_list = refined_data["transcript"]
@@ -225,11 +251,11 @@ Raw transcript:
             refined_list = refined_data
         else:
             raise ValueError("LLM did not return a valid list or transcript object")
-            
+
         if isinstance(refined_list, list):
             for item in refined_list:
                 item["source"] = "refined"
-            
+
             # Keep raw transcript chunks so users can toggle between Raw and Refined
             raw_chunks = [t for t in transcript_data if t.get("source") != "refined"]
             for r in raw_chunks:
@@ -237,7 +263,9 @@ Raw transcript:
                     r["source"] = "dom"
 
             combined = raw_chunks + refined_list
-            supabase.table("meetings").update({"transcript_data": combined}).eq("id", target_id).execute()
+            supabase.table("meetings").update({"transcript_data": combined}).eq(
+                "id", target_id
+            ).execute()
             return {"status": "success", "transcript_data": combined}
         else:
             raise TypeError("LLM did not return a list inside transcript")
@@ -261,14 +289,21 @@ async def _run_end_pipeline(
 
     try:
         from ..core.database import ensure_meeting_record
-        meeting_row = ensure_meeting_record(supabase, meeting_id, org_id, user_id, title)
+
+        meeting_row = ensure_meeting_record(
+            supabase, meeting_id, org_id, user_id, title
+        )
         target_id = meeting_row.get("id") or meeting_id
-        google_code = meeting_row.get("google_meet_link") or (meeting_id if not is_valid_uuid(meeting_id) else None)
+        google_code = meeting_row.get("google_meet_link") or (
+            meeting_id if not is_valid_uuid(meeting_id) else None
+        )
 
         # Mark as processing immediately
         if target_id and is_valid_uuid(target_id):
             try:
-                supabase.table("meetings").update({"status": "processing"}).eq("id", target_id).execute()
+                supabase.table("meetings").update({"status": "processing"}).eq(
+                    "id", target_id
+                ).execute()
             except Exception:
                 pass
 
@@ -278,9 +313,13 @@ async def _run_end_pipeline(
             utterances = await get_full_transcript(google_code)
         if not utterances and target_id:
             utterances = await get_full_transcript(target_id)
-            
-        old_utterances = meeting_row.get("transcript_data") if meeting_row and meeting_row.get("transcript_data") else []
-        
+
+        old_utterances = (
+            meeting_row.get("transcript_data")
+            if meeting_row and meeting_row.get("transcript_data")
+            else []
+        )
+
         if utterances and old_utterances:
             seen_ids = {u.get("id") for u in old_utterances if u.get("id")}
             merged = list(old_utterances)
@@ -294,41 +333,57 @@ async def _run_end_pipeline(
 
         # Prefer AI cleaned transcripts (source="audio"). Keep DOM transcripts only if no AI chunk exists for that timestamp.
         if utterances:
-            ai_times = {u.get("timestamp_ms") for u in utterances if u.get("source") == "audio"}
-            utterances = [u for u in utterances if u.get("source") == "audio" or u.get("timestamp_ms") not in ai_times]
+            ai_times = {
+                u.get("timestamp_ms") for u in utterances if u.get("source") == "audio"
+            }
+            utterances = [
+                u
+                for u in utterances
+                if u.get("source") == "audio" or u.get("timestamp_ms") not in ai_times
+            ]
 
         # Persist transcript to DB if target_id exists
         if target_id and utterances:
             await persist_transcript_to_db(target_id, utterances)
 
         if not utterances:
-            logger.warning(f"No utterances found for meeting {meeting_id}, proceeding with empty transcript to ensure summary generation.")
+            logger.warning(
+                f"No utterances found for meeting {meeting_id}, proceeding with empty transcript to ensure summary generation."
+            )
             if target_id:
-                supabase.table("meetings").update({"status": "no_transcript"}).eq("id", target_id).execute()
+                supabase.table("meetings").update({"status": "no_transcript"}).eq(
+                    "id", target_id
+                ).execute()
             # DO NOT RETURN, continue pipeline to generate summary
 
-
         import re
+
         if google_code:
-            match = re.search(r"([a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3})", google_code.lower())
+            match = re.search(
+                r"([a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3})", google_code.lower()
+            )
             if match:
                 google_code = match.group(1)
 
         # Determine title
         final_title = generate_meeting_title(
-            title or (meeting_row.get("title") if meeting_row else ""),
-            google_code
+            title or (meeting_row.get("title") if meeting_row else ""), google_code
         )
 
         # gen summary
-        logger.info(f"Dispatching MEETING_END for {meeting_id} with {len(utterances)} utterances")
-        summary = await dispatch(AgentTrigger.MEETING_END, {
-            "meeting_id": target_id or meeting_id,
-            "title": final_title,
-            "attendees": attendees,
-            "utterances": utterances,
-            "user_id": user_id,
-        })
+        logger.info(
+            f"Dispatching MEETING_END for {meeting_id} with {len(utterances)} utterances"
+        )
+        summary = await dispatch(
+            AgentTrigger.MEETING_END,
+            {
+                "meeting_id": target_id or meeting_id,
+                "title": final_title,
+                "attendees": attendees,
+                "utterances": utterances,
+                "user_id": user_id,
+            },
+        )
         logger.info(f"Dispatch MEETING_END returned for {meeting_id}")
 
         if summary.get("error"):
@@ -344,12 +399,17 @@ async def _run_end_pipeline(
         today = datetime.now(UTC).date().isoformat()
 
         if target_id:
-            final_sum_text = final_summary.get("summary") or final_summary.get("executive_summary") or final_summary.get("recap") or ""
+            final_sum_text = (
+                final_summary.get("summary")
+                or final_summary.get("executive_summary")
+                or final_summary.get("recap")
+                or ""
+            )
             if not final_sum_text and "error" in summary:
                 final_sum_text = summary["error"]
             if not final_sum_text:
                 final_sum_text = "The meeting was brief with limited context, but it has been successfully logged."
-        
+
             # Force status to completed so the UI always displays the summary
             final_status = "completed"
 
@@ -362,13 +422,13 @@ async def _run_end_pipeline(
                 if spk and spk not in {"Unknown", "System", ""}:
                     all_participants.add(spk)
             final_attendees_list = list(all_participants)
-            
+
             # Pad with dummy participants to match max_participants count
             current_count = len(final_attendees_list)
             if max_participants > current_count:
                 for i in range(current_count + 1, max_participants + 1):
                     final_attendees_list.append(f"Participant {i}")
-        
+
             supabase.table("meetings").update(
                 {
                     "title": final_title,
@@ -384,12 +444,19 @@ async def _run_end_pipeline(
         # save action items
         if target_id:
             _valid_priorities = {"high", "medium", "low"}
-            for ai in (final_summary.get("action_items") or []):
+            for ai in final_summary.get("action_items") or []:
                 raw_priority = (ai.get("priority") or "medium").strip().lower()
-                priority = raw_priority if raw_priority in _valid_priorities else "medium"
-                
+                priority = (
+                    raw_priority if raw_priority in _valid_priorities else "medium"
+                )
+
                 raw_due_date = ai.get("due_date")
-                due_date = raw_due_date if raw_due_date and re.match(r"^\d{4}-\d{2}-\d{2}$", str(raw_due_date).strip()) else None
+                due_date = (
+                    raw_due_date
+                    if raw_due_date
+                    and re.match(r"^\d{4}-\d{2}-\d{2}$", str(raw_due_date).strip())
+                    else None
+                )
 
                 supabase.table("action_items").insert(
                     {
@@ -428,7 +495,7 @@ async def _run_end_pipeline(
                 )
 
             # Embed and store decisions
-            for dec in (final_summary.get("decisions") or []):
+            for dec in final_summary.get("decisions") or []:
                 vec = await embed_batch([dec["text"]])
                 memory_points.append(
                     MemoryPoint(
@@ -450,7 +517,13 @@ async def _run_end_pipeline(
         # schedule follow-up and send gmail reminder if needed
         if not calendar_token:
             try:
-                user_res = supabase.table("users").select("calendar_token").eq("id", user_id).single().execute()
+                user_res = (
+                    supabase.table("users")
+                    .select("calendar_token")
+                    .eq("id", user_id)
+                    .single()
+                    .execute()
+                )
                 if user_res.data:
                     calendar_token = user_res.data.get("calendar_token")
             except Exception:
@@ -460,16 +533,24 @@ async def _run_end_pipeline(
             try:
                 if not calendar_token or not calendar_token.get("access_token"):
                     supabase.table("meetings").update(
-                        {"scheduling_result": {"status": "skipped", "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders."}}
+                        {
+                            "scheduling_result": {
+                                "status": "skipped",
+                                "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders.",
+                            }
+                        }
                     ).eq("id", target_id or meeting_id).execute()
                 else:
-                    schedule_result = await dispatch(AgentTrigger.SCHEDULE_FOLLOWUP, {
-                        "summary": final_summary,
-                        "attendees": attendees,
-                        "token": calendar_token,
-                        "org_id": org_id,
-                        "user_id": user_id,
-                    })
+                    schedule_result = await dispatch(
+                        AgentTrigger.SCHEDULE_FOLLOWUP,
+                        {
+                            "summary": final_summary,
+                            "attendees": attendees,
+                            "token": calendar_token,
+                            "org_id": org_id,
+                            "user_id": user_id,
+                        },
+                    )
                     supabase.table("meetings").update(
                         {"scheduling_result": schedule_result}
                     ).eq("id", target_id or meeting_id).execute()
@@ -478,16 +559,21 @@ async def _run_end_pipeline(
 
         # send notifications
         # Send email to organizer
-        email_result = await dispatch(AgentTrigger.SEND_EMAIL, {
-            "meeting_id": target_id or meeting_id,
-            "meeting_title": title or "Untitled Meeting",
-            "attendees": attendees,
-            "summary": final_summary.get("summary", ""),
-            "action_items": [ai.get("text") for ai in (final_summary.get("action_items") or [])],
-            "send_immediately": True,
-            "to_email": user_id, 
-            "user_id": user_id
-        })
+        email_result = await dispatch(
+            AgentTrigger.SEND_EMAIL,
+            {
+                "meeting_id": target_id or meeting_id,
+                "meeting_title": title or "Untitled Meeting",
+                "attendees": attendees,
+                "summary": final_summary.get("summary", ""),
+                "action_items": [
+                    ai.get("text") for ai in (final_summary.get("action_items") or [])
+                ],
+                "send_immediately": True,
+                "to_email": user_id,
+                "user_id": user_id,
+            },
+        )
 
         # Log email result (skip saving to DB as column doesn't exist)
         if email_result.get("sent"):
@@ -496,7 +582,9 @@ async def _run_end_pipeline(
             logger.warning(f"Email send result: {email_result}")
 
     except Exception as e:
-        logger.error(f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True)
+        logger.error(
+            f"Error in _run_end_pipeline for meeting {meeting_id}: {e}", exc_info=True
+        )
         try:
             # Use the target_id we already resolved at the top of the function
             local_target = locals().get("target_id") or meeting_id
@@ -504,9 +592,8 @@ async def _run_end_pipeline(
                 supabase.table("meetings").update(
                     {
                         "status": "completed",
-                        "summary": "An error occurred while generating the meeting summary. Please try again later."
+                        "summary": "An error occurred while generating the meeting summary. Please try again later.",
                     }
                 ).eq("id", local_target).execute()
         except Exception as inner_e:
             logger.error(f"Failed to update error status for {meeting_id}: {inner_e}")
-

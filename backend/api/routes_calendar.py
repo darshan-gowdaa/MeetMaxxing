@@ -76,7 +76,9 @@ def _parse_start_dt(meeting: dict) -> datetime | None:
     if meeting.get("end_at"):
         try:
             end = datetime.fromisoformat(meeting["end_at"].replace("Z", "+00:00"))
-            return (end + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0)
+            return (end + timedelta(days=1)).replace(
+                hour=10, minute=0, second=0, microsecond=0
+            )
         except Exception:
             pass
     return None
@@ -108,10 +110,17 @@ async def get_calendar_add_url(
 
     try:
         supabase.table("meetings").update(
-            {"scheduling_result": {"status": "gcal_url_generated", "html_link": gcal_url}}
+            {
+                "scheduling_result": {
+                    "status": "gcal_url_generated",
+                    "html_link": gcal_url,
+                }
+            }
         ).eq("id", meeting_id).execute()
     except Exception as e:
-        logging.warning(f"Could not persist scheduling_result (column may be missing): {e}")
+        logging.warning(
+            f"Could not persist scheduling_result (column may be missing): {e}"
+        )
 
     return {"gcal_url": gcal_url, "html_link": gcal_url, "status": "gcal_url_generated"}
 
@@ -145,7 +154,10 @@ async def calendar_callback(code: str, state: str = ""):
             "token_preview": {"has_refresh": bool(tokens.get("refresh_token"))},
         }
     except Exception:
-        raise HTTPException(status_code=400, detail="Calendar auth failed. Please try again or check your credentials.")
+        raise HTTPException(
+            status_code=400,
+            detail="Calendar auth failed. Please try again or check your credentials.",
+        )
 
 
 # ── POST /calendar/webhook ────────────────────────────────────────────────────
@@ -192,12 +204,15 @@ async def schedule_followup(
     if calendar_token and calendar_token.get("access_token"):
         try:
             from ..agents.scheduler_agent import run_scheduler_agent
+
             schedule_result = await run_scheduler_agent(
                 summary_output={
                     "summary": meeting.get("summary", ""),
                     "decisions": meeting.get("decisions", []),
                     "action_items": meeting.get("action_items", []),
-                    "follow_up": meeting.get("follow_up", {"required": True, "suggested_topic": "Follow-up"}),
+                    "follow_up": meeting.get(
+                        "follow_up", {"required": True, "suggested_topic": "Follow-up"}
+                    ),
                 },
                 attendee_emails=meeting.get("attendees", []),
                 calendar_token=calendar_token,
@@ -220,10 +235,17 @@ async def schedule_followup(
 
     try:
         supabase.table("meetings").update(
-            {"scheduling_result": {"status": "gcal_url_generated", "html_link": gcal_url}}
+            {
+                "scheduling_result": {
+                    "status": "gcal_url_generated",
+                    "html_link": gcal_url,
+                }
+            }
         ).eq("id", meeting_id).execute()
     except Exception as e:
-        logging.warning(f"Could not persist scheduling_result (column may be missing): {e}")
+        logging.warning(
+            f"Could not persist scheduling_result (column may be missing): {e}"
+        )
 
     return {
         "status": "gcal_url_generated",

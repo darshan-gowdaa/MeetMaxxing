@@ -51,7 +51,9 @@ def _format_window(chunks: list[dict]) -> str:
         ts = chunk.get("timestamp_ms", 0)
         mins = ts // 60000
         secs = (ts % 60000) // 1000
-        lines.append(f"[{mins:02d}:{secs:02d}] {chunk.get('speaker', 'Unknown')}: {chunk.get('text', '')}")
+        lines.append(
+            f"[{mins:02d}:{secs:02d}] {chunk.get('speaker', 'Unknown')}: {chunk.get('text', '')}"
+        )
     return "\n".join(lines)
 
 
@@ -71,12 +73,14 @@ async def run_realtime_agent(
         last_n=settings.REALTIME_WINDOW_MINUTES * 20,
     )
     chunks = [c for c in raw_chunks if c.get("source") != "audio"]
-    chunks = chunks[-(settings.REALTIME_WINDOW_MINUTES * 10):]
+    chunks = chunks[-(settings.REALTIME_WINDOW_MINUTES * 10) :]
 
     if not chunks:
         return {
             "meeting_id": meeting_id,
-            "suggestions": ["Listening for spoken speech... Turn on Google Meet Captions (CC) at the bottom right to begin real-time AI analysis."],
+            "suggestions": [
+                "Listening for spoken speech... Turn on Google Meet Captions (CC) at the bottom right to begin real-time AI analysis."
+            ],
             "risks": [],
             "next_questions": ["Waiting for speaker utterance..."],
             "transcript_chunks": 0,
@@ -87,7 +91,9 @@ async def run_realtime_agent(
     last_count = _last_chunk_counts.get(meeting_id, 0)
 
     if len(chunks) == last_count:
-        _consecutive_unchanged[meeting_id] = _consecutive_unchanged.get(meeting_id, 0) + 1
+        _consecutive_unchanged[meeting_id] = (
+            _consecutive_unchanged.get(meeting_id, 0) + 1
+        )
     else:
         _consecutive_unchanged[meeting_id] = 0
 
@@ -130,9 +136,14 @@ async def run_realtime_agent(
                 topic="uploaded_context",
                 query_text="meeting context overview",
             )
-            context_res = await search_memories(query_vector=q_vec, memory_filter=mem_filter, limit=3)
+            context_res = await search_memories(
+                query_vector=q_vec, memory_filter=mem_filter, limit=3
+            )
             if context_res:
-                uploaded_context = "\n\nUploaded Meeting Context Documents:\n" + "\n".join(r.text for r in context_res)
+                uploaded_context = (
+                    "\n\nUploaded Meeting Context Documents:\n"
+                    + "\n".join(r.text for r in context_res)
+                )
     except Exception as e:
         logger.debug("[Realtime Agent] Could not fetch uploaded context: {}", e)
 
@@ -140,6 +151,7 @@ async def run_realtime_agent(
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
+
         raw, powered_by = await generate_content_with_fallback(
             prompt,
             response_format_json=True,
@@ -166,6 +178,7 @@ async def run_realtime_agent(
         }
 
     from ..services.guardrails import validate_realtime_output
+
     raw_suggs = result.get("suggestions") or []
     if isinstance(raw_suggs, str):
         raw_suggs = [raw_suggs]
@@ -191,4 +204,3 @@ async def run_realtime_agent(
     _last_chunk_counts[meeting_id] = len(chunks)
     _last_results[meeting_id] = res
     return res
-

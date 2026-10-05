@@ -18,6 +18,7 @@ from ..memory.schemas import MemoryPoint, MemoryType
 
 router = APIRouter(prefix="/context", tags=["context"])
 
+
 async def extract_text_from_file(file: UploadFile) -> str:
     content = ""
     filename = file.filename or ""
@@ -39,24 +40,25 @@ async def extract_text_from_file(file: UploadFile) -> str:
         raise HTTPException(status_code=400, detail="Unsupported file type")
     return content
 
+
 @router.post("/upload")
 async def upload_context(
     meeting_id: str = Form(...),
     file: UploadFile = File(...),
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(get_current_user),
 ):
     try:
         text = await extract_text_from_file(file)
         if not text.strip():
             raise HTTPException(status_code=400, detail="File is empty")
-        
+
         # Simple chunking
         chunk_size = 1000
-        chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
-        
+        chunks = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+
         points = []
         today_str = datetime.datetime.now().strftime("%Y-%m-%d")
-        
+
         for chunk in chunks:
             if not chunk.strip():
                 continue
@@ -71,50 +73,68 @@ async def upload_context(
                 memory_type=MemoryType.KEY_TOPIC,
                 meeting_date=today_str,
                 topic="uploaded_context",
-                speaker_name=file.filename
+                speaker_name=file.filename,
             )
             points.append(pt)
-            
+
         await upsert_memories(points)
-        return {"status": "success", "message": f"Successfully uploaded {file.filename} and processed {len(points)} chunks."}
+        return {
+            "status": "success",
+            "message": f"Successfully uploaded {file.filename} and processed {len(points)} chunks.",
+        }
     except Exception as e:
         logger.error(f"Failed to process context upload: {e}")
-        raise HTTPException(status_code=500, detail="Failed to upload and process document context. Please try again.")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to upload and process document context. Please try again.",
+        )
+
 
 class ContextChatRequest(BaseModel):
     meeting_id: str
     query: str
     target_file: list[str] | str | None = None
 
+
 @router.post("/chat")
-async def chat_context(
-    req: ContextChatRequest,
-    user: dict = Depends(get_current_user)
-):
+async def chat_context(req: ContextChatRequest, user: dict = Depends(get_current_user)):
     try:
         if req.target_file:
             res = await run_docs_qa_agent(
-                question=req.query, org_id=user["org_id"], user_id=user["user_id"],
-                filters={"meeting_id": req.meeting_id, "speaker_name": req.target_file}
+                question=req.query,
+                org_id=user["org_id"],
+                user_id=user["user_id"],
+                filters={"meeting_id": req.meeting_id, "speaker_name": req.target_file},
             )
-            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Docs QA Agent"), "sources": res.get("sources", [])}
+            return {
+                "answer": res.get("answer"),
+                "powered_by": res.get("powered_by", "Docs QA Agent"),
+                "sources": res.get("sources", []),
+            }
         else:
             res = await run_memory_agent(
-                question=req.query, org_id=user["org_id"], user_id=user["user_id"],
-                filters={"current_meeting_id": req.meeting_id}
+                question=req.query,
+                org_id=user["org_id"],
+                user_id=user["user_id"],
+                filters={"current_meeting_id": req.meeting_id},
             )
-            return {"answer": res.get("answer"), "powered_by": res.get("powered_by", "Memory Agent"), "sources": res.get("sources", [])}
+            return {
+                "answer": res.get("answer"),
+                "powered_by": res.get("powered_by", "Memory Agent"),
+                "sources": res.get("sources", []),
+            }
     except Exception as e:
         logger.error("Error in chat_context: {}", e, exc_info=True)
         return {"answer": f"An error occurred: {e!s}"}
 
+
 class ContextClearRequest(BaseModel):
     meeting_id: str
 
+
 @router.post("/clear")
 async def clear_context(
-    req: ContextClearRequest,
-    user: dict = Depends(get_current_user)
+    req: ContextClearRequest, user: dict = Depends(get_current_user)
 ):
     try:
         client = await get_qdrant()
@@ -122,28 +142,43 @@ async def clear_context(
             collection_name=settings.QDRANT_COLLECTION,
             points_selector=qmodels.Filter(
                 must=[
-                    qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                    qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)),
-                    qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
+                    qmodels.FieldCondition(
+                        key="org_id", match=qmodels.MatchValue(value=user["org_id"])
+                    ),
+                    qmodels.FieldCondition(
+                        key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)
+                    ),
+                    qmodels.FieldCondition(
+                        key="topic", match=qmodels.MatchValue(value="uploaded_context")
+                    ),
                 ]
-            )
+            ),
         )
-        return {"status": "success", "message": "Uploaded context cleared successfully."}
+        return {
+            "status": "success",
+            "message": "Uploaded context cleared successfully.",
+        }
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to clear uploaded context. Please try again.")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to clear uploaded context. Please try again.",
+        )
+
 
 @router.get("/files")
-async def list_all_files(
-    user: dict = Depends(get_current_user)
-):
+async def list_all_files(user: dict = Depends(get_current_user)):
     try:
         client = await get_qdrant()
         results = await client.scroll(
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=qmodels.Filter(
                 must=[
-                    qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                    qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
+                    qmodels.FieldCondition(
+                        key="org_id", match=qmodels.MatchValue(value=user["org_id"])
+                    ),
+                    qmodels.FieldCondition(
+                        key="topic", match=qmodels.MatchValue(value="uploaded_context")
+                    ),
                 ]
             ),
             limit=10000,
@@ -158,30 +193,38 @@ async def list_all_files(
             date = pt.payload.get("meeting_date", "Unknown Date")
             key = f"{fname}|{mid}|{date}"
             files[key] = files.get(key, 0) + 1
-            
+
         file_list = []
         for k, v in files.items():
             fname, mid, date = k.split("|")
-            file_list.append({"filename": fname, "meeting_id": mid, "date": date, "chunks": v})
-            
+            file_list.append(
+                {"filename": fname, "meeting_id": mid, "date": date, "chunks": v}
+            )
+
         return {"files": file_list}
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to list files. Please try again.")
+        raise HTTPException(
+            status_code=500, detail="Failed to list files. Please try again."
+        )
+
 
 @router.get("/files/{meeting_id}")
-async def list_files(
-    meeting_id: str,
-    user: dict = Depends(get_current_user)
-):
+async def list_files(meeting_id: str, user: dict = Depends(get_current_user)):
     try:
         client = await get_qdrant()
         results = await client.scroll(
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=qmodels.Filter(
                 must=[
-                    qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                    qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=meeting_id)),
-                    qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
+                    qmodels.FieldCondition(
+                        key="org_id", match=qmodels.MatchValue(value=user["org_id"])
+                    ),
+                    qmodels.FieldCondition(
+                        key="meeting_id", match=qmodels.MatchValue(value=meeting_id)
+                    ),
+                    qmodels.FieldCondition(
+                        key="topic", match=qmodels.MatchValue(value="uploaded_context")
+                    ),
                 ]
             ),
             limit=10000,
@@ -193,20 +236,24 @@ async def list_files(
         for pt in points:
             fname = pt.payload.get("speaker_name", "Unknown File")
             files[fname] = files.get(fname, 0) + 1
-            
+
         file_list = [{"filename": k, "chunks": v} for k, v in files.items()]
         return {"files": file_list}
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to list files for meeting. Please try again.")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to list files for meeting. Please try again.",
+        )
+
 
 class ContextClearFileRequest(BaseModel):
     meeting_id: str
     filename: str
 
+
 @router.post("/clear_file")
 async def clear_file(
-    req: ContextClearFileRequest,
-    user: dict = Depends(get_current_user)
+    req: ContextClearFileRequest, user: dict = Depends(get_current_user)
 ):
     try:
         client = await get_qdrant()
@@ -214,21 +261,33 @@ async def clear_file(
             collection_name=settings.QDRANT_COLLECTION,
             points_selector=qmodels.Filter(
                 must=[
-                    qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                    qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)),
-                    qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
-                    qmodels.FieldCondition(key="speaker_name", match=qmodels.MatchValue(value=req.filename)),
+                    qmodels.FieldCondition(
+                        key="org_id", match=qmodels.MatchValue(value=user["org_id"])
+                    ),
+                    qmodels.FieldCondition(
+                        key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)
+                    ),
+                    qmodels.FieldCondition(
+                        key="topic", match=qmodels.MatchValue(value="uploaded_context")
+                    ),
+                    qmodels.FieldCondition(
+                        key="speaker_name", match=qmodels.MatchValue(value=req.filename)
+                    ),
                 ]
-            )
+            ),
         )
         return {"status": "success", "message": f"File {req.filename} cleared."}
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to clear file. Please try again.")
+        raise HTTPException(
+            status_code=500, detail="Failed to clear file. Please try again."
+        )
+
 
 class ContextRenameFileRequest(BaseModel):
     meeting_id: str
     old_filename: str
     new_filename: str
+
 
 @router.post("/rename_file")
 async def rename_file(
@@ -240,10 +299,18 @@ async def rename_file(
         # Scroll to get all matching point IDs first
         scroll_filter = qmodels.Filter(
             must=[
-                qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)),
-                qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
-                qmodels.FieldCondition(key="speaker_name", match=qmodels.MatchValue(value=req.old_filename)),
+                qmodels.FieldCondition(
+                    key="org_id", match=qmodels.MatchValue(value=user["org_id"])
+                ),
+                qmodels.FieldCondition(
+                    key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)
+                ),
+                qmodels.FieldCondition(
+                    key="topic", match=qmodels.MatchValue(value="uploaded_context")
+                ),
+                qmodels.FieldCondition(
+                    key="speaker_name", match=qmodels.MatchValue(value=req.old_filename)
+                ),
             ]
         )
         results = await client.scroll(
@@ -255,7 +322,9 @@ async def rename_file(
         )
         point_ids = [pt.id for pt in results[0]]
         if not point_ids:
-            raise HTTPException(status_code=404, detail=f"No points found for file '{req.old_filename}'")
+            raise HTTPException(
+                status_code=404, detail=f"No points found for file '{req.old_filename}'"
+            )
         # Update by explicit IDs for reliability
         await client.set_payload(
             collection_name=settings.QDRANT_COLLECTION,
@@ -263,20 +332,27 @@ async def rename_file(
             points=point_ids,
             wait=True,
         )
-        return {"status": "success", "message": f"File renamed to {req.new_filename}.", "updated": len(point_ids)}
+        return {
+            "status": "success",
+            "message": f"File renamed to {req.new_filename}.",
+            "updated": len(point_ids),
+        }
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to rename file. Please try again.")
+        raise HTTPException(
+            status_code=500, detail="Failed to rename file. Please try again."
+        )
+
 
 class ContextFileContentRequest(BaseModel):
     meeting_id: str
     filename: str
 
+
 @router.post("/file_content")
 async def get_file_content(
-    req: ContextFileContentRequest,
-    user: dict = Depends(get_current_user)
+    req: ContextFileContentRequest, user: dict = Depends(get_current_user)
 ):
     try:
         client = await get_qdrant()
@@ -284,10 +360,18 @@ async def get_file_content(
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=qmodels.Filter(
                 must=[
-                    qmodels.FieldCondition(key="org_id", match=qmodels.MatchValue(value=user["org_id"])),
-                    qmodels.FieldCondition(key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)),
-                    qmodels.FieldCondition(key="topic", match=qmodels.MatchValue(value="uploaded_context")),
-                    qmodels.FieldCondition(key="speaker_name", match=qmodels.MatchValue(value=req.filename)),
+                    qmodels.FieldCondition(
+                        key="org_id", match=qmodels.MatchValue(value=user["org_id"])
+                    ),
+                    qmodels.FieldCondition(
+                        key="meeting_id", match=qmodels.MatchValue(value=req.meeting_id)
+                    ),
+                    qmodels.FieldCondition(
+                        key="topic", match=qmodels.MatchValue(value="uploaded_context")
+                    ),
+                    qmodels.FieldCondition(
+                        key="speaker_name", match=qmodels.MatchValue(value=req.filename)
+                    ),
                 ]
             ),
             limit=10000,
@@ -298,4 +382,6 @@ async def get_file_content(
         content = "\n\n".join([pt.payload.get("text", "") for pt in points])
         return {"content": content}
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to retrieve file content. Please try again.")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve file content. Please try again."
+        )

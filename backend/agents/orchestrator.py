@@ -20,6 +20,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     try:
         if trigger == AgentTrigger.MEETING_END:
             from .summary_agent import run_summary_agent
+
             res = await run_summary_agent(
                 meeting_id=payload.get("meeting_id", ""),
                 title=payload.get("title", ""),
@@ -29,6 +30,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             )
         elif trigger == AgentTrigger.REALTIME_TICK:
             from .realtime_agent import run_realtime_agent
+
             res = await run_realtime_agent(
                 meeting_id=payload.get("meeting_id", ""),
                 context=payload.get("context"),
@@ -37,6 +39,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             )
         elif trigger == AgentTrigger.LATE_JOIN_RECAP:
             from .late_join_agent import generate_late_join_recap
+
             res = await generate_late_join_recap(
                 meeting_id=payload.get("meeting_id", ""),
                 force=payload.get("force", False),
@@ -44,6 +47,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             )
         elif trigger == AgentTrigger.SEND_EMAIL:
             from .email_agent import run_email_agent
+
             res = await run_email_agent(
                 meeting_id=payload.get("meeting_id", ""),
                 meeting_title=payload.get("meeting_title", ""),
@@ -58,6 +62,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             )
         elif trigger == AgentTrigger.SCHEDULE_FOLLOWUP:
             from .scheduler_agent import run_scheduler_agent
+
             res = await run_scheduler_agent(
                 summary_output=payload.get("summary", {}),
                 attendee_emails=payload.get("attendees", []),
@@ -67,6 +72,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             )
         elif trigger == AgentTrigger.MEMORY_QUERY:
             from .memory_agent import run_memory_agent
+
             res = await run_memory_agent(
                 question=payload.get("question", ""),
                 org_id=payload.get("org_id", ""),
@@ -75,6 +81,7 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
             )
         elif trigger == AgentTrigger.DOCS_QA:
             from .docs_qa_agent import run_docs_qa_agent
+
             res = await run_docs_qa_agent(
                 question=payload.get("question", ""),
                 org_id=payload.get("org_id", ""),
@@ -92,4 +99,3 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
     except Exception as e:
         logger.exception("[Orchestrator] Error dispatching {}: {}", trigger, e)
         return {"error": str(e)}
-

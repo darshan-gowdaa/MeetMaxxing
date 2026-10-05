@@ -88,11 +88,14 @@ async def provision_user(user: dict = Depends(get_current_user)):
 
     # 2. Ensure public.users record exists (required for foreign keys)
     try:
-        supabase_admin.table("users").upsert({
-            "id": user["user_id"],
-            "org_id": org_id,
-            "email": user.get("email", ""),
-        }, on_conflict="id").execute()
+        supabase_admin.table("users").upsert(
+            {
+                "id": user["user_id"],
+                "org_id": org_id,
+                "email": user.get("email", ""),
+            },
+            on_conflict="id",
+        ).execute()
     except Exception as e:
         logging.warning(f"Failed to provision public.users record: {e}")
 

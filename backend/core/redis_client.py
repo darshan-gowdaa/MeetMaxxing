@@ -36,7 +36,11 @@ class MemoryRedis:
         return len(_memory_store[key])
 
     async def rpop(self, key: str) -> str | None:
-        if key in _memory_store and isinstance(_memory_store[key], list) and _memory_store[key]:
+        if (
+            key in _memory_store
+            and isinstance(_memory_store[key], list)
+            and _memory_store[key]
+        ):
             return _memory_store[key].pop()
         return None
 
@@ -44,7 +48,7 @@ class MemoryRedis:
         items = _memory_store.get(key, [])
         if not isinstance(items, list):
             return []
-        return items[start:] if end == -1 else items[start: end + 1]
+        return items[start:] if end == -1 else items[start : end + 1]
 
     async def expire(self, key: str, ttl: int) -> bool:
         return True  # TTL not tracked in memory fallback
@@ -104,7 +108,9 @@ async def append_transcript_chunk(meeting_id: str, chunk: dict) -> None:
                 new_text = chunk.get("text", "").strip()
                 if last_text == new_text or last_text.startswith(new_text):
                     return
-                if new_text.startswith(last_text) or (len(new_text) > len(last_text) and new_text[:15] == last_text[:15]):
+                if new_text.startswith(last_text) or (
+                    len(new_text) > len(last_text) and new_text[:15] == last_text[:15]
+                ):
                     if isinstance(r, MemoryRedis):
                         _memory_store[key][-1] = json.dumps(chunk)
                     else:

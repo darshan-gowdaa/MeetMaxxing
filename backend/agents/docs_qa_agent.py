@@ -34,13 +34,15 @@ def _build_context_block(results) -> tuple[str, list[dict]]:
         context_lines.append(
             f"[Context {i}] File: {r.speaker_name or 'Document'} (Meeting {r.meeting_id})\n{r.text}"
         )
-        sources.append({
-            "index": i,
-            "meeting_id": r.meeting_id,
-            "speaker_name": r.speaker_name,
-            "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
-            "score": round(r.score, 3),
-        })
+        sources.append(
+            {
+                "index": i,
+                "meeting_id": r.meeting_id,
+                "speaker_name": r.speaker_name,
+                "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
+                "score": round(r.score, 3),
+            }
+        )
 
     return "\n\n".join(context_lines), sources
 
@@ -63,7 +65,9 @@ async def run_docs_qa_agent(
     )
 
     query_vec = await embed_query(question)
-    results = await search_memories(query_vector=query_vec, memory_filter=mem_filter, limit=6)
+    results = await search_memories(
+        query_vector=query_vec, memory_filter=mem_filter, limit=6
+    )
 
     context_block, sources = _build_context_block(results)
 
@@ -76,6 +80,7 @@ async def run_docs_qa_agent(
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
+
         raw, powered_by = await generate_content_with_fallback(
             prompt,
             response_format_json=True,
@@ -99,10 +104,13 @@ async def run_docs_qa_agent(
     cited_sources = [sources[i] for i in used_indices if i < len(sources)]
 
     from ..services.guardrails import validate_memory_output
-    guardrail_res = await validate_memory_output(answer=result.get("answer", ""), sources=cited_sources)
+
+    guardrail_res = await validate_memory_output(
+        answer=result.get("answer", ""), sources=cited_sources
+    )
 
     final_answer = guardrail_res.cleaned_output.get("answer", result.get("answer", ""))
-    final_answer = re.sub(r'\[Context\s*[\d,\s]*\]', '', final_answer).strip()
+    final_answer = re.sub(r"\[Context\s*[\d,\s]*\]", "", final_answer).strip()
 
     return {
         "answer": final_answer,
@@ -113,4 +121,3 @@ async def run_docs_qa_agent(
         "guardrail_valid": guardrail_res.valid,
         "guardrail_violations": guardrail_res.violations,
     }
-

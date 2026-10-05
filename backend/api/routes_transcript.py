@@ -61,7 +61,11 @@ async def get_realtime_insights(
 ):
     """On-demand generation of suggestions, next question, and late-join recap."""
     _require_scoped_meeting(meeting_id, user["org_id"])
-    logger.info("[MeetMaxxing REST] [ON-DEMAND] On-demand realtime insights requested for meeting {} (force={})...", meeting_id, force)
+    logger.info(
+        "[MeetMaxxing REST] [ON-DEMAND] On-demand realtime insights requested for meeting {} (force={})...",
+        meeting_id,
+        force,
+    )
     result = await dispatch(
         AgentTrigger.REALTIME_TICK,
         {
@@ -73,6 +77,7 @@ async def get_realtime_insights(
     )
     return result
 
+
 @router.get("/late-recap/{meeting_id}")
 async def get_late_recap(
     meeting_id: str,
@@ -81,7 +86,9 @@ async def get_late_recap(
 ):
     """Generates an executive late join recap."""
     _require_scoped_meeting(meeting_id, user["org_id"])
-    logger.info("[MeetMaxxing REST] [RECAP] Late join recap requested for {}", meeting_id)
+    logger.info(
+        "[MeetMaxxing REST] [RECAP] Late join recap requested for {}", meeting_id
+    )
     result = await dispatch(
         AgentTrigger.LATE_JOIN_RECAP,
         {
@@ -116,7 +123,9 @@ async def ingest_transcript_chunk(
     user: dict = Depends(get_current_user),
 ):
     """REST fallback for transcript ingestion (used if WebSocket unavailable)."""
-    logger.debug("[MeetMaxxing REST Ingest] [AUDIO] {}: <audio chunk received>", chunk.speaker)
+    logger.debug(
+        "[MeetMaxxing REST Ingest] [AUDIO] {}: <audio chunk received>", chunk.speaker
+    )
     result = await ingest_chunk(chunk.model_dump())
     # Broadcast to active WS connections if any exist
     if chunk.meeting_id in _active_connections and result.get("text"):
@@ -163,15 +172,22 @@ async def ingest_audio_chunk(
         )
         transcript_text = response.text.strip() if response.text else ""
     except Exception as e:
-        logger.warning("[MeetMaxxing Audio Ingest] [WARN] Gemini audio transcription failed ({}). Checking Groq fallback...", e)
+        logger.warning(
+            "[MeetMaxxing Audio Ingest] [WARN] Gemini audio transcription failed ({}). Checking Groq fallback...",
+            e,
+        )
         groq_key = getattr(settings, "GROQ_API_KEY", "")
         if groq_key and groq_key.strip():
             try:
                 import httpx
+
                 audio_bytes = base64.b64decode(req.audio_base64)
                 ext = "webm" if "webm" in req.mime_type else "wav"
                 files = {"file": (f"chunk.{ext}", audio_bytes, req.mime_type)}
-                data = {"model": "whisper-large-v3", "prompt": "Meeting conversation transcription:"}
+                data = {
+                    "model": "whisper-large-v3",
+                    "prompt": "Meeting conversation transcription:",
+                }
                 async with httpx.AsyncClient(timeout=15.0) as http_client:
                     res = await http_client.post(
                         "https://api.groq.com/openai/v1/audio/transcriptions",
@@ -181,18 +197,34 @@ async def ingest_audio_chunk(
                     )
                     if res.status_code == 200:
                         transcript_text = res.json().get("text", "").strip()
-                        logger.info("[MeetMaxxing Audio Ingest] [SUCCESS] Groq Whisper fallback succeeded! Transcribed {} chars.", len(transcript_text))
+                        logger.info(
+                            "[MeetMaxxing Audio Ingest] [SUCCESS] Groq Whisper fallback succeeded! Transcribed {} chars.",
+                            len(transcript_text),
+                        )
                     else:
-                        logger.error("[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper error: {}", res.status_code)
+                        logger.error(
+                            "[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper error: {}",
+                            res.status_code,
+                        )
             except Exception as groq_err:
-                logger.error("[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper exception: {}", groq_err)
+                logger.error(
+                    "[MeetMaxxing Audio Ingest] [ERROR] Groq Whisper exception: {}",
+                    groq_err,
+                )
         if not transcript_text:
-            return {"status": "skipped", "reason": str(locals().get('e', 'Transcription failed')), "copilot_update": None}
+            return {
+                "status": "skipped",
+                "reason": str(locals().get("e", "Transcription failed")),
+                "copilot_update": None,
+            }
 
     if not transcript_text:
         return {"status": "empty", "copilot_update": None}
 
-    logger.debug("[MeetMaxxing Audio Ingest] [TRANSCRIBED] Transcribed audio ({} chars)", len(transcript_text))
+    logger.debug(
+        "[MeetMaxxing Audio Ingest] [TRANSCRIBED] Transcribed audio ({} chars)",
+        len(transcript_text),
+    )
 
     # Store each line as a transcript chunk
     for line in transcript_text.splitlines():
@@ -215,11 +247,17 @@ async def ingest_audio_chunk(
         if req.meeting_id in _active_connections and clean_chunk.get("text"):
             for ws in list(_active_connections[req.meeting_id]):
                 try:
-                    await ws.send_json({"type": "live_caption_chunk", "chunk": clean_chunk})
+                    await ws.send_json(
+                        {"type": "live_caption_chunk", "chunk": clean_chunk}
+                    )
                 except Exception:
                     pass
 
-    return {"status": "transcribed", "transcript": transcript_text, "copilot_update": None}
+    return {
+        "status": "transcribed",
+        "transcript": transcript_text,
+        "copilot_update": None,
+    }
 
 
 @router.websocket("/ws/{meeting_id}")
@@ -252,18 +290,27 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
     try:
         user = await get_user_from_token(token or "")
     except HTTPException:
-        logger.warning("[MeetMaxxing WS] [AUTH] Rejected unauthenticated connection for meeting {}", meeting_id)
+        logger.warning(
+            "[MeetMaxxing WS] [AUTH] Rejected unauthenticated connection for meeting {}",
+            meeting_id,
+        )
         await websocket.close(code=WS_CLOSE_UNAUTHORIZED, reason="Unauthorized")
         return
 
     # Echo the harmless protocol name back (never the token) if the client
     # requested the subprotocol handshake, so the upgrade succeeds cleanly.
-    requested_protocols = (websocket.headers.get("sec-websocket-protocol") or "").split(",")
+    requested_protocols = (websocket.headers.get("sec-websocket-protocol") or "").split(
+        ","
+    )
     if any(p.strip() == WS_PROTOCOL_NAME for p in requested_protocols):
         await websocket.accept(subprotocol=WS_PROTOCOL_NAME)
     else:
         await websocket.accept()
-    logger.info("[MeetMaxxing WS] [CONNECT] Client connected for meeting {} (user={})", meeting_id, user["user_id"])
+    logger.info(
+        "[MeetMaxxing WS] [CONNECT] Client connected for meeting {} (user={})",
+        meeting_id,
+        user["user_id"],
+    )
 
     # Register connection
     if meeting_id not in _active_connections:
@@ -279,12 +326,17 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
                 continue
 
             raw["meeting_id"] = meeting_id
-            logger.debug("[MeetMaxxing WS Ingest] [MSG] {}: <text chunk received>", raw.get("speaker", "Speaker"))
+            logger.debug(
+                "[MeetMaxxing WS Ingest] [MSG] {}: <text chunk received>",
+                raw.get("speaker", "Speaker"),
+            )
 
             async def broadcast_ai_chunk(ai_chunk):
                 for ws_conn in list(_active_connections.get(meeting_id, set())):
                     try:
-                        await ws_conn.send_json({"type": "live_caption_chunk", "chunk": ai_chunk})
+                        await ws_conn.send_json(
+                            {"type": "live_caption_chunk", "chunk": ai_chunk}
+                        )
                     except Exception:
                         pass
 

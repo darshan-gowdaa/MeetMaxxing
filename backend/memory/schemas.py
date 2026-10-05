@@ -15,23 +15,23 @@ class MemoryType(str, Enum):
 class MemoryPoint:
     """A single point to upsert into Qdrant."""
 
-    id: str                          # UUID string
+    id: str  # UUID string
     vector: list[float]
-    text: str                        # raw text content
+    text: str  # raw text content
 
     # Required metadata (always present)
     org_id: str
     user_id: str
     meeting_id: str
     memory_type: MemoryType
-    meeting_date: str                # ISO date string YYYY-MM-DD
+    meeting_date: str  # ISO date string YYYY-MM-DD
 
     # Optional metadata
     speaker_id: str = ""
     speaker_name: str = ""
     topic: str = ""
-    priority: int = 1                # 1 = normal, 2 = high, 3 = critical
-    timestamp_ms: int = 0            # utterance timestamp within meeting
+    priority: int = 1  # 1 = normal, 2 = high, 3 = critical
+    timestamp_ms: int = 0  # utterance timestamp within meeting
 
     def to_payload(self) -> dict:
         return {
@@ -61,7 +61,7 @@ class MemoryFilter:
     topic: str = ""
     query_text: str = ""
     memory_type: MemoryType | None = None
-    date_from: str = ""              # ISO date YYYY-MM-DD
+    date_from: str = ""  # ISO date YYYY-MM-DD
     date_to: str = ""
 
 

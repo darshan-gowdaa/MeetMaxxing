@@ -15,7 +15,7 @@ from ..core.utils import parse_json_clean
 @dataclass
 class GuardrailResult:
     valid: bool
-    score: float          # 0.0 – 1.0 groundedness score
+    score: float  # 0.0 – 1.0 groundedness score
     violations: list[str]
     cleaned_output: dict
 
@@ -82,13 +82,21 @@ async def validate_summary_output(
     speaker_names = _extract_speaker_names(transcript)
     for dec in decisions:
         decided_by = dec.get("decided_by", "")
-        if decided_by and decided_by not in {"Team", "Group", "Everyone"} and decided_by not in speaker_names:
-            violations.append(f"Decision owner '{decided_by}' not found in transcript speakers")
+        if (
+            decided_by
+            and decided_by not in {"Team", "Group", "Everyone"}
+            and decided_by not in speaker_names
+        ):
+            violations.append(
+                f"Decision owner '{decided_by}' not found in transcript speakers"
+            )
 
     for ai in action_items:
         owner = ai.get("owner", "")
         if owner and owner not in {"Unassigned", "Team"} and owner not in speaker_names:
-            violations.append(f"Action item owner '{owner}' not found in transcript speakers")
+            violations.append(
+                f"Action item owner '{owner}' not found in transcript speakers"
+            )
 
     eval_context = f"Transcript (first 2000 chars):\n{transcript[:2000]}"
     eval_content = (
@@ -118,14 +126,24 @@ async def validate_memory_output(
 ) -> GuardrailResult:
     # checks if the generated answer is actually based on the retrieved context
     if not sources or not answer:
-        return GuardrailResult(valid=True, score=1.0, violations=[], cleaned_output={"answer": answer})
+        return GuardrailResult(
+            valid=True, score=1.0, violations=[], cleaned_output={"answer": answer}
+        )
 
     # fast check for standard fallback or missing info responses
     low_answer = answer.lower()
-    if "couldn't find" in low_answer or "could not find" in low_answer or "error occurred" in low_answer:
-        return GuardrailResult(valid=True, score=1.0, violations=[], cleaned_output={"answer": answer})
+    if (
+        "couldn't find" in low_answer
+        or "could not find" in low_answer
+        or "error occurred" in low_answer
+    ):
+        return GuardrailResult(
+            valid=True, score=1.0, violations=[], cleaned_output={"answer": answer}
+        )
 
-    context_text = "\n".join(f"Context {i}: {s.get('excerpt', '')}" for i, s in enumerate(sources))
+    context_text = "\n".join(
+        f"Context {i}: {s.get('excerpt', '')}" for i, s in enumerate(sources)
+    )
 
     if eval_with_llm:
         score, violations = await _run_groundedness_eval(context_text, answer)
@@ -156,4 +174,3 @@ async def validate_memory_output(
         violations=[],
         cleaned_output={"answer": answer},
     )
-

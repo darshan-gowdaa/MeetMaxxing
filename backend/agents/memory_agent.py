@@ -44,15 +44,17 @@ def _build_context_block(results) -> tuple[str, list[dict]]:
         context_lines.append(
             f"[Context {i}] Meeting {r.meeting_id} ({r.meeting_date}) — {r.speaker_name}\n{r.text}"
         )
-        sources.append({
-            "index": i,
-            "meeting_id": r.meeting_id,
-            "meeting_date": r.meeting_date,
-            "speaker_name": r.speaker_name,
-            "memory_type": r.memory_type,
-            "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
-            "score": round(r.score, 3),
-        })
+        sources.append(
+            {
+                "index": i,
+                "meeting_id": r.meeting_id,
+                "meeting_date": r.meeting_date,
+                "speaker_name": r.speaker_name,
+                "memory_type": r.memory_type,
+                "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
+                "score": round(r.score, 3),
+            }
+        )
 
     return "\n\n".join(context_lines), sources
 
@@ -108,13 +110,16 @@ async def run_memory_agent(
             pass
 
     query_vec = await embed_query(question)
-    raw_results = await search_memories(query_vector=query_vec, memory_filter=mem_filter, limit=15)
+    raw_results = await search_memories(
+        query_vector=query_vec, memory_filter=mem_filter, limit=15
+    )
     results = _rerank_results(raw_results)
 
     meetings_context = ""
     meetings_list = []
     try:
         from ..core.database import get_supabase_admin
+
         supabase = get_supabase_admin()
         res = (
             supabase.table("meetings")
@@ -134,7 +139,9 @@ async def run_memory_agent(
                 summary = m.get("summary") or ""
                 decisions = m.get("decisions") or []
                 attendees = ", ".join(m.get("attendees") or [])
-                dec_text = "; ".join(d.get("text", "") for d in decisions if d.get("text"))
+                dec_text = "; ".join(
+                    d.get("text", "") for d in decisions if d.get("text")
+                )
                 line = f"[Meeting: {title} | Date: {date_str} | Attendees: {attendees}]\nSummary: {summary}"
                 if dec_text:
                     line += f"\nDecisions: {dec_text}"
@@ -142,7 +149,6 @@ async def run_memory_agent(
             meetings_context = "\n\n".join(lines)
     except Exception as e:
         logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
-
 
     if not results and not meetings_context:
         return {
@@ -155,7 +161,8 @@ async def run_memory_agent(
 
     db_section = (
         f"\n\n--- ALL PAST MEETING SUMMARIES (from database) ---\n{meetings_context}\n--- END OF MEETING SUMMARIES ---\n"
-        if meetings_context else ""
+        if meetings_context
+        else ""
     )
 
     # Inject live transcript if current_meeting_id is provided
@@ -164,14 +171,20 @@ async def run_memory_agent(
     if target_meeting_ids:
         if isinstance(target_meeting_ids, str):
             target_meeting_ids = [target_meeting_ids]
-        
+
         from ..core.redis_client import get_full_transcript
+
         for m_id in target_meeting_ids:
             if m_id != "global":
                 try:
                     utterances = await get_full_transcript(m_id)
                     if utterances:
-                        formatted = "\n".join([f"{u.get('speaker', 'Speaker')}: {u.get('text', '')}" for u in utterances])
+                        formatted = "\n".join(
+                            [
+                                f"{u.get('speaker', 'Speaker')}: {u.get('text', '')}"
+                                for u in utterances
+                            ]
+                        )
                         live_transcript_section += f"\n\n--- LIVE TRANSCRIPT FOR CURRENT MEETING ---\n{formatted}\n--- END OF LIVE TRANSCRIPT ---\n"
                 except Exception as e:
                     logger.warning(f"Could not fetch live transcript for {m_id}: {e}")
@@ -190,6 +203,7 @@ async def run_memory_agent(
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
+
         raw, powered_by = await generate_content_with_fallback(
             prompt,
             response_format_json=True,
@@ -201,7 +215,6 @@ async def run_memory_agent(
         if not result:
             result = {"answer": raw.strip(), "confidence": "low", "sources_used": []}
     except Exception as e:
-
         err_str = str(e)
         return {
             "answer": "An error occurred while querying memory. Please try again.",
@@ -216,10 +229,13 @@ async def run_memory_agent(
     cited_sources = [sources[i] for i in used_indices if i < len(sources)]
 
     from ..services.guardrails import validate_memory_output
-    guardrail_res = await validate_memory_output(answer=result.get("answer", ""), sources=cited_sources)
+
+    guardrail_res = await validate_memory_output(
+        answer=result.get("answer", ""), sources=cited_sources
+    )
 
     final_answer = guardrail_res.cleaned_output.get("answer", result.get("answer", ""))
-    final_answer = re.sub(r'\[Context\s*[\d,\s]*\]', '', final_answer).strip()
+    final_answer = re.sub(r"\[Context\s*[\d,\s]*\]", "", final_answer).strip()
 
     return {
         "answer": final_answer,

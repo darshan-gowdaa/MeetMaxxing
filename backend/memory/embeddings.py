@@ -19,13 +19,16 @@ def _get_client() -> genai.Client:
 async def _fallback_vector(text: str) -> list[float]:
     raise RuntimeError("GEMINI_API_KEY is not set. Cannot generate embeddings.")
 
+
 # Simple in-memory LRU cache for embeddings
 _embed_cache: dict[str, list[float]] = {}
 _embed_cache_keys: list[str] = []
 CACHE_MAX_SIZE = 500
 
+
 def _get_from_cache(text: str):
     return _embed_cache.get(text)
+
 
 def _set_in_cache(text: str, vector: list[float]):
     if text in _embed_cache:
@@ -36,17 +39,21 @@ def _set_in_cache(text: str, vector: list[float]):
         oldest = _embed_cache_keys.pop(0)
         del _embed_cache[oldest]
 
+
 async def embed_text(text: str) -> list[float]:
     """Embed a single text string using Gemini gemini-embedding-001."""
     cached = _get_from_cache(text)
     if cached:
         return cached
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key"]:
+    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in [
+        "your-gemini-api-key",
+        "mock-key",
+    ]:
         vec = await _fallback_vector(text)
         _set_in_cache(text, vec)
         return vec
-        
+
     client = _get_client()
     # embed_content is a synchronous network call — offload it so it doesn't
     # block the FastAPI event loop.
@@ -67,7 +74,10 @@ async def embed_text(text: str) -> list[float]:
 async def embed_query(text: str) -> list[float]:
     """Embed a query string (different task_type for better retrieval recall)."""
     # Note: query embeddings might not be cached since they are highly variable and context-dependent
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key"]:
+    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in [
+        "your-gemini-api-key",
+        "mock-key",
+    ]:
         return await _fallback_vector(text)
     client = _get_client()
     result = await asyncio.to_thread(
@@ -86,9 +96,9 @@ async def embed_batch(texts: list[str]) -> list[list[float]]:
     """Batch embed multiple texts (for post-meeting processing)."""
     if not texts:
         return []
-        
+
     results = []
-    
+
     # Check cache first to reduce batch size
     uncached_texts = []
     uncached_indices = []
@@ -97,28 +107,31 @@ async def embed_batch(texts: list[str]) -> list[list[float]]:
         if cached:
             results.append(cached)
         else:
-            results.append(None) # Placeholder
+            results.append(None)  # Placeholder
             uncached_texts.append(t)
             uncached_indices.append(i)
-            
+
     if not uncached_texts:
         return results
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in ["your-gemini-api-key", "mock-key"]:
+    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in [
+        "your-gemini-api-key",
+        "mock-key",
+    ]:
         for i, idx in enumerate(uncached_indices):
             vec = await _fallback_vector(uncached_texts[i])
             results[idx] = vec
             _set_in_cache(uncached_texts[i], vec)
         return results
-        
+
     try:
         client = _get_client()
         # Batch in groups of 20
         batch_size = 20
         for i in range(0, len(uncached_texts), batch_size):
-            batch = uncached_texts[i:i+batch_size]
-            batch_indices = uncached_indices[i:i+batch_size]
-            
+            batch = uncached_texts[i : i + batch_size]
+            batch_indices = uncached_indices[i : i + batch_size]
+
             result = await asyncio.to_thread(
                 client.models.embed_content,
                 model=settings.GEMINI_EMBEDDING_MODEL,
@@ -128,12 +141,12 @@ async def embed_batch(texts: list[str]) -> list[list[float]]:
                     output_dimensionality=settings.EMBEDDING_DIM,
                 ),
             )
-            
+
             for j, emb in enumerate(result.embeddings):
                 vec = emb.values
                 results[batch_indices[j]] = vec
                 _set_in_cache(batch[j], vec)
-                
+
         return results
     except Exception:
         for i, idx in enumerate(uncached_indices):
@@ -158,22 +171,26 @@ def chunk_transcript(
     current_speaker = None
     current_ts = 0
     token_count = 0
-    
+
     # First, group by speaker
     grouped_utterances = []
     for utt in utterances:
         speaker = utt.get("speaker", "Unknown")
         text = utt.get("text", "").strip()
         ts = utt.get("timestamp_ms", 0)
-        
+
         if not grouped_utterances:
-            grouped_utterances.append({"speaker": speaker, "text": text, "timestamp_ms": ts})
+            grouped_utterances.append(
+                {"speaker": speaker, "text": text, "timestamp_ms": ts}
+            )
         else:
             last = grouped_utterances[-1]
             if last["speaker"] == speaker:
                 last["text"] += f" {text}"
             else:
-                grouped_utterances.append({"speaker": speaker, "text": text, "timestamp_ms": ts})
+                grouped_utterances.append(
+                    {"speaker": speaker, "text": text, "timestamp_ms": ts}
+                )
 
     # Now apply size/overlap logic on the grouped utterances
     for utt in grouped_utterances:
@@ -185,36 +202,40 @@ def chunk_transcript(
         tokens = len(line.split())
 
         if token_count + tokens > chunk_size and current_text:
-            chunks.append({
-                "text": "\n".join(current_text),
-                "speaker_name": current_speaker if current_speaker else "Multiple",
-                "timestamp_ms": current_ts,
-            })
+            chunks.append(
+                {
+                    "text": "\n".join(current_text),
+                    "speaker_name": current_speaker if current_speaker else "Multiple",
+                    "timestamp_ms": current_ts,
+                }
+            )
             # Overlap handling (simplistic)
             if tokens > chunk_size:
-                 # If a single speaker's turn is massive, just start new
-                 current_text = []
-                 token_count = 0
+                # If a single speaker's turn is massive, just start new
+                current_text = []
+                token_count = 0
             else:
-                 # Keep last turn as overlap if it fits
-                 last_line = current_text[-1]
-                 current_text = [last_line]
-                 token_count = len(last_line.split())
+                # Keep last turn as overlap if it fits
+                last_line = current_text[-1]
+                current_text = [last_line]
+                token_count = len(last_line.split())
 
         if not current_text:
             current_ts = ts
             current_speaker = speaker
         elif current_speaker != speaker:
             current_speaker = "Multiple"
-            
+
         current_text.append(line)
         token_count += tokens
 
     if current_text:
-        chunks.append({
-            "text": "\n".join(current_text),
-            "speaker_name": current_speaker if current_speaker else "Multiple",
-            "timestamp_ms": current_ts,
-        })
+        chunks.append(
+            {
+                "text": "\n".join(current_text),
+                "speaker_name": current_speaker if current_speaker else "Multiple",
+                "timestamp_ms": current_ts,
+            }
+        )
 
     return chunks

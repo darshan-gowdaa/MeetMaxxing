@@ -30,7 +30,7 @@ async def query_memory(
 ):
     """
     Natural-language cross-meeting memory query.
-    
+
     Examples:
     - "What did the client say about pricing in the last 3 meetings?"
     - "What's pending with Rahul?"
@@ -49,7 +49,12 @@ async def query_memory(
     if req.memory_type:
         filters["memory_type"] = req.memory_type
 
-    logger.info("Memory Query Debug -> question: {}, user_id: {}, org_id: {}", req.question, user['user_id'], user['org_id'])
+    logger.info(
+        "Memory Query Debug -> question: {}, user_id: {}, org_id: {}",
+        req.question,
+        user["user_id"],
+        user["org_id"],
+    )
     result = await run_memory_agent(
         question=req.question,
         org_id=user["org_id"],

@@ -51,7 +51,10 @@ async def run_scheduler_agent(
     follow_up = summary_output.get("follow_up", {})
 
     if not follow_up.get("required", False):
-        return {"scheduled": False, "reason": "No follow-up required per summary agent."}
+        return {
+            "scheduled": False,
+            "reason": "No follow-up required per summary agent.",
+        }
 
     suggested_topic = follow_up.get("suggested_topic", "Follow-up meeting")
     suggested_attendees = follow_up.get("suggested_attendees", attendee_emails)
@@ -72,6 +75,7 @@ async def run_scheduler_agent(
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
+
         raw, powered_by = await generate_content_with_fallback(
             prompt,
             response_format_json=True,
@@ -81,7 +85,10 @@ async def run_scheduler_agent(
         )
         event_plan = parse_json_clean(raw or "{}")
     except Exception as e:
-        return {"scheduled": False, "reason": f"AI error during scheduling: {str(e)[:150]}"}
+        return {
+            "scheduled": False,
+            "reason": f"AI error during scheduling: {str(e)[:150]}",
+        }
 
     # Resolve event start datetime
     iso_start = event_plan.get("start_datetime_iso")
@@ -89,10 +96,14 @@ async def run_scheduler_agent(
         try:
             event_start = datetime.fromisoformat(iso_start.replace("Z", "+00:00"))
         except (ValueError, TypeError):
-            event_start = (datetime.now(UTC) + timedelta(days=5)).replace(hour=10, minute=0, second=0, microsecond=0)
+            event_start = (datetime.now(UTC) + timedelta(days=5)).replace(
+                hour=10, minute=0, second=0, microsecond=0
+            )
     else:
         offset_days = int(event_plan.get("suggested_date_offset_days", 5) or 5)
-        event_start = (datetime.now(UTC) + timedelta(days=offset_days)).replace(hour=10, minute=0, second=0, microsecond=0)
+        event_start = (datetime.now(UTC) + timedelta(days=offset_days)).replace(
+            hour=10, minute=0, second=0, microsecond=0
+        )
 
     # ensure the meeting falls on a weekday (monday-friday)
     if event_start.weekday() == 5:  # saturday -> monday
@@ -101,7 +112,9 @@ async def run_scheduler_agent(
         event_start += timedelta(days=1)
 
     event_end = event_start + timedelta(minutes=event_plan.get("duration_minutes", 30))
-    final_attendees = list(set(event_plan.get("attendees", []) + (suggested_attendees or attendee_emails)))
+    final_attendees = list(
+        set(event_plan.get("attendees", []) + (suggested_attendees or attendee_emails))
+    )
 
     calendar_payload = {
         "summary": event_plan.get("title", f"Follow-up: {suggested_topic}"),
@@ -118,7 +131,6 @@ async def run_scheduler_agent(
         },
     }
 
-
     if not event_plan.get("has_explicit_date_time", True):
         return {
             "scheduled": False,
@@ -129,7 +141,9 @@ async def run_scheduler_agent(
 
     try:
         result = await create_calendar_event(calendar_payload, calendar_token)
-        logger.info(f"[Scheduler Agent] Successfully scheduled event using {powered_by}")
+        logger.info(
+            f"[Scheduler Agent] Successfully scheduled event using {powered_by}"
+        )
         return {
             "scheduled": True,
             "event_id": result.get("id"),

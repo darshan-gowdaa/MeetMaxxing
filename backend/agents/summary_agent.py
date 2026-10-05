@@ -52,7 +52,6 @@ Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or `
 }"""
 
 
-
 def _format_full_transcript(utterances: list[dict]) -> str:
     lines = []
     for utt in utterances:
@@ -67,7 +66,13 @@ def _format_full_transcript(utterances: list[dict]) -> str:
                     parts = []
                     for item in parsed:
                         if isinstance(item, dict):
-                            val = item.get("text") or item.get("utterance") or item.get("raw_text") or item.get("refined_text") or ""
+                            val = (
+                                item.get("text")
+                                or item.get("utterance")
+                                or item.get("raw_text")
+                                or item.get("refined_text")
+                                or ""
+                            )
                             if val:
                                 parts.append(val)
                         elif isinstance(item, str):
@@ -80,7 +85,9 @@ def _format_full_transcript(utterances: list[dict]) -> str:
             try:
                 parsed = json.loads(text)
                 if isinstance(parsed, dict):
-                    if "dialog_turn" in parsed and isinstance(parsed["dialog_turn"], list):
+                    if "dialog_turn" in parsed and isinstance(
+                        parsed["dialog_turn"], list
+                    ):
                         text = " ".join(
                             t.get("refined_text") or t.get("raw_text") or ""
                             for t in parsed["dialog_turn"]
@@ -124,6 +131,7 @@ async def run_summary_agent(
             "Extract the structured meeting intelligence as per instructions."
         )
         from ..core.llm_fallback import generate_content_with_fallback
+
         raw, powered_by = await generate_content_with_fallback(
             prompt,
             response_format_json=True,
@@ -135,7 +143,10 @@ async def run_summary_agent(
         result = parse_json_clean(raw or "{}")
         if not result:
             result = {}
-        result.setdefault("summary", "The meeting was too brief or context was limited, but it has been successfully logged.")
+        result.setdefault(
+            "summary",
+            "The meeting was too brief or context was limited, but it has been successfully logged.",
+        )
         result.setdefault("decisions", [])
         result.setdefault("action_items", [])
         result.setdefault("follow_up", {"required": False})

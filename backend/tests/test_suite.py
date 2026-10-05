@@ -39,12 +39,14 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         # Seed user
         supabase = get_supabase_admin()
         try:
-            supabase.table("users").upsert({
-                "id": self.user_id,
-                "org_id": self.org_id,
-                "email": "test_ai_copilot@example.com",
-                "name": "AI Copilot Tester"
-            }).execute()
+            supabase.table("users").upsert(
+                {
+                    "id": self.user_id,
+                    "org_id": self.org_id,
+                    "email": "test_ai_copilot@example.com",
+                    "name": "AI Copilot Tester",
+                }
+            ).execute()
         except Exception:
             res = supabase.table("users").select("id, org_id").limit(1).execute()
             if res.data:
@@ -66,22 +68,49 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
 
         # 2. Ingest rolling utterances
         utterances = [
-            {"meeting_id": m_id, "speaker": "Rahul", "text": "Let's review our Q3 AI architecture.", "timestamp_ms": 1000},
-            {"meeting_id": m_id, "speaker": "Sriya", "text": "We need to ensure Gemini Flash API gives under 2s latency for live suggestions.", "timestamp_ms": 15000},
-            {"meeting_id": m_id, "speaker": "Rahul", "text": "Also make sure late joiners get instant recap summaries.", "timestamp_ms": 30000},
-            {"meeting_id": m_id, "speaker": "Sriya", "text": "I will handle the summary agent and Lyzr integration.", "timestamp_ms": 45000},
-            {"meeting_id": m_id, "speaker": "Rahul", "text": "Pricing will be $49/user/month with a 14-day free trial.", "timestamp_ms": 60000},
+            {
+                "meeting_id": m_id,
+                "speaker": "Rahul",
+                "text": "Let's review our Q3 AI architecture.",
+                "timestamp_ms": 1000,
+            },
+            {
+                "meeting_id": m_id,
+                "speaker": "Sriya",
+                "text": "We need to ensure Gemini Flash API gives under 2s latency for live suggestions.",
+                "timestamp_ms": 15000,
+            },
+            {
+                "meeting_id": m_id,
+                "speaker": "Rahul",
+                "text": "Also make sure late joiners get instant recap summaries.",
+                "timestamp_ms": 30000,
+            },
+            {
+                "meeting_id": m_id,
+                "speaker": "Sriya",
+                "text": "I will handle the summary agent and Lyzr integration.",
+                "timestamp_ms": 45000,
+            },
+            {
+                "meeting_id": m_id,
+                "speaker": "Rahul",
+                "text": "Pricing will be $49/user/month with a 14-day free trial.",
+                "timestamp_ms": 60000,
+            },
         ]
         for utt in utterances:
             res = await ingest_chunk(utt)
             self.assertEqual(res["meeting_id"], m_id)
 
         # 3. Trigger Realtime Agent
-        realtime_output = await run_realtime_agent(m_id, context={"title": "Q3 Roadmap", "attendees": ["Rahul", "Sriya"]})
+        realtime_output = await run_realtime_agent(
+            m_id, context={"title": "Q3 Roadmap", "attendees": ["Rahul", "Sriya"]}
+        )
         self.assertIn("suggestions", realtime_output)
         self.assertIn("risks", realtime_output)
         self.assertIn("next_questions", realtime_output)
-        
+
         recap_output = await generate_late_join_recap(m_id)
         self.assertIn("recap", recap_output)
         self.assertTrue(len(recap_output["recap"]) > 0)
@@ -92,8 +121,16 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         """Test Case 3: Summary Agent, Lyzr Guardrail groundedness verification, database storage."""
         print("\n--- Running Test Case 3: Meeting End Pipeline & Guardrail Check ---")
         utterances = [
-            {"speaker": "Rahul", "text": "We decided to adopt Qdrant vector DB for memory storage.", "timestamp_ms": 1000},
-            {"speaker": "Sriya", "text": "I will handle the Google Calendar and Gmail API reminder integration by tomorrow.", "timestamp_ms": 5000},
+            {
+                "speaker": "Rahul",
+                "text": "We decided to adopt Qdrant vector DB for memory storage.",
+                "timestamp_ms": 1000,
+            },
+            {
+                "speaker": "Sriya",
+                "text": "I will handle the Google Calendar and Gmail API reminder integration by tomorrow.",
+                "timestamp_ms": 5000,
+            },
         ]
         for u in utterances:
             u["meeting_id"] = self.meeting_id
@@ -109,11 +146,15 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         self.assertIn("action_items", summary)
 
         # Guardrail check
-        guardrail = await validate_summary_output(summary, "\n".join([f"{u['speaker']}: {u['text']}" for u in utterances]))
+        guardrail = await validate_summary_output(
+            summary, "\n".join([f"{u['speaker']}: {u['text']}" for u in utterances])
+        )
         self.assertIsNotNone(guardrail.cleaned_output)
         print(f"-> Guardrail Score: {guardrail.score}")
         print(f"-> Extracted Decisions: {guardrail.cleaned_output.get('decisions')}")
-        print(f"-> Extracted Action Items: {guardrail.cleaned_output.get('action_items')}")
+        print(
+            f"-> Extracted Action Items: {guardrail.cleaned_output.get('action_items')}"
+        )
 
     async def test_03_multi_meeting_memory_query(self):
         """Test Case 4: Grounded cross-meeting natural language query using Qdrant + Gemini."""
@@ -156,9 +197,18 @@ class TestMeetMaxxingPipeline(unittest.IsolatedAsyncioTestCase):
         print("\n--- Running Test Case 5: Smart Calendar & Gmail API Follow-up ---")
         summary_payload = {
             "summary": "Reviewed architecture and finalized Calendar+Gmail reminder flow.",
-            "decisions": [{"text": "Deploy Gmail reminder notification service.", "decided_by": "Rahul"}],
+            "decisions": [
+                {
+                    "text": "Deploy Gmail reminder notification service.",
+                    "decided_by": "Rahul",
+                }
+            ],
             "action_items": [{"text": "Verify email invite links", "owner": "Sriya"}],
-            "follow_up": {"required": True, "suggested_topic": "Deployment Check-in", "suggested_attendees": ["rahul@christ.edu", "sriya@christ.edu"]},
+            "follow_up": {
+                "required": True,
+                "suggested_topic": "Deployment Check-in",
+                "suggested_attendees": ["rahul@christ.edu", "sriya@christ.edu"],
+            },
         }
         mock_token = {"access_token": "mock_access_token"}
         res = await run_scheduler_agent(

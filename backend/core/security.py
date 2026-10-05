@@ -20,9 +20,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
 
     # Tuples of (window_seconds, max_requests)
-    _INGESTION_LIMIT = (60, 120)   # 120 req/min on transcript ingest
-    _DEFAULT_LIMIT = (60, 300)     # 300 req/min everywhere else
-    _STRICT_LIMIT = (60, 30)       # 30 req/min on auth routes
+    _INGESTION_LIMIT = (60, 120)  # 120 req/min on transcript ingest
+    _DEFAULT_LIMIT = (60, 300)  # 300 req/min everywhere else
+    _STRICT_LIMIT = (60, 30)  # 30 req/min on auth routes
 
     _STRICT_PREFIXES = ("/api/auth/",)
     _INGESTION_PREFIXES = ("/ingest/",)
@@ -106,4 +106,6 @@ def validate_production_secrets() -> None:
         )
 
     if not settings.SUPABASE_SERVICE_ROLE_KEY:
-        raise RuntimeError("FATAL: SUPABASE_SERVICE_ROLE_KEY is required in production.")
+        raise RuntimeError(
+            "FATAL: SUPABASE_SERVICE_ROLE_KEY is required in production."
+        )

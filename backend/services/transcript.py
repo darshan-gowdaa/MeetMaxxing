@@ -19,7 +19,9 @@ def normalize_chunk(raw: dict) -> dict:
     return {
         "id": str(uuid.uuid4()),
         "speaker": raw.get("speaker", "Unknown Speaker").strip(),
-        "text": (raw.get("text") or raw.get("utterance") or raw.get("raw_text") or "").strip(),
+        "text": (
+            raw.get("text") or raw.get("utterance") or raw.get("raw_text") or ""
+        ).strip(),
         "timestamp_ms": int(raw.get("timestamp_ms", 0)),
         "meeting_id": raw.get("meeting_id", ""),
         "platform": raw.get("platform", "google_meet"),
@@ -36,6 +38,7 @@ async def ingest_chunk(raw_chunk: dict, on_ai_chunk_ready=None) -> dict:
 
         if on_ai_chunk_ready:
             import asyncio
+
             if asyncio.iscoroutinefunction(on_ai_chunk_ready):
                 await on_ai_chunk_ready(chunk)
             else:
@@ -68,7 +71,9 @@ async def create_meeting_record(
     from ..core.redis_client import set_meeting_alias
 
     final_title = generate_meeting_title(title, google_meet_link)
-    clean_code = google_meet_link.strip().replace("https://meet.google.com/", "").strip("/")
+    clean_code = (
+        google_meet_link.strip().replace("https://meet.google.com/", "").strip("/")
+    )
 
     meeting_id = str(uuid.uuid4())
     supabase = get_supabase_admin()

@@ -24,7 +24,14 @@ def get_http_client() -> httpx.AsyncClient:
 
 
 def _is_placeholder(key: str) -> bool:
-    return not key or key.strip() in ["", "your-gemini-api-key", "mock-key", "your-groq-key", "your-openrouter-key", "your-perplexity-key"]
+    return not key or key.strip() in [
+        "",
+        "your-gemini-api-key",
+        "mock-key",
+        "your-groq-key",
+        "your-openrouter-key",
+        "your-perplexity-key",
+    ]
 
 
 async def _call_openai_compat(
@@ -50,20 +57,32 @@ async def _call_openai_compat(
     if response_format_json:
         payload["response_format"] = {"type": "json_object"}
 
-    headers = {"Authorization": f"Bearer {key.strip()}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {key.strip()}",
+        "Content-Type": "application/json",
+    }
     if extra_headers:
         headers.update(extra_headers)
 
     try:
-        res = await http_client.post(url, headers=headers, json=payload, timeout=timeout)
+        res = await http_client.post(
+            url, headers=headers, json=payload, timeout=timeout
+        )
         if res.status_code == 200:
-            text = res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+            text = (
+                res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+            )
             return text.strip() if text else None
         if res.status_code == 429:
             rate_limiter.record_failure(provider)
             logger.warning("[LLM Fallback] {} rate limited (429)", provider)
         else:
-            logger.warning("[LLM Fallback] {} error {}: {}", provider, res.status_code, res.text[:150])
+            logger.warning(
+                "[LLM Fallback] {} error {}: {}",
+                provider,
+                res.status_code,
+                res.text[:150],
+            )
     except Exception as e:
         logger.warning("[LLM Fallback] {} network error: {}", provider, e)
     return None
@@ -98,7 +117,11 @@ async def generate_content_with_fallback(
 
     async def _cache_and_return(text: str, provider_str: str) -> tuple[str, str]:
         await rate_limiter.set_cached_response(
-            prompt, "fallback", temperature, {"text": text, "provider": provider_str}, cache_ttl
+            prompt,
+            "fallback",
+            temperature,
+            {"text": text, "provider": provider_str},
+            cache_ttl,
         )
         return text, provider_str
 
@@ -106,12 +129,17 @@ async def generate_content_with_fallback(
     if user_id:
         try:
             from .byok import resolve_user_byok, call_byok_provider
+
             byok_cfg = await resolve_user_byok(user_id)
             if byok_cfg:
                 b_provider = byok_cfg["provider"]
                 b_model = byok_cfg["model"]
                 b_key = byok_cfg["api_key"]
-                logger.info("[LLM BYOK] Routing request to user key for provider={}, model={}", b_provider, b_model)
+                logger.info(
+                    "[LLM BYOK] Routing request to user key for provider={}, model={}",
+                    b_provider,
+                    b_model,
+                )
                 byok_text = await call_byok_provider(
                     http_client=http_client,
                     provider=b_provider,
@@ -126,13 +154,20 @@ async def generate_content_with_fallback(
                 if byok_text:
                     label = f"BYOK: {b_provider.capitalize()} ({b_model or 'default'})"
                     return await _cache_and_return(byok_text, label)
-                logger.warning("[LLM BYOK] User key for {} failed; falling back to MeetMaxxing AI default pool.", b_provider)
+                logger.warning(
+                    "[LLM BYOK] User key for {} failed; falling back to MeetMaxxing AI default pool.",
+                    b_provider,
+                )
         except Exception as byok_err:
-            logger.warning("[LLM BYOK] Error in BYOK resolution/execution: {}", byok_err)
+            logger.warning(
+                "[LLM BYOK] Error in BYOK resolution/execution: {}", byok_err
+            )
 
     # 1. Google Gemini (fast fail on quota exhaustion)
     gemini_key = settings.GEMINI_API_KEY
-    if not _is_placeholder(gemini_key) and await rate_limiter.acquire("gemini", wait=False):
+    if not _is_placeholder(gemini_key) and await rate_limiter.acquire(
+        "gemini", wait=False
+    ):
         try:
             from google import genai
             from google.genai import types as genai_types
@@ -160,7 +195,9 @@ async def generate_content_with_fallback(
                             lambda m=g_model: client.models.generate_content(
                                 model=m,
                                 contents=prompt,
-                                config=genai_types.GenerateContentConfig(**config_kwargs),
+                                config=genai_types.GenerateContentConfig(
+                                    **config_kwargs
+                                ),
                             ),
                         ),
                         timeout=5.0,
@@ -186,8 +223,9 @@ async def generate_content_with_fallback(
 
     # 2. OpenRouter (rock solid, fast response times)
     openrouter_key = settings.OPENROUTER_API_KEY
-    if not _is_placeholder(openrouter_key) and await rate_limiter.acquire("openrouter", wait=False):
-
+    if not _is_placeholder(openrouter_key) and await rate_limiter.acquire(
+        "openrouter", wait=False
+    ):
         openrouter_models = [
             "google/gemini-2.5-flash",
             "meta-llama/llama-3.3-70b-instruct",
@@ -213,7 +251,9 @@ async def generate_content_with_fallback(
                 )
                 if text:
                     rate_limiter.record_success("openrouter")
-                    return await _cache_and_return(text, f"MeetMaxxing AI (OpenRouter - {m})")
+                    return await _cache_and_return(
+                        text, f"MeetMaxxing AI (OpenRouter - {m})"
+                    )
             except Exception as e:
                 errors.append(f"OpenRouter ({m}): {e}")
         rate_limiter.record_failure("openrouter")
@@ -272,7 +312,9 @@ async def generate_content_with_fallback(
             )
             if text:
                 rate_limiter.record_success("perplexity")
-                return await _cache_and_return(text, "MeetMaxxing AI (Perplexity Sonar)")
+                return await _cache_and_return(
+                    text, "MeetMaxxing AI (Perplexity Sonar)"
+                )
         except Exception as e:
             rate_limiter.record_failure("perplexity")
             errors.append(f"Perplexity: {e}")
@@ -283,7 +325,11 @@ async def generate_content_with_fallback(
 
     if response_format_json:
         is_rate_limit = any("429" in e or "RESOURCE_EXHAUSTED" in e for e in errors)
-        err_msg = "Rate limit reached on AI providers. Retrying shortly." if is_rate_limit else "AI services unavailable. Please check configuration."
+        err_msg = (
+            "Rate limit reached on AI providers. Retrying shortly."
+            if is_rate_limit
+            else "AI services unavailable. Please check configuration."
+        )
         mock = {
             "error": err_msg,
             "error_type": "QUOTA_EXCEEDED" if is_rate_limit else "API_ERROR",
@@ -301,6 +347,9 @@ async def generate_content_with_fallback(
         return json.dumps(mock), "API Error"
 
     is_rate_limit = any("429" in e or "RESOURCE_EXHAUSTED" in e for e in errors)
-    err_msg = "Rate limit reached on AI providers. Retrying shortly." if is_rate_limit else "AI services unavailable. Please check configuration."
+    err_msg = (
+        "Rate limit reached on AI providers. Retrying shortly."
+        if is_rate_limit
+        else "AI services unavailable. Please check configuration."
+    )
     return err_msg, "API Error"
-

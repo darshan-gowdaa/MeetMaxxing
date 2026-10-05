@@ -23,13 +23,20 @@ async def list_meetings(
     supabase = get_supabase_admin()
     result = (
         supabase.table("meetings")
-        .select("id, title, start_at, end_at, summary, status, attendees, guardrail_score", count="exact")
+        .select(
+            "id, title, start_at, end_at, summary, status, attendees, guardrail_score",
+            count="exact",
+        )
         .eq("org_id", user["org_id"])
         .order("start_at", desc=True)
         .range(offset, offset + limit - 1)
         .execute()
     )
-    total_meetings = result.count if hasattr(result, 'count') and result.count is not None else len(result.data or [])
+    total_meetings = (
+        result.count
+        if hasattr(result, "count") and result.count is not None
+        else len(result.data or [])
+    )
 
     return {
         "meetings": result.data or [],
@@ -52,10 +59,7 @@ async def get_meeting_detail(
     target_id = meeting["id"]
 
     actions = (
-        supabase.table("action_items")
-        .select("*")
-        .eq("meeting_id", target_id)
-        .execute()
+        supabase.table("action_items").select("*").eq("meeting_id", target_id).execute()
     )
 
     # Sort by priority (high → medium → low) then status (open → in_progress → done)
@@ -66,7 +70,7 @@ async def get_meeting_detail(
         key=lambda a: (
             _status_order.get(a.get("status", "open"), 9),
             _priority_order.get((a.get("priority") or "medium").lower(), 9),
-        )
+        ),
     )
 
     return {
@@ -110,7 +114,9 @@ async def update_action_item(
     # Validate status transitions
     valid_statuses = {"open", "in_progress", "done"}
     if "status" in safe_updates and safe_updates["status"] not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}"
+        )
     if not safe_updates:
         raise HTTPException(status_code=400, detail="No valid fields to update")
     result = (
@@ -156,10 +162,18 @@ async def delete_meeting(
     target_id = meeting["id"]
 
     # Delete associated action items first (if no cascade in DB)
-    supabase.table("action_items").delete().eq("meeting_id", target_id).eq("org_id", user["org_id"]).execute()
+    supabase.table("action_items").delete().eq("meeting_id", target_id).eq(
+        "org_id", user["org_id"]
+    ).execute()
     # Delete meeting
-    result = supabase.table("meetings").delete().eq("id", target_id).eq("org_id", user["org_id"]).execute()
-    
+    result = (
+        supabase.table("meetings")
+        .delete()
+        .eq("id", target_id)
+        .eq("org_id", user["org_id"])
+        .execute()
+    )
+
     # Delete associated memories from Qdrant
     try:
         await delete_meeting_memories(target_id, user["org_id"])
@@ -167,4 +181,3 @@ async def delete_meeting(
         logging.warning(f"Could not delete memories from Qdrant: {e}")
 
     return {"status": "deleted"}
-

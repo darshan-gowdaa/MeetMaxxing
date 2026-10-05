@@ -24,6 +24,7 @@ _client: AsyncQdrantClient | None = None
 _collection_ensured = False
 _client_loop: asyncio.AbstractEventLoop | None = None
 
+
 async def get_qdrant() -> AsyncQdrantClient:
     global _client, _collection_ensured, _client_loop
     loop = asyncio.get_running_loop()
@@ -38,9 +39,13 @@ async def get_qdrant() -> AsyncQdrantClient:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             if settings.QDRANT_URL in [":memory:", "memory"]:
-                _client = AsyncQdrantClient(location=":memory:", check_compatibility=False)
+                _client = AsyncQdrantClient(
+                    location=":memory:", check_compatibility=False
+                )
             elif settings.QDRANT_URL == "local":
-                _client = AsyncQdrantClient(path="./qdrant_data", check_compatibility=False)
+                _client = AsyncQdrantClient(
+                    path="./qdrant_data", check_compatibility=False
+                )
             else:
                 _client = AsyncQdrantClient(
                     url=settings.QDRANT_URL,
@@ -71,7 +76,6 @@ async def ensure_collection(force: bool = False) -> None:
     existing = await client.get_collections()
     names = [c.name for c in existing.collections]
 
-
     if collection_name not in names:
         # Create collection with named dense + sparse vectors for hybrid search
         await client.create_collection(
@@ -82,9 +86,7 @@ async def ensure_collection(force: bool = False) -> None:
                     distance=qmodels.Distance.COSINE,
                 )
             },
-            sparse_vectors_config={
-                "sparse": qmodels.SparseVectorParams()
-            },
+            sparse_vectors_config={"sparse": qmodels.SparseVectorParams()},
             optimizers_config=qmodels.OptimizersConfigDiff(
                 indexing_threshold=20_000,
             ),
@@ -97,13 +99,17 @@ async def ensure_collection(force: bool = False) -> None:
         ("user_id", qmodels.PayloadSchemaType.KEYWORD),
         ("meeting_id", qmodels.PayloadSchemaType.KEYWORD),
         ("memory_type", qmodels.PayloadSchemaType.KEYWORD),
-        ("meeting_date", qmodels.PayloadSchemaType.DATETIME),  # DATETIME enables range (gte/lte) queries
+        (
+            "meeting_date",
+            qmodels.PayloadSchemaType.DATETIME,
+        ),  # DATETIME enables range (gte/lte) queries
         ("speaker_id", qmodels.PayloadSchemaType.KEYWORD),
         ("speaker_name", qmodels.PayloadSchemaType.KEYWORD),
         ("topic", qmodels.PayloadSchemaType.KEYWORD),
         ("priority", qmodels.PayloadSchemaType.INTEGER),
     ]
     import warnings
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         for field_name, schema_type in indexed_fields:
@@ -118,35 +124,36 @@ async def ensure_collection(force: bool = False) -> None:
     _collection_ensured = True
 
 
-
 async def upsert_memories(points: list[MemoryPoint]) -> None:
     """Batch upsert memory points into Qdrant."""
     if not points:
         return
     await ensure_collection()
     client = await get_qdrant()
-    
+
     qdrant_points = []
     for p in points:
         # Generate simple hash-based sparse vector from the text content
         words = p.text.lower().split()
         freq = collections.Counter(words)
-        
+
         # Deduplicate and sort sparse indices
         sparse_dict = {}
         for w, v in freq.items():
             idx = int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000
             sparse_dict[idx] = sparse_dict.get(idx, 0) + float(v)
-            
+
         sorted_items = sorted(sparse_dict.items())
         sparse_indices = [k for k, _ in sorted_items]
         sparse_values = [v for _, v in sorted_items]
-        
+
         vector_dict = {
             "dense": p.vector,
-            "sparse": qmodels.SparseVector(indices=sparse_indices, values=sparse_values)
+            "sparse": qmodels.SparseVector(
+                indices=sparse_indices, values=sparse_values
+            ),
         }
-        
+
         qdrant_points.append(
             qmodels.PointStruct(
                 id=p.id,
@@ -263,22 +270,18 @@ async def search_memories(
     for w, v in freq.items():
         idx = int(hashlib.md5(w.encode()).hexdigest(), 16) % 1000000
         sparse_dict[idx] = sparse_dict.get(idx, 0) + float(v)
-        
+
     sorted_items = sorted(sparse_dict.items())
     sparse_indices = [k for k, _ in sorted_items]
     sparse_values = [v for _, v in sorted_items]
 
     prefetch = [
-        qmodels.Prefetch(
-            query=query_vector,
-            using="dense",
-            limit=limit
-        ),
+        qmodels.Prefetch(query=query_vector, using="dense", limit=limit),
         qmodels.Prefetch(
             query=qmodels.SparseVector(indices=sparse_indices, values=sparse_values),
             using="sparse",
-            limit=limit
-        )
+            limit=limit,
+        ),
     ]
 
     results = await client.query_points(

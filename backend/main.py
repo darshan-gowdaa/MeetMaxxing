@@ -52,7 +52,7 @@ APP_VERSION = "1.0.0"
 async def lifespan(app: FastAPI):
     """Startup: ensure Qdrant collection + indexes exist."""
     validate_production_secrets()
-    
+
     try:
         await ensure_collection()
     except Exception:
@@ -83,6 +83,7 @@ app.add_middleware(
 
 app.add_middleware(RateLimitMiddleware)
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     try:
@@ -91,7 +92,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         pass
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Internal server error occurred."}
+        content={"detail": "Internal server error occurred."},
     )
 
 
@@ -104,7 +105,9 @@ async def secure_headers_middleware(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
     return response
 
 
@@ -129,6 +132,7 @@ async def diagnostics():
     """Verify ADK (Google GenAI SDK), Lyzr Guardrails, and Qdrant memory status."""
     try:
         import lyzr
+
         lyzr_ver = getattr(lyzr, "__version__", "loaded")
     except ImportError:
         lyzr_ver = "not_installed"
@@ -159,7 +163,9 @@ async def diagnostics():
         # ensure_collection was already called at startup; just verify here
         client = await get_qdrant()
         collections = await client.get_collections()
-        has_collection = any(c.name == settings.QDRANT_COLLECTION for c in collections.collections)
+        has_collection = any(
+            c.name == settings.QDRANT_COLLECTION for c in collections.collections
+        )
         points_count = 0
         if has_collection:
             try:

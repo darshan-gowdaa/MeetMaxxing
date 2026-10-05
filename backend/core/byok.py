@@ -320,7 +320,9 @@ async def call_byok_provider(
                 content = data.get("content", [])
                 if content and isinstance(content, list):
                     return content[0].get("text", "").strip()
-            logger.warning("[BYOK Anthropic] status {}: {}", res.status_code, res.text[:120])
+            logger.warning(
+                "[BYOK Anthropic] status {}: {}", res.status_code, res.text[:120]
+            )
             return None
 
         # Google Gemini
@@ -329,6 +331,7 @@ async def call_byok_provider(
             try:
                 from google import genai
                 from google.genai import types as genai_types
+
                 client = genai.Client(api_key=api_key.strip())
                 cfg: dict[str, Any] = {
                     "temperature": temperature,

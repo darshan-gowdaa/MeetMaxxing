@@ -25,7 +25,9 @@ class ProviderHealth:
         if is_quota or self.failures >= 2:
             self.is_degraded = True
             self.cooldown_seconds = 600.0 if is_quota else 60.0
-            logger.warning(f"Provider marked as degraded (quota={is_quota}) for {self.cooldown_seconds}s")
+            logger.warning(
+                f"Provider marked as degraded (quota={is_quota}) for {self.cooldown_seconds}s"
+            )
 
     def record_success(self):
         self.failures = 0
@@ -40,7 +42,6 @@ class ProviderHealth:
             self.failures = 0
             return True
         return False
-
 
 
 class TokenBucket:
@@ -80,16 +81,16 @@ class IntelligentRateLimiter:
         self.rpm = settings.RATE_LIMIT_RPM
         self.burst = settings.RATE_LIMIT_BURST
         self.fill_rate = self.rpm / 60.0
-        
+
         # Track per-provider limits (e.g., "gemini", "openrouter", "groq", "perplexity")
         self.buckets: dict[str, TokenBucket] = {}
         self.health: dict[str, ProviderHealth] = {}
-        
+
         # Semantic Response Cache
         self.cache: dict[str, CacheEntry] = {}
-        
+
         self._cache_lock = asyncio.Lock()
-        
+
     def _get_bucket(self, provider: str) -> TokenBucket:
         if provider not in self.buckets:
             self.buckets[provider] = TokenBucket(self.burst, self.fill_rate)
@@ -109,23 +110,23 @@ class IntelligentRateLimiter:
             return False
 
         bucket = self._get_bucket(provider)
-        
+
         if not wait:
             return await bucket.acquire(tokens)
 
         # Exponential backoff with jitter
         max_attempts = 3
         base_delay = 1.0
-        
+
         for attempt in range(max_attempts):
             if await bucket.acquire(tokens):
                 return True
-            
+
             # Wait with exponential backoff + jitter
-            delay = min((2 ** attempt) * base_delay + random.uniform(0, 1), 60)
+            delay = min((2**attempt) * base_delay + random.uniform(0, 1), 60)
             logger.info(f"Rate limit hit for {provider}, sleeping for {delay:.2f}s")
             await asyncio.sleep(delay)
-            
+
         return False
 
     def record_failure(self, provider: str, is_quota: bool = False):
@@ -142,7 +143,9 @@ class IntelligentRateLimiter:
         data = f"{prompt}:{model}:{temperature}".encode()
         return hashlib.sha256(data).hexdigest()
 
-    async def get_cached_response(self, prompt: str, model: str, temperature: float) -> Any | None:
+    async def get_cached_response(
+        self, prompt: str, model: str, temperature: float
+    ) -> Any | None:
         key = self._generate_cache_key(prompt, model, temperature)
         async with self._cache_lock:
             if key in self.cache:
@@ -153,10 +156,13 @@ class IntelligentRateLimiter:
                     del self.cache[key]
         return None
 
-    async def set_cached_response(self, prompt: str, model: str, temperature: float, response: Any, ttl: int = 300):
+    async def set_cached_response(
+        self, prompt: str, model: str, temperature: float, response: Any, ttl: int = 300
+    ):
         key = self._generate_cache_key(prompt, model, temperature)
         async with self._cache_lock:
             self.cache[key] = CacheEntry(response, ttl)
+
 
 # Global instance
 rate_limiter = IntelligentRateLimiter()

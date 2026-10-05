@@ -18,6 +18,7 @@ async def get_user_from_token(token: str) -> dict:
 
     try:
         from .database import get_supabase
+
         supabase = get_supabase()
 
         # Verify the token and get the user securely via Supabase Auth

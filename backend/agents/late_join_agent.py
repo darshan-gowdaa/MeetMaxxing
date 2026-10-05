@@ -34,9 +34,13 @@ def _format_transcript(chunks: list[dict]) -> str:
         older = chunks[:-40]
         recent = chunks[-40:]
         older_summary = f"[Earlier {len(older)} utterances summarized: Discussion occurred between {', '.join({c.get('speaker', 'Speaker') for c in older[:5]})}]"
-        recent_lines = [f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in recent]
+        recent_lines = [
+            f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in recent
+        ]
         return older_summary + "\n" + "\n".join(recent_lines)
-    return "\n".join(f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in chunks)
+    return "\n".join(
+        f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in chunks
+    )
 
 
 async def generate_late_join_recap(
@@ -46,7 +50,11 @@ async def generate_late_join_recap(
 ) -> dict:
     now = time.time()
 
-    if not force and meeting_id in _last_recaps and (now - _last_recap_times.get(meeting_id, 0) < 120):
+    if (
+        not force
+        and meeting_id in _last_recaps
+        and (now - _last_recap_times.get(meeting_id, 0) < 120)
+    ):
         return _last_recaps[meeting_id]
 
     chunks = await get_full_transcript(meeting_id)
@@ -74,7 +82,9 @@ async def generate_late_join_recap(
 
         if not isinstance(result, dict) or not result.get("recap"):
             result = {
-                "recap": result.get("_raw") if isinstance(result, dict) and result.get("_raw") else "Meeting in progress.",
+                "recap": result.get("_raw")
+                if isinstance(result, dict) and result.get("_raw")
+                else "Meeting in progress.",
                 "key_decisions_so_far": [],
                 "current_topic": "General Discussion",
                 "who_said_what": [],
@@ -94,4 +104,3 @@ async def generate_late_join_recap(
             "who_said_what": [],
             "error": str(e),
         }
-

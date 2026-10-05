@@ -57,7 +57,9 @@ def _format_decisions_html(decisions: list) -> str:
 def _format_action_items_html(items: list) -> str:
     # renders action items with owner, priority, and deadline
     if not items:
-        return "<p style='color:#718096;font-style:italic;'>No action items recorded.</p>"
+        return (
+            "<p style='color:#718096;font-style:italic;'>No action items recorded.</p>"
+        )
 
     rows = ""
     for item in items:
@@ -93,9 +95,17 @@ def _format_action_items_html(items: list) -> str:
     )
 
 
-def _build_email_html(meeting_title: str, summary: str, action_items: list, decisions: list, meeting_id: str) -> str:
+def _build_email_html(
+    meeting_title: str,
+    summary: str,
+    action_items: list,
+    decisions: list,
+    meeting_id: str,
+) -> str:
     # assembles the complete branded email layout
-    summary_html = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", summary or "No summary available.")
+    summary_html = re.sub(
+        r"\*\*(.*?)\*\*", r"<strong>\1</strong>", summary or "No summary available."
+    )
     summary_html = summary_html.replace("\n", "<br>")
     decisions_html = _format_decisions_html(decisions)
     action_items_html = _format_action_items_html(action_items)
@@ -156,7 +166,6 @@ async def run_email_agent(
     action_items = action_items or []
     decisions = decisions or []
 
-
     # Resolve recipient email — to_email may be a UUID from pipeline
     recipient_email = to_email or ""
     if not recipient_email or is_valid_uuid(recipient_email):
@@ -164,11 +173,21 @@ async def run_email_agent(
         if lookup_id:
             try:
                 supabase = get_supabase_admin()
-                res = supabase.table("users").select("email").eq("id", lookup_id).single().execute()
+                res = (
+                    supabase.table("users")
+                    .select("email")
+                    .eq("id", lookup_id)
+                    .single()
+                    .execute()
+                )
                 if res.data and res.data.get("email"):
                     recipient_email = res.data["email"]
             except Exception as e:
-                logger.warning("[Email Agent] Could not resolve email for user_id %s: %s", lookup_id, e)
+                logger.warning(
+                    "[Email Agent] Could not resolve email for user_id %s: %s",
+                    lookup_id,
+                    e,
+                )
 
     if not recipient_email or "@" not in recipient_email:
         logger.warning("[Email Agent] No valid recipient email — skipping send.")
@@ -178,7 +197,10 @@ async def run_email_agent(
             "draft_saved": True,
         }
 
-    if not settings.RESEND_API_KEY or settings.RESEND_API_KEY in ["", "your-resend-key"]:
+    if not settings.RESEND_API_KEY or settings.RESEND_API_KEY in [
+        "",
+        "your-resend-key",
+    ]:
         return {
             "sent": False,
             "draft_saved": True,
@@ -194,23 +216,29 @@ async def run_email_agent(
         meeting_id,
     )
 
-
     if not send_immediately:
         return {
             "sent": False,
             "draft_saved": True,
-            "draft": {"subject": f"Meeting Summary: {meeting_title}", "body": html_body},
+            "draft": {
+                "subject": f"Meeting Summary: {meeting_title}",
+                "body": html_body,
+            },
         }
 
     try:
         resend.api_key = settings.RESEND_API_KEY
-        result = resend.Emails.send({
-            "from": "MeetMaxxing <noreply@meetmaxxing.app>",
-            "to": [recipient_email],
-            "subject": f"Meeting Summary: {meeting_title or 'Your Meeting'}",
-            "html": html_body,
-        })
-        logger.info("[Email Agent] Email sent → %s (id: %s)", recipient_email, result.get("id"))
+        result = resend.Emails.send(
+            {
+                "from": "MeetMaxxing <noreply@meetmaxxing.app>",
+                "to": [recipient_email],
+                "subject": f"Meeting Summary: {meeting_title or 'Your Meeting'}",
+                "html": html_body,
+            }
+        )
+        logger.info(
+            "[Email Agent] Email sent → %s (id: %s)", recipient_email, result.get("id")
+        )
         return {
             "sent": True,
             "resend_id": result.get("id"),

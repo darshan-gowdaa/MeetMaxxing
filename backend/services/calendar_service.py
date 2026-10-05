@@ -15,6 +15,7 @@ from ..core.config import settings
 def _build_flow():
     """Build Google OAuth2 Flow from settings (shared by auth URL + code exchange)."""
     from google_auth_oauthlib.flow import Flow
+
     return Flow.from_client_config(
         {
             "web": {
@@ -56,11 +57,15 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
 
     def _create() -> dict:
         service = _build_service(token_data)
-        return service.events().insert(
-            calendarId="primary",
-            body=event_body,
-            sendUpdates="all",
-        ).execute()
+        return (
+            service.events()
+            .insert(
+                calendarId="primary",
+                body=event_body,
+                sendUpdates="all",
+            )
+            .execute()
+        )
 
     try:
         return await run_in_threadpool(_create)
@@ -83,6 +88,7 @@ async def get_calendar_auth_url() -> str:
 
 async def exchange_calendar_code(code: str) -> dict:
     """Exchange OAuth2 authorization code for tokens."""
+
     def _exchange() -> dict:
         flow = _build_flow()
         flow.fetch_token(code=code)
