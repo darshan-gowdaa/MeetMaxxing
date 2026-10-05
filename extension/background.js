@@ -127,9 +127,22 @@ async function doRefresh() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: r.authRefreshToken }),
     });
-    if (!res.ok) throw new Error("refresh failed: " + res.status);
+    
+    if (!res.ok) {
+      if (res.status >= 500) {
+        // Backend might be waking up or down. Don't wipe session!
+        throw new Error("server error: " + res.status);
+      }
+      // 4xx error means token is actually invalid/expired
+      await clearAuth();
+      return false;
+    }
+    
     const data = await res.json();
-    if (!data.access_token) throw new Error("refresh response missing access_token");
+    if (!data.access_token) {
+      await clearAuth();
+      return false;
+    }
 
     activeAuthToken = data.access_token;
     const updates = { authToken: data.access_token };
@@ -141,8 +154,8 @@ async function doRefresh() {
     await setAuthState("authenticated");
     return true;
   } catch (e) {
-    // Refresh failed → session is genuinely expired.
-    await clearAuth();
+    // Network errors (e.g., fetch failed entirely) or 5xx errors.
+    // Do not clear tokens so they can try again when backend is awake.
     return false;
   }
 }
@@ -352,8 +365,8 @@ async function rehydrateState() {
     await setAuthState("anonymous");
   } else if (activeAuthToken && !isTokenExpired(activeAuthToken)) {
     await setAuthState("authenticated");
-    // Proactively refresh a token that is about to expire.
-    if (tokenIsExpiringSoon(activeAuthToken) && activeRefreshToken) refreshAuthToken();
+    // Refresh proactively on startup to extend session
+    if (activeRefreshToken) refreshAuthToken();
   } else {
     // Expired/missing access token with a refresh token → try to refresh.
     const ok = await refreshAuthToken();
