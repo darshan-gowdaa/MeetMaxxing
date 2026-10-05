@@ -9,7 +9,6 @@ Two tiers:
 import re
 from dataclasses import dataclass
 
-from ..core.config import settings
 from ..core.utils import parse_json_clean
 
 

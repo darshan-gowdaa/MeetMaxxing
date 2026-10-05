@@ -29,21 +29,11 @@ async def list_meetings(
         .range(offset, offset + limit - 1)
         .execute()
     )
-    action_items_res = (
-        supabase.table("action_items")
-        .select("id", count="exact")
-        .eq("org_id", user["org_id"])
-        .execute()
-    )
-    total_actions = action_items_res.count if hasattr(action_items_res, 'count') and action_items_res.count is not None else len(action_items_res.data or [])
     total_meetings = result.count if hasattr(result, 'count') and result.count is not None else len(result.data or [])
-    total_memories = total_meetings * 18 + total_actions * 4
 
     return {
         "meetings": result.data or [],
         "total": total_meetings,
-        "total_action_items": total_actions,
-        "total_memory_points": total_memories,
     }
 
 

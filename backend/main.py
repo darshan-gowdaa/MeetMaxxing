@@ -3,7 +3,6 @@ MeetMaxxing FastAPI application entry point.
 """
 
 import sys
-import threading
 import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -44,7 +43,6 @@ from .api.routes_settings import router as settings_router
 from .api.routes_transcript import router as transcript_router
 from .core.config import settings
 from .core.security import RateLimitMiddleware, validate_production_secrets
-from .grpc_bus.grpc_server import serve as grpc_serve
 from .memory.qdrant_client import ensure_collection
 
 APP_VERSION = "1.0.0"
@@ -52,16 +50,13 @@ APP_VERSION = "1.0.0"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: ensure Qdrant collection + indexes exist and start gRPC server."""
+    """Startup: ensure Qdrant collection + indexes exist."""
     validate_production_secrets()
     
     try:
         await ensure_collection()
     except Exception:
         pass
-
-    grpc_thread = threading.Thread(target=grpc_serve, daemon=True)
-    grpc_thread.start()
 
     yield
 
@@ -121,7 +116,6 @@ app.include_router(calendar_router)
 app.include_router(dashboard_router)
 app.include_router(context_router)
 app.include_router(api_keys_router)
-app.include_router(api_keys_router, prefix="/api")
 app.include_router(settings_router)
 
 
@@ -133,7 +127,11 @@ async def health():
 @app.get("/api/diagnostics")
 async def diagnostics():
     """Verify ADK (Google GenAI SDK), Lyzr Guardrails, and Qdrant memory status."""
-    import lyzr
+    try:
+        import lyzr
+        lyzr_ver = getattr(lyzr, "__version__", "loaded")
+    except ImportError:
+        lyzr_ver = "not_installed"
     from google import genai
 
     from .memory.qdrant_client import get_qdrant
@@ -151,7 +149,7 @@ async def diagnostics():
 
     lyzr_info = {
         "status": "ready",
-        "sdk_version": getattr(lyzr, "__version__", "loaded"),
+        "sdk_version": lyzr_ver,
         "realtime_guardrail_enabled": True,
         "summary_guardrail_enabled": True,
     }

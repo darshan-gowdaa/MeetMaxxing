@@ -12,7 +12,6 @@ class AgentTrigger(str, Enum):
     SCHEDULE_FOLLOWUP = "schedule_followup"
     MEMORY_QUERY = "memory_query"
     DOCS_QA = "docs_qa"
-    TRANSCRIPT_CHUNK = "transcript_chunk"
 
 
 async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
@@ -81,15 +80,6 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 org_id=payload.get("org_id", ""),
                 user_id=payload.get("user_id", ""),
                 filters=payload.get("filters"),
-            )
-        elif trigger == AgentTrigger.TRANSCRIPT_CHUNK:
-            from .transcription_agent import process_transcript_chunk
-            res = await process_transcript_chunk(
-                meeting_id=payload.get("meeting_id", ""),
-                raw_text=payload.get("raw_text", ""),
-                speaker=payload.get("speaker", ""),
-                timestamp_ms=payload.get("timestamp_ms", 0),
-                source=payload.get("source", "extension"),
             )
         else:
             logger.error("[Orchestrator] Unknown trigger: {}", trigger)

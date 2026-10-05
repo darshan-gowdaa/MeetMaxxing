@@ -78,20 +78,6 @@ async def end_meeting(
     return {"status": "processing", "meeting_id": meeting_id}
 
 
-@router.get("/{meeting_id}")
-async def get_meeting(
-    meeting_id: str,
-    user: dict = Depends(get_current_user),
-):
-    """Fetch meeting record with summary, decisions, and action items."""
-    supabase = get_supabase_admin()
-    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
-    
-    if not meeting:
-        raise HTTPException(status_code=404, detail="Meeting not found")
-    return meeting
-
-
 @router.post("/{meeting_id}/reprocess")
 async def reprocess_meeting(
     meeting_id: str,

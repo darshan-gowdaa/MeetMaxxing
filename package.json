@@ -12,7 +12,7 @@
     "build:backend": "cd backend && uv run ruff check .",
     "build": "npm run build:backend && cd frontend && npm run build",
     "lint": "cd frontend && npm run lint",
-    "kill": "npx kill-port 3000 8000 50051",
+    "kill": "npx kill-port 3000 8000",
     "restart": "npm run kill && npm run dev",
     "start": "node scripts/start.js",
     "start:backend": "cd backend && uv run python -m uvicorn main:app --port 8000",

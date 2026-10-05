@@ -3,8 +3,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from loguru import logger
 
-from .config import settings
-
 bearer_scheme = HTTPBearer(auto_error=False)
 
 

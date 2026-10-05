@@ -60,8 +60,7 @@ def decrypt_key(record: dict) -> str:
 
 def invalidate_user_byok_cache(user_id: str) -> None:
     # purge cached byok status when settings change
-    if user_id in _BYOK_CACHE:
-        del _BYOK_CACHE[user_id]
+    _BYOK_CACHE.pop(user_id, None)
 
 
 def _infer_provider_from_model(model_id: str) -> str:

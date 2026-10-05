@@ -11,8 +11,6 @@ import json
 import logging
 from datetime import UTC, datetime, timedelta
 
-from ..core.config import settings
-from ..core.lyzr_integration import run_lyzr_agent
 from ..core.utils import parse_json_clean
 from ..services.calendar_service import create_calendar_event
 

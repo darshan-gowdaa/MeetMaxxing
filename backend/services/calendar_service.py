@@ -70,23 +70,6 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
         raise RuntimeError(f"Failed to create event: {e}")
 
 
-async def update_calendar_event(event_id: str, updates: dict, token_data: dict) -> dict:
-    """Partial update of an existing calendar event."""
-    def _update() -> dict:
-        service = _build_service(token_data)
-        return service.events().patch(
-            calendarId="primary",
-            eventId=event_id,
-            body=updates,
-            sendUpdates="all",
-        ).execute()
-
-    try:
-        return await run_in_threadpool(_update)
-    except HttpError as e:
-        raise RuntimeError(f"Calendar update error: {e.status_code} — {e.reason}")
-
-
 async def get_calendar_auth_url() -> str:
     """Generate Google OAuth2 authorization URL for Calendar access."""
     flow = _build_flow()

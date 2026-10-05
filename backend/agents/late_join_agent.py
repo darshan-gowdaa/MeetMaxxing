@@ -33,7 +33,7 @@ def _format_transcript(chunks: list[dict]) -> str:
     if len(chunks) > 80:
         older = chunks[:-40]
         recent = chunks[-40:]
-        older_summary = f"[Earlier {len(older)} utterances summarized: Discussion occurred between {', '.join(set(c.get('speaker', 'Speaker') for c in older[:5]))}]"
+        older_summary = f"[Earlier {len(older)} utterances summarized: Discussion occurred between {', '.join({c.get('speaker', 'Speaker') for c in older[:5]})}]"
         recent_lines = [f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in recent]
         return older_summary + "\n" + "\n".join(recent_lines)
     return "\n".join(f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in chunks)
@@ -94,9 +94,4 @@ async def generate_late_join_recap(
             "who_said_what": [],
             "error": str(e),
         }
-
-
-async def run_late_join_agent(meeting_id: str) -> dict:
-    # grpc task bus wrapper that always bypasses cache
-    return await generate_late_join_recap(meeting_id, force=True)
 

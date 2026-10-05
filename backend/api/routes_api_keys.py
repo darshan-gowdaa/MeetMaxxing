@@ -2,19 +2,14 @@
 API Keys management endpoints.
 """
 
-import os
-import httpx
 from datetime import UTC, datetime
-from typing import Any
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from loguru import logger
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from ..core.auth import get_current_user
 from ..core.database import get_supabase_admin
-from ..core.config import settings
 from ..core.byok import (
-    get_kek as _get_kek,
     encrypt_key as _encrypt_key,
     decrypt_key as _decrypt_key,
     resolve_user_byok,

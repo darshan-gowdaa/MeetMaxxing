@@ -68,15 +68,6 @@ async function startCapture(streamId, meetingId) {
         }, () => { let _ = chrome.runtime.lastError; });
       };
       reader.readAsDataURL(event.data);
-      return;
-
-      // Send to background.js
-      chrome.runtime.sendMessage({
-        type: "AUDIO_CHUNK",
-        meetingId,
-        base64,
-        mimeType,
-      }, () => { let _ = chrome.runtime.lastError; });
     };
 
     // Emit a chunk every 5 seconds

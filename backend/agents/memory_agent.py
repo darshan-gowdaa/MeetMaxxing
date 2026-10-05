@@ -11,7 +11,6 @@ Governed by Lyzr guardrail — answer must cite sources
 import re
 import logging
 
-from ..core.lyzr_integration import run_lyzr_agent
 from ..core.utils import parse_json_clean
 from ..memory.embeddings import embed_query
 from ..memory.qdrant_client import search_memories
