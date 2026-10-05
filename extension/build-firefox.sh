@@ -13,7 +13,6 @@ zip -r ../meetmaxxing-firefox.zip . \
   --exclude 'sidebar-app/src/*' \
   --exclude '*.sh' \
   --exclude '*.ps1' \
-  --exclude 'background.js' \
   --exclude 'offscreen.*' \
   --exclude '.gitignore'
 mv manifest.json.bak manifest.json 2>/dev/null || true
