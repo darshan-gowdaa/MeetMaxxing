@@ -18,6 +18,7 @@ import {
   RiCalendarEventLine,
   RiCodeSSlashLine,
   RiTimerLine,
+  RiKey2Line,
 } from '@remixicon/react';
 
 export const AUTHORS = [
@@ -28,15 +29,15 @@ export const AUTHORS = [
     order: 'Lead Architect',
     github: 'darshan-gowdaa',
     githubUrl: 'https://github.com/darshan-gowdaa',
-    bio: 'Architected the full-stack system: Next.js 15 Material 3 dashboard, FastAPI microservices, A2A gRPC communication bus, Google ADK agent integration, and the Chrome Extension.',
+    bio: 'Architected the full-stack system: Next.js 15 Material 3 dashboard, FastAPI services, event-driven agent orchestration, Google ADK integration, and the Chrome Extension.',
     domains: [
       { label: 'Next.js 15 / React', icon: RiLayoutGridLine },
-      { label: 'FastAPI Microservices', icon: RiServerLine },
+      { label: 'FastAPI Services', icon: RiServerLine },
       { label: 'Chrome Extension (V3)', icon: RiGlobalLine },
-      { label: 'A2A / gRPC Protocol', icon: RiFlowChart },
+      { label: 'Event Orchestration', icon: RiFlowChart },
       { label: 'Material 3 Expressive', icon: RiReactjsLine },
     ],
-    stack: ['Next.js 15', 'React', 'TypeScript', 'FastAPI', 'Python', 'gRPC', 'Supabase', 'Redis', 'Tailwind CSS'],
+    stack: ['Next.js 15', 'React', 'TypeScript', 'FastAPI', 'Python', 'Supabase', 'Redis', 'Tailwind CSS', 'WebSockets'],
   },
   {
     name: 'Kanika Pitaliya',
@@ -45,33 +46,33 @@ export const AUTHORS = [
     order: 'AI Researcher',
     github: 'kanikapitaliya',
     githubUrl: 'https://github.com/kanikapitaliya',
-    bio: 'Engineered the multi-agent AI ecosystem: episodic semantic memory with Qdrant vector search, Lyzr agent orchestration, LLM prompt engineering, and evaluation benchmarks.',
+    bio: 'Engineered the multi-agent AI ecosystem: episodic semantic memory with Qdrant vector search, multi-model LLM fallback (Gemini, Groq, OpenRouter), and structured prompt pipelines.',
     domains: [
-      { label: 'Google ADK', icon: RiRobot2Line },
+      { label: 'Google Gemini / ADK', icon: RiRobot2Line },
       { label: 'Qdrant Vector DB', icon: RiDatabase2Line },
-      { label: 'Lyzr Orchestration', icon: RiCpuLine },
-      { label: 'LLM Prompt Research', icon: RiBrainLine },
-      { label: 'Agent Pipelines', icon: RiTerminalBoxLine },
+      { label: 'LLM Fallback & BYOK', icon: RiCpuLine },
+      { label: 'Prompt Architecture', icon: RiBrainLine },
+      { label: 'Agent Workflows', icon: RiTerminalBoxLine },
     ],
-    stack: ['Google ADK', 'Lyzr', 'Qdrant', 'Vector Embeddings', 'LLM Prompting', 'A2A Protocol', 'OpenTelemetry', 'Langfuse'],
+    stack: ['Google Gemini', 'Qdrant', 'Vector Embeddings', 'BYOK Routing', 'LLM Prompting', 'FastAPI', 'Python'],
   },
 ] as const;
 
 export const STATS = [
-  { value: 9, suffix: '', label: 'AI Agents', desc: 'Specialized & isolated', icon: RiRobot2Line },
-  { value: 100, suffix: '%', label: 'A2A Native', desc: 'gRPC message bus', icon: RiFlowChart },
+  { value: 8, suffix: '', label: 'AI Agents', desc: 'Specialized & decoupled', icon: RiRobot2Line },
+  { value: 100, suffix: '%', label: 'BYOK Ready', desc: 'OpenAI · Groq · Gemini', icon: RiKey2Line },
   { value: 8, suffix: '+', label: 'Tech Integrations', desc: 'End-to-end pipeline', icon: RiDatabase2Line },
   { value: 3, suffix: '', label: 'Core Platforms', desc: 'Web · Extension · API', icon: RiSparkling2Fill },
 ] as const;
 
 export const AGENTS = [
   {
-    name: 'Transcription Stream',
-    capability: 'Live Audio Ingestion',
-    desc: 'Streams and processes live meeting audio with zero latency using persistent WebSocket connections and high-accuracy speech models.',
+    name: 'Live Stream Ingestion',
+    capability: 'Real-Time Audio Ingest',
+    desc: 'Streams and ingests live meeting audio and caption chunks with low latency using persistent WebSocket connections and background processing.',
     icon: RiVideoChatLine,
     pillar: 'Live Stream',
-    tag: 'WebSocket · Zero Loss',
+    tag: 'WebSocket · Low Latency',
   },
   {
     name: 'Realtime Copilot',
@@ -100,7 +101,7 @@ export const AGENTS = [
   {
     name: 'Semantic Memory',
     capability: 'Vector Knowledge Base',
-    desc: 'Indexes episodic embeddings in Qdrant vector database for semantic recall across organizational history and previous meetings.',
+    desc: 'Indexes episodic 768-dim embeddings in Qdrant vector database for semantic recall across meeting history and organizational context.',
     icon: RiBrainLine,
     pillar: 'Intelligence',
     tag: 'Qdrant Vector DB',
@@ -124,18 +125,18 @@ export const AGENTS = [
   {
     name: 'Follow-Up Email',
     capability: 'Automated Communication',
-    desc: 'Drafts comprehensive, professional follow-up emails highlighting takeaways and assigned items ready for one-click Gmail review.',
+    desc: 'Drafts comprehensive follow-up emails highlighting decisions and assigned deliverables, delivering them via Resend with verified attendee routing.',
     icon: RiMailSendLine,
     pillar: 'Automation',
-    tag: 'Gmail Ready Drafts',
+    tag: 'Resend Email Service',
   },
   {
-    name: 'gRPC Orchestrator',
-    capability: 'Multi-Agent Intelligence',
-    desc: 'Routes high-speed agent-to-agent (A2A) message traffic with fallback resilience, coordinating isolated workers instead of one monolithic LLM.',
+    name: 'Agent Orchestrator',
+    capability: 'Event-Driven Dispatch',
+    desc: 'Coordinates specialized micro-agents across meeting lifecycle events with fallback resilience, executing isolated tasks instead of relying on a monolithic prompt.',
     icon: RiFlowChart,
     pillar: 'Automation',
-    tag: 'A2A Protocol Bus',
+    tag: 'Async Event Hub',
   },
 ] as const;
 
@@ -154,7 +155,7 @@ export const getLogo = (tech: string) => {
   if (tech.includes('TypeScript')) return <Logos.TypeScript />;
   if (tech.includes('FastAPI')) return <Logos.FastAPI />;
   if (tech.includes('Python')) return <Logos.Python />;
-  if (tech.includes('Google ADK')) return <Logos.Google />;
+  if (tech.includes('Google') || tech.includes('Gemini')) return <Logos.Google />;
   if (tech.includes('Qdrant')) return <RiDatabase2Line size={14} color="#a8c7fa" />;
   return null;
 };

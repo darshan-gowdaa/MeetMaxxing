@@ -50,9 +50,9 @@ export default function AboutPage() {
                 transition={{ duration: 0.5, delay: 0.25 }}
                 className="text-base sm:text-lg text-text-muted max-w-xl leading-relaxed mb-6 sm:mb-8"
               >
-                An agent ecosystem built on an A2A gRPC message bus. Streams live meeting
-                audio, extracts decisions, retrieves episodic semantic memory, and orchestrates
-                follow-up actions without human intervention.
+                An event-driven multi-agent ecosystem. Streams live meeting context,
+                extracts decisions, retrieves episodic semantic memory via Qdrant, and orchestrates
+                automated post-meeting follow-ups.
               </motion.p>
 
               <motion.div
@@ -146,7 +146,7 @@ export default function AboutPage() {
                 Engineered for Real-Time Execution
               </h2>
               <p className="text-text-muted text-base sm:text-lg mt-3 leading-relaxed">
-                Rather than relying on a single monolithic LLM, MeetMaxxing coordinates 9 specialized micro-agents over an A2A gRPC bus to turn unstructured audio into structured team velocity.
+                Rather than relying on a single monolithic LLM, MeetMaxxing coordinates specialized micro-agents over an event-driven orchestrator to turn unstructured meeting discussions into structured team velocity.
               </p>
             </div>
 
