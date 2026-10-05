@@ -9,7 +9,7 @@ interface NextQuestionAgentProps {
 
 export function NextQuestionAgent({ nextQuestions, isProcessing, onSendToIntelliAgent }: NextQuestionAgentProps) {
   return (
-    <div className="bg-secondary-container border-border rounded-[24px] border p-3 min-h-[100px] flex flex-col">
+    <div className="bg-secondary-container border-border rounded-[24px] border p-3 min-h-[100px] flex flex-col shrink-0">
       <div className="flex items-center gap-2 mb-1 shrink-0 h-[24px]">
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-on-secondary-container flex items-center gap-2">
           <i className="ri-question-answer-fill text-sm" /> What to Ask

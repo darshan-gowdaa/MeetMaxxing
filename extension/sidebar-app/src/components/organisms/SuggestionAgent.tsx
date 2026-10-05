@@ -3,7 +3,7 @@ import { Skeleton } from "../atoms/Skeleton";
 
 export function SuggestionAgent({ suggestions, isProcessing }: { suggestions: string[]; isProcessing?: boolean }) {
   return (
-    <div className="bg-primary-dim border-border rounded-[24px] border p-3 min-h-[140px] flex flex-col">
+    <div className="bg-primary-dim border-border rounded-[24px] border p-3 min-h-[140px] flex flex-col shrink-0">
       <div className="flex items-center gap-2 shrink-0 h-[24px]">
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-primary flex items-center gap-2">
           <i className="ri-sparkling-line text-sm" /> Answers

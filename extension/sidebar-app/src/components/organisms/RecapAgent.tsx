@@ -7,7 +7,7 @@ export function RecapAgent({ recap, isProcessing }: { recap: string; isProcessin
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="bg-tertiary-container border-border rounded-[24px] border p-3 min-h-[140px] flex flex-col">
+    <div className="bg-tertiary-container border-border rounded-[24px] border p-3 min-h-[140px] flex flex-col shrink-0">
       <div className="flex items-center justify-between mb-1 shrink-0 h-[28px]">
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-on-tertiary-container flex items-center gap-2">
           <i className="ri-article-fill text-sm" /> AI Recap

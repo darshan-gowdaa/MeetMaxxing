@@ -124,9 +124,9 @@ export default function App() {
   return (
     <>
       <Header meetingId={meetingId} isEnded={isEnded} elapsedTime={elapsedTime} triggerAction={triggerAction} isEnding={isEnding} poweredBy={poweredBy} />
-      {backendStarting && <ColdStartBanner />}
+      {backendStarting && ColdStartBanner()}
       {authState === "loading" ? (
-        <main className="flex-1 flex flex-col min-h-0"><LoadingState /></main>
+        <main className="flex-1 flex flex-col min-h-0">{LoadingState()}</main>
       ) : authState === "expired" ? (
         <main className="flex-1 flex flex-col min-h-0"><ExpiredState /></main>
       ) : !authToken ? (
@@ -146,7 +146,7 @@ export default function App() {
             </div>
             <ErrorBanner errorMessage={errorMessage} clearError={clearError} />
             <div className={activeTab === "live" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>
-              <GenerateButton />
+              {GenerateButton()}
               <SuggestionAgent suggestions={suggestions} isProcessing={isProcessing} />
               <NextQuestionAgent nextQuestions={nextQuestions} isProcessing={isProcessing} onSendToIntelliAgent={(q) => { setActiveTab("rag"); setPendingQuery(q); }} />
             </div>
@@ -154,7 +154,7 @@ export default function App() {
               <ContextAgent meetingId={meetingId} authToken={authToken} pendingQuery={pendingQuery} clearPendingQuery={() => setPendingQuery("")} />
             </div>
             <div className={activeTab === "recap" ? "flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar min-h-0 pr-1 pb-2" : "hidden"}>
-              <GenerateButton />
+              {GenerateButton()}
               <RecapAgent recap={recap} isProcessing={isProcessing} />
             </div>
             <div className={activeTab === "transcript" ? "flex flex-col flex-1 min-h-0" : "hidden"}>

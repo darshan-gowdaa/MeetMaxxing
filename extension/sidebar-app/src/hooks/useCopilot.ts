@@ -79,7 +79,7 @@ export function useCopilot() {
              return updated;
           }
           // We allow merging continuations up to 15 seconds to prevent unbounded bubble merging if they just keep talking
-          if (now - (last.timestamp || 0) < 60000) {
+          if (now - (last.timestamp || 0) < 15000) {
             if (text.startsWith(last.text) || last.text.startsWith(text) || text.includes(last.text)) {
               updated = [...prev];
               updated[updated.length - 1] = { ...last, text: text.length > last.text.length ? text : last.text, timestamp: now, source: chunk.source || last.source };

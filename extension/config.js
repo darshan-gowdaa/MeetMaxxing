@@ -1,10 +1,6 @@
 // MeetMaxxing Extension Config
 // Detect environment: dev if unpacked extension, prod otherwise
-const isDevMode = () => {
-  return false;
-};
-
-const _isDevHost = isDevMode();
+const _isDevHost = false;
 
 const MEETMAXXING_CONFIG = {
   BASE_URL_BACKEND: _isDevHost ? "http://localhost:8000" : "https://meetmaxxing-api.onrender.com",

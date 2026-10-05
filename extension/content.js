@@ -19,6 +19,7 @@ let authToken = null;
 let maxParticipants = 1;
 let endCheckInterval = null;        // meeting-end polling timer (cleared on end)
 let visibilityAttachInterval = null; // CC button attach timer (cleared on end)
+let autoCcInterval = null;           // auto CC enable timer (cleared on end)
 
 /**
  * Per-speaker utterance tracker.
@@ -559,8 +560,9 @@ function injectVisibilityButton() {
 }
 
 function autoEnableCC() {
+  if (autoCcInterval) { clearInterval(autoCcInterval); autoCcInterval = null; }
   let attempts = 0;
-  const interval = setInterval(() => {
+  autoCcInterval = setInterval(() => {
     attempts++;
     const ccBtns = document.querySelectorAll('button[aria-label*="caption" i], button[data-tooltip*="caption" i]');
     
@@ -571,17 +573,20 @@ function autoEnableCC() {
       if (!isPressed && label.toLowerCase().includes("turn on")) {
         btn.click();
         console.log("[MeetMaxxing] Auto-enabled CC.");
-        clearInterval(interval);
+        clearInterval(autoCcInterval);
+        autoCcInterval = null;
         return;
       } else if (isPressed || label.toLowerCase().includes("turn off")) {
         console.log("[MeetMaxxing] CC already enabled.");
-        clearInterval(interval);
+        clearInterval(autoCcInterval);
+        autoCcInterval = null;
         return;
       }
     }
     
     if (attempts >= 15) {
-      clearInterval(interval);
+      clearInterval(autoCcInterval);
+      autoCcInterval = null;
       console.log("[MeetMaxxing] Gave up trying to auto-enable CC after 15 seconds.");
     }
   }, 1000);
@@ -678,10 +683,14 @@ function endMeeting() {
   for (const sp of [...utteranceMap.keys()]) flushUtterance(sp);
   if (captionObserver) { try { captionObserver.disconnect(); } catch (e) {} captionObserver = null; }
 
-  const toggleBtn = document.getElementById("meetmaxxing-cc-toggle");
+  if (autoCcInterval) { clearInterval(autoCcInterval); autoCcInterval = null; }
+  
+  const toggleBtn = document.getElementById("mm-caption-visibility-btn");
   if (toggleBtn) toggleBtn.remove();
-  const styleEl = document.getElementById("meetmaxxing-hide-cc");
-  if (styleEl) styleEl.remove();
+  if (hideCaptionsStyle) {
+    hideCaptionsStyle.remove();
+    hideCaptionsStyle = null;
+  }
 
   safeSendMessage({ type: "END_MEETING", meetingId, title: document.title, maxParticipants });
 
@@ -746,7 +755,11 @@ if (chrome.runtime && chrome.runtime.id) {
 // SPA navigation
 let lastUrl = location.href;
 new MutationObserver(() => {
-  if (location.href !== lastUrl) { lastUrl = location.href; detectMeetingState(); }
+  if (location.href !== lastUrl) { 
+    lastUrl = location.href; 
+    detectMeetingState(); 
+    setTimeout(tryInjectPanel, 1000);
+  }
 }).observe(document, { subtree: true, childList: true });
 
 // ─── Firefox DOM Panel Injection ─────────────────────────────────────────────
@@ -851,15 +864,6 @@ function tryInjectPanel() {
   }
 }
 
-// Observe URL changes (Meet is a SPA)
-let mmLastUrl = location.href;
-const urlObserver = new MutationObserver(() => {
-  if (location.href !== mmLastUrl) {
-    mmLastUrl = location.href;
-    setTimeout(tryInjectPanel, 1000);
-  }
-});
-urlObserver.observe(document.body, { subtree: true, childList: true });
 
 // Initial inject attempt
 if (document.readyState === 'loading') {

@@ -5,7 +5,7 @@ Set-Location ..
 
 node -e "const fs=require('fs');const p='dist/assets';if(fs.existsSync(p)){const files=fs.readdirSync(p).filter(f=>f.endsWith('.js'));for(const f of files){let c=fs.readFileSync(p+'/'+f,'utf8');c=c.replace(/\.innerHTML/g,'[\'inner\'+\'HTML\']').replace(/\.document\(\)\.write/g,'[\'document\']()[\'write\']');fs.writeFileSync(p+'/'+f,c);}}"
 
-Copy-Item manifest.firefox.json manifest.json.chrome-bak -Force
+Copy-Item manifest.json manifest.json.chrome-bak -Force
 Copy-Item manifest.firefox.json manifest.json -Force
 
 Remove-Item -Path temp_build -Recurse -Force -ErrorAction SilentlyContinue

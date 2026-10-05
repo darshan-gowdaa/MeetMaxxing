@@ -5,6 +5,10 @@
  */
 "use strict";
 
+if (typeof importScripts === 'function' && typeof MEETMAXXING_CONFIG === 'undefined') {
+  importScripts('config.js', 'compat.js');
+}
+
 let ws = null;
 let activeMeetingId = null;
 let activeMeetTabId = null;
@@ -299,7 +303,7 @@ async function persistChunk(chunk) {
   const updated = [...prev];
   if (updated.length > 0) {
     const last = updated[updated.length - 1];
-    if (last.speaker === (chunk.speaker || "Speaker") && now - (last.timestamp || 0) < 60000) {
+    if (last.speaker === (chunk.speaker || "Speaker") && now - (last.timestamp || 0) < 15000) {
       const newText = (chunk.text || "").trim();
       if (newText.startsWith(last.text) || last.text.startsWith(newText) || newText.includes(last.text)) {
         updated[updated.length - 1] = {
@@ -643,20 +647,9 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             }
           } catch (e) {}
 
-          let recapText = recapData.recap?.trim()
-            ? `**Recap**\n${recapData.recap}`
-            : "Meeting is still in early stages or no speech captured yet. Keep talking for a richer recap.";
-          if (recapData.current_topic && recapData.current_topic !== "Unknown") {
-            recapText += `\n\n**Current Topic**\n${recapData.current_topic}`;
-          }
-          if (recapData.key_decisions_so_far?.length) {
-            recapText += `\n\n**Decisions**\n- ${recapData.key_decisions_so_far.join("\n- ")}`;
-          }
-          if (recapData.who_said_what?.length) {
-            recapText += `\n\n**Who said what**\n- ${recapData.who_said_what.join("\n- ")}`;
-          }
-
-          realtimeData.recap = recapText;
+          const formattedRecap = buildRecapText(recapData, targetId);
+          realtimeData.recap = formattedRecap.recap;
+          if (formattedRecap.powered_by) realtimeData.powered_by = formattedRecap.powered_by;
           await pushUpdate(realtimeData, targetId);
           sendResponse({ success: true, data: realtimeData });
         } catch (err) {
