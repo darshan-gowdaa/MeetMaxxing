@@ -29,7 +29,7 @@ async def get_qdrant() -> AsyncQdrantClient:
     loop = asyncio.get_running_loop()
     if _client is None or _client_loop is not loop:
         # Async clients are bound to the event loop that created them. When the
-        # loop changes (per-test event loops, or the gRPC worker thread's own
+        # loop changes (per-test event loops, or a worker thread's own
         # loop), recreate the client instead of reusing a loop-bound one — which
         # would otherwise raise "Event loop is closed".
         _client = None

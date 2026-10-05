@@ -17,7 +17,7 @@
     <img height="28" src="https://img.shields.io/badge/Qdrant-Vector%20Memory-DC244C?style=for-the-badge" alt="Qdrant" />
     <img height="28" src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
     <img height="28" src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-    <img height="28" src="https://img.shields.io/badge/gRPC-4285F4?style=for-the-badge&logo=grpc&logoColor=white" alt="gRPC" />
+    <img height="28" src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
     <img height="28" src="https://img.shields.io/badge/Chrome%20Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension" />
   </div>
 </div>
@@ -319,7 +319,7 @@ flowchart TD
 | Layer | Technology | Purpose |
 | :--- | :--- | :--- |
 | AI Framework | Google ADK, Lyzr | Core agent logic and orchestration |
-| Communication | <img height="20" src="https://img.shields.io/badge/A2A-FF6F00?style=flat-square" alt="A2A" /> <img height="20" src="https://img.shields.io/badge/gRPC-4285F4?style=flat-square&logo=grpc&logoColor=white" alt="gRPC" /> | Inter-agent messaging and RPC |
+| Communication | <img height="20" src="https://img.shields.io/badge/A2A-FF6F00?style=flat-square" alt="A2A" /> <img height="20" src="https://img.shields.io/badge/WebSocket-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="WebSocket" /> | Inter-agent orchestration and real-time streaming |
 | Memory | <img height="20" src="https://img.shields.io/badge/Qdrant-DC244C?style=flat-square" alt="Qdrant" /> | Vector embeddings and semantic search |
 | Backend | <img height="20" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" /> <img height="20" src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" /> | High-performance API services |
 | Frontend | <img height="20" src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" /> <img height="20" src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" /> <img height="20" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /> <img height="20" src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /> | Dashboard and user interface |
@@ -349,12 +349,7 @@ MeetMaxxing/
 │   │   ├── orchestrator.py                        # Routes tasks between all agents (A2A hub)
 │   │   ├── realtime_agent.py                      # Generates live in-meeting suggestions
 │   │   ├── scheduler_agent.py                     # Converts action items into calendar events
-│   │   ├── summary_agent.py                       # Produces meeting summaries and key points
-│   │   └── transcription_agent.py                 # Streams and processes meeting transcripts
-│   ├── alembic/                                   # DB migration tooling (Alembic)
-│   │   ├── env.py                                 # Alembic runtime/env configuration
-│   │   ├── README                                 # Alembic usage notes
-│   │   └── script.py.mako                         # Migration file template
+│   │   └── summary_agent.py                       # Produces meeting summaries and key points
 │   ├── api/                                       # REST API route definitions
 │   │   ├── __init__.py                            # Package init for api module
 │   │   ├── routes_calendar.py                     # Calendar/reminder endpoints
@@ -370,16 +365,9 @@ MeetMaxxing/
 │   │   ├── config.py                              # App-wide settings and env config
 │   │   ├── database.py                            # Database connection/session setup
 │   │   ├── llm_fallback.py                        # Fallback logic across LLM providers
-│   │   ├── lyzr_integration.py                    # Lyzr orchestration integration
 │   │   ├── rate_limiter.py                        # Request rate-limiting middleware
 │   │   ├── redis_client.py                        # Redis connection and cache helpers
 │   │   └── utils.py                               # Shared helper functions
-│   ├── grpc_bus/                                  # gRPC-based Agent-to-Agent (A2A) messaging
-│   │   ├── __init__.py                            # Package init for grpc_bus module
-│   │   ├── grpc_bus_pb2_grpc.py                   # Generated gRPC service stubs
-│   │   ├── grpc_bus_pb2.py                        # Generated protobuf message classes
-│   │   ├── grpc_bus.proto                         # Protobuf schema for A2A messages
-│   │   └── grpc_server.py                         # gRPC server that routes agent messages
 │   ├── memory/                                    # Qdrant-backed semantic memory layer
 │   │   ├── __init__.py                            # Package init for memory module
 │   │   ├── embeddings.py                          # Text-to-vector embedding generation
@@ -388,7 +376,6 @@ MeetMaxxing/
 │   ├── services/                                  # Third-party service integrations
 │   │   ├── __init__.py                            # Package init for services module
 │   │   ├── calendar_service.py                    # Google Calendar API integration
-│   │   ├── gmail_service.py                       # Gmail API integration for follow-ups
 │   │   ├── guardrails.py                          # Input/output safety and validation checks
 │   │   └── transcript.py                          # Transcript parsing/formatting logic
 │   ├── tests/                                     # Backend test suite
@@ -397,7 +384,6 @@ MeetMaxxing/
 │   ├── .env.example                               # Sample environment variables
 │   ├── .pre-commit-config.yaml                    # Pre-commit hook configuration
 │   ├── .python-version                            # Pinned Python version for the backend
-│   ├── alembic.ini                                # Alembic migration config
 │   ├── main.py                                    # Backend entry point (FastAPI app)
 │   ├── pyproject.toml                             # Python project/dependency config
 │   ├── README.md                                  # Backend-specific documentation
@@ -514,11 +500,8 @@ MeetMaxxing/
 │   │   ├── lib/
 │   │   │   ├── api.ts                             # API client for backend requests
 │   │   │   └── supabase.ts                        # Supabase client setup
-│   │   ├── scripts/
-│   │   │   └── apply_colors.py                    # Script to apply/generate theme colors
 │   │   └── types/
-│   │       ├── index.ts                           # Shared TypeScript type definitions
-│   │       └── mdwc.d.ts                          # Type declarations for md web components
+│   │       └── index.ts                           # Shared TypeScript type definitions
 │   ├── .env.local.example                         # Sample local environment variables
 │   ├── .eslintrc.json                             # ESLint configuration
 │   ├── .gitignore                                 # Git ignore rules for frontend
@@ -583,13 +566,13 @@ MeetMaxxing/
 4. Click **Load unpacked**
 5. Select the `extension` folder
 
-### Load Firefox Extension (.zip)
+### Load Firefox Extension (Development)
 
 1. Open Firefox
 2. Go to `about:debugging`
 3. Click **This Firefox** on the left
 4. Click **Load Temporary Add-on...**
-5. Select the `meetmaxxing-firefox.zip` file located in the root directory
+5. Select `manifest.json` inside the `extension` folder
 
 ---
 
