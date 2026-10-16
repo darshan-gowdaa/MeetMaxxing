@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { queryMemory } from '@/lib/api';
+import { queryMemory, fetchMeetings } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import type { Meeting, MemoryResult } from '@/types';
 
 export const EXAMPLE_QUERIES = [
@@ -16,6 +17,7 @@ export const CONFIDENCE_STYLES: Record<string, { bar: string; chip: string; labe
 };
 
 export function useMemoryManager() {
+  const { session, loading: authLoading } = useAuth();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<MemoryResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,29 +26,28 @@ export function useMemoryManager() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
   useEffect(() => {
-    import("@/lib/api").then(({ fetchMeetings }) => {
-      fetchMeetings()
-        .then((data) => {
-          const list: Meeting[] = Array.isArray(data)
-            ? data
-            : data && "meetings" in data && Array.isArray(data.meetings)
-            ? data.meetings
-            : [];
-          if (list.length > 0) {
-            const recentTitles = list.slice(0, 4).map(m => m.title || "Untitled Meeting");
-            const dynamicQueries = [
-              `What were the main decisions in ${recentTitles[0]}?`,
-              recentTitles.length > 1 ? `What are the action items from ${recentTitles[1]}?` : "What's pending for me to do?",
-              `Summarize the key points discussed about pricing.`,
-              `What was discussed in the last few meetings?`
-            ];
-            setSuggestions(dynamicQueries);
-          }
-        })
-        .catch(() => {})
-        .finally(() => setLoadingSuggestions(false));
-    });
-  }, []);
+    if (authLoading) return;
+    fetchMeetings(session?.access_token)
+      .then((data) => {
+        const list: Meeting[] = Array.isArray(data)
+          ? data
+          : data && "meetings" in data && Array.isArray(data.meetings)
+          ? data.meetings
+          : [];
+        if (list.length > 0) {
+          const recentTitles = list.slice(0, 4).map(m => m.title || "Untitled Meeting");
+          const dynamicQueries = [
+            `What were the main decisions in ${recentTitles[0]}?`,
+            recentTitles.length > 1 ? `What are the action items from ${recentTitles[1]}?` : "What's pending for me to do?",
+            `Summarize the key points discussed about pricing.`,
+            `What was discussed in the last few meetings?`
+          ];
+          setSuggestions(dynamicQueries);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSuggestions(false));
+  }, [authLoading, session?.access_token]);
 
   const handleQuery = async (q: string = query) => {
     if (!q.trim()) return;

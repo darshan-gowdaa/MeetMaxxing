@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import {
   fetchMeeting,
   updateActionItem,
@@ -13,6 +14,8 @@ import type { Meeting } from '@/types';
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 export function useMeetingManager(id: string) {
+  const { session } = useAuth();
+  const token = session?.access_token;
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionItems, setActionItems] = useState<Meeting["action_items"]>([]);
@@ -23,7 +26,7 @@ export function useMeetingManager(id: string) {
 
   const loadMeeting = useCallback(() => {
     setLoading(true);
-    fetchMeeting(id)
+    fetchMeeting(id, token)
       .then((data: Meeting) => {
         setMeeting(data);
         setActionItems(data.action_items || []);
@@ -34,12 +37,11 @@ export function useMeetingManager(id: string) {
           setCalendarState("success");
       })
       .catch((err: Error) => {
-        setMeeting(null);
         setColdStart(isColdStartError(err));
         setErrorMsg(err.message || "Failed to fetch meeting from backend");
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, token]);
 
   useEffect(() => {
     const timeoutRef = { current: undefined as NodeJS.Timeout | undefined };
@@ -47,7 +49,7 @@ export function useMeetingManager(id: string) {
     
     const poll = async () => {
       try {
-        const data = await fetchMeeting(id);
+        const data = await fetchMeeting(id, token);
         if (!isMounted) return;
         
         setMeeting(data);
@@ -63,7 +65,6 @@ export function useMeetingManager(id: string) {
         }
       } catch (err: unknown) {
         if (!isMounted) return;
-        setMeeting(null);
         setColdStart(isColdStartError(err));
         setErrorMsg((err as Error).message || "Failed to fetch meeting from backend");
       } finally {
@@ -78,7 +79,7 @@ export function useMeetingManager(id: string) {
       isMounted = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [id]);
+  }, [id, token]);
 
   const toggleItemStatus = async (itemId: string) => {
     const item = actionItems.find((a) => a.id === itemId);

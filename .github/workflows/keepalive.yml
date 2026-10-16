@@ -1,0 +1,26 @@
+name: Keep Services Active
+# Pings Supabase and Render periodically to prevent Supabase 7-day inactivity pause
+
+on:
+  schedule:
+    # Runs at 06:00 UTC every 2 days
+    - cron: '0 6 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ping Supabase and Render
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://gcslaozkazuhdqctefpn.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          RENDER_API_URL: ${{ secrets.RENDER_API_URL || 'https://meetmaxxing-api.onrender.com' }}
+        run: node scripts/ping-supabase.js

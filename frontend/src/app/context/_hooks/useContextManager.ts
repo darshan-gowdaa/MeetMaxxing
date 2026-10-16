@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getAuthToken } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { useSnackbar } from '@/components/providers/SnackbarProvider';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -12,6 +13,7 @@ export type ContextFile = {
 };
 
 export function useContextManager() {
+  const { session, loading: authLoading } = useAuth();
   const [files, setFiles] = useState<ContextFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,10 +34,14 @@ export function useContextManager() {
   const [viewTarget, setViewTarget] = useState<ContextFile | null>(null);
   const { showMessage } = useSnackbar();
 
-  const load = async () => {
+  const load = useCallback(async (explicitToken?: string) => {
+    const token = explicitToken ?? (await getAuthToken());
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const token = await getAuthToken();
       const res = await fetch(`${BACKEND_URL}/context/files`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -43,6 +49,7 @@ export function useContextManager() {
         const data = await res.json();
         const list = data.files || [];
         setFiles(list);
+        setError("");
       } else {
         setError("Failed to load files.");
       }
@@ -52,11 +59,16 @@ export function useContextManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    load();
-  }, []);
+    if (authLoading) return;
+    if (session?.access_token) {
+      load(session.access_token);
+    } else {
+      setLoading(false);
+    }
+  }, [authLoading, session?.access_token, load]);
 
   const filtered = useMemo(() => {
     let result = [...files];
@@ -241,7 +253,7 @@ export function useContextManager() {
     uploadBusy,
     viewTarget,
     setViewTarget,
-    load,
+    load: () => load(session?.access_token),
     handleMultiDelete,
     handleDelete,
     handleEdit,

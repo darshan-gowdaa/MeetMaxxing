@@ -82,10 +82,10 @@ export async function fetchMeetings(token?: string): Promise<MeetingsApiResponse
   return activeMeetingsPromise;
 }
 
-export async function fetchMeeting(id: string) {
- const token = await getToken();
+export async function fetchMeeting(id: string, token?: string) {
+ const authToken = await getToken(token);
  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
- headers: { Authorization: `Bearer ${token}` },
+ headers: { Authorization: `Bearer ${authToken}` },
  cache:"no-store",
  });
  if (!res.ok) {
@@ -96,12 +96,12 @@ export async function fetchMeeting(id: string) {
  return safeParse(text, null);
 }
 
-export async function queryMemory(question: string, filters?: Record<string, string>) {
- const token = await getToken();
+export async function queryMemory(question: string, filters?: Record<string, string>, token?: string) {
+ const authToken = await getToken(token);
  const res = await fetch(`${BACKEND_URL}/memory/query`, {
  method:"POST",
  headers: {
- Authorization: `Bearer ${token}`,
+ Authorization: `Bearer ${authToken}`,
 "Content-Type":"application/json",
  },
  body: JSON.stringify({ question, ...(filters || {}) }),
@@ -112,12 +112,12 @@ export async function queryMemory(question: string, filters?: Record<string, str
  return safeParse(text);
 }
 
-export async function updateActionItem(id: string, updates: Record<string, string>) {
- const token = await getToken();
+export async function updateActionItem(id: string, updates: Record<string, string>, token?: string) {
+ const authToken = await getToken(token);
  const res = await fetch(`${BACKEND_URL}/dashboard/action-items/${id}`, {
  method:"PATCH",
  headers: {
- Authorization: `Bearer ${token}`,
+ Authorization: `Bearer ${authToken}`,
 "Content-Type":"application/json",
  },
  body: JSON.stringify(updates),
@@ -127,22 +127,22 @@ export async function updateActionItem(id: string, updates: Record<string, strin
  return safeParse(text);
 }
 
-export async function deleteMeeting(id: string) {
- const token = await getToken();
+export async function deleteMeeting(id: string, token?: string) {
+ const authToken = await getToken(token);
  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
  method:"DELETE",
- headers: { Authorization: `Bearer ${token}` },
+ headers: { Authorization: `Bearer ${authToken}` },
  });
  if (!res.ok) throw new Error("Failed to delete meeting");
  return true;
 }
 
-export async function updateMeeting(id: string, updates: Record<string, string>) {
- const token = await getToken();
+export async function updateMeeting(id: string, updates: Record<string, string>, token?: string) {
+ const authToken = await getToken(token);
  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}`, {
  method:"PATCH",
  headers: {
- Authorization: `Bearer ${token}`,
+ Authorization: `Bearer ${authToken}`,
 "Content-Type":"application/json",
  },
  body: JSON.stringify(updates),

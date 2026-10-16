@@ -16,21 +16,45 @@ async def get_user_from_token(token: str) -> dict:
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")
 
+    # Fast path: locally verify JWT signature with SUPABASE_JWT_SECRET (0.05ms vs 250ms HTTP call)
+    from .config import settings
+
+    if settings.SUPABASE_JWT_SECRET:
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SUPABASE_JWT_SECRET,
+                algorithms=["HS256"],
+                audience="authenticated",
+                options={"verify_aud": True},
+            )
+            user_id = payload.get("sub")
+            if user_id:
+                org_id = payload.get("app_metadata", {}).get("org_id", user_id)
+                return {
+                    "user_id": user_id,
+                    "org_id": org_id,
+                    "email": payload.get("email"),
+                }
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token expired")
+        except Exception as e:
+            logger.debug("[Auth] Local JWT decode failed, trying remote: {}", e)
+
     try:
+        import asyncio
         from .database import get_supabase
 
         supabase = get_supabase()
 
-        # Verify the token and get the user securely via Supabase Auth
-        user_resp = supabase.auth.get_user(token)
+        # Non-blocking threadpool fallback to Supabase Auth API
+        user_resp = await asyncio.to_thread(supabase.auth.get_user, token)
         if not user_resp or not user_resp.user:
             logger.warning("[Auth] Supabase returned no user for token")
             raise HTTPException(status_code=401, detail="Invalid token")
 
         user = user_resp.user
 
-        # Decode locally (no signature check) to get org_id from app_metadata.
-        # Security relies on the Supabase SDK call above — this is just metadata extraction.
         try:
             payload = jwt.decode(token, options={"verify_signature": False})
             org_id = payload.get("app_metadata", {}).get("org_id", user.id)

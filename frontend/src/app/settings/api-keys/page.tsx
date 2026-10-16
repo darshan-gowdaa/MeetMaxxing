@@ -1,55 +1,60 @@
 "use client";
 
-import { useState, useEffect } from"react";
-import { AnimatePresence } from"framer-motion";
-import { useAuth } from"@/lib/auth-context";
-import { Provider, ApiKey } from"./types";
-import { useSnackbar } from"@/components/providers/SnackbarProvider";
+import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/auth-context";
+import { Provider, ApiKey } from "./types";
+import { useSnackbar } from "@/components/providers/SnackbarProvider";
 
-import { ApiKeysHero } from"./_components/organisms/ApiKeysHero";
-import { ProviderCard } from"./_components/organisms/ProviderCard";
-import { ModelSelection } from"./_components/organisms/ModelSelection";
-import { AddKeyDialog } from"./_components/organisms/AddKeyDialog";
-import { ProviderHelpDrawer } from"./_components/organisms/ProviderHelpDrawer";
+import { ApiKeysHero } from "./_components/organisms/ApiKeysHero";
+import { ProviderCard } from "./_components/organisms/ProviderCard";
+import { ModelSelection } from "./_components/organisms/ModelSelection";
+import { AddKeyDialog } from "./_components/organisms/AddKeyDialog";
+import { ProviderHelpDrawer } from "./_components/organisms/ProviderHelpDrawer";
 import { ProviderListSkeleton } from "../../../components/organisms/skeletons/ProviderListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 export default function ApiKeysPage() {
-	 const { session } = useAuth();
-	 const token = session?.access_token;
-	 const { showMessage } = useSnackbar();
+	const { session, loading: authLoading } = useAuth();
+	const token = session?.access_token;
+	const { showMessage } = useSnackbar();
 
-	 const [providers, setProviders] = useState<Provider[]>([]);
-	 const [keys, setKeys] = useState<ApiKey[]>([]);
-	 const [loading, setLoading] = useState(true);
+	const [providers, setProviders] = useState<Provider[]>([]);
+	const [keys, setKeys] = useState<ApiKey[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	 const [addDialog, setAddDialog] = useState<Provider | null>(null);
-	 const [helpDrawer, setHelpDrawer] = useState<Provider | null>(null);
+	const [addDialog, setAddDialog] = useState<Provider | null>(null);
+	const [helpDrawer, setHelpDrawer] = useState<Provider | null>(null);
 
- const fetchKeys = async () => {
- if (!token) return;
- try {
- const res = await fetch(`${API_URL}/api-keys`, {
- headers: { Authorization: `Bearer ${token}` }
- });
- const data = await res.json();
- setKeys(data.api_keys || []);
- } catch {}
- };
+	const fetchKeys = useCallback(async (authToken?: string) => {
+		const tk = authToken || token;
+		if (!tk) return;
+		try {
+			const res = await fetch(`${API_URL}/api-keys`, {
+				headers: { Authorization: `Bearer ${tk}` }
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setKeys(data.api_keys || []);
+			}
+		} catch {}
+	}, [token]);
 
- const fetchProviders = async () => {
- try {
- const res = await fetch(`${API_URL}/api-keys/providers`);
- const data = await res.json();
- setProviders(data.providers || []);
- } catch {}
- };
+	const fetchProviders = useCallback(async () => {
+		try {
+			const res = await fetch(`${API_URL}/api-keys/providers`);
+			if (res.ok) {
+				const data = await res.json();
+				setProviders(data.providers || []);
+			}
+		} catch {}
+	}, []);
 
- useEffect(() => {
- Promise.all([fetchProviders(), fetchKeys()]).then(() => setLoading(false));
- // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [token]);
+	useEffect(() => {
+		if (authLoading) return;
+		Promise.all([fetchProviders(), fetchKeys(token)]).finally(() => setLoading(false));
+	}, [authLoading, token, fetchKeys, fetchProviders]);
 
  const handleCheckStatus = async (keyId: string) => {
  setKeys(keys.map(k => k.id === keyId ? { ...k, status:"unchecked"} : k)); // simulate loading

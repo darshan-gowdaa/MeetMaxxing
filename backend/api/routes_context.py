@@ -182,7 +182,7 @@ async def list_all_files(user: dict = Depends(get_current_user)):
                 ]
             ),
             limit=10000,
-            with_payload=True,
+            with_payload=["speaker_name", "meeting_id", "meeting_date"],
             with_vectors=False,
         )
         points = results[0]
@@ -228,7 +228,7 @@ async def list_files(meeting_id: str, user: dict = Depends(get_current_user)):
                 ]
             ),
             limit=10000,
-            with_payload=True,
+            with_payload=["speaker_name"],
             with_vectors=False,
         )
         points = results[0]

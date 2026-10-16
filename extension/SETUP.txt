@@ -1,0 +1,32 @@
+MEETMAXXING CHROME EXTENSION - SETUP INSTRUCTIONS
+===================================================
+
+Follow these steps to set up MeetMaxxing in Google Chrome, Brave, or Microsoft Edge.
+
+STEP 1: UNPACK
+Extract all files from meetmaxxing-chrome.zip into a permanent folder on your computer (for example: Documents/MeetMaxxing-Chrome). Do not delete or move this folder after installing.
+
+STEP 2: OPEN EXTENSIONS PAGE
+In Google Chrome address bar, type:
+chrome://extensions
+and press Enter. (In Edge use edge://extensions, in Brave use brave://extensions)
+
+STEP 3: ENABLE DEVELOPER MODE
+In the top right corner of the Extensions page, switch the "Developer mode" toggle ON.
+
+STEP 4: LOAD UNPACKED EXTENSION
+Click the "Load unpacked" button in the top left corner.
+In the file picker, select the folder where you unzipped meetmaxxing-chrome.zip (the folder with manifest.json inside).
+
+STEP 5: PIN EXTENSION
+Click the puzzle piece icon on your browser toolbar near your profile picture, find "MeetMaxxing", and click the Pin icon so it stays visible.
+
+STEP 6: LOGIN & USE
+1. Go to https://meetmaxxing.vercel.app and log in to your account.
+2. Join any meeting on https://meet.google.com.
+3. Turn on Captions (press 'c' key in Google Meet).
+4. The MeetMaxxing sidebar will appear on the right side with real-time tips, action items, and live summaries.
+
+NEED HELP?
+Check out README.md in this folder for common troubleshooting steps and FAQ answers.
+Dashboard & Support: https://meetmaxxing.vercel.app

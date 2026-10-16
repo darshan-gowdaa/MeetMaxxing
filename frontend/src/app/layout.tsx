@@ -26,12 +26,6 @@ export default function RootLayout({
  <head>
  <link rel="preconnect" href="https://meetmaxxing-api.onrender.com" crossOrigin="anonymous" />
  <link rel="dns-prefetch" href="https://meetmaxxing-api.onrender.com" />
- <link rel="preconnect"href="https://fonts.googleapis.com"/>
- <link rel="preconnect"href="https://fonts.gstatic.com"crossOrigin="anonymous"/>
- <link
- href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&family=Google+Sans+Mono&display=swap"
- rel="stylesheet"
- />
  </head>
  <body className="min-h-full flex flex-col bg-bg text-text">
  <ThemeProvider attribute="class"defaultTheme="system"enableSystem disableTransitionOnChange>

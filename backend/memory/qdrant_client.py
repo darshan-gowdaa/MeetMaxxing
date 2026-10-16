@@ -51,13 +51,13 @@ async def get_qdrant() -> AsyncQdrantClient:
                     url=settings.QDRANT_URL,
                     api_key=settings.QDRANT_API_KEY or None,
                     check_compatibility=False,
+                    timeout=10.0,
                 )
-                await _client.get_collections()
 
     if not _collection_ensured:
         _collection_ensured = True
         try:
-            await ensure_collection()
+            await ensure_collection(force=True)
         except Exception:
             _collection_ensured = False
             raise

@@ -1,0 +1,36 @@
+MEETMAXXING FIREFOX EXTENSION - SETUP GUIDE
+============================================
+
+OFFICIAL 1-CLICK INSTALL (RECOMMENDED):
+If you just want to install and use MeetMaxxing permanently, use the official Mozilla Add-ons store link:
+https://addons.mozilla.org/en-US/firefox/addon/meetmaxxing/
+
+Click "Add to Firefox" on the page and you are good to go!
+
+--------------------------------------------
+MANUAL INSTALLATION FROM THIS ZIP (DEVELOPER / TESTING):
+--------------------------------------------
+
+1. EXTRACT FILES
+Extract meetmaxxing-firefox.zip into any folder on your computer.
+
+2. OPEN FIREFOX DEBUGGING
+Open a new tab in Firefox and go to:
+about:debugging#/runtime/this-firefox
+
+3. LOAD ADD-ON
+Click the "Load Temporary Add-on..." button.
+Browse into the unzipped folder and select the "manifest.json" file.
+
+4. PIN EXTENSION
+Click the puzzle piece icon on the right side of the Firefox navigation bar and click the gear/pin next to MeetMaxxing to keep it handy.
+
+5. LOGIN AND TEST
+- Log in to your account at https://meetmaxxing.vercel.app
+- Join any meeting on https://meet.google.com
+- Press 'c' to turn on captions in Google Meet
+- The MeetMaxxing AI assistant sidebar will open on your right screen.
+
+NEED HELP?
+Check out README.md for complete troubleshooting steps and FAQ.
+Support: https://meetmaxxing.vercel.app

@@ -59,9 +59,10 @@ backend/qdrant_data/
 !README.md
 !README.MD
 !readme.md
+!extension/*.md
+!docs/**/*.md
 
 .gemini_rules/
-scripts/
 *.zip
 .vercel
 .env*

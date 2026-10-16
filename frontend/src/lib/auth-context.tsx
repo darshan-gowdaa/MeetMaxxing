@@ -25,45 +25,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
  const [loading, setLoading] = useState(true);
  const router = useRouter();
 
- useEffect(() => {
- // Fast initial check directly from local cache
- supabase.auth.getSession().then(({ data: { session } }) => {
- if (session) {
- setSession(session);
- setUser(session.user);
- }
- setLoading(false);
- }).catch(() => {
- setLoading(false);
- });
+  useEffect(() => {
+    let mounted = true;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
- // Listen for auth changes
- const { data: { subscription } } = supabase.auth.onAuthStateChange(
- async (event, session) => {
- setSession(session);
- setUser(session?.user ?? null);
- setLoading(false);
- if (event ==="SIGNED_OUT") {
- router.push("/login");
- } else if (session?.access_token && event ==="SIGNED_IN") {
- // Provision in background only on explicit sign in
- const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ||"https://meetmaxxing-api.onrender.com";
- fetch(`${backendUrl}/api/auth/provision`, {
- method:"POST",
- headers: { Authorization: `Bearer ${session.access_token}` },
- })
- .then((res) => {
- if (!res.ok) console.error("[AuthContext] Backend provision returned status:", res.status);
- })
- .catch((err) => console.error("[AuthContext] Failed to hit backend provision endpoint:", err));
- }
- }
- );
+    // Non-blocking pre-warm ping to Render backend to eliminate cold-start wait
+    try {
+      fetch(`${backendUrl}/health`, { mode: "no-cors" }).catch(() => {});
+    } catch {}
 
- return () => {
- subscription.unsubscribe();
- };
- }, [router]);
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        if (!mounted) return;
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setLoading(false);
+
+        if (event === "SIGNED_OUT") {
+          router.push("/login");
+        } else if (newSession?.access_token && event === "SIGNED_IN") {
+          fetch(`${backendUrl}/api/auth/provision`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${newSession.access_token}` },
+          }).catch((err) => console.error("[AuthContext] Provision error:", err));
+        }
+      }
+    );
+
+    // Fast initial check directly from local cache
+    supabase.auth.getSession().then(({ data: { session: initSession } }) => {
+      if (!mounted) return;
+      if (initSession) {
+        setSession(initSession);
+        setUser(initSession.user);
+      }
+      setLoading(false);
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
  const signOut = async () => {
  try {
