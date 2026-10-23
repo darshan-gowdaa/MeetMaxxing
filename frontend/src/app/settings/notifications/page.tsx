@@ -131,77 +131,73 @@ export default function NotificationsPage() {
       ) : (
         <div className="flex flex-col gap-6 sm:gap-8">
           {/* Notification Channels */}
-          <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+          <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
               <RiNotification3Line className="w-4 h-4 text-primary" /> Notification Channels & Triggers
             </h2>
 
-            <label className="flex items-center justify-between gap-4 cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-bold text-base sm:text-lg text-text flex items-center gap-2">
-                  <RiMailLine className="w-4 h-4 text-primary" /> Email Summaries
-                </span>
-                <span className="text-xs sm:text-sm text-text-muted">Daily and post-meeting activity recaps</span>
-              </div>
-              <Switch 
-                checked={notifs.email}
-                onCheckedChange={() => toggleNotif('email')}
-                aria-label="Toggle email summaries"
-              />
-            </label>
-            
-            <div className="h-px w-full bg-border" />
-            
-            <label className="flex items-center justify-between gap-4 cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-bold text-base sm:text-lg text-text flex items-center gap-2">
-                  <RiCalendarCheckLine className="w-4 h-4 text-primary" /> Meeting Reminders
-                </span>
-                <span className="text-xs sm:text-sm text-text-muted">Direct alerts before scheduled meetings start</span>
-              </div>
-              <Switch 
-                checked={notifs.reminders}
-                onCheckedChange={() => toggleNotif('reminders')}
-                aria-label="Toggle meeting reminders"
-              />
-            </label>
+            <div className="flex flex-col gap-3">
+              <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-bold text-base text-text flex items-center gap-2">
+                    <RiMailLine className="w-4 h-4 text-primary" /> Email Summaries
+                  </span>
+                  <span className="text-xs sm:text-sm text-text-muted">Daily and post-meeting activity recaps</span>
+                </div>
+                <Switch 
+                  checked={notifs.email}
+                  onCheckedChange={() => toggleNotif('email')}
+                  aria-label="Toggle email summaries"
+                />
+              </label>
+              
+              <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-bold text-base text-text flex items-center gap-2">
+                    <RiCalendarCheckLine className="w-4 h-4 text-primary" /> Meeting Reminders
+                  </span>
+                  <span className="text-xs sm:text-sm text-text-muted">Direct alerts before scheduled meetings start</span>
+                </div>
+                <Switch 
+                  checked={notifs.reminders}
+                  onCheckedChange={() => toggleNotif('reminders')}
+                  aria-label="Toggle meeting reminders"
+                />
+              </label>
 
-            <div className="h-px w-full bg-border" />
-
-            <label className="flex items-center justify-between gap-4 cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-bold text-base sm:text-lg text-text flex items-center gap-2">
-                  <RiAlarmWarningLine className="w-4 h-4 text-primary" /> Action Items Due Reminder
-                </span>
-                <span className="text-xs sm:text-sm text-text-muted">Reminders when extracted tasks approach their target date</span>
-              </div>
-              <Switch 
-                checked={notifs.action_items_due}
-                onCheckedChange={() => toggleNotif('action_items_due')}
-                aria-label="Toggle action items due reminders"
-              />
-            </label>
-            
-            <div className="h-px w-full bg-border" />
-            
-            <label className="flex items-center justify-between gap-4 cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-bold text-base sm:text-lg text-text flex items-center gap-2">
-                  <RiNotification3Line className="w-4 h-4 text-primary" /> In-App Alerts
-                </span>
-                <span className="text-xs sm:text-sm text-text-muted">Real-time toasts and desktop notification prompts</span>
-              </div>
-              <Switch 
-                checked={notifs.in_app}
-                onCheckedChange={() => toggleNotif('in_app')}
-                aria-label="Toggle in-app alerts"
-              />
-            </label>
+              <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-bold text-base text-text flex items-center gap-2">
+                    <RiAlarmWarningLine className="w-4 h-4 text-primary" /> Action Items Due Reminder
+                  </span>
+                  <span className="text-xs sm:text-sm text-text-muted">Reminders when extracted tasks approach their target date</span>
+                </div>
+                <Switch 
+                  checked={notifs.action_items_due}
+                  onCheckedChange={() => toggleNotif('action_items_due')}
+                  aria-label="Toggle action items due reminders"
+                />
+              </label>
+              
+              <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-bold text-base text-text flex items-center gap-2">
+                    <RiNotification3Line className="w-4 h-4 text-primary" /> In-App Alerts
+                  </span>
+                  <span className="text-xs sm:text-sm text-text-muted">Real-time toasts and desktop notification prompts</span>
+                </div>
+                <Switch 
+                  checked={notifs.in_app}
+                  onCheckedChange={() => toggleNotif('in_app')}
+                  aria-label="Toggle in-app alerts"
+                />
+              </label>
+            </div>
           </div>
 
           {/* Timing Preferences */}
-          <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+          <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
               <RiTimeLine className="w-4 h-4 text-primary" /> Schedule & Timing Preferences
             </h2>
 
@@ -217,7 +213,7 @@ export default function NotificationsPage() {
                 id="prep-lead-time"
                 value={notifs.prep_alerts_lead_time}
                 onChange={e => updateSelect('prep_alerts_lead_time', e.target.value)}
-                className="w-full bg-surface2 border border-border rounded-[20px] px-5 py-4 text-[14px] font-medium focus:outline-none focus:border-primary text-text transition-all appearance-none cursor-pointer mt-1"
+                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer mt-1"
               >
                 <option value="5m">5 minutes before</option>
                 <option value="10m">10 minutes before</option>
@@ -226,7 +222,7 @@ export default function NotificationsPage() {
               </select>
             </div>
 
-            <div className="h-px w-full bg-border" />
+            <div className="h-px w-full bg-outline-variant/15" />
 
             {/* Daily Digest Time */}
             <div className="flex flex-col gap-2">
@@ -240,7 +236,7 @@ export default function NotificationsPage() {
                 id="daily-digest-time"
                 value={notifs.daily_digest_time}
                 onChange={e => updateSelect('daily_digest_time', e.target.value)}
-                className="w-full bg-surface2 border border-border rounded-[20px] px-5 py-4 text-[14px] font-medium focus:outline-none focus:border-primary text-text transition-all appearance-none cursor-pointer mt-1"
+                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer mt-1"
               >
                 <option value="07:00">07:00 AM (Early Morning)</option>
                 <option value="08:00">08:00 AM (Morning Prep)</option>

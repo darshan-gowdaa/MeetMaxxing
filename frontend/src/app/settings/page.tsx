@@ -177,10 +177,10 @@ export default function GeneralPreferences() {
       </div>
 
       {/* Timezone Section */}
-      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
               <RiTimeLine className="w-4 h-4 text-primary" /> Primary Timezone
             </h2>
             <p className="text-xs text-text-muted">
@@ -190,9 +190,9 @@ export default function GeneralPreferences() {
           <button
             type="button"
             onClick={handleAutoDetectTimezone}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface2 hover:bg-surface-container-highest border border-border text-xs font-semibold text-text transition-all self-start sm:self-auto cursor-pointer"
+            className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container text-xs font-semibold hover:brightness-105 active:scale-[0.98] transition-all inline-flex items-center gap-2 self-start sm:self-auto cursor-pointer"
           >
-            <RiCompass3Line className="w-3.5 h-3.5 text-primary" />
+            <RiCompass3Line className="w-3.5 h-3.5" />
             Auto-detect
           </button>
         </div>
@@ -201,7 +201,7 @@ export default function GeneralPreferences() {
           value={timezone}
           onChange={e => saveTimezone(e.target.value)}
           aria-label="Primary timezone"
-          className="w-full bg-surface2 border border-border rounded-[20px] px-5 py-4 text-[14px] font-medium focus:outline-none focus:border-primary text-text transition-all appearance-none cursor-pointer"
+          className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-5 py-4 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer"
         >
           {timezoneOptions.map(tz => (
             <option key={tz} value={tz}>
@@ -212,9 +212,9 @@ export default function GeneralPreferences() {
       </section>
 
       {/* Default Meeting Duration */}
-      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <RiTimerLine className="w-4 h-4 text-primary" /> Default Meeting Duration
           </h2>
           <p className="text-xs text-text-muted">
@@ -226,7 +226,7 @@ export default function GeneralPreferences() {
           value={duration}
           onChange={e => saveDuration(Number(e.target.value))}
           aria-label="Default meeting duration"
-          className="w-full bg-surface2 border border-border rounded-[20px] px-5 py-4 text-[14px] font-medium focus:outline-none focus:border-primary text-text transition-all appearance-none cursor-pointer"
+          className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-5 py-4 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer"
         >
           <option value={15}>15 minutes (Quick Standup)</option>
           <option value={30}>30 minutes (Standard Meeting)</option>
@@ -236,7 +236,7 @@ export default function GeneralPreferences() {
       </section>
 
       {/* Auto-extract Action Items */}
-      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <label className="flex items-center justify-between gap-4 cursor-pointer">
           <div className="flex flex-col">
             <span className="font-bold text-base sm:text-lg text-text flex items-center gap-2">
@@ -255,15 +255,15 @@ export default function GeneralPreferences() {
       </section>
 
       {/* Language Section */}
-      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
           <RiTranslate2 className="w-4 h-4 text-primary" /> Default Meeting Language
         </h2>
         <select
           value={lang}
           onChange={e => saveLang(e.target.value)}
           aria-label="Default meeting language"
-          className="w-full bg-surface2 border border-border rounded-[20px] px-5 py-4 text-[14px] font-medium focus:outline-none focus:border-primary text-text transition-all appearance-none cursor-pointer"
+          className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-5 py-4 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer"
         >
           <option value="en">English</option>
           <option value="es">Spanish</option>
@@ -274,8 +274,8 @@ export default function GeneralPreferences() {
       </section>
 
       {/* Summary Style */}
-      <section className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-surface-container border border-border flex flex-col gap-5 sm:gap-6">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
           <RiFileList3Line className="w-4 h-4 text-primary" /> Summary Style
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup">

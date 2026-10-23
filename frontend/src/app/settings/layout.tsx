@@ -25,22 +25,22 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="flex flex-col md:flex-row w-full max-w-6xl mx-auto md:gap-6 lg:gap-10 pb-24">
-      <nav className="w-full md:w-64 shrink-0 flex flex-col gap-2 sm:gap-3 sticky top-16 md:top-[80px] z-30 bg-bg/95 backdrop-blur-xl md:bg-transparent md:backdrop-blur-none pt-3 md:pt-8 pb-3 md:pb-0 px-3 sm:px-4 md:pl-8 md:pr-0 border-b border-border/50 md:border-none self-start transition-all">
+      <nav className="w-full md:w-64 shrink-0 flex flex-col gap-2 sm:gap-3 sticky top-16 md:top-[80px] z-30 pt-3 md:pt-8 pb-3 md:pb-0 px-3 sm:px-4 md:pl-8 md:pr-0 self-start transition-all">
         <h2 className="text-xl sm:text-2xl font-black mb-1 md:mb-4 px-1 md:px-4 text-text tracking-tight">Settings</h2>
-        <ul className="flex flex-nowrap md:flex-col gap-2 overflow-x-auto hide-scrollbar px-1 md:px-0 pb-1 md:pb-0 touch-pan-x">
+        <ul className="flex flex-nowrap md:flex-col gap-1.5 sm:gap-2 overflow-x-auto hide-scrollbar touch-pan-x bg-surface-container-low/70 backdrop-blur-xl rounded-[32px] p-2.5 sm:p-3 border border-outline-variant/15 shadow-none">
           {links.map(link => {
             const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);
             return (
               <li key={link.href} className="shrink-0">
                 <Link 
                   href={link.href} 
-                  className={`flex items-center gap-3 px-4 py-3 rounded-full font-medium text-sm transition-colors whitespace-nowrap ${
+                  className={`whitespace-nowrap text-sm ${
                     isActive 
-                      ? 'bg-primary-container text-on-primary-container shadow-sm' 
-                      : 'bg-surface hover:bg-surface2 text-text-muted hover:text-text'
+                      ? 'bg-primary-container text-on-primary-container font-semibold rounded-full shadow-none px-4 py-3 flex items-center gap-3 active:scale-[0.98] transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)]' 
+                      : 'text-text-muted hover:text-text hover:bg-surface-container-high/60 rounded-full px-4 py-3 flex items-center gap-3 active:scale-[0.98] transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)]'
                   }`}
                 >
-                  <link.icon className={`w-4 h-4 ${isActive ? 'text-on-primary-container' : 'text-text-muted'}`} /> {link.label}
+                  <link.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-on-primary-container' : 'text-text-muted'}`} /> {link.label}
                 </Link>
               </li>
             );

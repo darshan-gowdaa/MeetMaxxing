@@ -96,7 +96,7 @@ export const ProfileHero = () => {
   const avatarUrl = user?.user_metadata?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=fallback";
 
   return (
-    <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-center md:items-start p-5 md:p-6 rounded-[24px] bg-surface border border-border shadow-sm mb-2">
+    <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-center md:items-start p-6 sm:p-8 rounded-[28px] bg-surface-container-low border border-outline-variant/15 shadow-none mb-2">
       {/* Avatar column */}
       <div className="flex flex-col items-center gap-2 shrink-0">
         <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-border bg-surface shrink-0">
@@ -132,7 +132,7 @@ export const ProfileHero = () => {
               placeholder="Your Name"
               autoComplete="name"
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-surface2 text-text px-4 py-3 rounded-xl border border-border focus:outline-none focus:border-primary text-[15px] sm:text-sm transition-colors"
+              className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             />
           </div>
 
@@ -147,7 +147,7 @@ export const ProfileHero = () => {
               placeholder="Company or Team name"
               autoComplete="organization"
               onChange={(e) => setOrgName(e.target.value)}
-              className="w-full bg-surface2 text-text px-4 py-3 rounded-xl border border-border focus:outline-none focus:border-primary text-[15px] sm:text-sm transition-colors"
+              className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
             />
           </div>
         </div>
@@ -158,7 +158,7 @@ export const ProfileHero = () => {
             type="button"
             onClick={handleUpdateProfile}
             disabled={loading}
-            className="w-full sm:w-auto px-6 py-2.5 bg-primary text-on-primary rounded-full text-sm font-semibold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center cursor-pointer shadow-sm"
+            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center cursor-pointer"
           >
             {loading ? "Saving…" : "Save Profile"}
           </button>

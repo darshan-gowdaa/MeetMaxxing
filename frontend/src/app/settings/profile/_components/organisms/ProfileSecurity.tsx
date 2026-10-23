@@ -111,7 +111,7 @@ export const ProfileSecurity = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Change Password Card */}
-      <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
+      <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-surface-container-low border border-outline-variant/15 shadow-none">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <RiLockPasswordLine className="w-4 h-4 text-primary" />
@@ -130,7 +130,7 @@ export const ProfileSecurity = () => {
                 value={password}
                 autoComplete="new-password"
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-12 rounded-xl bg-surface border border-outline-variant text-text focus:outline-none focus:border-primary text-[16px] sm:text-sm transition-colors"
+                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 pr-12 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 required
               />
               <button
@@ -145,7 +145,7 @@ export const ProfileSecurity = () => {
             <button
               type="submit"
               disabled={pwdLoading || !password}
-              className="w-full sm:w-auto px-6 py-3 bg-primary text-on-primary rounded-full text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
               {pwdLoading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
               {pwdLoading ? "Updating…" : "Update Password"}
@@ -157,10 +157,10 @@ export const ProfileSecurity = () => {
       </div>
 
       {/* Data Management (GDPR Export) Card */}
-      <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
+      <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-tertiary-container/20 border border-tertiary/30 text-on-tertiary-container shadow-none">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <RiDownloadLine className="w-4 h-4 text-primary" />
+            <RiDownloadLine className="w-4 h-4 text-tertiary" />
             <h3 className="text-[15px] font-bold text-text">Data Management & GDPR Export</h3>
           </div>
           <p className="text-[13px] text-text-muted font-medium">
@@ -172,7 +172,7 @@ export const ProfileSecurity = () => {
             type="button"
             onClick={handleExportData}
             disabled={exportLoading}
-            className="w-full sm:w-auto px-6 py-2.5 bg-surface2 hover:bg-surface-container-highest border border-border text-text rounded-full text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             {exportLoading && <Md3LoadingIndicator size="sm" className="text-text" />}
             <RiDownloadLine className="w-4 h-4 text-primary" />
@@ -182,7 +182,7 @@ export const ProfileSecurity = () => {
       </div>
 
       {/* Danger Zone */}
-      <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-risk-container border border-risk/20 text-on-risk-container shadow-sm">
+      <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-risk-container/20 border border-risk/30 text-on-risk-container shadow-none">
         <div className="flex flex-col gap-1">
           <h3 className="text-[15px] font-bold text-risk">Danger Zone</h3>
           <p className="text-[13px] text-risk/80 font-medium">Permanently delete your account and all associated data. This action is irreversible.</p>
@@ -191,7 +191,7 @@ export const ProfileSecurity = () => {
           <button
             onClick={() => setIsDeleteOpen(true)}
             disabled={loading}
-            className="w-full sm:w-auto px-6 py-3 bg-risk text-on-risk rounded-full text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-risk text-on-risk hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading && <Md3LoadingIndicator size="sm" className="text-on-risk" />}
             {loading ? "Deleting…" : "Delete Account"}

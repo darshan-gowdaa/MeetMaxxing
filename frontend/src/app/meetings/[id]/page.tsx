@@ -43,10 +43,10 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
   if (!meeting) {
     return (
-      <div className="min-h-screen bg-bg flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+      <div className="min-h-screen bg-bg flex flex-col justify-center items-center px-4">
+        <div className="rounded-[28px] bg-surface-container-low border border-outline-variant/15 p-8 max-w-md mx-auto text-center flex flex-col items-center gap-6">
           {errorMsg ? (
-            <div className="w-16 h-16 rounded-full bg-risk-container flex items-center justify-center mb-2">
+            <div className="w-16 h-16 rounded-full bg-risk-container text-on-risk-container flex items-center justify-center mb-2">
               <span className="text-risk font-bold text-2xl">{coldStart ? "..." : "!"}</span>
             </div>
           ) : (
@@ -76,14 +76,14 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex items-center gap-3 mt-4">
             <Link
               href="/"
-              className="flex items-center gap-2 h-10 px-5 rounded-full bg-surface2 hover:bg-surface3 text-text text-[13px] font-semibold spring"
+              className="flex items-center gap-2 rounded-full bg-secondary-container text-on-secondary-container px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
             </Link>
             <button
               onClick={loadMeeting}
-              className="w-10 h-10 rounded-full bg-surface2 hover:bg-surface3 text-text flex items-center justify-center spring"
+              className="w-11 h-11 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center active:scale-[0.98] transition-all"
               title="Refresh"
               aria-label="Refresh meeting"
             >
@@ -96,7 +96,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="min-h-screen bg-bg text-text font-sans pb-16">
+    <div className="min-h-screen bg-bg text-text font-sans pb-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 flex flex-col gap-5">
 
         <MeetingHeader 

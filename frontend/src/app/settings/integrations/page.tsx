@@ -266,7 +266,7 @@ export default function IntegrationsPage() {
 
       <div className="grid grid-cols-1 gap-5 sm:gap-6">
         {/* 1. Google Calendar Integration */}
-        <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-border flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all">
+        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start gap-4 flex-1">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
               <RiCalendarLine className="w-6 h-6 text-primary" />
@@ -275,15 +275,15 @@ export default function IntegrationsPage() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <h2 className="text-base sm:text-lg font-bold text-text">Google Calendar</h2>
                 {calendarLoading ? (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface2 text-text-muted animate-pulse">
+                  <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold animate-pulse">
                     Checking…
                   </span>
                 ) : calendarConnected ? (
-                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-success/15 text-success font-semibold border border-success/30">
+                  <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
                     <RiCheckLine className="w-3.5 h-3.5" /> Connected
                   </span>
                 ) : (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface2 text-text-muted font-medium border border-border">
+                  <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
                     Disconnected
                   </span>
                 )}
@@ -300,7 +300,7 @@ export default function IntegrationsPage() {
                 type="button"
                 onClick={handleDisconnectCalendar}
                 disabled={calendarActionLoading}
-                className="px-4 py-2.5 rounded-full border border-risk/30 text-risk hover:bg-risk/10 text-xs sm:text-sm font-semibold transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
               >
                 {calendarActionLoading ? <Md3LoadingIndicator size="sm" className="text-risk" /> : null}
                 Disconnect
@@ -310,7 +310,7 @@ export default function IntegrationsPage() {
                 type="button"
                 onClick={handleConnectCalendar}
                 disabled={calendarActionLoading || calendarLoading}
-                className="px-5 py-2.5 rounded-full bg-primary text-on-primary hover:brightness-110 text-xs sm:text-sm font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
               >
                 {calendarActionLoading ? (
                   <Md3LoadingIndicator size="sm" className="text-on-primary" />
@@ -325,7 +325,7 @@ export default function IntegrationsPage() {
               onClick={fetchCalendarStatus}
               title="Refresh status"
               disabled={calendarLoading}
-              className="p-2.5 rounded-full hover:bg-surface2 text-text-muted hover:text-text transition-colors"
+              className="p-3 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors cursor-pointer"
             >
               <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
             </button>
@@ -333,7 +333,7 @@ export default function IntegrationsPage() {
         </div>
 
         {/* 2. Google Meet Integration */}
-        <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-border flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all">
+        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start gap-4 flex-1">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
               <RiVideoChatLine className="w-6 h-6 text-primary" />
@@ -341,7 +341,7 @@ export default function IntegrationsPage() {
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2.5">
                 <h2 className="text-base sm:text-lg font-bold text-text">Google Meet</h2>
-                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-primary/15 text-primary font-bold border border-primary/30">
+                <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
                   <RiCheckLine className="w-3.5 h-3.5" /> Built-in / Ready
                 </span>
               </div>
@@ -356,7 +356,7 @@ export default function IntegrationsPage() {
               href="https://meet.google.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2.5 rounded-full bg-surface2 hover:bg-surface-container-highest border border-border text-text text-xs sm:text-sm font-semibold transition-all inline-flex items-center gap-1.5"
+              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text inline-flex items-center gap-1.5"
             >
               Open Google Meet <RiExternalLinkLine className="w-3.5 h-3.5 text-text-muted" />
             </a>
@@ -364,7 +364,7 @@ export default function IntegrationsPage() {
         </div>
 
         {/* 3. Zoom Integration */}
-        <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-border flex flex-col gap-4 transition-all">
+        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
@@ -374,11 +374,11 @@ export default function IntegrationsPage() {
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-base sm:text-lg font-bold text-text">Zoom</h2>
                   {zoomWebhook ? (
-                    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-success/15 text-success font-semibold border border-success/30">
-                      Configured
+                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                      <RiCheckLine className="w-3.5 h-3.5" /> Configured
                     </span>
                   ) : (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface2 text-text-muted font-medium border border-border">
+                    <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
                       Webhook / OAuth
                     </span>
                   )}
@@ -396,13 +396,13 @@ export default function IntegrationsPage() {
               placeholder="Zoom Webhook Endpoint / Secret URL"
               value={zoomWebhook}
               onChange={e => setZoomWebhook(e.target.value)}
-              className="flex-1 bg-surface2 border border-border rounded-xl px-4 py-3 text-xs sm:text-sm font-medium focus:outline-none focus:border-primary text-text placeholder:text-text-muted"
+              className="flex-1 bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted"
             />
             <button
               type="button"
               onClick={handleSaveZoom}
               disabled={zoomSaving}
-              className="px-5 py-3 rounded-xl bg-surface2 hover:bg-surface-container-highest border border-border text-xs sm:text-sm font-semibold text-text transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {zoomSaving ? <Md3LoadingIndicator size="sm" className="text-text" /> : <RiSaveLine className="w-4 h-4 text-primary" />}
               Save Zoom
@@ -411,7 +411,7 @@ export default function IntegrationsPage() {
         </div>
 
         {/* 4. Slack Integration */}
-        <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-border flex flex-col gap-4 transition-all">
+        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
@@ -421,11 +421,11 @@ export default function IntegrationsPage() {
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-base sm:text-lg font-bold text-text">Slack</h2>
                   {slackWebhook ? (
-                    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-success/15 text-success font-semibold border border-success/30">
-                      Webhook Active
+                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                      <RiCheckLine className="w-3.5 h-3.5" /> Webhook Active
                     </span>
                   ) : (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface2 text-text-muted font-medium border border-border">
+                    <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
                       Incoming Webhook
                     </span>
                   )}
@@ -443,13 +443,13 @@ export default function IntegrationsPage() {
               placeholder="https://hooks.slack.com/services/T00/B00/XXXXX"
               value={slackWebhook}
               onChange={e => setSlackWebhook(e.target.value)}
-              className="flex-1 bg-surface2 border border-border rounded-xl px-4 py-3 text-xs sm:text-sm font-medium focus:outline-none focus:border-primary text-text placeholder:text-text-muted font-mono"
+              className="flex-1 bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
             />
             <button
               type="button"
               onClick={handleTestSlack}
               disabled={slackTesting || !slackWebhook}
-              className="px-4 py-3 rounded-xl bg-surface2 hover:bg-surface-container-highest border border-border text-xs sm:text-sm font-semibold text-text transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {slackTesting ? <Md3LoadingIndicator size="sm" className="text-text" /> : <RiSendPlaneLine className="w-4 h-4 text-primary" />}
               Test
@@ -458,7 +458,7 @@ export default function IntegrationsPage() {
               type="button"
               onClick={handleSaveSlack}
               disabled={slackSaving}
-              className="px-5 py-3 rounded-xl bg-primary text-on-primary hover:brightness-110 text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {slackSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiSaveLine className="w-4 h-4" />}
               Save
@@ -467,7 +467,7 @@ export default function IntegrationsPage() {
         </div>
 
         {/* 5. Notion Integration */}
-        <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-border flex flex-col gap-4 transition-all">
+        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
@@ -477,11 +477,11 @@ export default function IntegrationsPage() {
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-base sm:text-lg font-bold text-text">Notion</h2>
                   {notionApiKey ? (
-                    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-success/15 text-success font-semibold border border-success/30">
-                      Workspace Ready
+                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                      <RiCheckLine className="w-3.5 h-3.5" /> Workspace Ready
                     </span>
                   ) : (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface2 text-text-muted font-medium border border-border">
+                    <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
                       Workspace Export
                     </span>
                   )}
@@ -500,14 +500,14 @@ export default function IntegrationsPage() {
                 placeholder="Notion Internal Integration Token (secret_...)"
                 value={notionApiKey}
                 onChange={e => setNotionApiKey(e.target.value)}
-                className="bg-surface2 border border-border rounded-xl px-4 py-3 text-xs sm:text-sm font-medium focus:outline-none focus:border-primary text-text placeholder:text-text-muted font-mono"
+                className="bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
               />
               <input
                 type="text"
                 placeholder="Database ID (32-character string)"
                 value={notionDbId}
                 onChange={e => setNotionDbId(e.target.value)}
-                className="bg-surface2 border border-border rounded-xl px-4 py-3 text-xs sm:text-sm font-medium focus:outline-none focus:border-primary text-text placeholder:text-text-muted font-mono"
+                className="bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
               />
             </div>
             <div className="flex justify-end">
@@ -515,7 +515,7 @@ export default function IntegrationsPage() {
                 type="button"
                 onClick={handleSaveNotion}
                 disabled={notionSaving}
-                className="px-5 py-3 rounded-xl bg-primary text-on-primary hover:brightness-110 text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {notionSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiLinkM className="w-4 h-4" />}
                 Save Notion Settings

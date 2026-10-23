@@ -125,13 +125,13 @@ export default function ApiKeysPage() {
  {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
  <div id="configured-providers" className="flex flex-col gap-3 scroll-mt-24">
  <h2 className="text-[15px] font-bold text-text px-2">Configured Providers</h2>
- <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
+ <div className="flex flex-col bg-surface-container-low rounded-[28px] border border-outline-variant/15 overflow-hidden shadow-none">
  {[...providers]
  .filter(p => keys.some(k => k.provider_id === p.id))
  .map((provider, idx, arr) => {
  const providerKeys = keys.filter(k => k.provider_id === provider.id);
  return (
- <div key={provider.id} className={idx !== arr.length - 1 ?"border-b border-border":""}>
+ <div key={provider.id} className={idx !== arr.length - 1 ? "border-b border-outline-variant/15" : ""}>
  <ProviderCard 
  provider={provider} 
  apiKeys={providerKeys} 
@@ -149,7 +149,7 @@ export default function ApiKeysPage() {
 
  <div id="available-providers" className="flex flex-col gap-3 scroll-mt-24">
  <h2 className="text-[15px] font-bold text-text px-2">Available Providers</h2>
- <div className="flex flex-col border border-border rounded-[24px] overflow-hidden bg-surface shadow-sm">
+ <div className="flex flex-col bg-surface-container-low rounded-[28px] border border-outline-variant/15 overflow-hidden shadow-none">
  {[...providers]
  .filter(p => !keys.some(k => k.provider_id === p.id))
  .sort((a, b) => {
@@ -161,7 +161,7 @@ export default function ApiKeysPage() {
  }).map((provider, idx, arr) => {
  const providerKeys = keys.filter(k => k.provider_id === provider.id);
  return (
- <div key={provider.id} className={idx !== arr.length - 1 ?"border-b border-border":""}>
+ <div key={provider.id} className={idx !== arr.length - 1 ? "border-b border-outline-variant/15" : ""}>
  <ProviderCard 
  provider={provider} 
  apiKeys={providerKeys} 

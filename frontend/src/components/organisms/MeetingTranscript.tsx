@@ -122,21 +122,22 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
   if (!transcriptData || transcriptData.length === 0) return null;
 
   return (
-    <div className={`bg-surface-container rounded-[32px] overflow-hidden shadow-sm border border-border transition-all duration-300 ${transcriptOpen ? 'shadow-md shadow-primary/5' : ''}`}>
+    <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 shadow-none flex flex-col gap-4">
       <div 
-        className="w-full flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 md:py-5 hover:bg-surface-container-high transition-colors cursor-pointer group gap-3 sm:gap-4"
+        className="w-full flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer group gap-3 sm:gap-4 select-none"
         onClick={() => setTranscriptOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[18px] sm:rounded-[20px] bg-primary-container border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300 shrink-0">
-            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-on-primary-container" />
+          <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+            <MessageSquare className="w-5 h-5" />
           </div>
-          <span className="text-[16px] sm:text-[18px] font-extrabold tracking-tight text-text group-hover:text-primary transition-colors">
-            Full Transcript <span className="text-text-muted font-medium ml-1">({visibleChunks.length} lines)</span>
+          <span className="text-base sm:text-lg font-bold tracking-tight text-text group-hover:text-primary transition-colors">
+            Full Transcript <span className="text-text-muted font-medium ml-1 text-sm">({visibleChunks.length} lines)</span>
           </span>
         </div>
+
         <div className="flex items-center justify-between sm:justify-end gap-2 md:gap-3 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-border shadow-sm">
+          <div className="flex items-center bg-surface-container-high/60 rounded-full p-1 border border-outline-variant/20 shadow-none">
             {(["refined", "dom"] as const).map((source) => {
               const labels = { dom: "Raw", refined: "AI Refined" };
               const isActive = sourceFilter === source;
@@ -154,7 +155,11 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
                       setTranscriptOpen(true);
                     }
                   }}
-                  className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-[11px] sm:text-[12px] font-bold rounded-full transition-colors cursor-pointer ${isActive ? "bg-secondary-container text-on-secondary-container shadow-sm" : "text-text-muted hover:text-text hover:bg-surface-container-highest"}`}
+                  className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                    isActive 
+                      ? "bg-secondary-container text-on-secondary-container" 
+                      : "text-text-muted hover:text-text hover:bg-surface-container-high"
+                  }`}
                 >
                   {isLoading && <Md3LoadingIndicator size="sm" className="text-current shrink-0" />}
                   <span>{labels[source as keyof typeof labels]}</span>
@@ -166,22 +171,22 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
-              className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors cursor-pointer text-text hover:text-on-secondary-container shadow-sm"
+              className="w-9 h-9 rounded-full bg-surface-container-high/60 border border-outline-variant/20 flex items-center justify-center hover:bg-secondary-container hover:text-on-secondary-container transition-all cursor-pointer text-text active:scale-95"
               onClick={handleCopy}
               aria-label="Copy transcript"
             >
-              {copied ? <Check className="w-4 h-4 sm:w-5 sm:h-5 text-success" aria-hidden="true" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />}
+              {copied ? <Check className="w-4 h-4 text-success" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
             </button>
             <button
               type="button"
-              className="w-9 h-9 rounded-full bg-surface-container-high border border-border flex items-center justify-center hover:bg-secondary-container transition-colors duration-300 cursor-pointer group-hover:text-primary shadow-sm"
+              className="w-9 h-9 rounded-full bg-surface-container-high/60 border border-outline-variant/20 flex items-center justify-center hover:bg-secondary-container hover:text-on-secondary-container transition-all cursor-pointer text-text active:scale-95"
               onClick={() => setTranscriptOpen((o) => !o)}
               aria-label={transcriptOpen ? "Collapse transcript" : "Expand transcript"}
               aria-expanded={transcriptOpen}
             >
               {transcriptOpen
-                ? <ChevronUp className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
-                : <ChevronDown className="w-5 h-5 text-text transition-colors" aria-hidden="true" />
+                ? <ChevronUp className="w-5 h-5 text-text" aria-hidden="true" />
+                : <ChevronDown className="w-5 h-5 text-text" aria-hidden="true" />
               }
             </button>
           </div>
@@ -189,14 +194,14 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
       </div>
 
       {transcriptOpen && (
-        <div className="border-t border-border px-4 md:px-6 pb-4 md:pb-6 pt-4 md:pt-5 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar bg-surface relative">
-          
+        <div className="pt-3 border-t border-outline-variant/15 flex flex-col gap-3 max-h-[520px] overflow-y-auto custom-scrollbar">
           {refineError && (
-            <div className="bg-risk-container/40 border border-risk/30 rounded-xl p-3 flex flex-col gap-1.5 mb-2">
-              <div className="flex items-center gap-2 text-risk font-semibold text-[13px]">
-                <RiErrorWarningFill className="w-4 h-4" aria-hidden="true" /> Refinement Failed
+            <div className="bg-risk-container text-on-risk-container rounded-[20px] p-4 flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 font-semibold text-xs">
+                <RiErrorWarningFill className="w-4 h-4" aria-hidden="true" />
+                <span>Refinement Failed</span>
               </div>
-              <p className="text-[12px] text-risk/80">{refineError}</p>
+              <p className="text-xs opacity-90">{refineError}</p>
             </div>
           )}
 
@@ -204,7 +209,7 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             <div className="flex flex-col items-center justify-center py-16 gap-4 animate-fade-scale w-full">
               <Md3LoadingIndicator size="lg" className="text-primary" />
               <LoadingPhrases />
-              <p className="text-[12px] text-text-variant italic max-w-sm text-center">
+              <p className="text-xs text-text-variant italic max-w-sm text-center">
                 Processing your raw transcript to remove filler words, fix grammar, and perfect diarization. This may take up to a minute...
               </p>
             </div>
@@ -212,29 +217,29 @@ export default function MeetingTranscript({ transcriptData, onRefine }: MeetingT
             visibleChunks.map((chunk, idx) => (
               <div
                 key={idx}
-                className="flex flex-col gap-2 p-4 md:p-5 rounded-[24px] bg-surface-container border border-border hover:shadow-md hover:border-primary/30 transition-all duration-300 group/chunk"
+                className="bg-surface-container/60 rounded-[20px] p-4 sm:p-5 border border-outline-variant/10 flex flex-col gap-2.5 transition-colors hover:bg-surface-container"
               >
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2.5 text-[14px] font-bold tracking-wide text-text group-hover/chunk:text-primary transition-colors">
-                    <span className="w-8 h-8 rounded-[12px] bg-primary-container text-on-primary-container border border-primary/20 text-[12px] flex items-center justify-center shadow-inner transition-colors">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="bg-primary-container text-on-primary-container rounded-full px-3 py-1 text-xs font-semibold inline-flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-on-primary-container/20 text-on-primary-container text-[9px] font-bold flex items-center justify-center">
                       {(chunk.speaker || "?").charAt(0).toUpperCase()}
                     </span>
-                    {chunk.speaker || "Unknown"}
+                    <span>{chunk.speaker || "Unknown"}</span>
                   </span>
                   <div className="flex items-center gap-2">
                     {!!(chunk as Record<string, unknown>).source && (
-                      <span className="text-[10px] text-text-muted uppercase tracking-widest font-extrabold bg-surface-container-high px-2.5 py-1 rounded-full border border-border shadow-sm">
+                      <span className="text-[10px] text-text-muted uppercase tracking-widest font-extrabold bg-surface-container-high rounded-full px-2.5 py-1">
                         {(chunk as Record<string, unknown>).source as string}
                       </span>
                     )}
                     {chunk.timestamp_ms > 0 && (
-                      <span className="text-[11px] font-mono font-bold text-text-variant bg-surface-container-high px-2.5 py-1 rounded-full border border-border shadow-sm">
+                      <span className="text-[11px] font-mono font-bold text-text-variant bg-surface-container-high rounded-full px-2.5 py-1">
                         {`${String(Math.floor(chunk.timestamp_ms / 60000)).padStart(2, "0")}:${String(Math.floor((chunk.timestamp_ms % 60000) / 1000)).padStart(2, "0")}`}
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="text-[13.5px] sm:text-[14px] text-text-muted leading-relaxed pl-0 sm:pl-[42px] group-hover/chunk:text-text transition-colors">
+                <div className="text-[13.5px] sm:text-sm text-text leading-relaxed">
                   {(() => {
                     let content = chunk.text;
                     if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {

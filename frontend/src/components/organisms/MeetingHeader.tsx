@@ -232,7 +232,7 @@ export default function MeetingHeader({
 
   return (
     <>
-      <div className="relative z-20 bg-surface-container rounded-[28px] border border-border p-5 md:p-8">
+      <div className="relative z-20 bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 shadow-none">
         {/* Ambient tonal accent with contained overflow */}
         <div
           className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none"
@@ -256,7 +256,7 @@ export default function MeetingHeader({
             </div>
 
             {/* Title */}
-            <h1 className="text-xl md:text-2xl font-bold text-text tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight">
               {meeting.title && meeting.title !== "Google Meet" && meeting.title !== "Untitled Meeting"
                 ? meeting.title
                 : meeting.google_meet_link
@@ -287,6 +287,28 @@ export default function MeetingHeader({
               </>
             )}
 
+            {/* Export PDF pill button */}
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              className="flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-secondary-container text-on-secondary-container hover:brightness-105"
+            >
+              <RiFilePdfLine className="w-4 h-4" aria-hidden="true" />
+              <span>Export PDF</span>
+            </button>
+
+            {/* Delete Meeting pill button */}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => setIsDeleteOpen(true)}
+                className="flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-risk-container text-on-risk-container hover:brightness-105"
+              >
+                <RiDeleteBinLine className="w-4 h-4" aria-hidden="true" />
+                <span>Delete</span>
+              </button>
+            )}
+
             {/* MD3 Expressive More Options Menu */}
             <div className="relative z-50" ref={menuRef}>
               <button
@@ -295,7 +317,7 @@ export default function MeetingHeader({
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 aria-label="More options"
-                className="flex items-center justify-center gap-1.5 h-10 sm:h-9 px-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest border border-border text-[12px] sm:text-[13px] font-semibold text-text transition-all active:scale-[0.96] shadow-xs"
+                className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/15 text-text shadow-none"
               >
                 <RiMoreLine className="w-4 h-4 text-text-muted" aria-hidden="true" />
                 <span className="hidden sm:inline">Options</span>
@@ -314,7 +336,7 @@ export default function MeetingHeader({
                     }
                     role="menu"
                     aria-label="Meeting options"
-                    className="absolute top-full right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[24px] border border-border shadow-2xl flex flex-col p-1.5 z-[100] origin-top-right backdrop-blur-xl"
+                    className="absolute top-full right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[24px] border border-outline-variant/15 shadow-2xl flex flex-col p-1.5 z-[100] origin-top-right backdrop-blur-xl"
                   >
                     {/* Edit Title */}
                     {onRename && (
@@ -344,18 +366,7 @@ export default function MeetingHeader({
                     </button>
 
                     {/* Separator */}
-                    <div className="h-[1px] bg-border mx-2 my-1" aria-hidden="true" />
-
-                    {/* Export PDF */}
-                    <button
-                      type="button"
-                      onClick={handleExportPdf}
-                      role="menuitem"
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98]"
-                    >
-                      <RiFilePdfLine className="w-4 h-4 text-risk" aria-hidden="true" />
-                      <span>Export as PDF</span>
-                    </button>
+                    <div className="h-[1px] bg-outline-variant/15 mx-2 my-1" aria-hidden="true" />
 
                     {/* Export Markdown */}
                     <button
@@ -384,27 +395,6 @@ export default function MeetingHeader({
                         <span>View Calendar Event</span>
                       </a>
                     )}
-
-                    {/* Separator */}
-                    {onDelete && (
-                      <>
-                        <div className="h-[1px] bg-border mx-2 my-1" aria-hidden="true" />
-
-                        {/* Delete Meeting */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setIsDeleteOpen(true);
-                          }}
-                          role="menuitem"
-                          className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-risk hover:bg-risk-container hover:text-on-risk-container transition-colors outline-none active:scale-[0.98]"
-                        >
-                          <RiDeleteBinLine className="w-4 h-4 text-risk" aria-hidden="true" />
-                          <span>Delete Meeting</span>
-                        </button>
-                      </>
-                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -414,7 +404,7 @@ export default function MeetingHeader({
 
         {/* Participants chip list */}
         {participantsList.length > 0 && (
-          <div className="relative z-10 flex flex-wrap items-center gap-2 pt-4 mt-5 border-t border-border/60">
+          <div className="relative z-10 flex flex-wrap items-center gap-2 pt-4 mt-5 border-t border-outline-variant/15">
             <div className="flex items-center gap-1.5 text-[12px] text-text-muted font-medium">
               <RiUserLine className="w-4 h-4 text-primary" aria-hidden="true" />
               <span className="text-text font-semibold">
@@ -424,7 +414,7 @@ export default function MeetingHeader({
             {participantsList.map((a) => (
               <span
                 key={a}
-                className="flex items-center gap-1.5 text-[11.5px] font-medium text-text bg-surface-container-high border border-border/80 rounded-full px-3 py-1"
+                className="flex items-center gap-1.5 text-[11.5px] font-medium text-text bg-surface-container/70 border border-outline-variant/15 rounded-full px-3 py-1"
               >
                 <span className="w-4 h-4 rounded-full bg-primary-container text-[8px] font-bold text-on-primary-container flex items-center justify-center">
                   {a.charAt(0).toUpperCase()}

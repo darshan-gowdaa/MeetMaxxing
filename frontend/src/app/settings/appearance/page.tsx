@@ -158,8 +158,8 @@ export default function AppearancePage() {
         </p>
       </div>
       
-      <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
           <RiPaletteLine className="w-4 h-4 text-primary" /> Theme Preference
         </h2>
         
@@ -177,18 +177,18 @@ export default function AppearancePage() {
         </div>
       </div>
 
-      <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <RiLayoutGridLine className="w-4 h-4 text-primary" /> Display Density
           </h2>
           <p className="text-xs text-text-muted">
             Adjust information density across meetings and dashboard cards.
           </p>
         </div>
-        <label className="flex items-center justify-between gap-4 cursor-pointer">
+        <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
           <div className="flex flex-col">
-            <span className="font-bold text-base sm:text-lg text-text">Compact Meeting Cards</span>
+            <span className="font-bold text-base text-text">Compact Meeting Cards</span>
             <span className="text-xs sm:text-sm text-text-muted">
               Fit more cards on screen by condensing paddings and badge metadata
             </span>
@@ -201,18 +201,18 @@ export default function AppearancePage() {
         </label>
       </div>
 
-      <div className="bg-surface-container rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 border border-border">
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <RiEyeLine className="w-4 h-4 text-primary" /> Accessibility
           </h2>
           <p className="text-xs text-text-muted">
             Visual enhancements designed for maximum contrast and legibility.
           </p>
         </div>
-        <label className="flex items-center justify-between gap-4 cursor-pointer">
+        <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
           <div className="flex flex-col">
-            <span className="font-bold text-base sm:text-lg text-text">High Contrast Mode</span>
+            <span className="font-bold text-base text-text">High Contrast Mode</span>
             <span className="text-xs sm:text-sm text-text-muted">
               Sharpen borders, text contrast, and interactive focus states
             </span>
