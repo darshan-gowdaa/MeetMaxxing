@@ -8,7 +8,8 @@ import {
   RiComputerLine, 
   RiLayoutGridLine, 
   RiEyeLine,
-  RiPaletteLine 
+  RiPaletteLine,
+  RiContrastLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -160,12 +161,21 @@ export default function AppearancePage() {
         </p>
       </div>
       
-      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-          <RiPaletteLine className="w-4 h-4 text-primary" /> Theme Preference
-        </h2>
+      {/* Card 1: Color Scheme & Theme */}
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+            <RiPaletteLine className="w-5 h-5" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-base sm:text-lg font-bold text-text">Color Scheme & Theme</h2>
+            <p className="text-xs sm:text-sm text-text-muted font-medium">
+              Choose your preferred interface theme across light, dark, and operating system matching.
+            </p>
+          </div>
+        </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Theme selection">
           {options.map((opt) => (
             <SelectionCard
               key={opt.id}
@@ -179,52 +189,76 @@ export default function AppearancePage() {
         </div>
       </div>
 
-      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-            <RiLayoutGridLine className="w-4 h-4 text-primary" /> Display Density
-          </h2>
-          <p className="text-xs text-text-muted">
-            Adjust information density across meetings and dashboard cards.
-          </p>
-        </div>
-        <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
-          <div className="flex flex-col">
-            <span className="font-bold text-base text-text">Compact Meeting Cards</span>
-            <span className="text-xs sm:text-sm text-text-muted">
-              Fit more cards on screen by condensing paddings and badge metadata
-            </span>
+      {/* Card 2: Display Density & Visual Accessibility */}
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+            <RiEyeLine className="w-5 h-5" />
           </div>
-          <Switch 
-            checked={compactCards}
-            onCheckedChange={handleCompactToggle}
-            aria-label="Toggle compact meeting cards"
-          />
-        </label>
-      </div>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-base sm:text-lg font-bold text-text">Display Density & Visual Accessibility</h2>
+            <p className="text-xs sm:text-sm text-text-muted font-medium">
+              Fine-tune interface density and visual contrast for optimal legibility.
+            </p>
+          </div>
+        </div>
 
-      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-            <RiEyeLine className="w-4 h-4 text-primary" /> Accessibility
-          </h2>
-          <p className="text-xs text-text-muted">
-            Visual enhancements designed for maximum contrast and legibility.
-          </p>
-        </div>
-        <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
-          <div className="flex flex-col">
-            <span className="font-bold text-base text-text">High Contrast Mode</span>
-            <span className="text-xs sm:text-sm text-text-muted">
-              Sharpen borders, text contrast, and interactive focus states
-            </span>
+        <div className="flex flex-col gap-4">
+          {/* Item A: Compact Meeting Cards */}
+          <div
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("button")) return;
+              handleCompactToggle(!compactCards);
+            }}
+            className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer select-none"
+          >
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <RiLayoutGridLine className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-sm sm:text-base text-text">Compact Meeting Cards</span>
+                <span className="text-xs sm:text-sm text-text-muted">
+                  Fit more cards on screen by condensing paddings and badge metadata
+                </span>
+              </div>
+            </div>
+            <Switch 
+              checked={compactCards}
+              onCheckedChange={handleCompactToggle}
+              aria-label="Toggle compact meeting cards"
+            />
           </div>
-          <Switch 
-            checked={highContrast}
-            onCheckedChange={handleContrastToggle}
-            aria-label="Toggle high contrast mode"
-          />
-        </label>
+
+          {/* Divider line */}
+          <div className="h-px bg-outline-variant/15 w-full my-1" />
+
+          {/* Item B: High Contrast Mode */}
+          <div
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("button")) return;
+              handleContrastToggle(!highContrast);
+            }}
+            className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer select-none"
+          >
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <RiContrastLine className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-sm sm:text-base text-text">High Contrast Mode</span>
+                <span className="text-xs sm:text-sm text-text-muted">
+                  Sharpen borders, text contrast, and interactive focus states
+                </span>
+              </div>
+            </div>
+            <Switch 
+              checked={highContrast}
+              onCheckedChange={handleContrastToggle}
+              aria-label="Toggle high contrast mode"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

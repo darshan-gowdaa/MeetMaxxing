@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
-import { RiEyeLine, RiEyeOffLine, RiDownloadLine, RiLockPasswordLine } from "@remixicon/react";
+import {
+  RiEyeLine,
+  RiEyeOffLine,
+  RiDownloadLine,
+  RiLockPasswordLine,
+  RiAlertLine,
+} from "@remixicon/react";
 
 import { PasswordStrength, isValidPassword } from "@/components/molecules/PasswordStrength";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
@@ -56,8 +62,8 @@ export const ProfileSecurity = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       if (!res.ok) {
@@ -110,16 +116,21 @@ export const ProfileSecurity = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Change Password Card */}
-      <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-surface-container-low border border-outline-variant/15 shadow-none">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <RiLockPasswordLine className="w-4 h-4 text-primary" />
-            <h3 className="text-[15px] font-bold text-text">Change Password</h3>
+      {/* Card 1: Security & Authentication */}
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+            <RiLockPasswordLine className="w-5 h-5" />
           </div>
-          <p className="text-[13px] text-text-muted font-medium">Update your account password securely.</p>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-base sm:text-lg font-bold text-text">Security & Authentication</h3>
+            <p className="text-xs sm:text-sm text-text-muted font-medium">
+              Manage your credentials and sign-in credentials.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-2 mt-2">
+
+        <div className="flex flex-col gap-4">
           <form onSubmit={handleUpdatePassword} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="relative w-full sm:w-auto flex-1">
               <label htmlFor="new-password" className="sr-only">New password</label>
@@ -130,12 +141,12 @@ export const ProfileSecurity = () => {
                 value={password}
                 autoComplete="new-password"
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 pr-12 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 pr-12 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-text-muted/60"
                 required
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(s => !s)}
+                onClick={() => setShowPassword((s) => !s)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text spring-colors cursor-pointer"
               >
@@ -145,53 +156,68 @@ export const ProfileSecurity = () => {
             <button
               type="submit"
               disabled={pwdLoading || !password}
-              className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               {pwdLoading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
               {pwdLoading ? "Updating…" : "Update Password"}
             </button>
           </form>
           <PasswordStrength password={password} visible={password.length > 0} />
+          {message && <p className="text-sm font-medium text-text-variant">{message}</p>}
         </div>
-        {message && <p className="text-sm font-medium text-text-variant">{message}</p>}
       </div>
 
-      {/* Data Management (GDPR Export) Card */}
-      <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-tertiary-container/20 border border-tertiary/30 text-on-tertiary-container shadow-none">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <RiDownloadLine className="w-4 h-4 text-tertiary" />
-            <h3 className="text-[15px] font-bold text-text">Data Management & GDPR Export</h3>
+      {/* Card 2: Data Privacy & Portability */}
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+            <RiDownloadLine className="w-5 h-5" />
           </div>
-          <p className="text-[13px] text-text-muted font-medium">
-            Download a portable copy of your account profile, meeting transcripts, summaries, and action items in JSON format.
-          </p>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-base sm:text-lg font-bold text-text">Data Privacy & Portability</h3>
+            <p className="text-xs sm:text-sm text-text-muted font-medium">
+              Request an archive of your profile, meeting transcripts, intelligence summaries, and action items in standard JSON format.
+            </p>
+          </div>
         </div>
-        <div className="mt-1">
+
+        <div>
           <button
             type="button"
             onClick={handleExportData}
             disabled={exportLoading}
-            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-all bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
-            {exportLoading && <Md3LoadingIndicator size="sm" className="text-text" />}
-            <RiDownloadLine className="w-4 h-4 text-primary" />
+            {exportLoading ? (
+              <Md3LoadingIndicator size="sm" className="text-text" />
+            ) : (
+              <RiDownloadLine className="w-4 h-4 text-primary" />
+            )}
             {exportLoading ? "Preparing Export…" : "Export All Data (GDPR)"}
           </button>
         </div>
       </div>
 
-      {/* Danger Zone */}
-      <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-risk-container/20 border border-risk/30 text-on-risk-container shadow-none">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-[15px] font-bold text-risk">Danger Zone</h3>
-          <p className="text-[13px] text-risk/80 font-medium">Permanently delete your account and all associated data. This action is irreversible.</p>
+      {/* Card 3: Danger Zone */}
+      <div className="bg-risk-container/20 border border-risk/30 rounded-[28px] p-6 sm:p-8 text-on-risk-container flex flex-col gap-6 shadow-none">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-risk/10 text-risk flex items-center justify-center shrink-0 mt-0.5">
+            <RiAlertLine className="w-5 h-5" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-base sm:text-lg font-bold text-risk">Danger Zone</h3>
+            <p className="text-xs sm:text-sm text-risk/80 font-medium">
+              Permanently delete your account, saved meeting recordings, and all processed notes. This action cannot be undone.
+            </p>
+          </div>
         </div>
-        <div className="mt-2">
+
+        <div>
           <button
+            type="button"
             onClick={() => setIsDeleteOpen(true)}
             disabled={loading}
-            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-risk text-on-risk hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-all bg-risk text-on-risk hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading && <Md3LoadingIndicator size="sm" className="text-on-risk" />}
             {loading ? "Deleting…" : "Delete Account"}

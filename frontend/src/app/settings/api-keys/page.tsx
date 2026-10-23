@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
+import { RiKey2Line, RiPlugLine } from "@remixicon/react";
 import { useAuth } from "@/lib/auth-context";
 import { Provider, ApiKey } from "./types";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
@@ -127,33 +128,47 @@ export default function ApiKeysPage() {
           <ModelSelection keys={keys} onAddKey={handleScrollToProviders} />
 
           <div className="flex flex-col gap-8">
- {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
- <div id="configured-providers" className="flex flex-col gap-3 scroll-mt-24">
- <h2 className="text-[15px] font-bold text-text px-2">Configured Providers</h2>
- <div className="flex flex-col bg-surface-container-low rounded-[28px] border border-outline-variant/15 overflow-hidden shadow-none">
- {[...providers]
- .filter(p => keys.some(k => k.provider_id === p.id))
- .map((provider, idx, arr) => {
- const providerKeys = keys.filter(k => k.provider_id === provider.id);
- return (
- <div key={provider.id} className={idx !== arr.length - 1 ? "border-b border-outline-variant/15" : ""}>
- <ProviderCard 
- provider={provider} 
- apiKeys={providerKeys} 
- onAdd={() => setAddDialog(provider)}
- onCheck={handleCheckStatus}
- onDelete={handleDelete}
- onHelp={() => setHelpDrawer(provider)}
- />
- </div>
- );
- })}
- </div>
- </div>
- )}
+            {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
+              <div id="configured-providers" className="flex flex-col gap-3 scroll-mt-24">
+                <div className="flex flex-col gap-1 px-1">
+                  <h2 className="text-base font-bold text-text flex items-center gap-2">
+                    <RiKey2Line className="w-4 h-4 text-primary" /> Configured Providers
+                  </h2>
+                  <p className="text-xs text-text-muted">
+                    Active API keys connected to your workspace. Test live latency or remove credentials.
+                  </p>
+                </div>
+                <div className="flex flex-col bg-surface-container-low rounded-[28px] border border-outline-variant/15 overflow-hidden shadow-none">
+                  {[...providers]
+                    .filter(p => keys.some(k => k.provider_id === p.id))
+                    .map((provider, idx, arr) => {
+                      const providerKeys = keys.filter(k => k.provider_id === provider.id);
+                      return (
+                        <div key={provider.id} className={idx !== arr.length - 1 ? "border-b border-outline-variant/15" : ""}>
+                          <ProviderCard 
+                            provider={provider} 
+                            apiKeys={providerKeys} 
+                            onAdd={() => setAddDialog(provider)}
+                            onCheck={handleCheckStatus}
+                            onDelete={handleDelete}
+                            onHelp={() => setHelpDrawer(provider)}
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
- <div id="available-providers" className="flex flex-col gap-3 scroll-mt-24">
- <h2 className="text-[15px] font-bold text-text px-2">Available Providers</h2>
+            <div id="available-providers" className="flex flex-col gap-3 scroll-mt-24">
+              <div className="flex flex-col gap-1 px-1">
+                <h2 className="text-base font-bold text-text flex items-center gap-2">
+                  <RiPlugLine className="w-4 h-4 text-primary" /> Available Providers
+                </h2>
+                <p className="text-xs text-text-muted">
+                  Connect additional frontier models and fast inference backends. Free tier providers are prioritized.
+                </p>
+              </div>
  <div className="flex flex-col bg-surface-container-low rounded-[28px] border border-outline-variant/15 overflow-hidden shadow-none">
  {[...providers]
  .filter(p => !keys.some(k => k.provider_id === p.id))

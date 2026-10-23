@@ -5,9 +5,11 @@ import {
   RiCheckLine, 
   RiExternalLinkLine, 
   RiRefreshLine,
-  RiLinkM,
   RiSendPlaneLine,
-  RiSaveLine
+  RiSaveLine,
+  RiVideoChatLine,
+  RiApps2Line,
+  RiFileCopyLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -20,21 +22,13 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.
 function GoogleCalendarLogo({ className = "w-6 h-6" }: { className?: string }) {
   return (
     <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Google Calendar logo">
-      {/* White background base plate */}
       <path d="M390.736 121.264H121.264V390.736H390.736V121.264Z" fill="white" />
-      {/* Red corner fold (Bottom Right) */}
       <path d="M390.736 512L512 390.736L451.368 380.392L390.736 390.736L379.67 446.196L390.736 512Z" fill="#EA4335" />
-      {/* Green corner fold (Bottom Left) */}
       <path d="M0 390.736V471.578C0 493.912 18.088 512 40.42 512H121.264L133.714 451.368L121.264 390.736L55.198 380.392L0 390.736Z" fill="#188038" />
-      {/* Blue corner fold (Top Right) */}
       <path d="M512 121.264V40.42C512 18.088 493.912 0 471.58 0H390.736C383.36 30.072 379.671 52.2027 379.67 66.392C379.67 80.58 383.359 98.8707 390.736 121.264C417.556 128.944 437.767 132.784 451.368 132.784C464.969 132.784 485.18 128.945 512 121.264Z" fill="#1967D2" />
-      {/* Yellow quadrant (Mid-Right) */}
       <path d="M512 121.264H390.736V390.736H512V121.264Z" fill="#FBBC04" />
-      {/* Green quadrant (Bottom-Center) */}
       <path d="M390.736 390.736H121.264V512H390.736V390.736Z" fill="#34A853" />
-      {/* Blue main/top-left block */}
       <path d="M390.736 0H40.422C18.088 0 0 18.088 0 40.42V390.736H121.264V121.264H390.736V0Z" fill="#4285F4" />
-      {/* Number "3" and "1" Paths in Google Blue */}
       <path d="M176.54 330.308C166.468 323.504 159.494 313.568 155.688 300.428L179.066 290.796C181.186 298.88 184.891 305.145 190.182 309.592C195.436 314.038 201.836 316.228 209.314 316.228C216.959 316.228 223.527 313.903 229.018 309.254C234.51 304.606 237.272 298.678 237.272 291.504C237.272 284.16 234.375 278.164 228.582 273.516C222.788 268.868 215.512 266.544 206.822 266.544H193.314V243.404H205.44C212.917 243.404 219.216 241.382 224.336 237.338C229.456 233.298 232.016 227.772 232.016 220.732C232.016 214.468 229.726 209.482 225.146 205.744C220.566 202.004 214.77 200.118 207.73 200.118C200.86 200.118 194.954 202.004 190.012 205.776C185.07 209.548 181.652 215.11 179.758 222.464L156.938 213.112C160.058 200.804 167.34 190.868 178.784 183.304C190.228 175.74 204.094 171.958 220.382 171.958C232.69 171.958 243.088 174.686 251.576 180.142C260.064 185.598 264.308 193.006 264.308 202.366C264.308 209.11 261.984 215.008 257.336 220.06C252.688 225.112 246.658 228.608 239.246 230.548V232.072C247.936 234.012 254.91 238.072 260.168 244.252C265.426 250.432 268.055 258.112 268.055 267.292C268.055 277.624 264.442 286.29 257.216 293.29C249.99 300.29 240.406 305.144 228.464 307.852V308.236C239.696 311.112 248.51 316.592 254.906 324.676C261.302 332.76 264.5 342.344 264.5 353.428C264.5 363.38 260.916 371.99 253.748 379.258C246.58 386.526 236.932 392.052 224.804 395.836C212.676 399.62 199.198 401.512 184.37 401.512C167.3 401.512 152.26 398.71 139.25 393.106C126.24 387.502 116.35 379.162 109.58 368.086L132.188 353.428C136.628 361.028 143.208 367.056 151.928 371.512C160.648 375.968 171.106 378.196 183.302 378.196C193.934 378.196 203.042 376.66 210.626 373.588C218.21 370.516 224.036 366.19 228.104 360.61C232.172 355.03 234.206 348.334 234.206 340.522C234.206 331.666 231.134 324.498 224.99 319.018C218.846 313.538 210.65 310.222 200.402 309.07L176.54 330.308Z" fill="#1967D2" />
       <path d="M309.927 396.676V184.18H338.457V396.676H309.927Z" fill="#1967D2" />
     </svg>
@@ -125,7 +119,6 @@ export default function IntegrationsPage() {
     }
     setCalendarLoading(true);
     try {
-      // Check calendar status endpoint
       const res = await fetch(`${API_URL}/api/calendar/status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -133,7 +126,6 @@ export default function IntegrationsPage() {
         const data = await res.json();
         setCalendarConnected(Boolean(data.connected));
       } else {
-        // Fallback endpoint without /api
         const fallbackRes = await fetch(`${API_URL}/calendar/status`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -194,7 +186,6 @@ export default function IntegrationsPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
-        // Fallback to /calendar/connect
         res = await fetch(`${API_URL}/calendar/connect`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -239,6 +230,20 @@ export default function IntegrationsPage() {
       showMessage("Error disconnecting calendar", { variant: "error" });
     } finally {
       setCalendarActionLoading(false);
+    }
+  };
+
+  const handleCopyZoom = () => {
+    if (!zoomWebhook) {
+      showMessage("No Zoom webhook URL to copy", { variant: "error" });
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(zoomWebhook)
+        .then(() => showMessage("Zoom webhook copied to clipboard", { variant: "success" }))
+        .catch(() => showMessage("Failed to copy webhook", { variant: "error" }));
+    } else {
+      showMessage("Clipboard not accessible", { variant: "error" });
     }
   };
 
@@ -303,7 +308,6 @@ export default function IntegrationsPage() {
         }),
         mode: "no-cors"
       });
-      // no-cors returns opaque status 0
       showMessage("Slack test message sent!", { variant: "success" });
     } catch {
       showMessage("Could not deliver to Slack webhook. Check URL.", { variant: "error" });
@@ -337,7 +341,8 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+      {/* Page Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
           Integrations Hub
@@ -347,265 +352,309 @@ export default function IntegrationsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:gap-6">
-        {/* 1. Google Calendar Integration */}
-        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-start gap-4 flex-1">
-            <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
-              <GoogleCalendarLogo className="w-6 h-6" />
+      <div className="flex flex-col gap-8">
+        {/* Section 1: Meeting & Calendar Platforms */}
+        <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <RiVideoChatLine className="w-5 h-5" />
             </div>
-            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-base sm:text-lg font-bold text-text">Google Calendar</h2>
-                {calendarLoading ? (
-                  <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold animate-pulse">
-                    Checking…
-                  </span>
-                ) : calendarConnected ? (
-                  <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                    <RiCheckLine className="w-3.5 h-3.5" /> Connected
-                  </span>
-                ) : (
-                  <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
-                    Disconnected
-                  </span>
-                )}
-              </div>
-              <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                Bi-directional sync for event conflict detection, follow-up meeting creation, and automated invites.
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Calendar Platforms</h2>
+              <p className="text-xs sm:text-sm text-text-muted">
+                Connect video calling and scheduling tools for live transcription and calendar sync.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-            {calendarConnected ? (
-              <button
-                type="button"
-                onClick={handleDisconnectCalendar}
-                disabled={calendarActionLoading}
-                className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-              >
-                {calendarActionLoading ? <Md3LoadingIndicator size="sm" className="text-risk" /> : null}
-                Disconnect
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleConnectCalendar}
-                disabled={calendarActionLoading || calendarLoading}
-                className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-              >
-                {calendarActionLoading ? (
-                  <Md3LoadingIndicator size="sm" className="text-on-primary" />
-                ) : (
-                  <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
-                )}
-                Connect Calendar
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={fetchCalendarStatus}
-              title="Refresh status"
-              disabled={calendarLoading}
-              className="p-3 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors cursor-pointer"
-            >
-              <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
-
-        {/* 2. Google Meet Integration */}
-        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-start gap-4 flex-1">
-            <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
-              <GoogleMeetLogo className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-base sm:text-lg font-bold text-text">Google Meet</h2>
-                <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                  <RiCheckLine className="w-3.5 h-3.5" /> Built-in / Ready
-                </span>
+          <div className="flex flex-col gap-4">
+            {/* Google Calendar */}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+                  <GoogleCalendarLogo className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h3 className="text-base sm:text-lg font-bold text-text">Google Calendar</h3>
+                    {calendarLoading ? (
+                      <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold animate-pulse">
+                        Checking…
+                      </span>
+                    ) : calendarConnected ? (
+                      <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                        <RiCheckLine className="w-3.5 h-3.5" /> Connected
+                      </span>
+                    ) : (
+                      <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
+                        Disconnected
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                    Bi-directional sync for event conflict detection & follow-ups, meeting creation, and automated invites.
+                  </p>
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                Native real-time audio caption extraction, memory suggestions, and live meeting assist directly in Meet tabs.
+
+              <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                {calendarConnected ? (
+                  <button
+                    type="button"
+                    onClick={handleDisconnectCalendar}
+                    disabled={calendarActionLoading}
+                    className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {calendarActionLoading ? <Md3LoadingIndicator size="sm" className="text-risk" /> : null}
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleConnectCalendar}
+                    disabled={calendarActionLoading || calendarLoading}
+                    className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    {calendarActionLoading ? (
+                      <Md3LoadingIndicator size="sm" className="text-on-primary" />
+                    ) : (
+                      <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
+                    )}
+                    Connect Calendar
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={fetchCalendarStatus}
+                  title="Refresh status"
+                  disabled={calendarLoading}
+                  className="p-3 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors cursor-pointer"
+                >
+                  <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Google Meet */}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+                  <GoogleMeetLogo className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h3 className="text-base sm:text-lg font-bold text-text">Google Meet</h3>
+                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                      <RiCheckLine className="w-3.5 h-3.5" /> Built-in / Ready
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                    Built-in real-time captioning & live assistant directly in Google Meet tabs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                <a
+                  href="https://meet.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text inline-flex items-center gap-1.5"
+                >
+                  Open Google Meet <RiExternalLinkLine className="w-3.5 h-3.5 text-text-muted" />
+                </a>
+              </div>
+            </div>
+
+            {/* Zoom */}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0B5CFF]/10 border border-[#0B5CFF]/20 flex items-center justify-center shrink-0 shadow-xs">
+                    <ZoomLogo className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-base sm:text-lg font-bold text-text">Zoom</h3>
+                      {zoomWebhook ? (
+                        <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                          <RiCheckLine className="w-3.5 h-3.5" /> Configured
+                        </span>
+                      ) : (
+                        <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
+                          Webhook Intake
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-text-muted">
+                      Cloud recordings & webhook intake via Zoom Marketplace webhook or server-to-server OAuth.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-1 flex flex-col sm:flex-row gap-2.5">
+                <input
+                  type="text"
+                  placeholder="Zoom Webhook Endpoint / Secret URL"
+                  value={zoomWebhook}
+                  onChange={e => setZoomWebhook(e.target.value)}
+                  className="flex-1 bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyZoom}
+                  disabled={!zoomWebhook}
+                  title="Copy Webhook URL"
+                  className="rounded-full px-5 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <RiFileCopyLine className="w-4 h-4 text-primary" />
+                  <span>Copy</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveZoom}
+                  disabled={zoomSaving}
+                  className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {zoomSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiSaveLine className="w-4 h-4" />}
+                  <span>Save Credentials</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Workspaces & Collaboration */}
+        <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <RiApps2Line className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg sm:text-xl font-bold text-text">Workspaces & Collaboration</h2>
+              <p className="text-xs sm:text-sm text-text-muted">
+                Deliver meeting digests, action items, and executive summaries to your team workspaces.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-            <a
-              href="https://meet.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text inline-flex items-center gap-1.5"
-            >
-              Open Google Meet <RiExternalLinkLine className="w-3.5 h-3.5 text-text-muted" />
-            </a>
-          </div>
-        </div>
-
-        {/* 3. Zoom Integration */}
-        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#0B5CFF]/10 border border-[#0B5CFF]/20 flex items-center justify-center shrink-0 shadow-xs">
-                <ZoomLogo className="w-6 h-6" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-base sm:text-lg font-bold text-text">Zoom</h2>
-                  {zoomWebhook ? (
-                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                      <RiCheckLine className="w-3.5 h-3.5" /> Configured
-                    </span>
-                  ) : (
-                    <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
-                      Webhook / OAuth
-                    </span>
-                  )}
+          <div className="flex flex-col gap-4">
+            {/* Slack */}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+                    <SlackLogo className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-base sm:text-lg font-bold text-text">Slack</h3>
+                      {slackWebhook ? (
+                        <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                          <RiCheckLine className="w-3.5 h-3.5" /> Webhook Active
+                        </span>
+                      ) : (
+                        <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
+                          Incoming Webhook
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-text-muted">
+                      Incoming webhook URL for automated meeting recap channel dispatches.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted">
-                  Ingest recording transcripts via Zoom Marketplace webhook or server-to-server OAuth.
-                </p>
+              </div>
+
+              <div className="mt-1 flex flex-col sm:flex-row gap-2.5">
+                <input
+                  type="url"
+                  placeholder="https://hooks.slack.com/services/T00/B00/XXXXX"
+                  value={slackWebhook}
+                  onChange={e => setSlackWebhook(e.target.value)}
+                  className="flex-1 bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleTestSlack}
+                  disabled={slackTesting || !slackWebhook}
+                  className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {slackTesting ? <Md3LoadingIndicator size="sm" className="text-text" /> : <RiSendPlaneLine className="w-4 h-4 text-primary" />}
+                  Test Connection
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveSlack}
+                  disabled={slackSaving}
+                  className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {slackSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiSaveLine className="w-4 h-4" />}
+                  Save
+                </button>
               </div>
             </div>
-          </div>
 
-          <div className="mt-1 flex flex-col sm:flex-row gap-2.5">
-            <input
-              type="text"
-              placeholder="Zoom Webhook Endpoint / Secret URL"
-              value={zoomWebhook}
-              onChange={e => setZoomWebhook(e.target.value)}
-              className="flex-1 bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted"
-            />
-            <button
-              type="button"
-              onClick={handleSaveZoom}
-              disabled={zoomSaving}
-              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {zoomSaving ? <Md3LoadingIndicator size="sm" className="text-text" /> : <RiSaveLine className="w-4 h-4 text-primary" />}
-              Save Zoom
-            </button>
-          </div>
-        </div>
-
-        {/* 4. Slack Integration */}
-        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
-                <SlackLogo className="w-6 h-6" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-base sm:text-lg font-bold text-text">Slack</h2>
-                  {slackWebhook ? (
-                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                      <RiCheckLine className="w-3.5 h-3.5" /> Webhook Active
-                    </span>
-                  ) : (
-                    <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
-                      Incoming Webhook
-                    </span>
-                  )}
+            {/* Notion */}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs text-text">
+                    <NotionLogo className="w-6 h-6 text-text" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-base sm:text-lg font-bold text-text">Notion</h3>
+                      {notionApiKey ? (
+                        <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                          <RiCheckLine className="w-3.5 h-3.5" /> Workspace Ready
+                        </span>
+                      ) : (
+                        <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
+                          Workspace Export
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-text-muted">
+                      Automated database sync for meeting notes & transcripts.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted">
-                  Automatically broadcast post-meeting executive summaries and action items into dedicated Slack channels.
-                </p>
               </div>
-            </div>
-          </div>
 
-          <div className="mt-1 flex flex-col sm:flex-row gap-2.5">
-            <input
-              type="url"
-              placeholder="https://hooks.slack.com/services/T00/B00/XXXXX"
-              value={slackWebhook}
-              onChange={e => setSlackWebhook(e.target.value)}
-              className="flex-1 bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
-            />
-            <button
-              type="button"
-              onClick={handleTestSlack}
-              disabled={slackTesting || !slackWebhook}
-              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {slackTesting ? <Md3LoadingIndicator size="sm" className="text-text" /> : <RiSendPlaneLine className="w-4 h-4 text-primary" />}
-              Test
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveSlack}
-              disabled={slackSaving}
-              className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {slackSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiSaveLine className="w-4 h-4" />}
-              Save
-            </button>
-          </div>
-        </div>
-
-        {/* 5. Notion Integration */}
-        <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs text-text">
-                <NotionLogo className="w-6 h-6 text-text" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-base sm:text-lg font-bold text-text">Notion</h2>
-                  {notionApiKey ? (
-                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                      <RiCheckLine className="w-3.5 h-3.5" /> Workspace Ready
-                    </span>
-                  ) : (
-                    <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
-                      Workspace Export
-                    </span>
-                  )}
+              <div className="mt-1 flex flex-col gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <input
+                    type="password"
+                    placeholder="Notion Internal Integration Token (secret_...)"
+                    value={notionApiKey}
+                    onChange={e => setNotionApiKey(e.target.value)}
+                    className="bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Database ID (32-character string)"
+                    value={notionDbId}
+                    onChange={e => setNotionDbId(e.target.value)}
+                    className="bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
+                  />
                 </div>
-                <p className="text-xs sm:text-sm text-text-muted">
-                  Export formatted meeting notes, key decisions, and tracked tasks to your team Notion databases.
-                </p>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSaveNotion}
+                    disabled={notionSaving}
+                    className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {notionSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiSaveLine className="w-4 h-4" />}
+                    Save Notion Settings
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="mt-1 flex flex-col gap-2.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <input
-                type="password"
-                placeholder="Notion Internal Integration Token (secret_...)"
-                value={notionApiKey}
-                onChange={e => setNotionApiKey(e.target.value)}
-                className="bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
-              />
-              <input
-                type="text"
-                placeholder="Database ID (32-character string)"
-                value={notionDbId}
-                onChange={e => setNotionDbId(e.target.value)}
-                className="bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-text-muted font-mono"
-              />
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleSaveNotion}
-                disabled={notionSaving}
-                className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {notionSaving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : <RiLinkM className="w-4 h-4" />}
-                Save Notion Settings
-              </button>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );
