@@ -12,6 +12,7 @@ import type { Meeting } from "@/types";
 
 import dynamic from "next/dynamic";
 import MeetingCard from "@/components/molecules/MeetingCard";
+import { suggestMeetingTitle } from "@/lib/api";
 
 const DeleteDialog = dynamic(() => import("@/components/organisms/DeleteDialog"), { ssr: false });
 const EditDialog = dynamic(() => import("@/components/organisms/EditDialog"), { ssr: false });
@@ -187,6 +188,7 @@ export default function Dashboard() {
           onSave={handleEdit}
           onCancel={() => setEditTarget(null)}
           busy={editBusy}
+          onSuggestAiTitle={() => suggestMeetingTitle(editTarget.id)}
         />
       )}
     </div>

@@ -9,8 +9,6 @@ import {
   RiMoreLine,
   RiEditLine,
   RiDeleteBinLine,
-  RiFilePdfLine,
-  RiFileTextLine,
   RiLinkM,
   RiExternalLinkLine,
   RiSparklingLine,
@@ -22,6 +20,8 @@ import {
   GmailIcon,
   GoogleCalendarIcon,
   GoogleMeetIcon,
+  PdfColorIcon,
+  MarkdownColorIcon,
   type BtnState,
 } from "@/components/molecules/ActionButtons";
 import EditDialog from "@/components/organisms/EditDialog";
@@ -29,6 +29,7 @@ import DeleteDialog from "@/components/organisms/DeleteDialog";
 import { copyToClipboard } from "@/lib/clipboard";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { exportMeetingPdf } from "@/lib/pdfExport";
+import { suggestMeetingTitle } from "@/lib/api";
 import type { Meeting } from "@/types";
 
 interface MeetingHeaderProps {
@@ -153,6 +154,44 @@ export default function MeetingHeader({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showMessage("Meeting notes exported (Markdown)", { variant: "success" });
+  };
+
+  const handleCopyAllNotes = async () => {
+    let md = `# ${meeting.title || "Untitled Meeting"}\n\n`;
+    if (meeting.start_at && !isNaN(new Date(meeting.start_at).getTime())) {
+      md += `**Date:** ${format(
+        new Date(meeting.start_at),
+        "EEEE, MMMM d, yyyy • h:mm a"
+      )}\n\n`;
+    }
+    if (meeting.summary) {
+      md += `## Executive Summary\n\n${meeting.summary}\n\n`;
+    }
+    if (meeting.decisions && meeting.decisions.length > 0) {
+      md += `## Key Decisions\n\n`;
+      meeting.decisions.forEach((d) => {
+        const text = typeof d === "string" ? d : d.text || JSON.stringify(d);
+        md += `- ${text}\n`;
+      });
+      md += `\n`;
+    }
+    if (meeting.action_items && meeting.action_items.length > 0) {
+      md += `## Action Items\n\n`;
+      meeting.action_items.forEach((item) => {
+        md += `- [${item.status === "done" ? "x" : " "}] **${item.description}** (Owner: ${
+          item.owner_name || "Unassigned"
+        })\n`;
+      });
+      md += `\n`;
+    }
+
+    const ok = await copyToClipboard(md);
+    setMenuOpen(false);
+    if (ok) {
+      showMessage("All meeting notes copied to clipboard", { variant: "success" });
+    } else {
+      showMessage("Failed to copy notes to clipboard", { variant: "error" });
+    }
   };
 
   const handleSaveTitle = async (newTitle: string) => {
@@ -340,22 +379,35 @@ export default function MeetingHeader({
             {statusBadge}
           </div>
 
-          {/* 2. Full-Width Expressive Title Row with Inline Edit Pencil */}
-          <div className="flex items-center gap-3 w-full group">
+          {/* 2. Full-Width Expressive Title Row with Inline Edit Pencil & AI Suggest Chip */}
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full group">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-text tracking-tight leading-tight break-words">
               {displayTitle}
             </h1>
-            {onRename && (
-              <button
-                type="button"
-                onClick={() => setIsEditOpen(true)}
-                aria-label="Edit meeting title"
-                title="Edit meeting title"
-                className="p-1.5 rounded-full text-text-muted hover:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 shrink-0 cursor-pointer"
-              >
-                <RiEditLine className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
-              </button>
-            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onRename && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(true)}
+                  aria-label="Edit meeting title"
+                  title="Edit meeting title"
+                  className="p-1.5 rounded-full text-text-muted hover:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 shrink-0 cursor-pointer"
+                >
+                  <RiEditLine className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                </button>
+              )}
+              {onRename && (!meeting.title || meeting.title.startsWith("Meet - ") || meeting.title === "Google Meet" || meeting.title === "Untitled Meeting") && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/40 hover:bg-primary-container text-primary hover:text-on-primary-container text-xs font-bold border border-primary/20 transition-all active:scale-95 cursor-pointer shadow-xs"
+                  title="Generate intelligent title with AI"
+                >
+                  <RiSparklingLine className="w-3.5 h-3.5 text-primary" />
+                  <span>Suggest Title</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 3. Clean Participants Avatar Stack with Initials & Role Badges */}
@@ -431,13 +483,13 @@ export default function MeetingHeader({
               </>
             )}
 
-            {/* Export PDF pill button (M3 Tonal button) */}
+            {/* Export PDF pill button (M3 Tonal button) with colorful PDF badge */}
             <button
               type="button"
               onClick={handleExportPdf}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-surface-container-high text-text hover:bg-surface-container-highest border border-outline-variant/15 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-surface-container-high text-text hover:bg-surface-container-highest border border-outline-variant/15 hover:border-red-500/30 cursor-pointer group shadow-2xs"
             >
-              <RiFilePdfLine className="w-4 h-4 shrink-0 text-secondary" aria-hidden="true" />
+              <PdfColorIcon className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" />
               <span>Export PDF</span>
             </button>
 
@@ -468,8 +520,19 @@ export default function MeetingHeader({
                     }
                     role="menu"
                     aria-label="Meeting options"
-                    className="absolute top-full right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[24px] border border-outline-variant/15 shadow-2xl flex flex-col p-1.5 z-[100] origin-top-right backdrop-blur-xl"
+                    className="absolute top-full right-0 mt-2 w-60 max-w-[calc(100vw-1.5rem)] bg-surface-container-highest rounded-[24px] border border-outline-variant/15 shadow-2xl flex flex-col p-1.5 z-[100] origin-top-right backdrop-blur-xl"
                   >
+                    {/* Copy All Notes */}
+                    <button
+                      type="button"
+                      onClick={handleCopyAllNotes}
+                      role="menuitem"
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer"
+                    >
+                      <RiLinkM className="w-4 h-4 text-primary" aria-hidden="true" />
+                      <span>Copy Full Meeting Notes</span>
+                    </button>
+
                     {/* Edit Title */}
                     {onRename && (
                       <button
@@ -481,7 +544,7 @@ export default function MeetingHeader({
                         role="menuitem"
                         className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer"
                       >
-                        <RiEditLine className="w-4 h-4 text-primary" aria-hidden="true" />
+                        <RiEditLine className="w-4 h-4 text-text-muted" aria-hidden="true" />
                         <span>Edit Title</span>
                       </button>
                     )}
@@ -497,7 +560,7 @@ export default function MeetingHeader({
                       <span>{linkCopied ? "Link Copied!" : "Copy Meeting Link"}</span>
                     </button>
 
-                    {/* Export Markdown */}
+                    {/* Export Markdown (.md) */}
                     <button
                       type="button"
                       onClick={() => {
@@ -505,10 +568,10 @@ export default function MeetingHeader({
                         handleExportMarkdown();
                       }}
                       role="menuitem"
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer"
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer group"
                     >
-                      <RiFileTextLine className="w-4 h-4 text-text-muted" aria-hidden="true" />
-                      <span>Export as Markdown</span>
+                      <MarkdownColorIcon className="w-4 h-4 shrink-0 group-hover:scale-105 transition-transform" />
+                      <span>Export as Markdown (.md)</span>
                     </button>
 
                     {/* View Calendar Event */}
@@ -551,7 +614,7 @@ export default function MeetingHeader({
         </div>
       </header>
 
-      {/* Edit Title Dialog */}
+      {/* Edit Title Dialog with AI Title Suggestions */}
       {isEditOpen && (
         <EditDialog
           initialTitle={meeting.title || ""}
@@ -559,6 +622,7 @@ export default function MeetingHeader({
           onSave={handleSaveTitle}
           onCancel={() => setIsEditOpen(false)}
           busy={editBusy}
+          onSuggestAiTitle={() => suggestMeetingTitle(meeting.id)}
         />
       )}
 

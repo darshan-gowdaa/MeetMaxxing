@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   RiCheckLine as Check,
   RiTimeLine as Clock,
@@ -66,13 +66,56 @@ export default function MeetingActionItems({
 }: MeetingActionItemsProps) {
   const [cyclingId, setCyclingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [filter, setFilter] = useState<"all" | "open" | "done">("all");
 
-  const items = actionItems || [];
+  const items = useMemo(() => actionItems || [], [actionItems]);
   const hasItems = items.length > 0;
 
   const openCount = items.filter((a) => a.status === "open").length;
   const inProgressCount = items.filter((a) => a.status === "in_progress").length;
   const doneCount = items.filter((a) => a.status === "done").length;
+
+  // Stable sort order: compute order on initial load / when set of item IDs changes
+  // This prevents items from jumping positions when toggled in-place!
+  const itemIdsKey = items.map((i) => i.id).join(",");
+  const orderedIds = useMemo(() => {
+    return [...items]
+      .sort((a, b) => {
+        const statusOrder: Record<string, number> = {
+          open: 0,
+          in_progress: 1,
+          done: 2,
+        };
+        const priorityOrder: Record<Priority, number> = {
+          high: 0,
+          medium: 1,
+          low: 2,
+        };
+        const aStatus = statusOrder[a.status] ?? 3;
+        const bStatus = statusOrder[b.status] ?? 3;
+        if (aStatus !== bStatus) return aStatus - bStatus;
+        return (
+          (priorityOrder[normalizePriority(a.priority)] ?? 3) -
+          (priorityOrder[normalizePriority(b.priority)] ?? 3)
+        );
+      })
+      .map((i) => i.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemIdsKey]);
+
+  // Retrieve current item states using stable positions
+  const stableItems = useMemo(() => {
+    const map = new Map(items.map((i) => [i.id, i]));
+    return orderedIds
+      .map((id) => map.get(id))
+      .filter((item): item is Meeting["action_items"][0] => Boolean(item));
+  }, [items, orderedIds]);
+
+  const displayedItems = stableItems.filter((item) => {
+    if (filter === "open") return item.status === "open" || item.status === "in_progress";
+    if (filter === "done") return item.status === "done";
+    return true;
+  });
 
   const handleCopy = async () => {
     if (!hasItems) return;
@@ -137,21 +180,43 @@ export default function MeetingActionItems({
         {/* Status badges & copy action */}
         {hasItems && (
           <div className="flex items-center gap-2 flex-wrap">
-            {openCount > 0 && (
-              <span className="rounded-full px-3 py-1 text-xs font-semibold bg-surface-container-high text-text-muted">
-                {openCount} open
-              </span>
-            )}
-            {inProgressCount > 0 && (
-              <span className="rounded-full px-3 py-1 text-xs font-semibold bg-warning-container text-on-warning-container">
-                {inProgressCount} in progress
-              </span>
-            )}
-            {doneCount > 0 && (
-              <span className="rounded-full px-3 py-1 text-xs font-semibold bg-success-container text-on-success-container">
-                {doneCount} done
-              </span>
-            )}
+            {/* QoL Filter Pills */}
+            <div className="inline-flex p-1 rounded-full bg-surface-container-high/60 border border-outline-variant/15 text-xs">
+              <button
+                type="button"
+                onClick={() => setFilter("all")}
+                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                  filter === "all"
+                    ? "bg-primary-container text-on-primary-container"
+                    : "text-text-muted hover:text-text"
+                }`}
+              >
+                All ({items.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter("open")}
+                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                  filter === "open"
+                    ? "bg-warning-container text-on-warning-container"
+                    : "text-text-muted hover:text-text"
+                }`}
+              >
+                Open ({openCount + inProgressCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter("done")}
+                className={`px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                  filter === "done"
+                    ? "bg-success-container text-on-success-container"
+                    : "text-text-muted hover:text-text"
+                }`}
+              >
+                Done ({doneCount})
+              </button>
+            </div>
+
             <button
               onClick={handleCopy}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 text-xs font-semibold text-text active:scale-95 transition-all ml-1"
@@ -184,29 +249,22 @@ export default function MeetingActionItems({
             No action items extracted from this call.
           </p>
         </div>
+      ) : displayedItems.length === 0 ? (
+        <div className="rounded-[22px] border border-dashed border-outline-variant/25 bg-surface-container/20 py-8 px-6 text-center flex flex-col items-center justify-center gap-2.5">
+          <p className="text-[13.5px] text-text-muted font-medium">
+            {filter === "done" ? "No completed action items yet." : "No open action items. All done!"}
+          </p>
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className="text-xs font-semibold text-primary hover:underline"
+          >
+            Show all items
+          </button>
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {[...items]
-            .sort((a, b) => {
-              const statusOrder: Record<string, number> = {
-                open: 0,
-                in_progress: 1,
-                done: 2,
-              };
-              const priorityOrder: Record<Priority, number> = {
-                high: 0,
-                medium: 1,
-                low: 2,
-              };
-              const aStatus = statusOrder[a.status] ?? 3;
-              const bStatus = statusOrder[b.status] ?? 3;
-              if (aStatus !== bStatus) return aStatus - bStatus;
-              return (
-                (priorityOrder[normalizePriority(a.priority)] ?? 3) -
-                (priorityOrder[normalizePriority(b.priority)] ?? 3)
-              );
-            })
-            .map((item) => {
+          {displayedItems.map((item) => {
               const isDone = item.status === "done";
               const isInProgress = item.status === "in_progress";
               const priority = normalizePriority(item.priority);

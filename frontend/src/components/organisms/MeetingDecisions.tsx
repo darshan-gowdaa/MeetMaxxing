@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  RiCheckDoubleLine as CheckDouble,
+  RiCompass3Line,
   RiUserLine as UserIcon,
   RiFileCopyLine as Copy,
   RiCheckLine as Check,
@@ -46,7 +46,7 @@ export default function MeetingDecisions({ decisions }: MeetingDecisionsProps) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0 shadow-xs">
-            <CheckDouble className="w-5 h-5 text-tertiary" />
+            <RiCompass3Line className="w-5 h-5 text-tertiary" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2.5">
@@ -90,7 +90,7 @@ export default function MeetingDecisions({ decisions }: MeetingDecisionsProps) {
       {!hasDecisions ? (
         <div className="rounded-[22px] border border-dashed border-outline-variant/25 bg-surface-container/20 py-8 px-6 text-center flex flex-col items-center justify-center gap-2.5">
           <div className="w-10 h-10 rounded-2xl bg-surface-container-high/60 flex items-center justify-center text-text-muted">
-            <CheckDouble className="w-5 h-5 opacity-60" />
+            <RiCompass3Line className="w-5 h-5 opacity-60" />
           </div>
           <p className="text-[13.5px] text-text-muted font-medium">
             No explicit decisions recorded in this call.
@@ -112,8 +112,9 @@ export default function MeetingDecisions({ decisions }: MeetingDecisionsProps) {
                 key={idx}
                 className="group bg-surface-container/50 hover:bg-surface-container border border-outline-variant/15 hover:border-outline-variant/30 rounded-[22px] p-4.5 sm:p-5 transition-all flex items-start gap-3.5"
               >
-                <div className="w-8 h-8 rounded-xl bg-tertiary-container/80 text-on-tertiary-container flex items-center justify-center shrink-0 mt-0.5 shadow-xs group-hover:scale-105 transition-transform">
-                  <CheckDouble className="w-4 h-4 text-tertiary" />
+                {/* Numbered Milestone Indicator */}
+                <div className="w-8 h-8 rounded-xl bg-tertiary-container/80 text-on-tertiary-container font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-xs group-hover:scale-105 transition-transform">
+                  {String(idx + 1).padStart(2, "0")}
                 </div>
                 <div className="flex-1 flex flex-col justify-between gap-3 min-w-0">
                   <p className="text-[14px] sm:text-[14.5px] text-text leading-relaxed font-normal">

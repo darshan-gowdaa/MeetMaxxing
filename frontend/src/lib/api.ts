@@ -152,6 +152,20 @@ export async function updateMeeting(id: string, updates: Record<string, string>,
  return safeParse(text);
 }
 
+export async function suggestMeetingTitle(
+  id: string,
+  token?: string
+): Promise<{ suggested_title: string; alternatives?: string[] }> {
+  const authToken = await getToken(token);
+  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}/suggest-title`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  if (!res.ok) throw await apiError(res, "Failed to suggest title");
+  const text = await res.text();
+  return safeParse(text, { suggested_title: "", alternatives: [] });
+}
+
 export async function endMeeting(id: string) {
  const token = await getToken();
  const res = await fetch(`${BACKEND_URL}/meeting/${id}/end`, {

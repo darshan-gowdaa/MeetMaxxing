@@ -9,6 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from ..core.auth import get_current_user
 from ..core.database import get_meeting_record, get_supabase_admin
 from ..memory.qdrant_client import delete_meeting_memories
+from ..core.utils import parse_json_clean
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -177,3 +180,104 @@ async def delete_meeting(
         logging.warning(f"Could not delete memories from Qdrant: {e}")
 
     return {"status": "deleted"}
+
+
+@router.post("/meetings/{meeting_id}/suggest-title")
+async def suggest_meeting_title(
+    meeting_id: str,
+    user: dict = Depends(get_current_user),
+):
+    """Generate intelligent meeting titles from meeting summary and discussion context."""
+    supabase = get_supabase_admin()
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    summary = (meeting.get("summary") or "").strip()
+    decisions = meeting.get("decisions") or []
+    action_items = meeting.get("action_items") or []
+    meet_code = meeting.get("google_meet_link") or ""
+    current_title = meeting.get("title") or ""
+
+    decisions_summary = "; ".join(
+        [d.get("text") if isinstance(d, dict) else str(d) for d in decisions[:3]]
+    )
+    actions_summary = "; ".join(
+        [
+            a.get("description") if isinstance(a, dict) else str(a)
+            for a in action_items[:3]
+        ]
+    )
+
+    system_prompt = (
+        "You are an executive meeting assistant. "
+        "Generate 3 concise, professional, highly relevant titles (3-6 words each) for this meeting. "
+        "Return ONLY raw JSON with keys 'suggested_title' and 'alternatives' (a list of 3 strings)."
+    )
+
+    user_prompt = (
+        f"Meeting Context:\n"
+        f"Current Title: {current_title}\n"
+        f"Summary: {summary or 'Brief technical or sync meeting.'}\n"
+        f"Key Decisions: {decisions_summary or 'None'}\n"
+        f"Action Items: {actions_summary or 'None'}\n\n"
+        "Generate 3 professional, engaging title options.\n"
+        "Title 1 should be the most descriptive recommended title.\n"
+        "Title 2 should focus on outcomes or actions.\n"
+        "Title 3 should be concise (2-4 words).\n"
+        "Do not include generic words like 'Meeting' or raw codes.\n"
+        'Respond in raw JSON: {"suggested_title": "...", "alternatives": ["...", "...", "..."]}'
+    )
+
+    suggested_title = ""
+    alternatives = []
+
+    try:
+        from ..core.llm_fallback import generate_content_with_fallback
+
+        raw_text, _ = await generate_content_with_fallback(
+            prompt=user_prompt,
+            system_instruction=system_prompt,
+            temperature=0.4,
+            max_tokens=150,
+            response_format_json=True,
+            user_id=user.get("user_id") or user.get("id"),
+        )
+        data = parse_json_clean(raw_text)
+        if isinstance(data, dict):
+            suggested_title = str(data.get("suggested_title") or "").strip()
+            alts = data.get("alternatives")
+            if isinstance(alts, list):
+                alternatives = [
+                    str(a).strip() for a in alts if a and isinstance(a, str)
+                ]
+    except Exception as e:
+        logger.warning(f"[SuggestTitle] LLM fallback error: {e}")
+
+    if not suggested_title:
+        if summary:
+            first_sent = summary.split(".")[0].strip()
+            if len(first_sent) > 50:
+                first_sent = first_sent[:47] + "..."
+            suggested_title = first_sent
+        elif meet_code:
+            clean = meet_code.replace("https://meet.google.com/", "").strip("/")
+            suggested_title = f"Sync: {clean}"
+        else:
+            suggested_title = "Team Discussion & Sync"
+
+    if not alternatives:
+        alternatives = [suggested_title]
+        if summary and suggested_title != "Team Discussion & Sync":
+            alternatives.append("Strategic Sync & Action Items")
+            alternatives.append("Project Review")
+        else:
+            alternatives.extend(["Weekly Standup", "Technical Sync"])
+
+    if suggested_title not in alternatives:
+        alternatives.insert(0, suggested_title)
+
+    return {
+        "suggested_title": suggested_title,
+        "alternatives": alternatives[:3],
+    }

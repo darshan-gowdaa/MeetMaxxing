@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { MeetingSkeleton } from "@/components/templates/skeletons";
 import {
@@ -24,6 +24,21 @@ type ViewTab = "notes" | "transcript" | "overview";
 export default function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [activeTab, setActiveTab] = useState<ViewTab>("overview");
+
+  // QoL Keyboard shortcuts: '1' for Overview, '2' for Notes, '3' for Transcript
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+      if (e.key === "1") setActiveTab("overview");
+      if (e.key === "2") setActiveTab("notes");
+      if (e.key === "3") setActiveTab("transcript");
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const {
     meeting,
@@ -133,10 +148,29 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             aria-label="Meeting content views"
             className="inline-flex p-1.5 rounded-full bg-surface-container-low border border-outline-variant/15 shadow-xs overflow-x-auto max-w-full"
           >
+            {/* Complete Overview: First / Leftmost */}
+            <button
+              role="tab"
+              aria-selected={activeTab === "overview"}
+              onClick={() => setActiveTab("overview")}
+              title="Press 1 for Complete Overview"
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "overview"
+                  ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
+                  : "text-text-muted hover:text-text hover:bg-surface-container/60"
+              }`}
+            >
+              <RiLayoutMasonryLine className="w-4 h-4 text-primary" />
+              <span>Complete Overview</span>
+              <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-text-muted font-mono">1</kbd>
+            </button>
+
+            {/* Notes & Summary */}
             <button
               role="tab"
               aria-selected={activeTab === "notes"}
               onClick={() => setActiveTab("notes")}
+              title="Press 2 for Notes & Summary"
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "notes"
                   ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
@@ -150,12 +184,15 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                   {actionItems.length}
                 </span>
               )}
+              <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-text-muted font-mono">2</kbd>
             </button>
 
+            {/* Full Transcript */}
             <button
               role="tab"
               aria-selected={activeTab === "transcript"}
               onClick={() => setActiveTab("transcript")}
+              title="Press 3 for Full Transcript"
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "transcript"
                   ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
@@ -167,31 +204,18 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-surface-container-high text-text-variant font-mono">
                 {transcriptCount}
               </span>
-            </button>
-
-            <button
-              role="tab"
-              aria-selected={activeTab === "overview"}
-              onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === "overview"
-                  ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
-                  : "text-text-muted hover:text-text hover:bg-surface-container/60"
-              }`}
-            >
-              <RiLayoutMasonryLine className="w-4 h-4 text-primary" />
-              <span>Complete Overview</span>
+              <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-text-muted font-mono">3</kbd>
             </button>
           </div>
 
           <div className="hidden sm:flex items-center gap-2 text-xs text-text-muted">
             <span className="w-2 h-2 rounded-full bg-primary/70 animate-pulse" />
             <span>
-              {activeTab === "notes"
+              {activeTab === "overview"
+                ? "Complete Overview"
+                : activeTab === "notes"
                 ? "Notes & Action Items View"
-                : activeTab === "transcript"
-                ? "Focused Transcript Reader"
-                : "Complete Overview"}
+                : "Focused Transcript Reader"}
             </span>
           </div>
         </div>

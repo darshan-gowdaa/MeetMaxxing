@@ -97,6 +97,69 @@ export function GoogleMeetIcon({ className = "w-4 h-4" }: { className?: string }
   );
 }
 
+/** Authentic colored Adobe Red PDF document icon */
+export function PdfColorIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-label="PDF file format"
+    >
+      <path
+        d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"
+        fill="#EA4335"
+        fillOpacity="0.18"
+        stroke="#EA4335"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14 2v6h6"
+        stroke="#EA4335"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="5" y="11" width="14" height="7.5" rx="1.8" fill="#EA4335" />
+      <text
+        x="12"
+        y="16.5"
+        textAnchor="middle"
+        fill="#FFFFFF"
+        fontSize="4.8"
+        fontWeight="900"
+        fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        letterSpacing="0.3px"
+      >
+        PDF
+      </text>
+    </svg>
+  );
+}
+
+/** Official colored Markdown (.md) icon */
+export function MarkdownColorIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-label="Markdown file format"
+    >
+      <rect width="16" height="16" rx="3.5" fill="#0284C7" />
+      <path
+        fill="#FFFFFF"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2.5 4h2.2l1.8 2.25L8.3 4h2.2v8h-1.8V7.2L7 9.35H6.4L4.3 7.2V12H2.5V4zm11 4.5l-2.25-2.5v1.8H9.5v1.4h1.75V11L13.5 8.5z"
+      />
+    </svg>
+  );
+}
+
 export interface ActionButtonProps {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
