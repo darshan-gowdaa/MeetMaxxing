@@ -1,12 +1,12 @@
-import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { Meeting } from "@/types";
 
 /**
  * Cleanly export meeting details (summary, key decisions, action items)
- * to a beautifully styled PDF document using jsPDF.
+ * to a beautifully styled PDF document using jsPDF (dynamically imported).
  */
-export function exportMeetingPdf(meeting: Meeting) {
+export async function exportMeetingPdf(meeting: Meeting) {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",

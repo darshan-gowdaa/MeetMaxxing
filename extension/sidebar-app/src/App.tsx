@@ -108,7 +108,7 @@ export default function App() {
     <div className="mx-3 mt-2 mb-1 px-4 py-3 rounded-[24px] bg-surface-container border border-border flex items-center gap-3 shadow-sm">
       <div className="md3-loading-indicator md3-loading-indicator-sm text-primary shrink-0" />
       <div className="flex flex-col min-w-0">
-        <span className="text-[13px] font-bold text-text">Backend is starting up ☕</span>
+        <span className="text-[13px] font-bold text-text">Backend is starting up</span>
         <span className="text-[11px] text-text-muted">This can take up to a minute. We'll reconnect automatically.</span>
       </div>
     </div>

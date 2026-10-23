@@ -51,26 +51,32 @@ async def get_qdrant() -> AsyncQdrantClient:
                     url=settings.QDRANT_URL,
                     api_key=settings.QDRANT_API_KEY or None,
                     check_compatibility=False,
-                    timeout=10.0,
+                    timeout=3.0,
                 )
 
     if not _collection_ensured:
-        _collection_ensured = True
         try:
-            await ensure_collection(force=True)
-        except Exception:
-            _collection_ensured = False
-            raise
+            await _ensure_collection_internal(_client)
+            _collection_ensured = True
+        except Exception as e:
+            if settings.QDRANT_URL not in [':memory:', 'memory']:
+                from loguru import logger
+                logger.warning(
+                    '[Qdrant] Remote Qdrant at {} failed ({}); falling back to in-memory store.',
+                    settings.QDRANT_URL,
+                    e,
+                )
+                _client = AsyncQdrantClient(location=':memory:', check_compatibility=False)
+                await _ensure_collection_internal(_client)
+                _collection_ensured = True
+            else:
+                _collection_ensured = False
+                raise
 
     return _client
 
 
-async def ensure_collection(force: bool = False) -> None:
-    # creates collection and indexes only once to avoid repeated network roundtrips
-    global _collection_ensured
-    if _collection_ensured and not force:
-        return
-    client = await get_qdrant()
+async def _ensure_collection_internal(client: AsyncQdrantClient) -> None:
     collection_name = settings.QDRANT_COLLECTION
 
     existing = await client.get_collections()
@@ -328,3 +334,12 @@ async def delete_meeting_memories(meeting_id: str, org_id: str) -> None:
             )
         ),
     )
+
+
+async def ensure_collection(force: bool = False) -> None:
+    global _collection_ensured
+    if _collection_ensured and not force:
+        return
+    client = await get_qdrant()
+    await _ensure_collection_internal(client)
+    _collection_ensured = True

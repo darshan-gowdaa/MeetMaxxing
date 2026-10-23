@@ -59,10 +59,11 @@ async def upload_context(
         points = []
         today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        for chunk in chunks:
-            if not chunk.strip():
-                continue
-            vector = await embed_text(chunk)
+        valid_chunks = [c for c in chunks if c.strip()]
+        from ..memory.embeddings import embed_batch
+        vectors = await embed_batch(valid_chunks)
+
+        for chunk, vector in zip(valid_chunks, vectors):
             pt = MemoryPoint(
                 id=str(uuid.uuid4()),
                 vector=vector,

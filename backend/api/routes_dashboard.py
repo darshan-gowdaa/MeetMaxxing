@@ -32,11 +32,7 @@ async def list_meetings(
         .range(offset, offset + limit - 1)
         .execute()
     )
-    total_meetings = (
-        result.count
-        if hasattr(result, "count") and result.count is not None
-        else len(result.data or [])
-    )
+    total_meetings = len(result.data or [])
 
     return {
         "meetings": result.data or [],

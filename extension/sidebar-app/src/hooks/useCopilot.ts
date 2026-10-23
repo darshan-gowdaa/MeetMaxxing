@@ -163,7 +163,14 @@ export function useCopilot() {
         ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken", "authState", "backendStarting", "poweredBy"], (res: any) => {
           if (res.transcript && Array.isArray(res.transcript)) {
             setTranscriptLines(prev => {
-              if (prev.length === res.transcript.length && JSON.stringify(prev) === JSON.stringify(res.transcript)) return prev;
+              if (prev.length === res.transcript.length) {
+                if (prev.length === 0) return prev;
+                const lastPrev = prev[prev.length - 1];
+                const lastRes = res.transcript[res.transcript.length - 1];
+                if (lastPrev?.text === lastRes?.text && lastPrev?.speaker === lastRes?.speaker && lastPrev?.timestamp === lastRes?.timestamp) {
+                  return prev;
+                }
+              }
               return res.transcript;
             });
           }

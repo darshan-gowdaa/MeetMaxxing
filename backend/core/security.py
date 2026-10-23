@@ -3,7 +3,7 @@ Security middleware and production hardening utilities.
 """
 
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
@@ -30,7 +30,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         # ip -> list of timestamps
-        self._windows: dict[str, list[float]] = defaultdict(list)
+        self._windows: dict[str, deque[float]] = defaultdict(deque)
 
     def _get_client_ip(self, request: Request) -> str:
         # Honour X-Forwarded-For from reverse proxy (Render/Vercel)
@@ -66,7 +66,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Prune expired timestamps
         while hits and hits[0] < cutoff:
-            hits.pop(0)
+            hits.popleft()
 
         if len(hits) >= max_req:
             logger.warning("Rate limit exceeded: ip={} path={}", ip, path)

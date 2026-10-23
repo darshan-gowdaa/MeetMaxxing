@@ -6,6 +6,7 @@ import redis.asyncio as aioredis
 from .config import settings
 
 _pool: aioredis.ConnectionPool | None = None
+_redis_instance: aioredis.Redis | None = None
 _memory_store: dict[str, list[str]] = {}
 _is_fallback: bool = False
 _fallback_since: float = 0.0
@@ -69,8 +70,23 @@ def _get_pool() -> aioredis.ConnectionPool:
 
 async def _get_redis() -> aioredis.Redis | MemoryRedis:
     """Return a Redis client, falling back to MemoryRedis on connection failure."""
-    global _is_fallback, _fallback_since
+    global _is_fallback, _fallback_since, _redis_instance
     if settings.REDIS_URL in ["memory", "local", ""]:
+        return MemoryRedis()
+    if _is_fallback and (time.time() - _fallback_since) < _FALLBACK_RETRY_SECONDS:
+        return MemoryRedis()
+    if _redis_instance is not None and not _is_fallback:
+        return _redis_instance
+    try:
+        r = aioredis.Redis(connection_pool=_get_pool())
+        await r.ping()
+        _is_fallback = False
+        _redis_instance = r
+        return r
+    except Exception:
+        _is_fallback = True
+        _fallback_since = time.time()
+        _redis_instance = None
         return MemoryRedis()
     if _is_fallback and (time.time() - _fallback_since) < _FALLBACK_RETRY_SECONDS:
         return MemoryRedis()

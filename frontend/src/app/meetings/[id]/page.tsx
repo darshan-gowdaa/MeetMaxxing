@@ -47,7 +47,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
           {errorMsg ? (
             <div className="w-16 h-16 rounded-full bg-risk-container flex items-center justify-center mb-2">
-              <span className="text-risk font-bold text-2xl">{coldStart ? "☕" : "!"}</span>
+              <span className="text-risk font-bold text-2xl">{coldStart ? "..." : "!"}</span>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-2">
@@ -59,7 +59,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-col items-center gap-2">
             <p className="text-[14px] text-text-muted font-medium tracking-wide">
               {coldStart
-                ? "Backend is starting up ☕ — this can take up to a minute"
+                ? "Backend is starting up — this can take up to a minute"
                 : errorMsg
                 ? "Failed to load meeting"
                 : "AI is processing this meeting transcript"}

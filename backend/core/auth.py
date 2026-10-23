@@ -1,9 +1,16 @@
+import hashlib
+import time
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from loguru import logger
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+# Short TTL cache for validated user tokens to eliminate repeated remote auth latency
+# SHA256(token) -> (expires_at, user_dict)
+_TOKEN_CACHE: dict[str, tuple[float, dict]] = {}
+_TOKEN_CACHE_TTL = 60.0  # seconds
 
 
 async def get_user_from_token(token: str) -> dict:
@@ -15,6 +22,12 @@ async def get_user_from_token(token: str) -> dict:
     """
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")
+
+    now = time.time()
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    cached = _TOKEN_CACHE.get(token_hash)
+    if cached and now < cached[0]:
+        return cached[1]
 
     # Fast path: locally verify JWT signature with SUPABASE_JWT_SECRET (0.05ms vs 250ms HTTP call)
     from .config import settings
@@ -31,11 +44,13 @@ async def get_user_from_token(token: str) -> dict:
             user_id = payload.get("sub")
             if user_id:
                 org_id = payload.get("app_metadata", {}).get("org_id", user_id)
-                return {
+                user_info = {
                     "user_id": user_id,
                     "org_id": org_id,
                     "email": payload.get("email"),
                 }
+                _TOKEN_CACHE[token_hash] = (now + _TOKEN_CACHE_TTL, user_info)
+                return user_info
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail="Token expired")
         except Exception as e:
@@ -61,7 +76,9 @@ async def get_user_from_token(token: str) -> dict:
         except Exception:
             org_id = user.id
 
-        return {"user_id": user.id, "org_id": org_id, "email": user.email}
+        user_info = {"user_id": user.id, "org_id": org_id, "email": user.email}
+        _TOKEN_CACHE[token_hash] = (now + _TOKEN_CACHE_TTL, user_info)
+        return user_info
     except HTTPException:
         raise
     except Exception as e:

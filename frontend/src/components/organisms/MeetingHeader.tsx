@@ -102,10 +102,10 @@ export default function MeetingHeader({
     }
   };
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     setMenuOpen(false);
     try {
-      exportMeetingPdf(meeting);
+      await exportMeetingPdf(meeting);
       showMessage("Meeting notes exported as PDF", { variant: "success" });
     } catch (err) {
       console.error("PDF export error:", err);

@@ -1,4 +1,5 @@
 import asyncio
+import collections
 import hashlib
 
 from google import genai
@@ -21,23 +22,23 @@ async def _fallback_vector(text: str) -> list[float]:
 
 
 # Simple in-memory LRU cache for embeddings
-_embed_cache: dict[str, list[float]] = {}
-_embed_cache_keys: list[str] = []
-CACHE_MAX_SIZE = 500
+_embed_cache: collections.OrderedDict[str, list[float]] = collections.OrderedDict()
+CACHE_MAX_SIZE = 1000
 
 
 def _get_from_cache(text: str):
-    return _embed_cache.get(text)
+    if text in _embed_cache:
+        _embed_cache.move_to_end(text)
+        return _embed_cache[text]
+    return None
 
 
 def _set_in_cache(text: str, vector: list[float]):
     if text in _embed_cache:
-        _embed_cache_keys.remove(text)
+        _embed_cache.move_to_end(text)
     _embed_cache[text] = vector
-    _embed_cache_keys.append(text)
-    if len(_embed_cache_keys) > CACHE_MAX_SIZE:
-        oldest = _embed_cache_keys.pop(0)
-        del _embed_cache[oldest]
+    if len(_embed_cache) > CACHE_MAX_SIZE:
+        _embed_cache.popitem(last=False)
 
 
 async def embed_text(text: str) -> list[float]:
@@ -53,6 +54,30 @@ async def embed_text(text: str) -> list[float]:
         vec = await _fallback_vector(text)
         _set_in_cache(text, vec)
         return vec
+
+    client = _get_client()
+    try:
+        result = await client.aio.models.embed_content(
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
+            config=genai_types.EmbedContentConfig(
+                task_type="RETRIEVAL_DOCUMENT",
+                output_dimensionality=settings.EMBEDDING_DIM,
+            ),
+        )
+    except Exception:
+        result = await asyncio.to_thread(
+            client.models.embed_content,
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
+            config=genai_types.EmbedContentConfig(
+                task_type="RETRIEVAL_DOCUMENT",
+                output_dimensionality=settings.EMBEDDING_DIM,
+            ),
+        )
+    vec = result.embeddings[0].values
+    _set_in_cache(text, vec)
+    return vec
 
     client = _get_client()
     # embed_content is a synchronous network call — offload it so it doesn't
@@ -93,21 +118,19 @@ async def embed_query(text: str) -> list[float]:
 
 
 async def embed_batch(texts: list[str]) -> list[list[float]]:
-    """Batch embed multiple texts (for post-meeting processing)."""
+    """Batch embed multiple texts in parallel (for post-meeting processing)."""
     if not texts:
         return []
 
-    results = []
-
-    # Check cache first to reduce batch size
+    results = [None] * len(texts)
     uncached_texts = []
     uncached_indices = []
+
     for i, t in enumerate(texts):
         cached = _get_from_cache(t)
         if cached:
-            results.append(cached)
+            results[i] = cached
         else:
-            results.append(None)  # Placeholder
             uncached_texts.append(t)
             uncached_indices.append(i)
 
@@ -124,36 +147,52 @@ async def embed_batch(texts: list[str]) -> list[list[float]]:
             _set_in_cache(uncached_texts[i], vec)
         return results
 
-    try:
-        client = _get_client()
-        # Batch in groups of 20
-        batch_size = 20
-        for i in range(0, len(uncached_texts), batch_size):
-            batch = uncached_texts[i : i + batch_size]
-            batch_indices = uncached_indices[i : i + batch_size]
+    client = _get_client()
+    batch_size = 20
+    batches = [
+        (
+            uncached_texts[i : i + batch_size],
+            uncached_indices[i : i + batch_size],
+        )
+        for i in range(0, len(uncached_texts), batch_size)
+    ]
 
-            result = await asyncio.to_thread(
-                client.models.embed_content,
-                model=settings.GEMINI_EMBEDDING_MODEL,
-                contents=batch,
-                config=genai_types.EmbedContentConfig(
-                    task_type="RETRIEVAL_DOCUMENT",
-                    output_dimensionality=settings.EMBEDDING_DIM,
-                ),
-            )
-
-            for j, emb in enumerate(result.embeddings):
+    async def _process_batch(b_texts, b_indices):
+        try:
+            try:
+                res = await client.aio.models.embed_content(
+                    model=settings.GEMINI_EMBEDDING_MODEL,
+                    contents=b_texts,
+                    config=genai_types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=settings.EMBEDDING_DIM,
+                    ),
+                )
+            except Exception:
+                res = await asyncio.to_thread(
+                    client.models.embed_content,
+                    model=settings.GEMINI_EMBEDDING_MODEL,
+                    contents=b_texts,
+                    config=genai_types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=settings.EMBEDDING_DIM,
+                    ),
+                )
+            for j, emb in enumerate(res.embeddings):
                 vec = emb.values
-                results[batch_indices[j]] = vec
-                _set_in_cache(batch[j], vec)
+                results[b_indices[j]] = vec
+                _set_in_cache(b_texts[j], vec)
+        except Exception:
+            for j, idx in enumerate(b_indices):
+                try:
+                    vec = await _fallback_vector(b_texts[j])
+                    results[idx] = vec
+                    _set_in_cache(b_texts[j], vec)
+                except Exception:
+                    pass
 
-        return results
-    except Exception:
-        for i, idx in enumerate(uncached_indices):
-            vec = await _fallback_vector(uncached_texts[i])
-            results[idx] = vec
-            _set_in_cache(uncached_texts[i], vec)
-        return results
+    await asyncio.gather(*[_process_batch(b_t, b_idx) for b_t, b_idx in batches])
+    return results
 
 
 def chunk_transcript(

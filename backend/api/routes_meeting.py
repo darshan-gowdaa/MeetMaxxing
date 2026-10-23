@@ -1,3 +1,4 @@
+import asyncio
 """
 Meeting management endpoints — end meeting, trigger post-processing pipeline.
 """
@@ -441,9 +442,10 @@ async def _run_end_pipeline(
                 }
             ).eq("id", target_id).execute()
 
-        # save action items
+        # save action items in a single batch
         if target_id:
             _valid_priorities = {"high", "medium", "low"}
+            action_items_to_insert = []
             for ai in final_summary.get("action_items") or []:
                 raw_priority = (ai.get("priority") or "medium").strip().lower()
                 priority = (
@@ -458,7 +460,7 @@ async def _run_end_pipeline(
                     else None
                 )
 
-                supabase.table("action_items").insert(
+                action_items_to_insert.append(
                     {
                         "id": str(uuid.uuid4()),
                         "meeting_id": target_id,
@@ -469,16 +471,28 @@ async def _run_end_pipeline(
                         "due_date": due_date,
                         "status": "open",
                     }
-                ).execute()
+                )
+            if action_items_to_insert:
+                try:
+                    await asyncio.to_thread(
+                        lambda: supabase.table("action_items").insert(action_items_to_insert).execute()
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to batch insert action items: {e}")
 
         # embed for qdrant
         chunks = chunk_transcript(utterances)
-        if chunks:
-            texts = [c["text"] for c in chunks]
-            vectors = await embed_batch(texts)
+        decisions_list = final_summary.get("decisions") or []
+        texts_to_embed = [c["text"] for c in chunks] if chunks else []
+        dec_texts = [d["text"] for d in decisions_list if d.get("text")]
 
-            memory_points = []
-            for i, (chunk, vec) in enumerate(zip(chunks, vectors)):
+        all_vectors = await embed_batch(texts_to_embed + dec_texts)
+        chunk_vectors = all_vectors[: len(texts_to_embed)]
+        dec_vectors = all_vectors[len(texts_to_embed) :]
+
+        memory_points = []
+        if chunks:
+            for i, (chunk, vec) in enumerate(zip(chunks, chunk_vectors)):
                 memory_points.append(
                     MemoryPoint(
                         id=str(uuid.uuid4()),
@@ -494,24 +508,26 @@ async def _run_end_pipeline(
                     )
                 )
 
-            # Embed and store decisions
-            for dec in final_summary.get("decisions") or []:
-                vec = await embed_batch([dec["text"]])
-                memory_points.append(
-                    MemoryPoint(
-                        id=str(uuid.uuid4()),
-                        vector=vec[0],
-                        text=dec["text"],
-                        org_id=org_id,
-                        user_id=user_id,
-                        meeting_id=meeting_id,
-                        memory_type=MemoryType.DECISION,
-                        meeting_date=today,
-                        speaker_name=dec.get("decided_by", ""),
-                        priority=2 if dec.get("confidence") == "high" else 1,
-                    )
+        # Store decisions
+        for dec, vec in zip(decisions_list, dec_vectors):
+            if not vec:
+                continue
+            memory_points.append(
+                MemoryPoint(
+                    id=str(uuid.uuid4()),
+                    vector=vec,
+                    text=dec.get("text", ""),
+                    org_id=org_id,
+                    user_id=user_id,
+                    meeting_id=meeting_id,
+                    memory_type=MemoryType.DECISION,
+                    meeting_date=today,
+                    speaker_name=dec.get("decided_by", ""),
+                    priority=2 if dec.get("confidence") == "high" else 1,
                 )
+            )
 
+        if memory_points:
             await upsert_memories(memory_points)
 
         # schedule follow-up and send gmail reminder if needed

@@ -5,6 +5,7 @@ import Topbar from"@/components/molecules/Topbar";
 import { AuthProvider } from"@/lib/auth-context";
 import { ThemeProvider } from"@/components/theme-provider";
 import { SnackbarProvider } from"@/components/providers/SnackbarProvider";
+import Script from "next/script";
 
 export const metadata: Metadata = {
  title:"MeetMaxxing — AI Meeting Copilot",
@@ -26,6 +27,8 @@ export default function RootLayout({
  <head>
  <link rel="preconnect" href="https://meetmaxxing-api.onrender.com" crossOrigin="anonymous" />
  <link rel="dns-prefetch" href="https://meetmaxxing-api.onrender.com" />
+ <link rel="preconnect" href="https://fonts.googleapis.com" />
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
  </head>
  <body className="min-h-full flex flex-col bg-bg text-text">
  <ThemeProvider attribute="class"defaultTheme="system"enableSystem disableTransitionOnChange>
@@ -39,6 +42,14 @@ export default function RootLayout({
  </SnackbarProvider>
  </AuthProvider>
  </ThemeProvider>
+ {/* Lazy load fonts on idle time so initial HTML render stays unblocked */}
+ <Script
+ id="lazy-google-fonts"
+ strategy="lazyOnload"
+ dangerouslySetInnerHTML={{
+   __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&family=Google+Sans+Mono&display=swap';document.head.appendChild(l);})();`,
+ }}
+ />
  </body>
  </html>
  );

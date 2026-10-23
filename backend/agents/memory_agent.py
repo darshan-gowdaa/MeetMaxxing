@@ -109,46 +109,52 @@ async def run_memory_agent(
         except ValueError:
             pass
 
-    query_vec = await embed_query(question)
-    raw_results = await search_memories(
-        query_vector=query_vec, memory_filter=mem_filter, limit=15
-    )
-    results = _rerank_results(raw_results)
+    import asyncio
+    from ..core.database import get_supabase_admin
+
+    async def _fetch_qdrant():
+        q_vec = await embed_query(question)
+        raw_res = await search_memories(
+            query_vector=q_vec, memory_filter=mem_filter, limit=15
+        )
+        return _rerank_results(raw_res)
+
+    async def _fetch_supabase():
+        try:
+            supabase = get_supabase_admin()
+            res = await asyncio.to_thread(
+                lambda: supabase.table("meetings")
+                .select("id, title, start_at, summary, decisions, attendees, status")
+                .eq("org_id", org_id)
+                .eq("status", "completed")
+                .order("start_at", desc=True)
+                .limit(8)
+                .execute()
+            )
+            return res.data or []
+        except Exception as e:
+            logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
+            return []
+
+    results, meetings_list = await asyncio.gather(_fetch_qdrant(), _fetch_supabase())
 
     meetings_context = ""
-    meetings_list = []
-    try:
-        from ..core.database import get_supabase_admin
-
-        supabase = get_supabase_admin()
-        res = (
-            supabase.table("meetings")
-            .select("id, title, start_at, summary, decisions, attendees, status")
-            .eq("org_id", org_id)
-            .eq("status", "completed")
-            .order("start_at", desc=True)
-            .limit(8)
-            .execute()
-        )
-        meetings_list = res.data or []
-        if meetings_list:
-            lines = []
-            for m in meetings_list:
-                date_str = (m.get("start_at") or "")[:10]
-                title = m.get("title") or "Untitled Meeting"
-                summary = m.get("summary") or ""
-                decisions = m.get("decisions") or []
-                attendees = ", ".join(m.get("attendees") or [])
-                dec_text = "; ".join(
-                    d.get("text", "") for d in decisions if d.get("text")
-                )
-                line = f"[Meeting: {title} | Date: {date_str} | Attendees: {attendees}]\nSummary: {summary}"
-                if dec_text:
-                    line += f"\nDecisions: {dec_text}"
-                lines.append(line)
-            meetings_context = "\n\n".join(lines)
-    except Exception as e:
-        logger.warning(f"Could not fetch meetings from DB for memory context: {e}")
+    if meetings_list:
+        lines = []
+        for m in meetings_list:
+            date_str = (m.get("start_at") or "")[:10]
+            title = m.get("title") or "Untitled Meeting"
+            summary = m.get("summary") or ""
+            decisions = m.get("decisions") or []
+            attendees = ", ".join(m.get("attendees") or [])
+            dec_text = "; ".join(
+                d.get("text", "") for d in decisions if d.get("text")
+            )
+            line = f"[Meeting: {title} | Date: {date_str} | Attendees: {attendees}]\nSummary: {summary}"
+            if dec_text:
+                line += f"\nDecisions: {dec_text}"
+            lines.append(line)
+        meetings_context = "\n\n".join(lines)
 
     if not results and not meetings_context:
         return {

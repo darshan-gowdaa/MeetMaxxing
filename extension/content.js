@@ -280,7 +280,7 @@ function flushUtterance(speaker) {
     meetingId: meetingId,
     chunk: { speaker, text: diffText, timestamp: now, timestamp_ms: now - meetingStartTime, platform: "google_meet", source: "dom" },
   });
-  if (sent) console.log(`[MeetMaxxing] ✓ Utterance → ${speaker}: "${diffText.slice(0, 80)}"`);
+  if (sent) console.log(`[MeetMaxxing] Utterance -> ${speaker}: "${diffText.slice(0, 80)}"`);
   else console.warn("[MeetMaxxing] Context invalidated — refresh this tab (F5).");
 }
 

@@ -11,6 +11,8 @@ from .rate_limiter import rate_limiter
 # Shared connection-pooled client — closed at process exit
 _http_client: httpx.AsyncClient | None = None
 _http_client_loop: asyncio.AbstractEventLoop | None = None
+_gemini_client: Any = None
+_gemini_client_key: str = ""
 
 
 def get_http_client() -> httpx.AsyncClient:
@@ -172,7 +174,12 @@ async def generate_content_with_fallback(
             from google import genai
             from google.genai import types as genai_types
 
-            client = genai.Client(api_key=gemini_key)
+            global _gemini_client, _gemini_client_key
+            if _gemini_client is None or _gemini_client_key != gemini_key:
+                _gemini_client = genai.Client(api_key=gemini_key)
+                _gemini_client_key = gemini_key
+            client = _gemini_client
+
             config_kwargs: dict[str, Any] = {
                 "temperature": temperature,
                 "max_output_tokens": max_tokens,
@@ -182,26 +189,34 @@ async def generate_content_with_fallback(
             if response_format_json:
                 config_kwargs["response_mime_type"] = "application/json"
 
-            loop = asyncio.get_running_loop()
             gemini_models = [settings.GEMINI_FLASH_MODEL]
             if "2.5" in settings.GEMINI_FLASH_MODEL:
                 gemini_models.append("gemini-2.0-flash")
 
             for g_model in gemini_models:
                 try:
-                    response = await asyncio.wait_for(
-                        loop.run_in_executor(
-                            None,
-                            lambda m=g_model: client.models.generate_content(
-                                model=m,
+                    try:
+                        response = await asyncio.wait_for(
+                            client.aio.models.generate_content(
+                                model=g_model,
                                 contents=prompt,
-                                config=genai_types.GenerateContentConfig(
-                                    **config_kwargs
+                                config=genai_types.GenerateContentConfig(**config_kwargs),
+                            ),
+                            timeout=5.0,
+                        )
+                    except Exception:
+                        loop = asyncio.get_running_loop()
+                        response = await asyncio.wait_for(
+                            loop.run_in_executor(
+                                None,
+                                lambda m=g_model: client.models.generate_content(
+                                    model=m,
+                                    contents=prompt,
+                                    config=genai_types.GenerateContentConfig(**config_kwargs),
                                 ),
                             ),
-                        ),
-                        timeout=5.0,
-                    )
+                            timeout=5.0,
+                        )
                     if response and response.text:
                         rate_limiter.record_success("gemini")
                         return await _cache_and_return(
