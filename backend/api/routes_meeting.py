@@ -367,8 +367,8 @@ async def _run_end_pipeline(
             if match:
                 google_code = match.group(1)
 
-        # Determine title
-        final_title = generate_meeting_title(
+        # Determine fallback default title
+        fallback_default_title = generate_meeting_title(
             title or (meeting_row.get("title") if meeting_row else ""), google_code
         )
 
@@ -380,7 +380,7 @@ async def _run_end_pipeline(
             AgentTrigger.MEETING_END,
             {
                 "meeting_id": target_id or meeting_id,
-                "title": final_title,
+                "title": fallback_default_title,
                 "attendees": attendees,
                 "utterances": utterances,
                 "user_id": user_id,
@@ -411,6 +411,64 @@ async def _run_end_pipeline(
                 final_sum_text = summary["error"]
             if not final_sum_text:
                 final_sum_text = "The meeting was brief with limited context, but it has been successfully logged."
+
+            # Determine title: Always use AI-generated title on meeting save,
+            # but leave it default if it's short or has no meeting desc/transcript.
+            total_transcript_words = (
+                sum(len(str(u.get("text", "")).split()) for u in utterances)
+                if utterances
+                else 0
+            )
+            is_short_or_no_desc = (
+                len(utterances) < 2
+                or total_transcript_words < 15
+                or not final_sum_text
+                or "brief with limited context" in final_sum_text.lower()
+                or "too brief" in final_sum_text.lower()
+                or "no transcript" in final_sum_text.lower()
+                or "error generating summary" in final_sum_text.lower()
+            )
+
+            if is_short_or_no_desc:
+                final_title = fallback_default_title
+            else:
+                ai_title = (
+                    (final_summary.get("title") or "").strip().strip('"').strip("'")
+                )
+                if not ai_title or ai_title.lower() in {
+                    "untitled meeting",
+                    "google meet",
+                    "google meet session",
+                    "meeting",
+                }:
+                    try:
+                        from ..core.llm_fallback import generate_content_with_fallback
+
+                        decisions_snippet = "; ".join(
+                            d.get("text", "") if isinstance(d, dict) else str(d)
+                            for d in (final_summary.get("decisions") or [])[:3]
+                        )
+                        title_prompt = (
+                            "Generate a single concise, professional 3-6 word title for this meeting based on its summary.\n"
+                            f"Summary: {final_sum_text}\n"
+                            f"Decisions: {decisions_snippet or 'None'}\n"
+                            "Do not use generic words like 'Meeting' or 'Google Meet'.\n"
+                            "Return ONLY the title string, no quotes, no markdown, no other text."
+                        )
+                        gen_title, _ = await generate_content_with_fallback(
+                            prompt=title_prompt,
+                            temperature=0.3,
+                            max_tokens=30,
+                            user_id=user_id,
+                        )
+                        if gen_title and gen_title.strip():
+                            ai_title = gen_title.strip().strip('"').strip("'")
+                    except Exception as title_err:
+                        logger.warning(
+                            f"Failed to generate fallback AI title: {title_err}"
+                        )
+
+                final_title = ai_title if ai_title else fallback_default_title
 
             # Force status to completed so the UI always displays the summary
             final_status = "completed"
@@ -584,7 +642,11 @@ async def _run_end_pipeline(
             AgentTrigger.SEND_EMAIL,
             {
                 "meeting_id": target_id or meeting_id,
-                "meeting_title": title or "Untitled Meeting",
+                "meeting_title": (
+                    final_title
+                    if "final_title" in locals()
+                    else (title or "Untitled Meeting")
+                ),
                 "attendees": attendees,
                 "summary": final_summary.get("summary", ""),
                 "action_items": [

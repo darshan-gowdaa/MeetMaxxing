@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 _SYSTEM_PROMPT = """You are MeetMaxxing's Summary Agent. You extract structured meeting intelligence from transcripts.
 
 Produce:
-1. SUMMARY: A clear 3-5 sentence executive summary of the meeting.
-2. KEY_TOPICS: List of 2-5 main topics or tags discussed.
-3. DECISIONS: List of decisions made. Each must have: text, decided_by (speaker name from transcript or "Team"), confidence (high/medium).
-4. ACTION_ITEMS: List of tasks assigned. Each must have: text, owner (exact speaker name from transcript or "Unassigned"), due_date (if mentioned in YYYY-MM-DD or relative string, else null), priority (high/medium/low).
-5. FOLLOW_UP: A follow-up intent object — does this meeting imply a next meeting or follow-up? Include: required (bool), suggested_topic, suggested_attendees.
+1. TITLE: A concise, professional, highly relevant 3-6 word title summarizing the meeting topic/outcomes. Do NOT use generic words like "Meeting" or "Google Meet". If the meeting is very short, empty, or lacks context, output empty string "".
+2. SUMMARY: A clear 3-5 sentence executive summary of the meeting.
+3. KEY_TOPICS: List of 2-5 main topics or tags discussed.
+4. DECISIONS: List of decisions made. Each must have: text, decided_by (speaker name from transcript or "Team"), confidence (high/medium).
+5. ACTION_ITEMS: List of tasks assigned. Each must have: text, owner (exact speaker name from transcript or "Unassigned"), due_date (if mentioned in YYYY-MM-DD or relative string, else null), priority (high/medium/low).
+6. FOLLOW_UP: A follow-up intent object — does this meeting imply a next meeting or follow-up? Include: required (bool), suggested_topic, suggested_attendees.
 
 CRITICAL RULES:
 - EVEN IF THE MEETING IS EXTREMELY SHORT OR CONTAINS ONLY A FEW WORDS, YOU MUST PROVIDE A 'summary'. (e.g., 'The meeting was brief with limited context.').
@@ -36,6 +37,7 @@ CRITICAL RULES:
 
 Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
 {
+  "title": "3-6 word descriptive topic title or empty if short/no context",
   "summary": "...",
   "key_topics": ["Topic 1", "Topic 2"],
   "decisions": [
@@ -143,6 +145,7 @@ async def run_summary_agent(
         result = parse_json_clean(raw or "{}")
         if not result:
             result = {}
+        result.setdefault("title", "")
         result.setdefault(
             "summary",
             "The meeting was too brief or context was limited, but it has been successfully logged.",
@@ -154,6 +157,7 @@ async def run_summary_agent(
     except Exception as e:
         err_str = str(e)
         result = {
+            "title": "",
             "summary": "An error occurred while generating the meeting summary. Please try reprocessing.",
             "decisions": [],
             "action_items": [],

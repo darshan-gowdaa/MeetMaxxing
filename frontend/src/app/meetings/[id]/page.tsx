@@ -153,7 +153,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               role="tab"
               aria-selected={activeTab === "overview"}
               onClick={() => setActiveTab("overview")}
-              title="Press 1 for Complete Overview"
+              title="Complete Overview"
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "overview"
                   ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
@@ -162,7 +162,6 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             >
               <RiLayoutMasonryLine className="w-4 h-4 text-primary" />
               <span>Complete Overview</span>
-              <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-text-muted font-mono">1</kbd>
             </button>
 
             {/* Notes & Summary */}
@@ -170,7 +169,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               role="tab"
               aria-selected={activeTab === "notes"}
               onClick={() => setActiveTab("notes")}
-              title="Press 2 for Notes & Summary"
+              title="Notes & Summary"
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "notes"
                   ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
@@ -184,7 +183,6 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                   {actionItems.length}
                 </span>
               )}
-              <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-text-muted font-mono">2</kbd>
             </button>
 
             {/* Full Transcript */}
@@ -192,7 +190,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               role="tab"
               aria-selected={activeTab === "transcript"}
               onClick={() => setActiveTab("transcript")}
-              title="Press 3 for Full Transcript"
+              title="Full Transcript"
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "transcript"
                   ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
@@ -204,7 +202,6 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-surface-container-high text-text-variant font-mono">
                 {transcriptCount}
               </span>
-              <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-text-muted font-mono">3</kbd>
             </button>
           </div>
 
