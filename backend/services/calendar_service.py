@@ -8,6 +8,8 @@ from datetime import UTC, datetime, timedelta
 import json
 import logging
 import os
+import re
+import uuid
 
 from fastapi.concurrency import run_in_threadpool
 from google.auth.transport.requests import Request
@@ -20,6 +22,10 @@ from ..core.config import settings
 
 # Relax OAuthLib scope strictness to handle Google adding default openid/userinfo scopes
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
+MEET_URL_REGEX = re.compile(
+    r"https?://meet\.google\.com/[a-z0-9\-]+", re.IGNORECASE
+)
 
 
 def _extract_email_from_jwt(id_token_jwt: str) -> str | None:
@@ -172,8 +178,39 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
         raise RuntimeError(f"Failed to create event: {e}")
 
 
-async def list_upcoming_events(token_data: dict, max_results: int = 5) -> list[dict]:
-    """Fetch next upcoming calendar events for the connected user."""
+def _extract_meet_link(it: dict) -> str | None:
+    """
+    Extract Google Meet video call URL from event hangoutLink, conferenceData,
+    location, or description. Returns canonical URL or None.
+    """
+    if it.get("hangoutLink"):
+        return it["hangoutLink"]
+
+    conf_data = it.get("conferenceData") or {}
+    for ep in conf_data.get("entryPoints", []):
+        uri = ep.get("uri") or ""
+        if "meet.google.com" in uri:
+            return uri
+
+    loc = it.get("location") or ""
+    loc_match = MEET_URL_REGEX.search(loc)
+    if loc_match:
+        return loc_match.group(0)
+
+    desc = it.get("description") or ""
+    desc_match = MEET_URL_REGEX.search(desc)
+    if desc_match:
+        return desc_match.group(0)
+
+    return None
+
+
+async def list_upcoming_events(
+    token_data: dict, max_results: int = 25, only_meet: bool = False
+) -> list[dict]:
+    """Fetch next upcoming calendar events for the connected user.
+    If only_meet is True, returns only meetings with a valid Google Meet link.
+    """
     if not token_data or not (
         token_data.get("access_token") or token_data.get("refresh_token")
     ):
@@ -196,6 +233,10 @@ async def list_upcoming_events(token_data: dict, max_results: int = 5) -> list[d
         items = events_result.get("items", [])
         clean_events = []
         for it in items:
+            meet_link = _extract_meet_link(it)
+            if only_meet and not meet_link:
+                continue
+
             start = it.get("start", {}).get("dateTime") or it.get("start", {}).get(
                 "date"
             )
@@ -207,7 +248,7 @@ async def list_upcoming_events(token_data: dict, max_results: int = 5) -> list[d
                     "start": start,
                     "end": end,
                     "html_link": it.get("htmlLink"),
-                    "hangout_link": it.get("hangoutLink"),
+                    "hangout_link": meet_link,
                     "attendees_count": len(it.get("attendees") or []),
                 }
             )
@@ -221,14 +262,18 @@ async def list_upcoming_events(token_data: dict, max_results: int = 5) -> list[d
 
 
 async def create_test_event(token_data: dict) -> dict:
-    """Create a 15-min sample 'MeetMaxxing Copilot Sync Test' event to verify calendar integration."""
+    """Create a 15-min sample 'MeetMaxxing Copilot Sync Test' event with Google Meet link."""
     now = datetime.now(UTC) + timedelta(hours=1)
     event_start = now.replace(minute=0, second=0, microsecond=0)
     event_end = event_start + timedelta(minutes=15)
 
+    random_code = f"mmx-{uuid.uuid4().hex[:4]}-{uuid.uuid4().hex[:3]}"
+    test_meet_url = f"https://meet.google.com/{random_code}"
+
     payload = {
         "summary": "MeetMaxxing Copilot • Calendar Sync Test",
-        "description": "Test event verified and scheduled by MeetMaxxing AI meeting copilot.",
+        "description": f"Test event verified and scheduled by MeetMaxxing AI meeting copilot.\nGoogle Meet: {test_meet_url}",
+        "location": test_meet_url,
         "start": {"dateTime": event_start.isoformat(), "timeZone": "UTC"},
         "end": {"dateTime": event_end.isoformat(), "timeZone": "UTC"},
         "reminders": {"useDefault": True},

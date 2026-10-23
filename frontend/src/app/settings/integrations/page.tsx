@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { 
   RiCheckLine, 
   RiExternalLinkLine, 
@@ -13,7 +14,8 @@ import {
   RiInformationLine,
   RiCalendarLine,
   RiTimeLine,
-  RiFlashlightLine
+  RiFlashlightLine,
+  RiArrowRightLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -92,22 +94,6 @@ function NotionLogo({ className = "w-6 h-6" }: { className?: string }) {
   );
 }
 
-interface CalendarPreferences {
-  auto_schedule_followups: boolean;
-  followup_mode: "prompt" | "auto";
-  lead_days: number;
-  time_block_actions: boolean;
-  context_sync: boolean;
-}
-
-const DEFAULT_CALENDAR_PREFS: CalendarPreferences = {
-  auto_schedule_followups: true,
-  followup_mode: "prompt",
-  lead_days: 3,
-  time_block_actions: true,
-  context_sync: true,
-};
-
 export default function IntegrationsPage() {
   const { session } = useAuth();
   const token = session?.access_token;
@@ -118,25 +104,6 @@ export default function IntegrationsPage() {
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarActionLoading, setCalendarActionLoading] = useState(false);
   const [calendarEmail, setCalendarEmail] = useState<string | null>(null);
-  const [calendarPrefs, setCalendarPrefs] = useState<CalendarPreferences>(DEFAULT_CALENDAR_PREFS);
-  const [testEventLoading, setTestEventLoading] = useState(false);
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [showEventsDrawer, setShowEventsDrawer] = useState(false);
-  const [showOAuthConfig, setShowOAuthConfig] = useState(false);
-  const [copiedCalendarRedirect, setCopiedCalendarRedirect] = useState(false);
-
-  // Compute canonical redirect URI to display for Google Cloud Console setup
-  const calendarRedirectUri = `${API_URL.replace(/\/api$/, "")}/calendar/callback`;
-
-  const handleCopyCalendarRedirect = () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(calendarRedirectUri);
-      setCopiedCalendarRedirect(true);
-      showMessage("Authorized Redirect URI copied to clipboard", { variant: "success" });
-      setTimeout(() => setCopiedCalendarRedirect(false), 2000);
-    }
-  };
 
   // Zoom state
   const [zoomWebhook, setZoomWebhook] = useState("");
@@ -166,7 +133,6 @@ export default function IntegrationsPage() {
         const data = await res.json();
         setCalendarConnected(Boolean(data.connected));
         if (data.email) setCalendarEmail(data.email);
-        if (data.preferences) setCalendarPrefs(prev => ({ ...prev, ...data.preferences }));
       } else {
         const fallbackRes = await fetch(`${API_URL}/calendar/status`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -175,7 +141,6 @@ export default function IntegrationsPage() {
           const data = await fallbackRes.json();
           setCalendarConnected(Boolean(data.connected));
           if (data.email) setCalendarEmail(data.email);
-          if (data.preferences) setCalendarPrefs(prev => ({ ...prev, ...data.preferences }));
         } else {
           setCalendarConnected(false);
         }
@@ -184,65 +149,6 @@ export default function IntegrationsPage() {
       setCalendarConnected(false);
     } finally {
       setCalendarLoading(false);
-    }
-  }, [token]);
-
-  const handleUpdatePref = async (newPrefs: Partial<CalendarPreferences>) => {
-    const updated = { ...calendarPrefs, ...newPrefs };
-    setCalendarPrefs(updated);
-    if (!token) return;
-    try {
-      await fetch(`${API_URL}/api/calendar/preferences`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updated),
-      });
-      showMessage("Calendar preference saved", { variant: "success" });
-    } catch {
-      showMessage("Failed to save preference", { variant: "error" });
-    }
-  };
-
-  const handleCreateTestEvent = async () => {
-    if (!token) return;
-    setTestEventLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/calendar/test-event`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok && data.html_link) {
-        showMessage("Test event scheduled on your Google Calendar!", { variant: "success" });
-        fetchUpcomingEvents();
-      } else {
-        showMessage(data.detail || "Failed to create test event", { variant: "error" });
-      }
-    } catch {
-      showMessage("Error creating test event", { variant: "error" });
-    } finally {
-      setTestEventLoading(false);
-    }
-  };
-
-  const fetchUpcomingEvents = useCallback(async () => {
-    if (!token) return;
-    setEventsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/calendar/events`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUpcomingEvents(data.events || []);
-      }
-    } catch {
-      // silent
-    } finally {
-      setEventsLoading(false);
     }
   }, [token]);
 
@@ -508,8 +414,9 @@ export default function IntegrationsPage() {
                           Checking…
                         </span>
                       ) : calendarConnected ? (
-                        <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                          <RiCheckLine className="w-3.5 h-3.5" /> Connected
+                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-full px-3.5 py-1 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Connected
                         </span>
                       ) : (
                         <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
@@ -518,48 +425,62 @@ export default function IntegrationsPage() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                      Bi-directional sync for event conflict detection & follow-ups, meeting creation, and automated invites.
+                      Bi-directional calendar synchronization, instant Google Meet join buttons, autonomous follow-ups, and pre-meeting context priming.
                     </p>
+                    {calendarConnected && calendarEmail && (
+                      <div className="text-xs text-text-muted flex items-center gap-1.5 pt-0.5">
+                        <span className="font-medium text-text">Account:</span>
+                        <span className="bg-surface-container-high px-2 py-0.5 rounded-md font-mono text-[11px] text-text">
+                          {calendarEmail}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-start md:self-auto shrink-0 flex-wrap">
+                <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0 flex-wrap">
                   {calendarConnected ? (
                     <>
-                      <button
-                        type="button"
-                        onClick={handleCreateTestEvent}
-                        disabled={testEventLoading}
-                        title="Create a 15-minute test event to verify calendar write access"
-                        className="rounded-full px-4 py-2.5 font-semibold text-xs active:scale-[0.98] transition-transform border border-primary/30 text-primary hover:bg-primary/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                      <Link
+                        href="/settings/integrations/google-calendar"
+                        className="rounded-full px-5 py-2.5 font-bold text-xs active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm flex items-center gap-2 cursor-pointer"
                       >
-                        {testEventLoading ? <Md3LoadingIndicator size="sm" className="text-primary" /> : <RiFlashlightLine className="w-3.5 h-3.5" />}
-                        Test Event
-                      </button>
+                        Manage Schedule &amp; Settings
+                        <RiArrowRightLine className="w-3.5 h-3.5" />
+                      </Link>
                       <button
                         type="button"
                         onClick={handleDisconnectCalendar}
                         disabled={calendarActionLoading}
-                        className="rounded-full px-5 py-2.5 font-semibold text-xs active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        className="rounded-full px-4 py-2.5 font-semibold text-xs active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                       >
                         {calendarActionLoading ? <Md3LoadingIndicator size="sm" className="text-risk" /> : null}
                         Disconnect
                       </button>
                     </>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={handleConnectCalendar}
-                      disabled={calendarActionLoading || calendarLoading}
-                      className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                    >
-                      {calendarActionLoading ? (
-                        <Md3LoadingIndicator size="sm" className="text-on-primary" />
-                      ) : (
-                        <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
-                      )}
-                      Connect Calendar
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleConnectCalendar}
+                        disabled={calendarActionLoading || calendarLoading}
+                        className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                      >
+                        {calendarActionLoading ? (
+                          <Md3LoadingIndicator size="sm" className="text-on-primary" />
+                        ) : (
+                          <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
+                        )}
+                        Connect Calendar
+                      </button>
+                      <Link
+                        href="/settings/integrations/google-calendar"
+                        className="rounded-full px-4 py-3 font-medium text-xs text-text-muted hover:text-text hover:bg-surface-container-high transition-colors flex items-center gap-1"
+                      >
+                        Details
+                        <RiArrowRightLine className="w-3.5 h-3.5" />
+                      </Link>
+                    </>
                   )}
                   <button
                     type="button"
@@ -571,279 +492,6 @@ export default function IntegrationsPage() {
                     <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
-              </div>
-
-              {/* Google Calendar M3 Expressive Sub-Options */}
-              {calendarConnected && (
-                <div className="pt-4 border-t border-outline-variant/15 flex flex-col gap-4 animate-in fade-in duration-300">
-                  <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-high/40 rounded-2xl px-4 py-3 border border-outline-variant/15">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                      <span className="text-xs font-semibold text-text">
-                        {calendarEmail ? `Connected account: ${calendarEmail}` : "Google Calendar sync active"}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!showEventsDrawer) fetchUpcomingEvents();
-                        setShowEventsDrawer(!showEventsDrawer);
-                      }}
-                      className="text-xs font-medium text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <RiCalendarLine className="w-3.5 h-3.5" />
-                      {showEventsDrawer ? "Hide upcoming events" : "View upcoming events"}
-                    </button>
-                  </div>
-
-                  {/* Upcoming Events Drawer */}
-                  {showEventsDrawer && (
-                    <div className="bg-surface-container-low/90 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted">Upcoming Synced Events</h4>
-                        <button
-                          type="button"
-                          onClick={fetchUpcomingEvents}
-                          disabled={eventsLoading}
-                          className="text-xs text-text-muted hover:text-text flex items-center gap-1 cursor-pointer"
-                        >
-                          <RiRefreshLine className={`w-3.5 h-3.5 ${eventsLoading ? "animate-spin" : ""}`} />
-                          Refresh
-                        </button>
-                      </div>
-                      {eventsLoading ? (
-                        <div className="py-4 flex justify-center">
-                          <Md3LoadingIndicator size="sm" className="text-primary" />
-                        </div>
-                      ) : upcomingEvents.length === 0 ? (
-                        <p className="text-xs text-text-muted italic py-2">No upcoming calendar events found in primary calendar.</p>
-                      ) : (
-                        <div className="flex flex-col gap-2">
-                          {upcomingEvents.map((ev) => (
-                            <div key={ev.id} className="bg-surface-container-high/60 rounded-xl p-3 border border-outline-variant/10 flex items-center justify-between gap-3 text-xs">
-                              <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="font-semibold text-text truncate">{ev.summary}</span>
-                                <span className="text-text-muted">
-                                  {ev.start ? new Date(ev.start).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "Scheduled"}
-                                  {ev.attendees_count > 0 ? ` • ${ev.attendees_count} attendees` : ""}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {ev.hangout_link && (
-                                  <a
-                                    href={ev.hangout_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors flex items-center gap-1"
-                                  >
-                                    <GoogleMeetLogo className="w-3 h-3" /> Join
-                                  </a>
-                                )}
-                                {ev.html_link && (
-                                  <a
-                                    href={ev.html_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="p-1 rounded-lg text-text-muted hover:text-text hover:bg-surface-container transition-colors"
-                                    title="Open in Google Calendar"
-                                  >
-                                    <RiExternalLinkLine className="w-3.5 h-3.5" />
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Sub-Option 1: Autonomous Follow-Up Scheduling */}
-                  <div className="bg-surface-container-low/70 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 flex flex-col gap-3.5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                          <RiTimeLine className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <h4 className="text-sm font-bold text-text">Autonomous Follow-Up Scheduling</h4>
-                          <p className="text-xs text-text-muted leading-relaxed">
-                            When AI identifies follow-up agreements in meeting notes, prepare Google Calendar invites with executive summaries.
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={calendarPrefs.auto_schedule_followups}
-                        onClick={() => handleUpdatePref({ auto_schedule_followups: !calendarPrefs.auto_schedule_followups })}
-                        className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 cursor-pointer shrink-0 relative ${
-                          calendarPrefs.auto_schedule_followups ? "bg-primary" : "bg-surface-container-highest border border-outline-variant/30"
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full bg-surface shadow-xs transition-transform duration-200 ${
-                            calendarPrefs.auto_schedule_followups ? "translate-x-5 bg-on-primary" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {calendarPrefs.auto_schedule_followups && (
-                      <div className="pt-3 border-t border-outline-variant/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-text-muted font-medium">Mode:</span>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdatePref({ followup_mode: "prompt" })}
-                            className={`px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
-                              calendarPrefs.followup_mode === "prompt"
-                                ? "bg-primary text-on-primary font-semibold shadow-xs"
-                                : "bg-surface-container text-text-muted hover:text-text"
-                            }`}
-                          >
-                            Prompt For Confirmation
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdatePref({ followup_mode: "auto" })}
-                            className={`px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
-                              calendarPrefs.followup_mode === "auto"
-                                ? "bg-primary text-on-primary font-semibold shadow-xs"
-                                : "bg-surface-container text-text-muted hover:text-text"
-                            }`}
-                          >
-                            Auto-Book Directly
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-text-muted font-medium">Suggested Offset:</span>
-                          {[3, 5, 7].map((days) => (
-                            <button
-                              key={days}
-                              type="button"
-                              onClick={() => handleUpdatePref({ lead_days: days })}
-                              className={`px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer ${
-                                calendarPrefs.lead_days === days
-                                  ? "bg-primary text-on-primary font-semibold shadow-xs"
-                                  : "bg-surface-container text-text-muted hover:text-text"
-                              }`}
-                            >
-                              {days === 7 ? "1 Week" : `${days} Days`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Sub-Option 2: Action Item Focus Time-Blocking */}
-                  <div className="bg-surface-container-low/70 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                        <RiFlashlightLine className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <h4 className="text-sm font-bold text-text">Action Item Focus Time-Blocking</h4>
-                        <p className="text-xs text-text-muted leading-relaxed">
-                          Reserve dedicated 30-minute focus slots on your calendar for high-priority tasks assigned to you.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={calendarPrefs.time_block_actions}
-                      onClick={() => handleUpdatePref({ time_block_actions: !calendarPrefs.time_block_actions })}
-                      className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 cursor-pointer shrink-0 relative ${
-                        calendarPrefs.time_block_actions ? "bg-primary" : "bg-surface-container-highest border border-outline-variant/30"
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full bg-surface shadow-xs transition-transform duration-200 ${
-                          calendarPrefs.time_block_actions ? "translate-x-5 bg-on-primary" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Sub-Option 3: Pre-Meeting Context Priming */}
-                  <div className="bg-surface-container-low/70 rounded-2xl p-4 sm:p-5 border border-outline-variant/15 flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                        <RiCalendarLine className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <h4 className="text-sm font-bold text-text">Pre-Meeting Agenda & Memory Priming</h4>
-                        <p className="text-xs text-text-muted leading-relaxed">
-                          Ingest calendar invite agendas and recall past cross-meeting notes with participants before calls begin.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={calendarPrefs.context_sync}
-                      onClick={() => handleUpdatePref({ context_sync: !calendarPrefs.context_sync })}
-                      className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 cursor-pointer shrink-0 relative ${
-                        calendarPrefs.context_sync ? "bg-primary" : "bg-surface-container-highest border border-outline-variant/30"
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full bg-surface shadow-xs transition-transform duration-200 ${
-                          calendarPrefs.context_sync ? "translate-x-5 bg-on-primary" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* OAuth Setup & Redirect URI Helper */}
-              <div className="pt-2 border-t border-outline-variant/10 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowOAuthConfig(!showOAuthConfig)}
-                  className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors cursor-pointer self-start font-medium"
-                >
-                  <RiInformationLine className="w-4 h-4 shrink-0" />
-                  <span>{showOAuthConfig ? "Hide" : "Troubleshoot & view"} Google Cloud redirect URI</span>
-                </button>
-
-                {showOAuthConfig && (
-                  <div className="bg-surface-container-low/90 rounded-2xl p-4 border border-outline-variant/15 flex flex-col gap-3 text-xs text-text-muted animate-in fade-in duration-200">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-text font-semibold">
-                        Authorized Redirect URI required in Google Cloud Console:
-                      </p>
-                      <a
-                        href="https://console.cloud.google.com/apis/credentials"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline flex items-center gap-1 shrink-0 font-medium"
-                      >
-                        Open Console <RiExternalLinkLine className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 bg-surface-container-high/90 rounded-xl px-3 py-2 border border-outline-variant/20 font-mono text-xs text-text overflow-x-auto">
-                      <span className="flex-1 select-all break-all">{calendarRedirectUri}</span>
-                      <button
-                        type="button"
-                        onClick={handleCopyCalendarRedirect}
-                        className="shrink-0 text-text-muted hover:text-text p-1 rounded-lg hover:bg-surface-container-highest transition-colors cursor-pointer"
-                        title="Copy redirect URI"
-                      >
-                        {copiedCalendarRedirect ? <RiCheckLine className="w-4 h-4 text-emerald-500" /> : <RiFileCopyLine className="w-4 h-4" />}
-                      </button>
-                    </div>
-
-                    <p className="leading-relaxed">
-                      If you see <code className="text-risk font-mono bg-risk/10 px-1 py-0.5 rounded">Error 400: redirect_uri_mismatch</code>, add the exact URI above to your Google Cloud Console project under <strong>APIs &amp; Services &gt; Credentials &gt; OAuth 2.0 Client IDs &gt; Authorized redirect URIs</strong> and click Save.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
 

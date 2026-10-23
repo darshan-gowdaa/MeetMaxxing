@@ -321,7 +321,7 @@ async def calendar_callback(
         logging.warning(f"Google OAuth callback returned error: {error}")
         if is_browser:
             return RedirectResponse(
-                url=f"{frontend_origin}/settings/integrations?calendar_error={urllib.parse.quote(error)}",
+                url=f"{frontend_origin}/settings/integrations/google-calendar?calendar_error={urllib.parse.quote(error)}",
                 status_code=302,
             )
         raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
@@ -329,7 +329,7 @@ async def calendar_callback(
     if not code:
         if is_browser:
             return RedirectResponse(
-                url=f"{frontend_origin}/settings/integrations?calendar_error=missing_code",
+                url=f"{frontend_origin}/settings/integrations/google-calendar?calendar_error=missing_code",
                 status_code=302,
             )
         raise HTTPException(status_code=400, detail="Missing authorization code")
@@ -348,7 +348,7 @@ async def calendar_callback(
         logging.error(f"Failed to exchange calendar code: {e}")
         if is_browser:
             return RedirectResponse(
-                url=f"{frontend_origin}/settings/integrations?calendar_error={urllib.parse.quote(str(e))}",
+                url=f"{frontend_origin}/settings/integrations/google-calendar?calendar_error={urllib.parse.quote(str(e))}",
                 status_code=302,
             )
         raise HTTPException(
@@ -369,7 +369,7 @@ async def calendar_callback(
 
     if is_browser:
         return RedirectResponse(
-            url=f"{frontend_origin}/settings/integrations?calendar=connected",
+            url=f"{frontend_origin}/settings/integrations/google-calendar?calendar=connected",
             status_code=302,
         )
 
@@ -439,8 +439,11 @@ async def get_calendar_status(user: dict = Depends(get_current_user)):
 
 # ── GET /calendar/events ──────────────────────────────────────────────────────
 @router.get("/events")
-async def get_upcoming_calendar_events(user: dict = Depends(get_current_user)):
-    """Fetch next 5 upcoming calendar events for the connected user."""
+async def get_upcoming_calendar_events(
+    only_meet: bool = True,
+    user: dict = Depends(get_current_user),
+):
+    """Fetch next upcoming calendar events for the connected user (filtered to Google Meet calls)."""
     supabase = get_supabase_admin()
     try:
         res = (
@@ -452,7 +455,9 @@ async def get_upcoming_calendar_events(user: dict = Depends(get_current_user)):
         if not res.data or not res.data[0].get("calendar_token"):
             return {"events": []}
         calendar_token = res.data[0]["calendar_token"]
-        events = await list_upcoming_events(calendar_token, max_results=5)
+        events = await list_upcoming_events(
+            calendar_token, max_results=25, only_meet=only_meet
+        )
         return {"events": events}
     except Exception as e:
         logging.warning(f"Could not fetch upcoming calendar events: {e}")
@@ -462,7 +467,7 @@ async def get_upcoming_calendar_events(user: dict = Depends(get_current_user)):
 # ── POST /calendar/test-event ─────────────────────────────────────────────────
 @router.post("/test-event")
 async def create_calendar_test_event(user: dict = Depends(get_current_user)):
-    """Create a 15-minute test event on user's primary calendar to verify sync."""
+    """Create a 15-minute test event with Google Meet link on user's primary calendar."""
     supabase = get_supabase_admin()
     res = (
         supabase.table("users")
@@ -479,6 +484,7 @@ async def create_calendar_test_event(user: dict = Depends(get_current_user)):
             "status": "created",
             "event_id": created.get("id"),
             "html_link": created.get("htmlLink"),
+            "hangout_link": created.get("hangoutLink") or created.get("location"),
             "summary": created.get("summary"),
         }
     except Exception as e:

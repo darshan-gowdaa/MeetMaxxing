@@ -155,3 +155,82 @@ async def test_exchange_calendar_code_direct():
         assert res["access_token"] == "ya29.direct-token"
         assert res["email"] == "user@example.com"
         assert mock_direct.called
+
+
+@pytest.mark.asyncio
+async def test_extract_meet_link_variants():
+    """Verify Google Meet links are extracted from hangoutLink, conferenceData, location, and description."""
+    from backend.services.calendar_service import _extract_meet_link
+
+    # 1. hangoutLink directly
+    assert (
+        _extract_meet_link({"hangoutLink": "https://meet.google.com/abc-defg-hij"})
+        == "https://meet.google.com/abc-defg-hij"
+    )
+
+    # 2. conferenceData entryPoints
+    assert (
+        _extract_meet_link({
+            "conferenceData": {
+                "entryPoints": [{"uri": "https://meet.google.com/xyz-uvwx-rst"}]
+            }
+        })
+        == "https://meet.google.com/xyz-uvwx-rst"
+    )
+
+    # 3. location string
+    assert (
+        _extract_meet_link({"location": "Join here: https://meet.google.com/foo-bar-baz room"})
+        == "https://meet.google.com/foo-bar-baz"
+    )
+
+    # 4. description
+    assert (
+        _extract_meet_link({"description": "Call details:\nhttps://meet.google.com/cat-dog-bird"})
+        == "https://meet.google.com/cat-dog-bird"
+    )
+
+    # 5. None when no meet link
+    assert _extract_meet_link({"summary": "Lunch with team", "location": "Cafe"}) is None
+
+
+@pytest.mark.asyncio
+async def test_calendar_events_endpoint_meet_filter(auth_override):
+    """Verify /calendar/events filters to only Google Meet events when only_meet is True."""
+    with (
+        patch("backend.api.routes_calendar.get_supabase_admin") as mock_supabase,
+        patch(
+            "backend.api.routes_calendar.list_upcoming_events",
+            new_callable=AsyncMock,
+        ) as mock_list,
+    ):
+        mock_table = MagicMock()
+        mock_supabase.return_value.table.return_value = mock_table
+        mock_table.select.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+
+        mock_res = MagicMock()
+        mock_res.data = [{"calendar_token": {"access_token": "valid-token"}}]
+        mock_table.execute.return_value = mock_res
+
+        mock_list.return_value = [
+            {
+                "id": "meet-1",
+                "summary": "Sprint Planning",
+                "hangout_link": "https://meet.google.com/abc-defg-hij",
+                "start": "2026-10-24T10:00:00Z",
+                "end": "2026-10-24T11:00:00Z",
+            }
+        ]
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://localhost:8000"
+        ) as client:
+            res = await client.get("/calendar/events?only_meet=true")
+            assert res.status_code == 200
+            data = res.json()
+            assert len(data["events"]) == 1
+            assert data["events"][0]["hangout_link"] == "https://meet.google.com/abc-defg-hij"
+            mock_list.assert_called_once_with(
+                {"access_token": "valid-token"}, max_results=25, only_meet=True
+            )
