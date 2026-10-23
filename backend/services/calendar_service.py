@@ -3,6 +3,8 @@ Google Calendar API service wrapper.
 Handles OAuth2 token management and event CRUD.
 """
 
+import os
+
 from fastapi.concurrency import run_in_threadpool
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -10,6 +12,9 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from ..core.config import settings
+
+# Relax OAuthLib scope strictness to handle Google adding default openid/userinfo scopes
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
 
 def _build_flow(redirect_uri: str | None = None, code_verifier: str | None = None):
@@ -127,14 +132,34 @@ async def exchange_calendar_code(
     """Exchange OAuth2 authorization code for tokens."""
 
     def _exchange() -> dict:
+        os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
         flow = _build_flow(redirect_uri=redirect_uri, code_verifier=code_verifier)
         flow.fetch_token(code=code)
         creds = flow.credentials
+
+        email = None
+        try:
+            if hasattr(flow.oauth2session, "token") and flow.oauth2session.token:
+                id_token_jwt = flow.oauth2session.token.get("id_token")
+                if id_token_jwt:
+                    import base64
+                    import json
+
+                    payload = id_token_jwt.split(".")[1]
+                    padded = payload + "=" * (-len(payload) % 4)
+                    claims = json.loads(
+                        base64.urlsafe_b64decode(padded.encode()).decode("utf-8")
+                    )
+                    email = claims.get("email")
+        except Exception:
+            pass
+
         return {
             "access_token": creds.token,
             "refresh_token": creds.refresh_token,
             "token_uri": creds.token_uri,
             "scopes": list(creds.scopes or []),
+            "email": email,
         }
 
     return await run_in_threadpool(_exchange)

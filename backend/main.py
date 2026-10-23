@@ -2,10 +2,14 @@
 MeetMaxxing FastAPI application entry point.
 """
 
+import os
 import sys
 import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# Relax OAuthLib scope checks for Google OAuth (which appends openid / userinfo scopes)
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
