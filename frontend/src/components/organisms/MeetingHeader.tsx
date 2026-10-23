@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   RiCalendarLine,
+  RiTimeLine,
   RiMoreLine,
   RiEditLine,
   RiDeleteBinLine,
@@ -12,7 +13,6 @@ import {
   RiFileTextLine,
   RiLinkM,
   RiExternalLinkLine,
-  RiUserLine,
   RiSparklingLine,
   RiCheckboxCircleLine,
   RiInformationLine,
@@ -21,6 +21,7 @@ import {
   ActionButton,
   GmailIcon,
   GoogleCalendarIcon,
+  GoogleMeetIcon,
   type BtnState,
 } from "@/components/molecules/ActionButtons";
 import EditDialog from "@/components/organisms/EditDialog";
@@ -193,11 +194,53 @@ export default function MeetingHeader({
     return `${startStr} – ${format(endD, "h:mm a")}`;
   })();
 
-  // MD3 status badge: strictly conditional, never displays false state
+  // Duration calculated from start_at and end_at
+  const durationLabel = (() => {
+    if (!meeting.start_at || !meeting.end_at) return null;
+    const start = new Date(meeting.start_at).getTime();
+    const end = new Date(meeting.end_at).getTime();
+    if (isNaN(start) || isNaN(end) || end <= start) return null;
+    const diffMinutes = Math.round((end - start) / (1000 * 60));
+    if (diffMinutes < 1) return "< 1 min";
+    if (diffMinutes >= 60) {
+      const hrs = Math.floor(diffMinutes / 60);
+      const mins = diffMinutes % 60;
+      return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+    }
+    return `${diffMinutes} mins`;
+  })();
+
+  // Resolve Google Meet URL and display label
+  const meetUrl = (() => {
+    if (!meeting.google_meet_link) return null;
+    if (meeting.google_meet_link.startsWith("http://") || meeting.google_meet_link.startsWith("https://")) {
+      return meeting.google_meet_link;
+    }
+    return `https://meet.google.com/${meeting.google_meet_link}`;
+  })();
+
+  const meetDisplayCode = (() => {
+    if (!meeting.google_meet_link) return "Google Meet";
+    const clean = meeting.google_meet_link.replace(/^https?:\/\/meet\.google\.com\//, "");
+    return clean.length > 0 ? clean : "Google Meet";
+  })();
+
+  // Resolve display title
+  const displayTitle = (() => {
+    if (meeting.title && meeting.title !== "Google Meet" && meeting.title !== "Untitled Meeting") {
+      return meeting.title;
+    }
+    if (meeting.google_meet_link) {
+      return `Meet - ${meeting.google_meet_link}`;
+    }
+    return "Meet - Live Session";
+  })();
+
+  // MD3 Expressive status badge
   const statusBadge = (() => {
     if (meeting.status === "active") {
       return (
-        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-primary bg-primary-container/30 border border-primary/30 rounded-full px-3 py-0.5">
+        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-primary bg-primary-container/30 border border-primary/30 rounded-full px-3 py-1">
           <span className="w-2 h-2 rounded-full bg-primary animate-ping" aria-hidden="true" />
           Live Recording
         </span>
@@ -205,7 +248,7 @@ export default function MeetingHeader({
     }
     if (meeting.status === "processing") {
       return (
-        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-secondary bg-secondary-container/40 border border-secondary/30 rounded-full px-3 py-0.5">
+        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-secondary bg-secondary-container/40 border border-secondary/30 rounded-full px-3 py-1">
           <RiSparklingLine className="w-3.5 h-3.5 text-secondary animate-spin" aria-hidden="true" />
           AI Processing Summary…
         </span>
@@ -213,7 +256,7 @@ export default function MeetingHeader({
     }
     if (meeting.summary && meeting.summary.trim() && meeting.status !== "no_transcript") {
       return (
-        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-success bg-success/15 border border-success/30 rounded-full px-3 py-0.5">
+        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-success bg-success-container/30 border border-success/30 rounded-full px-3 py-1">
           <RiCheckboxCircleLine className="w-3.5 h-3.5 text-success" aria-hidden="true" />
           Completed & Summarized
         </span>
@@ -221,7 +264,7 @@ export default function MeetingHeader({
     }
     if (meeting.status === "no_transcript") {
       return (
-        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-text-muted bg-surface-container-high border border-border rounded-full px-3 py-0.5">
+        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-text-muted bg-surface-container-high border border-outline-variant/20 rounded-full px-3 py-1">
           <RiInformationLine className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
           No Transcript Recorded
         </span>
@@ -230,43 +273,142 @@ export default function MeetingHeader({
     return null;
   })();
 
+  // Participant initials color helper
+  const getAvatarBg = (idx: number) => {
+    const colors = [
+      "bg-primary-container text-on-primary-container",
+      "bg-secondary-container text-on-secondary-container",
+      "bg-tertiary-container text-on-tertiary-container",
+      "bg-success-container text-on-success-container",
+      "bg-warning-container text-on-warning-container",
+    ];
+    return colors[idx % colors.length];
+  };
+
   return (
     <>
-      <div className="relative z-20 bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 shadow-none">
+      <header className="relative z-20 bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 shadow-none transition-all">
         {/* Ambient tonal accent with contained overflow */}
         <div
           className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none"
           aria-hidden="true"
         >
           <div
-            className="absolute top-0 right-0 w-72 h-72 rounded-full blur-[100px]"
+            className="absolute top-0 right-0 w-80 h-80 rounded-full blur-[100px]"
             style={{ background: "radial-gradient(circle, var(--grad-primary) 0%, transparent 70%)" }}
           />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-start gap-5 justify-between">
-          <div className="flex flex-col gap-2.5 max-w-2xl">
-            {/* Metadata row: Date chip + Dynamic Status Badge */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-primary bg-primary-container/20 border border-primary/25 rounded-full px-3 py-0.5 w-fit">
-                <RiCalendarLine className="w-3 h-3" aria-hidden="true" />
-                <span>{formattedDate}</span>
+        <div className="relative z-10 flex flex-col gap-4">
+          {/* 1. Top Meta Row: Google Meet badge, Date & Time chip, Duration chip, Status badge */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Google Meet Badge */}
+            {meetUrl ? (
+              <a
+                href={meetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Open ${meetUrl} in Google Meet`}
+                className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-text bg-surface-container-high/70 hover:bg-surface-container-highest border border-outline-variant/20 rounded-full px-3 py-1 transition-all active:scale-[0.98] group cursor-pointer"
+              >
+                <GoogleMeetIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>{meetDisplayCode}</span>
+                <RiExternalLinkLine className="w-3 h-3 text-text-muted group-hover:text-primary transition-colors" aria-hidden="true" />
+              </a>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-text bg-surface-container-high/70 border border-outline-variant/20 rounded-full px-3 py-1">
+                <GoogleMeetIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>Google Meet</span>
               </div>
-              {statusBadge}
+            )}
+
+            {/* Date & Time Chip */}
+            <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-primary bg-primary-container/20 border border-primary/25 rounded-full px-3 py-1">
+              <RiCalendarLine className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>{formattedDate}</span>
             </div>
 
-            {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight">
-              {meeting.title && meeting.title !== "Google Meet" && meeting.title !== "Untitled Meeting"
-                ? meeting.title
-                : meeting.google_meet_link
-                ? `Meet - ${meeting.google_meet_link}`
-                : "Meet - Live Session"}
-            </h1>
+            {/* Duration Chip */}
+            {durationLabel && (
+              <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-semibold text-text-muted bg-surface-container-high/60 border border-outline-variant/20 rounded-full px-3 py-1">
+                <RiTimeLine className="w-3.5 h-3.5 shrink-0 text-text-muted" aria-hidden="true" />
+                <span>{durationLabel}</span>
+              </div>
+            )}
+
+            {/* Status Badge */}
+            {statusBadge}
           </div>
 
-          {/* Action Button Row: Primary visible buttons + MD3 Overflow Menu */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+          {/* 2. Full-Width Expressive Title Row with Inline Edit Pencil */}
+          <div className="flex items-center gap-3 w-full group">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-text tracking-tight leading-tight break-words">
+              {displayTitle}
+            </h1>
+            {onRename && (
+              <button
+                type="button"
+                onClick={() => setIsEditOpen(true)}
+                aria-label="Edit meeting title"
+                title="Edit meeting title"
+                className="p-1.5 rounded-full text-text-muted hover:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 shrink-0 cursor-pointer"
+              >
+                <RiEditLine className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+
+          {/* 3. Clean Participants Avatar Stack with Initials & Role Badges */}
+          {participantsList.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              {/* Overlapping Avatar Stack */}
+              <div className="flex items-center -space-x-2 shrink-0">
+                {participantsList.slice(0, 4).map((p, idx) => (
+                  <div
+                    key={p}
+                    title={p}
+                    className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full text-[10px] sm:text-[11px] font-bold flex items-center justify-center ring-2 ring-surface-container-low shadow-sm ${getAvatarBg(
+                      idx
+                    )}`}
+                  >
+                    {p.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+                {participantsList.length > 4 && (
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-[9px] sm:text-[10px] font-bold bg-surface-container-highest text-text-muted flex items-center justify-center ring-2 ring-surface-container-low">
+                    +{participantsList.length - 4}
+                  </div>
+                )}
+              </div>
+
+              {/* Participant Pill Badges */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {participantsList.map((p, idx) => (
+                  <span
+                    key={p}
+                    className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] font-medium text-text bg-surface-container/60 border border-outline-variant/15 rounded-full px-2.5 py-0.5"
+                  >
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full text-[8px] font-bold flex items-center justify-center ${getAvatarBg(
+                        idx
+                      )}`}
+                    >
+                      {p.charAt(0).toUpperCase()}
+                    </span>
+                    <span>{p}</span>
+                    {idx === 0 && (
+                      <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-primary/10 text-primary font-bold">
+                        Host
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 4. Dedicated Expressive Action Toolbar */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-5 mt-2 border-t border-outline-variant/15">
             {meeting.summary && (
               <>
                 <ActionButton
@@ -275,6 +417,7 @@ export default function MeetingHeader({
                   state={gmailState}
                   successLabel="Gmail Opened"
                   onClick={handleGmail}
+                  variant="filled-tonal"
                 />
                 <ActionButton
                   label="Sync Calendar"
@@ -283,41 +426,30 @@ export default function MeetingHeader({
                   successLabel="Calendar Synced"
                   errorLabel="Authorize Calendar"
                   onClick={handleCalendar}
+                  variant="tonal"
                 />
               </>
             )}
 
-            {/* Export PDF pill button */}
+            {/* Export PDF pill button (M3 Tonal button) */}
             <button
               type="button"
               onClick={handleExportPdf}
-              className="flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-secondary-container text-on-secondary-container hover:brightness-105"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-surface-container-high text-text hover:bg-surface-container-highest border border-outline-variant/15 cursor-pointer"
             >
-              <RiFilePdfLine className="w-4 h-4" aria-hidden="true" />
+              <RiFilePdfLine className="w-4 h-4 shrink-0 text-secondary" aria-hidden="true" />
               <span>Export PDF</span>
             </button>
 
-            {/* Delete Meeting pill button */}
-            {onDelete && (
-              <button
-                type="button"
-                onClick={() => setIsDeleteOpen(true)}
-                className="flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-risk-container text-on-risk-container hover:brightness-105"
-              >
-                <RiDeleteBinLine className="w-4 h-4" aria-hidden="true" />
-                <span>Delete</span>
-              </button>
-            )}
-
-            {/* MD3 Expressive More Options Menu */}
-            <div className="relative z-50" ref={menuRef}>
+            {/* M3 More Options Overflow Menu */}
+            <div className="relative z-50 ml-auto sm:ml-0" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 aria-label="More options"
-                className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/15 text-text shadow-none"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/15 text-text cursor-pointer"
               >
                 <RiMoreLine className="w-4 h-4 text-text-muted" aria-hidden="true" />
                 <span className="hidden sm:inline">Options</span>
@@ -347,26 +479,23 @@ export default function MeetingHeader({
                           setIsEditOpen(true);
                         }}
                         role="menuitem"
-                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98]"
+                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer"
                       >
                         <RiEditLine className="w-4 h-4 text-primary" aria-hidden="true" />
                         <span>Edit Title</span>
                       </button>
                     )}
 
-                    {/* Copy Link */}
+                    {/* Copy Meeting Link */}
                     <button
                       type="button"
                       onClick={handleCopyLink}
                       role="menuitem"
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98]"
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer"
                     >
                       <RiLinkM className="w-4 h-4 text-text-muted" aria-hidden="true" />
-                      <span>{linkCopied ? "Link Copied!" : "Copy Link"}</span>
+                      <span>{linkCopied ? "Link Copied!" : "Copy Meeting Link"}</span>
                     </button>
-
-                    {/* Separator */}
-                    <div className="h-[1px] bg-outline-variant/15 mx-2 my-1" aria-hidden="true" />
 
                     {/* Export Markdown */}
                     <button
@@ -376,7 +505,7 @@ export default function MeetingHeader({
                         handleExportMarkdown();
                       }}
                       role="menuitem"
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98]"
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-text hover:bg-surface-container-high transition-colors outline-none active:scale-[0.98] cursor-pointer"
                     >
                       <RiFileTextLine className="w-4 h-4 text-text-muted" aria-hidden="true" />
                       <span>Export as Markdown</span>
@@ -389,11 +518,30 @@ export default function MeetingHeader({
                         target="_blank"
                         rel="noopener noreferrer"
                         role="menuitem"
-                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-primary hover:bg-primary-container/20 transition-colors outline-none active:scale-[0.98]"
+                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-primary hover:bg-primary-container/20 transition-colors outline-none active:scale-[0.98] cursor-pointer"
                       >
                         <RiExternalLinkLine className="w-4 h-4 text-primary" aria-hidden="true" />
                         <span>View Calendar Event</span>
                       </a>
+                    )}
+
+                    {/* Destructive Action: Delete Meeting */}
+                    {onDelete && (
+                      <>
+                        <div className="h-[1px] bg-outline-variant/15 mx-2 my-1" aria-hidden="true" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setIsDeleteOpen(true);
+                          }}
+                          role="menuitem"
+                          className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-medium text-risk hover:bg-risk-container/20 transition-colors outline-none active:scale-[0.98] cursor-pointer"
+                        >
+                          <RiDeleteBinLine className="w-4 h-4 text-risk" aria-hidden="true" />
+                          <span>Delete Meeting</span>
+                        </button>
+                      </>
                     )}
                   </motion.div>
                 )}
@@ -401,30 +549,7 @@ export default function MeetingHeader({
             </div>
           </div>
         </div>
-
-        {/* Participants chip list */}
-        {participantsList.length > 0 && (
-          <div className="relative z-10 flex flex-wrap items-center gap-2 pt-4 mt-5 border-t border-outline-variant/15">
-            <div className="flex items-center gap-1.5 text-[12px] text-text-muted font-medium">
-              <RiUserLine className="w-4 h-4 text-primary" aria-hidden="true" />
-              <span className="text-text font-semibold">
-                Participants ({participantsList.length}):
-              </span>
-            </div>
-            {participantsList.map((a) => (
-              <span
-                key={a}
-                className="flex items-center gap-1.5 text-[11.5px] font-medium text-text bg-surface-container/70 border border-outline-variant/15 rounded-full px-3 py-1"
-              >
-                <span className="w-4 h-4 rounded-full bg-primary-container text-[8px] font-bold text-on-primary-container flex items-center justify-center">
-                  {a.charAt(0).toUpperCase()}
-                </span>
-                {a}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      </header>
 
       {/* Edit Title Dialog */}
       {isEditOpen && (
