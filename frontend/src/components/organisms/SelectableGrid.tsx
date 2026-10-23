@@ -83,7 +83,7 @@ export function SelectableGrid<T>({
           </div>
           
           {/* Contextual Action Bar (Floating Pill) */}
-          <div className={`col-start-1 row-start-1 flex items-center justify-between gap-1 sm:gap-3 transition-all duration-200 bg-surface-container-high/95 backdrop-blur-xl border border-border/80 rounded-full shadow-md px-2.5 sm:px-4 py-1.5 ${selectionMode ? 'opacity-100 scale-100' : 'opacity-0 pointer-events-none scale-[0.99]'}`}>
+          <div className={`col-start-1 row-start-1 flex items-center justify-between gap-1 sm:gap-3 transition-all duration-200 bg-surface-container-high/75 dark:bg-surface-container-high/65 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 dark:border-white/10 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_32px_rgba(0,0,0,0.14)] px-2.5 sm:px-4 py-1.5 ${selectionMode ? 'opacity-100 scale-100' : 'opacity-0 pointer-events-none scale-[0.99]'}`}>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 onClick={clearSelection}

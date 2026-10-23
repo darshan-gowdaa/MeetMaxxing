@@ -142,12 +142,12 @@ export default function Dashboard() {
 
                     return (
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 w-full">
-                        <div className="inline-flex items-center justify-between sm:justify-start gap-2.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-surface-container-high/90 backdrop-blur-xl border border-border/70 shadow-sm min-w-0 w-fit">
+                        <div className="inline-flex items-center justify-between sm:justify-start gap-2.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-surface-container-high/65 dark:bg-surface-container-high/50 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_24px_-4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),0_8px_24px_-4px_rgba(0,0,0,0.3)] min-w-0 w-fit">
                           <h2 className="text-[13.5px] sm:text-[15px] font-bold tracking-tight flex items-center gap-2 text-text truncate">
                             <HeaderIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-primary shrink-0 transition-transform duration-200" />
                             <span className="truncate transition-opacity duration-200">{title}</span>
                           </h2>
-                          <span className="text-[11px] sm:text-[12px] font-semibold text-text-muted bg-surface-container-highest border border-border/80 rounded-full px-2.5 py-0.5 shrink-0">
+                          <span className="text-[11px] sm:text-[12px] font-bold text-primary bg-primary/10 border border-primary/20 dark:bg-primary-container/40 dark:text-on-primary-container rounded-full px-2.5 py-0.5 shrink-0 font-mono">
                             {filtered.length}
                           </span>
                         </div>
