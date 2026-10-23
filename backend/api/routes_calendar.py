@@ -2,6 +2,8 @@
 Google Calendar OAuth flow + direct-link endpoints.
 """
 
+import base64
+import json
 import logging
 import urllib.parse
 from datetime import UTC, datetime, timedelta
@@ -125,7 +127,28 @@ async def get_calendar_add_url(
     return {"gcal_url": gcal_url, "html_link": gcal_url, "status": "gcal_url_generated"}
 
 
-# ── GET /calendar/connect ─────────────────────────────────────────────────────
+def _decode_state(state: str) -> str | None:
+    """Parse user_id from OAuth state parameter (json base64 or raw string)."""
+    if not state:
+        return None
+    try:
+        padded = state + "=" * (-len(state) % 4)
+        decoded = base64.urlsafe_b64decode(padded.encode()).decode("utf-8")
+        try:
+            payload = json.loads(decoded)
+            if isinstance(payload, dict) and "user_id" in payload:
+                return payload["user_id"]
+        except Exception:
+            pass
+        if decoded:
+            return decoded
+    except Exception:
+        pass
+    return state
+
+
+# ── GET /calendar/auth-url & /calendar/connect ────────────────────────────────
+@router.get("/auth-url")
 @router.get("/connect")
 async def connect_calendar(user: dict = Depends(get_current_user)):
     """Redirect user to Google OAuth consent for Calendar API access."""
@@ -138,26 +161,105 @@ async def connect_calendar(user: dict = Depends(get_current_user)):
                 "in Google Cloud Console."
             ),
         )
-    auth_url = await get_calendar_auth_url()
-    return {"auth_url": auth_url}
+    state_payload = json.dumps({"user_id": user["user_id"]})
+    state = base64.urlsafe_b64encode(state_payload.encode()).decode()
+    auth_url = await get_calendar_auth_url(state=state)
+    return {"auth_url": auth_url, "state": state}
 
 
 # ── GET /calendar/callback ────────────────────────────────────────────────────
 @router.get("/callback")
 async def calendar_callback(code: str, state: str = ""):
     """Handle Google OAuth2 callback — exchange code for tokens."""
+    user_id = _decode_state(state)
     try:
         tokens = await exchange_calendar_code(code)
-        return {
-            "status": "connected",
-            "message": "Google Calendar connected successfully",
-            "token_preview": {"has_refresh": bool(tokens.get("refresh_token"))},
-        }
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=400,
-            detail="Calendar auth failed. Please try again or check your credentials.",
+            detail=f"Calendar auth failed. Please try again or check your credentials: {e}",
         )
+
+    if user_id:
+        try:
+            supabase = get_supabase_admin()
+            tokens_to_store = dict(tokens)
+            tokens_to_store.setdefault("last_synced_at", datetime.now(UTC).isoformat())
+            supabase.table("users").update({"calendar_token": tokens_to_store}).eq(
+                "id", user_id
+            ).execute()
+        except Exception as e:
+            logging.error(f"Failed to persist calendar_token for user {user_id}: {e}")
+
+    return {
+        "status": "connected",
+        "message": "Google Calendar connected successfully",
+        "token_preview": {"has_refresh": bool(tokens.get("refresh_token"))},
+    }
+
+
+# ── GET /calendar/status ──────────────────────────────────────────────────────
+@router.get("/status")
+async def get_calendar_status(user: dict = Depends(get_current_user)):
+    """Check if current authenticated user has connected Google Calendar."""
+    supabase = get_supabase_admin()
+    calendar_token = None
+    user_email = user.get("email")
+    try:
+        res = (
+            supabase.table("users")
+            .select("calendar_token, email")
+            .eq("id", user["user_id"])
+            .execute()
+        )
+        if res.data:
+            calendar_token = res.data[0].get("calendar_token")
+            if not user_email:
+                user_email = res.data[0].get("email")
+    except Exception as e:
+        logging.warning(
+            f"Error checking calendar status for {user.get('user_id')}: {e}"
+        )
+
+    is_connected = bool(
+        calendar_token
+        and isinstance(calendar_token, dict)
+        and len(calendar_token) > 0
+        and (calendar_token.get("access_token") or calendar_token.get("refresh_token"))
+    )
+
+    if not is_connected:
+        return {
+            "connected": False,
+            "email": None,
+            "last_synced_at": None,
+        }
+
+    token_email = calendar_token.get("email") or user_email
+    last_synced = calendar_token.get("last_synced_at") or calendar_token.get(
+        "synced_at"
+    )
+
+    return {
+        "connected": True,
+        "email": token_email,
+        "last_synced_at": last_synced,
+    }
+
+
+# ── POST /calendar/disconnect ─────────────────────────────────────────────────
+@router.post("/disconnect")
+async def disconnect_calendar(user: dict = Depends(get_current_user)):
+    """Disconnect Google Calendar by clearing stored token."""
+    supabase = get_supabase_admin()
+    try:
+        supabase.table("users").update({"calendar_token": None}).eq(
+            "id", user["user_id"]
+        ).execute()
+    except Exception as e:
+        logging.error(f"Error disconnecting calendar for {user.get('user_id')}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to disconnect calendar")
+    return {"success": True}
 
 
 # ── POST /calendar/webhook ────────────────────────────────────────────────────

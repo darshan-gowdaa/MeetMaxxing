@@ -64,7 +64,13 @@ export default function ApiKeysPage() {
  headers: { Authorization: `Bearer ${token}` }
  });
  const data = await res.json();
- setKeys(keys.map(k => k.id === keyId ? { ...k, status: data.status } : k));
+ setKeys(keys.map(k => k.id === keyId ? {
+ ...k,
+ status: data.status,
+ latency_ms: data.latency_ms,
+ last_error_message_safe: data.error || data.last_error_message_safe,
+ last_checked_at: new Date().toISOString(),
+ } : k));
  } catch {}
  };
 

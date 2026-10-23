@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
-import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
+import { RiEyeLine, RiEyeOffLine, RiDownloadLine, RiLockPasswordLine } from "@remixicon/react";
 
 import { PasswordStrength, isValidPassword } from "@/components/molecules/PasswordStrength";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
@@ -14,6 +14,7 @@ export const ProfileSecurity = () => {
   const { session, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const [pwdLoading, setPwdLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -45,6 +46,43 @@ export const ProfileSecurity = () => {
     }
   };
 
+  const handleExportData = async () => {
+    if (!session?.access_token) return;
+    setExportLoading(true);
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+
+    try {
+      const res = await fetch(`${backendUrl}/api/settings/export`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error(`Export failed with status ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "meetmaxxing-data-export.json";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showMessage("Data export downloaded successfully", { variant: "success" });
+    } catch (e) {
+      console.error(e);
+      showMessage("Failed to export account data", { variant: "error" });
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   const confirmDeleteAccount = async () => {
     if (!session?.access_token) return;
 
@@ -72,9 +110,13 @@ export const ProfileSecurity = () => {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Change Password Card */}
       <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
         <div className="flex flex-col gap-1">
-          <h3 className="text-[15px] font-bold text-text">Change Password</h3>
+          <div className="flex items-center gap-2">
+            <RiLockPasswordLine className="w-4 h-4 text-primary" />
+            <h3 className="text-[15px] font-bold text-text">Change Password</h3>
+          </div>
           <p className="text-[13px] text-text-muted font-medium">Update your account password securely.</p>
         </div>
         <div className="flex flex-col gap-2 mt-2">
@@ -95,7 +137,7 @@ export const ProfileSecurity = () => {
                 type="button"
                 onClick={() => setShowPassword(s => !s)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text spring-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text spring-colors cursor-pointer"
               >
                 {showPassword ? <RiEyeOffLine className="w-4 h-4" aria-hidden="true" /> : <RiEyeLine className="w-4 h-4" aria-hidden="true" />}
               </button>
@@ -103,7 +145,7 @@ export const ProfileSecurity = () => {
             <button
               type="submit"
               disabled={pwdLoading || !password}
-              className="w-full sm:w-auto px-6 py-3 bg-primary text-on-primary rounded-full text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 bg-primary text-on-primary rounded-full text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
               {pwdLoading && <Md3LoadingIndicator size="sm" className="text-on-primary" />}
               {pwdLoading ? "Updating…" : "Update Password"}
@@ -114,6 +156,32 @@ export const ProfileSecurity = () => {
         {message && <p className="text-sm font-medium text-text-variant">{message}</p>}
       </div>
 
+      {/* Data Management (GDPR Export) Card */}
+      <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-surface-container border border-border shadow-sm">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <RiDownloadLine className="w-4 h-4 text-primary" />
+            <h3 className="text-[15px] font-bold text-text">Data Management & GDPR Export</h3>
+          </div>
+          <p className="text-[13px] text-text-muted font-medium">
+            Download a portable copy of your account profile, meeting transcripts, summaries, and action items in JSON format.
+          </p>
+        </div>
+        <div className="mt-1">
+          <button
+            type="button"
+            onClick={handleExportData}
+            disabled={exportLoading}
+            className="w-full sm:w-auto px-6 py-2.5 bg-surface2 hover:bg-surface-container-highest border border-border text-text rounded-full text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {exportLoading && <Md3LoadingIndicator size="sm" className="text-text" />}
+            <RiDownloadLine className="w-4 h-4 text-primary" />
+            {exportLoading ? "Preparing Export…" : "Export All Data (GDPR)"}
+          </button>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
       <div className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-risk-container border border-risk/20 text-on-risk-container shadow-sm">
         <div className="flex flex-col gap-1">
           <h3 className="text-[15px] font-bold text-risk">Danger Zone</h3>
@@ -123,7 +191,7 @@ export const ProfileSecurity = () => {
           <button
             onClick={() => setIsDeleteOpen(true)}
             disabled={loading}
-            className="w-full sm:w-auto px-6 py-3 bg-risk text-on-risk rounded-full text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 bg-risk text-on-risk rounded-full text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all active:opacity-80 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading && <Md3LoadingIndicator size="sm" className="text-on-risk" />}
             {loading ? "Deleting…" : "Delete Account"}

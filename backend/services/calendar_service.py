@@ -75,14 +75,17 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
         raise RuntimeError(f"Failed to create event: {e}")
 
 
-async def get_calendar_auth_url() -> str:
+async def get_calendar_auth_url(state: str | None = None) -> str:
     """Generate Google OAuth2 authorization URL for Calendar access."""
     flow = _build_flow()
-    auth_url, _ = flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true",
-        prompt="consent",
-    )
+    auth_kwargs = {
+        "access_type": "offline",
+        "include_granted_scopes": "true",
+        "prompt": "consent",
+    }
+    if state:
+        auth_kwargs["state"] = state
+    auth_url, _ = flow.authorization_url(**auth_kwargs)
     return auth_url
 
 

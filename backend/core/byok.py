@@ -100,7 +100,7 @@ async def resolve_user_byok(user_id: str | None) -> dict[str, Any] | None:
         # 1. Fetch user model preferences
         pref_res = (
             supabase.table("user_model_preferences")
-            .select("mode, model_id")
+            .select("*")
             .eq("user_id", user_id)
             .eq("feature_scope", "default_chat")
             .execute()
@@ -113,6 +113,7 @@ async def resolve_user_byok(user_id: str | None) -> dict[str, Any] | None:
             return None
 
         chosen_model = (prefs.get("model_id") or "").strip()
+        pref_credential_id = prefs.get("provider_credential_id")
         provider_id = _infer_provider_from_model(chosen_model)
 
         # 2. Fetch available keys for this user
@@ -128,24 +129,47 @@ async def resolve_user_byok(user_id: str | None) -> dict[str, Any] | None:
             _BYOK_CACHE[user_id] = (now, None)
             return None
 
-        # Match key for inferred provider
         target_key_record = None
-        if provider_id:
-            target_key_record = next(
-                (k for k in keys if k.get("provider_id") == provider_id),
-                None,
-            )
 
-        # Fallback to OpenRouter key if present
-        if not target_key_record:
-            target_key_record = next(
-                (k for k in keys if k.get("provider_id") == "openrouter"),
-                None,
+        # Preference 1: Specific credential selected by user in preferences
+        if pref_credential_id:
+            matching_cred = next(
+                (k for k in keys if k.get("id") == pref_credential_id), None
             )
-            if target_key_record:
+            if matching_cred:
+                if not provider_id or matching_cred.get("provider_id") == provider_id:
+                    target_key_record = matching_cred
+                    provider_id = matching_cred.get("provider_id", provider_id)
+
+        # Preference 2: Keys matching inferred provider, respecting is_default_for_provider
+        if not target_key_record and provider_id:
+            provider_keys = [k for k in keys if k.get("provider_id") == provider_id]
+            if provider_keys:
+                target_key_record = next(
+                    (k for k in provider_keys if k.get("is_default_for_provider")),
+                    provider_keys[0],
+                )
+
+        # Preference 3: Fallback to OpenRouter key if present (respecting default)
+        if not target_key_record:
+            or_keys = [k for k in keys if k.get("provider_id") == "openrouter"]
+            if or_keys:
+                target_key_record = next(
+                    (k for k in or_keys if k.get("is_default_for_provider")),
+                    or_keys[0],
+                )
                 provider_id = "openrouter"
 
-        # Fallback to any single valid key if user only has 1
+        # Preference 4: If pref_credential_id pointed to valid key for another provider as fallback
+        if not target_key_record and pref_credential_id:
+            matching_cred = next(
+                (k for k in keys if k.get("id") == pref_credential_id), None
+            )
+            if matching_cred:
+                target_key_record = matching_cred
+                provider_id = matching_cred.get("provider_id", "")
+
+        # Preference 5: Fallback to any single valid key if user only has 1
         if not target_key_record and len(keys) == 1:
             target_key_record = keys[0]
             provider_id = target_key_record.get("provider_id", "")
