@@ -123,13 +123,17 @@ async def run_memory_agent(
         try:
             supabase = get_supabase_admin()
             res = await asyncio.to_thread(
-                lambda: supabase.table("meetings")
-                .select("id, title, start_at, summary, decisions, attendees, status")
-                .eq("org_id", org_id)
-                .eq("status", "completed")
-                .order("start_at", desc=True)
-                .limit(8)
-                .execute()
+                lambda: (
+                    supabase.table("meetings")
+                    .select(
+                        "id, title, start_at, summary, decisions, attendees, status"
+                    )
+                    .eq("org_id", org_id)
+                    .eq("status", "completed")
+                    .order("start_at", desc=True)
+                    .limit(8)
+                    .execute()
+                )
             )
             return res.data or []
         except Exception as e:
@@ -147,9 +151,7 @@ async def run_memory_agent(
             summary = m.get("summary") or ""
             decisions = m.get("decisions") or []
             attendees = ", ".join(m.get("attendees") or [])
-            dec_text = "; ".join(
-                d.get("text", "") for d in decisions if d.get("text")
-            )
+            dec_text = "; ".join(d.get("text", "") for d in decisions if d.get("text"))
             line = f"[Meeting: {title} | Date: {date_str} | Attendees: {attendees}]\nSummary: {summary}"
             if dec_text:
                 line += f"\nDecisions: {dec_text}"

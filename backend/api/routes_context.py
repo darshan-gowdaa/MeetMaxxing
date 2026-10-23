@@ -61,6 +61,7 @@ async def upload_context(
 
         valid_chunks = [c for c in chunks if c.strip()]
         from ..memory.embeddings import embed_batch
+
         vectors = await embed_batch(valid_chunks)
 
         for chunk, vector in zip(valid_chunks, vectors):

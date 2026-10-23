@@ -1,4 +1,5 @@
 import asyncio
+
 """
 Meeting management endpoints — end meeting, trigger post-processing pipeline.
 """
@@ -475,7 +476,11 @@ async def _run_end_pipeline(
             if action_items_to_insert:
                 try:
                     await asyncio.to_thread(
-                        lambda: supabase.table("action_items").insert(action_items_to_insert).execute()
+                        lambda: (
+                            supabase.table("action_items")
+                            .insert(action_items_to_insert)
+                            .execute()
+                        )
                     )
                 except Exception as e:
                     logger.error(f"Failed to batch insert action items: {e}")

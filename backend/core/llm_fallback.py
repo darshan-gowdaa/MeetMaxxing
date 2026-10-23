@@ -200,7 +200,9 @@ async def generate_content_with_fallback(
                             client.aio.models.generate_content(
                                 model=g_model,
                                 contents=prompt,
-                                config=genai_types.GenerateContentConfig(**config_kwargs),
+                                config=genai_types.GenerateContentConfig(
+                                    **config_kwargs
+                                ),
                             ),
                             timeout=5.0,
                         )
@@ -212,7 +214,9 @@ async def generate_content_with_fallback(
                                 lambda m=g_model: client.models.generate_content(
                                     model=m,
                                     contents=prompt,
-                                    config=genai_types.GenerateContentConfig(**config_kwargs),
+                                    config=genai_types.GenerateContentConfig(
+                                        **config_kwargs
+                                    ),
                                 ),
                             ),
                             timeout=5.0,

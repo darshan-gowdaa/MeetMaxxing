@@ -59,14 +59,17 @@ async def get_qdrant() -> AsyncQdrantClient:
             await _ensure_collection_internal(_client)
             _collection_ensured = True
         except Exception as e:
-            if settings.QDRANT_URL not in [':memory:', 'memory']:
+            if settings.QDRANT_URL not in [":memory:", "memory"]:
                 from loguru import logger
+
                 logger.warning(
-                    '[Qdrant] Remote Qdrant at {} failed ({}); falling back to in-memory store.',
+                    "[Qdrant] Remote Qdrant at {} failed ({}); falling back to in-memory store.",
                     settings.QDRANT_URL,
                     e,
                 )
-                _client = AsyncQdrantClient(location=':memory:', check_compatibility=False)
+                _client = AsyncQdrantClient(
+                    location=":memory:", check_compatibility=False
+                )
                 await _ensure_collection_internal(_client)
                 _collection_ensured = True
             else:
