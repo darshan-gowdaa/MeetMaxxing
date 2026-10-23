@@ -2,7 +2,7 @@
 Unit tests for Google Calendar OAuth routes, diagnostics, and callback redirects.
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -129,3 +129,29 @@ async def test_calendar_callback_success_redirect():
             )
             assert res.status_code == 302
             assert "calendar=connected" in res.headers["location"]
+
+
+@pytest.mark.asyncio
+async def test_exchange_calendar_code_direct():
+    """Verify that exchange_calendar_code performs direct HTTP token exchange with Google."""
+    from backend.services.calendar_service import exchange_calendar_code
+
+    with patch(
+        "backend.services.calendar_service._direct_token_exchange",
+        new_callable=AsyncMock,
+    ) as mock_direct:
+        mock_direct.return_value = {
+            "access_token": "ya29.direct-token",
+            "refresh_token": "1//direct-refresh",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "scopes": ["openid", "https://www.googleapis.com/auth/calendar"],
+            "email": "user@example.com",
+        }
+
+        res = await exchange_calendar_code(
+            code="test-code",
+            redirect_uri="http://localhost:8000/calendar/callback",
+        )
+        assert res["access_token"] == "ya29.direct-token"
+        assert res["email"] == "user@example.com"
+        assert mock_direct.called

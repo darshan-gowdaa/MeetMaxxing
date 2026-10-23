@@ -3,6 +3,9 @@ Google Calendar API service wrapper.
 Handles OAuth2 token management and event CRUD.
 """
 
+import base64
+import json
+import logging
 import os
 
 from fastapi.concurrency import run_in_threadpool
@@ -10,11 +13,71 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import httpx
 
 from ..core.config import settings
 
 # Relax OAuthLib scope strictness to handle Google adding default openid/userinfo scopes
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
+
+def _extract_email_from_jwt(id_token_jwt: str) -> str | None:
+    """Extract email claim from Google ID token JWT without external signature verification."""
+    try:
+        parts = id_token_jwt.split(".")
+        if len(parts) >= 2:
+            payload = parts[1]
+            padded = payload + "=" * (-len(payload) % 4)
+            claims = json.loads(
+                base64.urlsafe_b64decode(padded.encode()).decode("utf-8")
+            )
+            return claims.get("email")
+    except Exception:
+        pass
+    return None
+
+
+async def _direct_token_exchange(
+    code: str,
+    redirect_uri: str,
+    code_verifier: str | None = None,
+) -> dict:
+    """Fallback: exchange authorization code directly via Google's token endpoint (avoids oauthlib scope errors)."""
+    payload = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "client_secret": settings.GOOGLE_CLIENT_SECRET,
+        "code": code,
+        "grant_type": "authorization_code",
+        "redirect_uri": redirect_uri,
+    }
+    if code_verifier:
+        payload["code_verifier"] = code_verifier
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data=payload,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        data = resp.json()
+        if resp.status_code != 200:
+            error_desc = data.get("error_description") or data.get("error") or resp.text
+            raise RuntimeError(f"Google token error: {error_desc}")
+
+        email = None
+        if data.get("id_token"):
+            email = _extract_email_from_jwt(data["id_token"])
+
+        raw_scope = data.get("scope") or ""
+        scopes = raw_scope.split() if isinstance(raw_scope, str) else list(raw_scope)
+
+        return {
+            "access_token": data.get("access_token"),
+            "refresh_token": data.get("refresh_token"),
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "scopes": scopes,
+            "email": email,
+        }
 
 
 def _build_flow(redirect_uri: str | None = None, code_verifier: str | None = None):
@@ -129,37 +192,10 @@ async def exchange_calendar_code(
     redirect_uri: str | None = None,
     code_verifier: str | None = None,
 ) -> dict:
-    """Exchange OAuth2 authorization code for tokens."""
-
-    def _exchange() -> dict:
-        os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
-        flow = _build_flow(redirect_uri=redirect_uri, code_verifier=code_verifier)
-        flow.fetch_token(code=code)
-        creds = flow.credentials
-
-        email = None
-        try:
-            if hasattr(flow.oauth2session, "token") and flow.oauth2session.token:
-                id_token_jwt = flow.oauth2session.token.get("id_token")
-                if id_token_jwt:
-                    import base64
-                    import json
-
-                    payload = id_token_jwt.split(".")[1]
-                    padded = payload + "=" * (-len(payload) % 4)
-                    claims = json.loads(
-                        base64.urlsafe_b64decode(padded.encode()).decode("utf-8")
-                    )
-                    email = claims.get("email")
-        except Exception:
-            pass
-
-        return {
-            "access_token": creds.token,
-            "refresh_token": creds.refresh_token,
-            "token_uri": creds.token_uri,
-            "scopes": list(creds.scopes or []),
-            "email": email,
-        }
-
-    return await run_in_threadpool(_exchange)
+    """Exchange OAuth2 authorization code for tokens directly via Google token endpoint."""
+    effective_uri = redirect_uri or settings.GOOGLE_REDIRECT_URI
+    return await _direct_token_exchange(
+        code=code,
+        redirect_uri=effective_uri,
+        code_verifier=code_verifier,
+    )
