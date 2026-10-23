@@ -11,10 +11,6 @@ import {
   RiVideoChatLine,
   RiApps2Line,
   RiFileCopyLine,
-  RiInformationLine,
-  RiCalendarLine,
-  RiTimeLine,
-  RiFlashlightLine,
   RiArrowRightLine
 } from "@remixicon/react";
 

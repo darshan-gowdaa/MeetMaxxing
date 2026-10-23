@@ -170,28 +170,36 @@ async def test_extract_meet_link_variants():
 
     # 2. conferenceData entryPoints
     assert (
-        _extract_meet_link({
-            "conferenceData": {
-                "entryPoints": [{"uri": "https://meet.google.com/xyz-uvwx-rst"}]
+        _extract_meet_link(
+            {
+                "conferenceData": {
+                    "entryPoints": [{"uri": "https://meet.google.com/xyz-uvwx-rst"}]
+                }
             }
-        })
+        )
         == "https://meet.google.com/xyz-uvwx-rst"
     )
 
     # 3. location string
     assert (
-        _extract_meet_link({"location": "Join here: https://meet.google.com/foo-bar-baz room"})
+        _extract_meet_link(
+            {"location": "Join here: https://meet.google.com/foo-bar-baz room"}
+        )
         == "https://meet.google.com/foo-bar-baz"
     )
 
     # 4. description
     assert (
-        _extract_meet_link({"description": "Call details:\nhttps://meet.google.com/cat-dog-bird"})
+        _extract_meet_link(
+            {"description": "Call details:\nhttps://meet.google.com/cat-dog-bird"}
+        )
         == "https://meet.google.com/cat-dog-bird"
     )
 
     # 5. None when no meet link
-    assert _extract_meet_link({"summary": "Lunch with team", "location": "Cafe"}) is None
+    assert (
+        _extract_meet_link({"summary": "Lunch with team", "location": "Cafe"}) is None
+    )
 
 
 @pytest.mark.asyncio
@@ -230,7 +238,10 @@ async def test_calendar_events_endpoint_meet_filter(auth_override):
             assert res.status_code == 200
             data = res.json()
             assert len(data["events"]) == 1
-            assert data["events"][0]["hangout_link"] == "https://meet.google.com/abc-defg-hij"
+            assert (
+                data["events"][0]["hangout_link"]
+                == "https://meet.google.com/abc-defg-hij"
+            )
             mock_list.assert_called_once_with(
                 {"access_token": "valid-token"}, max_results=25, only_meet=True
             )

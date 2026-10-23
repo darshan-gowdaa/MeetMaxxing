@@ -23,9 +23,7 @@ from ..core.config import settings
 # Relax OAuthLib scope strictness to handle Google adding default openid/userinfo scopes
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
-MEET_URL_REGEX = re.compile(
-    r"https?://meet\.google\.com/[a-z0-9\-]+", re.IGNORECASE
-)
+MEET_URL_REGEX = re.compile(r"https?://meet\.google\.com/[a-z0-9\-]+", re.IGNORECASE)
 
 
 def _extract_email_from_jwt(id_token_jwt: str) -> str | None:

@@ -148,7 +148,6 @@ function GoogleCalendarContent() {
   const [calendarPrefs, setCalendarPrefs] = useState<CalendarPreferences>(
     DEFAULT_CALENDAR_PREFS
   );
-  const [prefsSaving, setPrefsSaving] = useState(false);
 
   // Synced Events states (Google Meet only)
   const [upcomingMeetEvents, setUpcomingMeetEvents] = useState<
@@ -314,8 +313,9 @@ function GoogleCalendarContent() {
       showMessage("Could not initialize Google OAuth consent flow", {
         variant: "error",
       });
-    } catch (e: any) {
-      showMessage(`Calendar connection error: ${e?.message || e}`, {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      showMessage(`Calendar connection error: ${msg}`, {
         variant: "error",
       });
     } finally {
@@ -368,7 +368,6 @@ function GoogleCalendarContent() {
     const updated = { ...calendarPrefs, ...newPrefs };
     setCalendarPrefs(updated);
     if (!token) return;
-    setPrefsSaving(true);
     try {
       const res = await fetch(`${API_URL}/api/calendar/preferences`, {
         method: "POST",
@@ -391,8 +390,6 @@ function GoogleCalendarContent() {
       showMessage("Calendar preference saved", { variant: "success" });
     } catch {
       showMessage("Failed to save preference", { variant: "error" });
-    } finally {
-      setPrefsSaving(false);
     }
   };
 
