@@ -251,23 +251,13 @@ export function AddKeyDialog({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="mb-1.5">
               <label
                 htmlFor="add-key-input"
                 className="block text-[13px] font-medium text-text-muted"
               >
                 API Key
               </label>
-              {consoleUrl && (
-                <a
-                  href={consoleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
-                >
-                  Get API Key ↗
-                </a>
-              )}
             </div>
             <div className="relative">
               <input
@@ -417,22 +407,34 @@ export function AddKeyDialog({
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={saving}
-              className="px-5 py-2 rounded-full hover:bg-surface2 text-[14px] font-medium text-text transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving || (patternValidation !== null && !patternValidation.isValid)}
-              className="px-6 py-2 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-all min-w-[100px] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm active:scale-[0.98]"
-            >
-              {saving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : "Save Key"}
-            </button>
+          <div className="flex items-center justify-between gap-3 pt-3">
+            {consoleUrl ? (
+              <a
+                href={consoleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+              >
+                Get key from console ↗
+              </a>
+            ) : <span />}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={saving}
+                className="px-5 py-2 rounded-full hover:bg-surface2 text-[14px] font-medium text-text transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || (patternValidation !== null && !patternValidation.isValid)}
+                className="px-6 py-2 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-all min-w-[100px] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm active:scale-[0.98]"
+              >
+                {saving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : "Save Key"}
+              </button>
+            </div>
           </div>
         </form>
       </motion.div>

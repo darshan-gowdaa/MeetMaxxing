@@ -24,7 +24,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   ];
 
   return (
-    <div className="flex flex-col md:flex-row w-full max-w-6xl mx-auto md:gap-6 lg:gap-10 pb-24">
+    <div className="flex flex-col md:flex-row w-full max-w-7xl mx-auto md:gap-6 lg:gap-8 pb-24">
       <nav className="w-full md:w-64 shrink-0 flex flex-col gap-2 sm:gap-3 sticky top-16 md:top-[80px] z-30 pt-3 md:pt-8 pb-3 md:pb-0 px-3 sm:px-4 md:pl-8 md:pr-0 self-start transition-all">
         <h2 className="text-xl sm:text-2xl font-black mb-1 md:mb-4 px-1 md:px-4 text-text tracking-tight">Settings</h2>
         <ul className="flex flex-nowrap md:flex-col gap-1.5 sm:gap-2 overflow-x-auto hide-scrollbar touch-pan-x bg-surface-container-low/70 backdrop-blur-xl rounded-[32px] p-2.5 sm:p-3 border border-outline-variant/15 shadow-none">
@@ -47,7 +47,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           })}
         </ul>
       </nav>
-      <main className="flex-1 min-w-0 px-4 md:px-8 md:pr-8 pt-6 md:pt-8">
+      <main className="flex-1 min-w-0">
         {children}
       </main>
     </div>

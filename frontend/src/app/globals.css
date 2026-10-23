@@ -157,6 +157,72 @@
   --grad-tertiary:             #dbb9fd1f; /* 12% */
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   HIGH CONTRAST ACCESSIBILITY MODE (WCAG AAA)
+   Provides high visual separation, reinforced borders, and max legibility.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root.high-contrast {
+  --background:                #ffffff;
+  --bg:                        #ffffff;
+  --surface-container-lowest:  #ffffff;
+  --surface-container-low:     #f8f8f8;
+  --surface:                   #ffffff;
+  --surface-container:         #f0f0f0;
+  --surface-container-high:    #e4e4e4;
+  --surface-container-highest: #d4d4d4;
+  --surface-dim:               #d4d4d4;
+  --foreground:                #000000;
+  --text:                      #000000;
+  --text-muted:                #111111;
+  --border:                    #000000;
+  --border-strong:             #000000;
+  --outline:                   #000000;
+  --outline-variant:           #000000;
+  --primary:                   #0033a0;
+  --on-primary:                #ffffff;
+  --primary-container:         #d0e2ff;
+  --on-primary-container:      #001440;
+}
+
+.dark.high-contrast,
+html.dark.high-contrast {
+  --background:                #000000;
+  --bg:                        #000000;
+  --surface-container-lowest:  #000000;
+  --surface-container-low:     #080808;
+  --surface:                   #0a0a0a;
+  --surface-container:         #121212;
+  --surface-container-high:    #181818;
+  --surface-container-highest: #222222;
+  --surface-dim:               #000000;
+  --foreground:                #ffffff;
+  --text:                      #ffffff;
+  --text-muted:                #f0f0f0;
+  --border:                    rgba(255, 255, 255, 0.45);
+  --border-strong:             #ffffff;
+  --outline:                   #ffffff;
+  --outline-variant:           rgba(255, 255, 255, 0.6);
+  --primary:                   #b8d5ff;
+  --on-primary:                #001c4e;
+  --primary-container:         #0047b3;
+  --on-primary-container:      #ffffff;
+}
+
+.high-contrast .border,
+.high-contrast [class*="border-outline-variant"],
+.high-contrast [class*="border-border"] {
+  border-color: currentColor !important;
+  opacity: 0.8 !important;
+}
+
+.high-contrast button,
+.high-contrast a,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  outline-offset: 2px !important;
+}
+
 /* ── Tailwind v4 theme mapping ────────────────────────────────────────────── */
 @theme inline {
   --font-sans: 'Google Sans', 'Google Sans Display', system-ui, sans-serif;

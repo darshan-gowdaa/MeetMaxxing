@@ -94,11 +94,17 @@ def _format_settings_response(user_data: dict) -> dict:
             ),
             "action_item_reminders": bool(
                 sub_notifs.get(
-                    "action_item_reminders", notifs.get("action_item_reminders", True)
+                    "action_item_reminders",
+                    sub_notifs.get(
+                        "action_items_due", notifs.get("action_item_reminders", True)
+                    ),
                 )
             ),
             "digest_time": str(
-                sub_notifs.get("digest_time", notifs.get("digest_time", "09:00"))
+                sub_notifs.get(
+                    "digest_time",
+                    sub_notifs.get("daily_digest_time", notifs.get("digest_time", "09:00")),
+                )
             ),
         },
         "org_name": str(notifs.get("org_name", user_data.get("org_name", ""))),
@@ -259,9 +265,27 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
             existing_sub_notifs[k] = new_notifs[k]
 
     if "notifications" in updates and isinstance(updates["notifications"], dict):
-        existing_sub_notifs.update(updates["notifications"])
+        client_notifs = dict(updates["notifications"])
+        if "action_items_due" in client_notifs:
+            client_notifs["action_item_reminders"] = bool(client_notifs["action_items_due"])
+        if "action_item_reminders" in client_notifs:
+            client_notifs["action_items_due"] = bool(client_notifs["action_item_reminders"])
+        if "prep_alerts_lead_time" in client_notifs:
+            val_clean = str(client_notifs["prep_alerts_lead_time"]).replace("m", "").strip()
+            try:
+                client_notifs["prep_lead_time_minutes"] = int(val_clean)
+            except ValueError:
+                pass
+        if "prep_lead_time_minutes" in client_notifs:
+            client_notifs["prep_alerts_lead_time"] = f"{client_notifs['prep_lead_time_minutes']}m"
+        if "daily_digest_time" in client_notifs:
+            client_notifs["digest_time"] = str(client_notifs["daily_digest_time"])
+        if "digest_time" in client_notifs:
+            client_notifs["daily_digest_time"] = str(client_notifs["digest_time"])
+
+        existing_sub_notifs.update(client_notifs)
         new_notifs["notifications"] = existing_sub_notifs
-        new_notifs.update(updates["notifications"])
+        new_notifs.update(client_notifs)
     elif "notifications" not in new_notifs:
         new_notifs["notifications"] = existing_sub_notifs
 

@@ -2,7 +2,7 @@
 
 export function CardSkeleton() {
   return (
-    <div className="rounded-[32px] border border-border bg-surface-container p-5 flex flex-col h-[220px] justify-between relative overflow-hidden animate-pulse">
+    <div className="rounded-[32px] border border-outline-variant/15 bg-surface-container-low p-5 flex flex-col h-[220px] justify-between relative overflow-hidden animate-pulse shadow-none">
       {/* Top chip & menu skeleton */}
       <div className="flex items-center justify-between">
         <div className="w-28 h-6 rounded-full bg-surface-container-highest" />
@@ -22,7 +22,7 @@ export function CardSkeleton() {
       </div>
 
       {/* Footer skeleton */}
-      <div className="pt-3 border-t border-border/50 flex items-center justify-between mt-auto">
+      <div className="pt-3 border-t border-outline-variant/15 flex items-center justify-between mt-auto">
         <div className="w-24 h-4 rounded-full bg-surface-container-highest" />
         <div className="w-7 h-7 rounded-full bg-surface-container-highest" />
       </div>

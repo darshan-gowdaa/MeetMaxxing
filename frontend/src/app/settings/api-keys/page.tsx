@@ -11,6 +11,7 @@ import { ProviderCard } from "./_components/organisms/ProviderCard";
 import { ModelSelection } from "./_components/organisms/ModelSelection";
 import { AddKeyDialog } from "./_components/organisms/AddKeyDialog";
 import { ProviderHelpDrawer } from "./_components/organisms/ProviderHelpDrawer";
+import { ModelSelectionSkeleton } from "./_components/organisms/ModelSelectionSkeleton";
 import { ProviderListSkeleton } from "../../../components/organisms/skeletons/ProviderListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -112,16 +113,20 @@ export default function ApiKeysPage() {
     }
   };
 
- return (
- <div className="flex flex-col gap-8 w-full max-w-3xl">
- <ApiKeysHero onAdd={handleScrollToProviders} />
+  return (
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <ApiKeysHero onAdd={handleScrollToProviders} />
 
- <ModelSelection keys={keys} onAddKey={handleScrollToProviders} />
+      {loading ? (
+        <>
+          <ModelSelectionSkeleton />
+          <ProviderListSkeleton />
+        </>
+      ) : (
+        <>
+          <ModelSelection keys={keys} onAddKey={handleScrollToProviders} />
 
- {loading ? (
- <ProviderListSkeleton />
- ) : (
- <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8">
  {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
  <div id="configured-providers" className="flex flex-col gap-3 scroll-mt-24">
  <h2 className="text-[15px] font-bold text-text px-2">Configured Providers</h2>
@@ -176,6 +181,7 @@ export default function ApiKeysPage() {
  </div>
  </div>
  </div>
+ </>
  )}
 
  {/* Dialogs & Drawers */}

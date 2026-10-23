@@ -622,7 +622,14 @@ export default function MeetingHeader({
           onSave={handleSaveTitle}
           onCancel={() => setIsEditOpen(false)}
           busy={editBusy}
-          onSuggestAiTitle={() => suggestMeetingTitle(meeting.id)}
+          onSuggestAiTitle={() =>
+            suggestMeetingTitle(meeting.id, {
+              summary: meeting.summary,
+              current_title: meeting.title,
+              meet_code: meeting.google_meet_link,
+              decisions: meeting.decisions,
+            })
+          }
         />
       )}
 

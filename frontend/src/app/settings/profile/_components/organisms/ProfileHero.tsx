@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
@@ -9,22 +9,56 @@ import {
   RiBuildingLine,
   RiUserLine,
   RiUpload2Line,
-  RiGoogleFill,
   RiSparklingLine,
   RiCameraLine,
+  RiMailLine,
+  RiCheckboxCircleFill,
+  RiArrowGoBackLine,
+  RiCheckLine,
 } from "@remixicon/react";
+
+/** Official Google 4-color vector SVG */
+function GoogleIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
 
 export const ProfileHero = () => {
   const { user, session } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState<string>(user?.user_metadata?.name || "");
-  const [orgName, setOrgName] = useState<string>(
-    user?.user_metadata?.org_name || user?.user_metadata?.organization || ""
-  );
-  const [avatarUrl, setAvatarUrl] = useState<string>(
-    user?.user_metadata?.avatar_url || ""
-  );
   const { showMessage } = useSnackbar();
+
+  // Form states
+  const [name, setName] = useState<string>("");
+  const [orgName, setOrgName] = useState<string>("");
+  const [savedName, setSavedName] = useState<string>("");
+  const [savedOrgName, setSavedOrgName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [imgError, setImgError] = useState(false);
+
+  // Status & loading states
+  const [saving, setSaving] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper to obtain a valid access token for backend calls
   const getAccessToken = useCallback(async () => {
@@ -33,50 +67,102 @@ export const ProfileHero = () => {
     return data?.session?.access_token || null;
   }, [session?.access_token]);
 
-  // Sync profile/avatar data with backend database
-  const syncWithBackend = async (payload: {
-    avatar_url?: string;
-    name?: string;
-    org_name?: string;
-  }) => {
-    const token = await getAccessToken();
-    if (!token) return;
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+  // Sync avatar changes with backend endpoints (both POST /api/settings/avatar and PATCH /api/settings/)
+  const syncAvatarWithBackend = useCallback(
+    async (url: string) => {
+      const token = await getAccessToken();
+      if (!token) return;
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
-    try {
-      await fetch(`${backendUrl}/api/settings/`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch (err) {
-      console.error("[ProfileHero] Backend sync error:", err);
-    }
-  };
+      await Promise.allSettled([
+        fetch(`${backendUrl}/api/settings/avatar`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ avatar_url: url }),
+        }),
+        fetch(`${backendUrl}/api/settings/`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ avatar_url: url }),
+        }),
+      ]);
+    },
+    [getAccessToken]
+  );
 
-  // Google avatar detection
-  const googleAvatar: string | undefined | null =
-    user?.identities?.find((i) => i.provider === "google")?.identity_data?.avatar_url ||
-    user?.identities?.find((i) => i.provider === "google")?.identity_data?.picture ||
-    (user?.app_metadata?.provider === "google" ? user?.user_metadata?.avatar_url : null) ||
-    user?.user_metadata?.picture;
+  // Sync profile details with PATCH /api/settings/
+  const syncProfileWithBackend = useCallback(
+    async (payload: { name: string; org_name: string }) => {
+      const token = await getAccessToken();
+      if (!token) return;
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+
+      try {
+        await fetch(`${backendUrl}/api/settings/`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: payload.name,
+            display_name: payload.name,
+            org_name: payload.org_name,
+          }),
+        });
+      } catch (err) {
+        console.error("[ProfileHero] Backend sync error:", err);
+      }
+    },
+    [getAccessToken]
+  );
+
+  // Google OAuth identity & avatar detection
+  const googleIdentity = user?.identities?.find((i) => i.provider === "google");
+  const isGoogleUser =
+    user?.app_metadata?.provider === "google" || Boolean(googleIdentity);
+
+  const googleAvatar: string | null =
+    (googleIdentity?.identity_data?.avatar_url as string) ||
+    (googleIdentity?.identity_data?.picture as string) ||
+    (user?.app_metadata?.provider === "google"
+      ? (user?.user_metadata?.avatar_url as string)
+      : null) ||
+    (user?.user_metadata?.picture as string) ||
+    null;
+
+  const isEmailVerified = Boolean(
+    user?.email_confirmed_at || user?.confirmed_at || isGoogleUser
+  );
 
   // Hydrate from user metadata whenever user auth changes
   useEffect(() => {
     if (user?.user_metadata?.avatar_url) {
       setAvatarUrl(user.user_metadata.avatar_url);
     }
-    if (user?.user_metadata?.name) {
-      setName((prev: string) => prev || (user.user_metadata.name as string));
+    const metaName =
+      (user?.user_metadata?.name as string) ||
+      (user?.user_metadata?.full_name as string) ||
+      "";
+    if (metaName) {
+      setName((prev) => prev || metaName);
+      setSavedName((prev) => prev || metaName);
     }
     const metaOrg =
-      user?.user_metadata?.org_name || user?.user_metadata?.organization;
+      (user?.user_metadata?.org_name as string) ||
+      (user?.user_metadata?.organization as string) ||
+      "";
     if (metaOrg) {
-      setOrgName((prev: string) => prev || (metaOrg as string));
+      setOrgName((prev) => prev || metaOrg);
+      setSavedOrgName((prev) => prev || metaOrg);
     }
   }, [user]);
 
@@ -98,18 +184,22 @@ export const ProfileHero = () => {
         const data = await res.json();
         if (!data || !isMounted) return;
 
-        if (!user?.user_metadata?.name && data.name) {
-          setName((prev: string) => prev || String(data.name));
+        if (data.name) {
+          setName((prev) => {
+            const val = prev || String(data.name);
+            setSavedName((s) => s || String(data.name));
+            return val;
+          });
         }
-        if (
-          !user?.user_metadata?.org_name &&
-          !user?.user_metadata?.organization &&
-          data.org_name
-        ) {
-          setOrgName((prev: string) => prev || String(data.org_name));
+        if (data.org_name) {
+          setOrgName((prev) => {
+            const val = prev || String(data.org_name);
+            setSavedOrgName((s) => s || String(data.org_name));
+            return val;
+          });
         }
-        if (!user?.user_metadata?.avatar_url && data.avatar_url) {
-          setAvatarUrl((prev: string) => prev || String(data.avatar_url));
+        if (data.avatar_url) {
+          setAvatarUrl((prev) => prev || String(data.avatar_url));
         }
       } catch (err) {
         console.error("[ProfileHero] Failed to hydrate profile settings:", err);
@@ -121,32 +211,48 @@ export const ProfileHero = () => {
     return () => {
       isMounted = false;
     };
-  }, [user, getAccessToken]);
+  }, [getAccessToken]);
 
+  // Check if form has unsaved modifications
+  const hasChanges =
+    name.trim() !== savedName.trim() || orgName.trim() !== savedOrgName.trim();
+
+  // Save changes handler for name and organisation
   const handleUpdateProfile = async () => {
     if (!user) return;
-    setLoading(true);
+    setSaving(true);
+
     const { error } = await supabase.auth.updateUser({
       data: {
-        name,
-        org_name: orgName,
-        organization: orgName,
+        name: name.trim(),
+        full_name: name.trim(),
+        org_name: orgName.trim(),
+        organization: orgName.trim(),
       },
     });
 
     if (!error) {
-      await syncWithBackend({ name, org_name: orgName });
-      setLoading(false);
+      await syncProfileWithBackend({ name: name.trim(), org_name: orgName.trim() });
+      setSavedName(name.trim());
+      setSavedOrgName(orgName.trim());
+      setSaving(false);
       showMessage("Profile updated successfully", { variant: "success" });
     } else {
-      setLoading(false);
+      setSaving(false);
       showMessage("Failed to update profile", { variant: "error" });
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  // Discard changes
+  const handleDiscard = () => {
+    setName(savedName);
+    setOrgName(savedOrgName);
+    showMessage("Unsaved changes discarded", { variant: "default" });
+  };
+
+  // Process and upload an avatar file
+  const processAvatarFile = async (file: File) => {
+    if (!user) return;
 
     const MAX_SIZE = 5 * 1024 * 1024;
     const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -158,235 +264,466 @@ export const ProfileHero = () => {
       return;
     }
     if (!ALLOWED_TYPES.includes(file.type) || !ALLOWED_EXTS.includes(fileExt)) {
-      showMessage("Please upload a valid image (JPG, PNG, WebP)", { variant: "error" });
+      showMessage("Please upload a valid image (JPG, PNG, WebP, GIF)", {
+        variant: "error",
+      });
       return;
     }
 
-    setLoading(true);
+    setAvatarLoading(true);
+    const token = await getAccessToken();
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+    let publicUrl: string | null = null;
 
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error(uploadError);
-      setLoading(false);
-      showMessage("Failed to upload avatar", { variant: "error" });
-      return;
+    // 1. Attempt backend upload via POST /api/settings/avatar with multipart FormData
+    if (token) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const resp = await fetch(`${backendUrl}/api/settings/avatar`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json?.avatar_url) {
+            publicUrl = json.avatar_url;
+          }
+        }
+      } catch (err) {
+        console.warn(
+          "[ProfileHero] Backend multipart avatar upload failed, attempting Supabase storage:",
+          err
+        );
+      }
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    // 2. Fallback to Supabase client storage if backend direct upload didn't return url
+    if (!publicUrl) {
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: { avatar_url: publicUrl },
-    });
-    if (!updateError) {
-      setAvatarUrl(publicUrl);
-      await syncWithBackend({ avatar_url: publicUrl });
-      setLoading(false);
-      showMessage("Avatar updated", { variant: "success" });
-    } else {
-      setLoading(false);
-      showMessage("Failed to update avatar", { variant: "error" });
+      if (uploadError) {
+        console.error("[ProfileHero] Storage upload error:", uploadError);
+        setAvatarLoading(false);
+        showMessage("Failed to upload avatar", { variant: "error" });
+        return;
+      }
+
+      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
+      publicUrl = data.publicUrl;
+    }
+
+    // 3. Two-way sync to auth metadata and backend settings
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+      if (!updateError) {
+        setAvatarUrl(publicUrl);
+        setImgError(false);
+        await syncAvatarWithBackend(publicUrl);
+        showMessage("Avatar updated successfully", { variant: "success" });
+      } else {
+        throw updateError;
+      }
+    } catch (err) {
+      console.error("[ProfileHero] Avatar sync error:", err);
+      showMessage("Failed to update avatar in profile", { variant: "error" });
+    } finally {
+      setAvatarLoading(false);
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    await processAvatarFile(file);
+  };
+
+  // Drag and drop event handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processAvatarFile(file);
+    }
+  };
+
+  // Reset to Google Picture
   const handleResetToGoogle = async () => {
     if (!user || !googleAvatar) return;
-    setLoading(true);
-    const { error } = await supabase.auth.updateUser({
-      data: { avatar_url: googleAvatar },
-    });
-    if (!error) {
-      setAvatarUrl(googleAvatar);
-      await syncWithBackend({ avatar_url: googleAvatar });
-      setLoading(false);
-      showMessage("Avatar reset to Google picture", { variant: "success" });
-    } else {
-      setLoading(false);
+    setAvatarLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { avatar_url: googleAvatar },
+      });
+      if (!error) {
+        setAvatarUrl(googleAvatar);
+        setImgError(false);
+        await syncAvatarWithBackend(googleAvatar);
+        showMessage("Avatar reset to Google Account picture", { variant: "success" });
+      } else {
+        throw error;
+      }
+    } catch {
       showMessage("Failed to reset avatar to Google picture", { variant: "error" });
+    } finally {
+      setAvatarLoading(false);
     }
   };
 
+  // Generate Initials Avatar
   const handleGenerateInitials = async () => {
     if (!user) return;
-    setLoading(true);
-    const seed = (
-      name ||
-      user?.user_metadata?.name ||
-      user?.email?.split("@")[0] ||
-      "User"
-    ).trim();
-    const initialsUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
-    const { error } = await supabase.auth.updateUser({
-      data: { avatar_url: initialsUrl },
-    });
-    if (!error) {
-      setAvatarUrl(initialsUrl);
-      await syncWithBackend({ avatar_url: initialsUrl });
-      setLoading(false);
-      showMessage("Initials avatar generated", { variant: "success" });
-    } else {
-      setLoading(false);
+    setAvatarLoading(true);
+    try {
+      const seed = (
+        name ||
+        user?.user_metadata?.name ||
+        user?.email?.split("@")[0] ||
+        "User"
+      ).trim();
+      const initialsUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+        seed
+      )}&backgroundColor=0b57d0,7252a3,146c2e,9e6c00&textColor=ffffff&fontSize=42&fontWeight=600`;
+
+      const { error } = await supabase.auth.updateUser({
+        data: { avatar_url: initialsUrl },
+      });
+      if (!error) {
+        setAvatarUrl(initialsUrl);
+        setImgError(false);
+        await syncAvatarWithBackend(initialsUrl);
+        showMessage("Initials avatar generated", { variant: "success" });
+      } else {
+        throw error;
+      }
+    } catch {
       showMessage("Failed to generate initials avatar", { variant: "error" });
+    } finally {
+      setAvatarLoading(false);
     }
   };
 
+  // Reset to default fallback avatar
   const handleResetAvatar = async () => {
     if (!user) return;
-    setLoading(true);
-    const fallbackUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.id || "fallback")}`;
-    const { error } = await supabase.auth.updateUser({
-      data: { avatar_url: fallbackUrl },
-    });
-    if (!error) {
-      setAvatarUrl(fallbackUrl);
-      await syncWithBackend({ avatar_url: fallbackUrl });
-      setLoading(false);
-      showMessage("Avatar reset to default fallback", { variant: "success" });
-    } else {
-      setLoading(false);
+    setAvatarLoading(true);
+    try {
+      const fallbackUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+        user.email || user.id || "fallback"
+      )}`;
+      const { error } = await supabase.auth.updateUser({
+        data: { avatar_url: fallbackUrl },
+      });
+      if (!error) {
+        setAvatarUrl(fallbackUrl);
+        setImgError(false);
+        await syncAvatarWithBackend(fallbackUrl);
+        showMessage("Avatar reset to default", { variant: "success" });
+      } else {
+        throw error;
+      }
+    } catch {
       showMessage("Failed to reset avatar", { variant: "error" });
+    } finally {
+      setAvatarLoading(false);
     }
   };
 
   const displayedAvatar =
     avatarUrl ||
-    user?.user_metadata?.avatar_url ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.email || user?.id || "fallback")}`;
+    (user?.user_metadata?.avatar_url as string) ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+      user?.email || user?.id || "fallback"
+    )}`;
 
   return (
-    <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-center md:items-start p-6 sm:p-8 rounded-[28px] bg-surface-container-low border border-outline-variant/15 shadow-none mb-2">
-      {/* Avatar column */}
-      <div className="flex flex-col items-center md:items-start gap-3 shrink-0">
-        <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 hover:border-primary/60 transition-all duration-200 bg-surface shrink-0 shadow-xs">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={displayedAvatar}
-            alt="Avatar"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <label
-            htmlFor="avatar-file-input"
-            className="absolute inset-0 bg-surface-container-highest/85 text-on-surface backdrop-blur-[2px] flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 cursor-pointer transition-opacity text-xs font-semibold gap-1"
-          >
-            <RiCameraLine className="w-4 h-4 text-primary" />
-            <span>Edit</span>
-          </label>
-        </div>
-
-        <input
-          id="avatar-file-input"
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          aria-label="Upload avatar"
-          onChange={handleAvatarUpload}
-          disabled={loading}
-        />
-
-        {/* Clean tonal buttons */}
-        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 max-w-[280px]">
-          <label
-            htmlFor="avatar-file-input"
-            className={`rounded-full px-3.5 py-1.5 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer ${
-              loading ? "opacity-50 pointer-events-none" : ""
+    <div className="rounded-[32px] bg-surface-container-low border border-outline-variant/15 p-6 sm:p-8 lg:p-10 transition-all flex flex-col gap-8 shadow-none">
+      {/* Top Flex Section: Avatar Column + Details Column */}
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center lg:items-start">
+        {/* Avatar Upload Section */}
+        <div className="flex flex-col items-center lg:items-start gap-4 shrink-0 w-full lg:w-auto">
+          {/* Prominent expressive avatar display (96px or 112px) with smooth ring & hover overlay */}
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => !avatarLoading && fileInputRef.current?.click()}
+            className={`relative group w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden shrink-0 cursor-pointer shadow-md transition-all duration-300 ${
+              isDragging
+                ? "ring-4 ring-primary ring-offset-2 ring-offset-surface-container-low scale-105"
+                : "ring-4 ring-surface-container-high/60 hover:ring-primary/40"
             }`}
+            role="button"
+            tabIndex={0}
+            aria-label="Upload profile photo"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
           >
-            <RiUpload2Line className="w-3.5 h-3.5" />
-            Upload Photo
-          </label>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={
+                imgError
+                  ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                      user?.email || "fallback"
+                    )}`
+                  : displayedAvatar
+              }
+              alt={name ? `${name}'s avatar` : "Profile Avatar"}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
 
-          {googleAvatar && (
+            {/* Hover Camera Overlay with smooth fade-in */}
+            {!avatarLoading && !isDragging && (
+              <div className="absolute inset-0 bg-surface-container-highest/80 backdrop-blur-[2px] flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 text-xs font-semibold text-text gap-1">
+                <RiCameraLine className="w-5 h-5 text-primary" />
+                <span className="text-[11px] tracking-wide">Change</span>
+              </div>
+            )}
+
+            {/* Dragging Active Overlay */}
+            {isDragging && (
+              <div className="absolute inset-0 bg-primary/25 backdrop-blur-[2px] flex flex-col items-center justify-center text-primary text-xs font-bold gap-1 animate-pulse">
+                <RiUpload2Line className="w-6 h-6" />
+                <span className="text-[10px] uppercase tracking-wider">Drop here</span>
+              </div>
+            )}
+
+            {/* Loading Spinner Overlay */}
+            {avatarLoading && (
+              <div className="absolute inset-0 bg-surface-container-highest/85 backdrop-blur-[2px] flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1.5">
+                <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="text-[10px] tracking-wide text-text">Updating...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            id="avatar-file-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            aria-label="Upload avatar file"
+            onChange={handleAvatarUpload}
+            disabled={avatarLoading}
+          />
+
+          {/* Action button cluster */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 max-w-[280px]">
+            {/* Upload Photo pill */}
             <button
               type="button"
-              onClick={handleResetToGoogle}
-              disabled={loading}
-              className="rounded-full px-3.5 py-1.5 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarLoading}
+              className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
             >
-              <RiGoogleFill className="w-3.5 h-3.5 text-[#4285F4]" />
-              Reset to Google Picture
+              <RiUpload2Line className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>Upload Photo</span>
             </button>
-          )}
 
+            {/* Reset to Google Account pill (visible if Google OAuth picture detected) */}
+            {googleAvatar && (
+              <button
+                type="button"
+                onClick={handleResetToGoogle}
+                disabled={avatarLoading}
+                className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+              >
+                <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>Reset to Google</span>
+              </button>
+            )}
+
+            {/* Initials Avatar pill */}
+            <button
+              type="button"
+              onClick={handleGenerateInitials}
+              disabled={avatarLoading}
+              className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+            >
+              <RiSparklingLine className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>Initials Avatar</span>
+            </button>
+          </div>
+
+          {/* Reset to default fallback text action */}
           <button
             type="button"
-            onClick={handleGenerateInitials}
-            disabled={loading}
-            className="rounded-full px-3.5 py-1.5 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            onClick={handleResetAvatar}
+            disabled={avatarLoading}
+            className="text-xs text-text-variant hover:text-text transition-colors flex items-center gap-1.5 font-medium cursor-pointer disabled:opacity-50"
           >
-            <RiSparklingLine className="w-3.5 h-3.5 text-primary" />
-            Initials
+            <RiRefreshLine className="w-3.5 h-3.5" />
+            <span>Reset to Default</span>
           </button>
         </div>
+
+        {/* Form Fields & Account Details Column */}
+        <div className="flex-1 flex flex-col gap-6 w-full">
+          {/* Name & Organisation Fields Container */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            {/* Full Name field */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="display-name"
+                  className="text-xs font-semibold uppercase tracking-wider text-text-variant"
+                >
+                  Full Name
+                </label>
+              </div>
+              <div className="rounded-2xl bg-surface-container border border-outline-variant/20 px-4 py-3.5 focus-within:border-primary text-text text-sm transition-all flex items-center gap-3 shadow-xs">
+                <RiUserLine className="w-5 h-5 text-text-variant shrink-0" />
+                <input
+                  id="display-name"
+                  type="text"
+                  value={name}
+                  placeholder="Your Name"
+                  autoComplete="name"
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-transparent border-none outline-none text-text placeholder:text-text-variant/50 text-sm font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Organisation field (with subtle Optional chip) */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="org-name"
+                  className="text-xs font-semibold uppercase tracking-wider text-text-variant"
+                >
+                  Organization
+                </label>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-container-high/60 text-text-variant border border-outline-variant/20">
+                  Optional
+                </span>
+              </div>
+              <div className="rounded-2xl bg-surface-container border border-outline-variant/20 px-4 py-3.5 focus-within:border-primary text-text text-sm transition-all flex items-center gap-3 shadow-xs">
+                <RiBuildingLine className="w-5 h-5 text-text-variant shrink-0" />
+                <input
+                  id="org-name"
+                  type="text"
+                  value={orgName}
+                  placeholder="Company or Team name"
+                  autoComplete="organization"
+                  onChange={(e) => setOrgName(e.target.value)}
+                  className="w-full bg-transparent border-none outline-none text-text placeholder:text-text-variant/50 text-sm font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Account Details Section */}
+          <div className="rounded-2xl bg-surface-container/60 border border-outline-variant/15 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-surface-container-high/60 flex items-center justify-center shrink-0 border border-outline-variant/15 text-primary">
+                <RiMailLine className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-variant">
+                  Account Email
+                </span>
+                <span className="text-sm font-medium text-text truncate">
+                  {user?.email || "No email detected"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {/* Email row with verified badge chip */}
+              {isEmailVerified && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-container/30 border border-success/30 text-success text-xs font-semibold">
+                  <RiCheckboxCircleFill className="w-3.5 h-3.5 shrink-0" />
+                  <span>Verified</span>
+                </div>
+              )}
+
+              {/* Auth Provider pill */}
+              {isGoogleUser ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high/80 border border-outline-variant/20 text-text text-xs font-semibold shadow-xs">
+                  <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
+                  <span>Google Account</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high/80 border border-outline-variant/20 text-text text-xs font-semibold shadow-xs">
+                  <RiMailLine className="w-3.5 h-3.5 text-text-variant shrink-0" />
+                  <span>Email &amp; Password</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Bar: Discard / Reset button and M3 Filled Save Changes button */}
+      <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-5 border-t border-outline-variant/15">
+        <button
+          type="button"
+          onClick={handleDiscard}
+          disabled={!hasChanges || saving}
+          className="w-full sm:w-auto rounded-full px-6 py-3 bg-surface-container hover:bg-surface-container-high text-text active:scale-[0.98] transition-all text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-outline-variant/20"
+        >
+          <RiArrowGoBackLine className="w-4 h-4 text-text-variant" />
+          <span>Discard</span>
+        </button>
 
         <button
           type="button"
-          onClick={handleResetAvatar}
-          disabled={loading}
-          className="text-xs text-text-muted hover:text-primary transition-colors flex items-center gap-1 font-medium cursor-pointer disabled:opacity-50 mt-0.5"
+          onClick={handleUpdateProfile}
+          disabled={saving || !hasChanges}
+          className="w-full sm:w-auto rounded-full px-8 py-3 bg-primary text-on-primary font-bold shadow-sm hover:brightness-110 active:scale-[0.98] transition-all text-sm inline-flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <RiRefreshLine className="w-3.5 h-3.5" />
-          Reset Avatar
+          {saving ? (
+            <>
+              <span className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+              <span>Saving Changes...</span>
+            </>
+          ) : (
+            <>
+              <RiCheckLine className="w-4 h-4" />
+              <span>Save Changes</span>
+            </>
+          )}
         </button>
-      </div>
-
-      {/* Profile Form Details */}
-      <div className="flex-1 flex flex-col gap-4 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="display-name"
-              className="text-[13px] font-bold text-text flex items-center gap-1.5"
-            >
-              <RiUserLine className="w-4 h-4 text-primary" /> Display Name
-            </label>
-            <input
-              id="display-name"
-              type="text"
-              value={name}
-              placeholder="Your Name"
-              autoComplete="name"
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="org-name"
-              className="text-[13px] font-bold text-text flex items-center gap-1.5"
-            >
-              <RiBuildingLine className="w-4 h-4 text-primary" /> Organization Name
-            </label>
-            <input
-              id="org-name"
-              type="text"
-              value={orgName}
-              placeholder="Company or Team name"
-              autoComplete="organization"
-              onChange={(e) => setOrgName(e.target.value)}
-              className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          <p className="text-[13px] text-text-muted font-mono">{user?.email}</p>
-          <button
-            type="button"
-            onClick={handleUpdateProfile}
-            disabled={loading}
-            className="w-full sm:w-auto rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center justify-center cursor-pointer"
-          >
-            {loading ? "Saving…" : "Save Profile"}
-          </button>
-        </div>
       </div>
     </div>
   );

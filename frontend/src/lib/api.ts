@@ -152,18 +152,103 @@ export async function updateMeeting(id: string, updates: Record<string, string>,
  return safeParse(text);
 }
 
+export interface SuggestMeetingTitleContext {
+  summary?: string;
+  current_title?: string;
+  meet_code?: string;
+  decisions?: unknown[];
+}
+
 export async function suggestMeetingTitle(
   id: string,
+  meetingContext?: SuggestMeetingTitleContext | string,
   token?: string
 ): Promise<{ suggested_title: string; alternatives?: string[] }> {
-  const authToken = await getToken(token);
-  const res = await fetch(`${BACKEND_URL}/dashboard/meetings/${id}/suggest-title`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${authToken}` },
-  });
-  if (!res.ok) throw await apiError(res, "Failed to suggest title");
-  const text = await res.text();
-  return safeParse(text, { suggested_title: "", alternatives: [] });
+  let ctx: SuggestMeetingTitleContext | undefined;
+  let authTokenParam = token;
+  if (typeof meetingContext === "string") {
+    authTokenParam = meetingContext;
+    ctx = undefined;
+  } else {
+    ctx = meetingContext;
+  }
+
+  const generateFallback = () => {
+    let fallbackTitle = "";
+    const summary = (ctx?.summary || "").trim();
+    const currentTitle = (ctx?.current_title || "").trim();
+    const meetCode = (ctx?.meet_code || "").trim();
+
+    if (summary) {
+      const firstSent = summary.split(".")[0].trim();
+      fallbackTitle = firstSent.length > 50 ? firstSent.slice(0, 47) + "..." : firstSent;
+    } else if (currentTitle && currentTitle !== "Untitled Meeting") {
+      fallbackTitle = currentTitle;
+    } else if (meetCode) {
+      const clean = meetCode.replace("https://meet.google.com/", "").replace(/^\/+|\/+$/g, "");
+      fallbackTitle = clean ? `Sync: ${clean}` : "Team Discussion & Sync";
+    } else {
+      fallbackTitle = "Team Discussion & Sync";
+    }
+
+    const alternatives = [fallbackTitle];
+    if (summary && fallbackTitle !== "Team Discussion & Sync") {
+      alternatives.push("Strategic Sync & Action Items", "Project Review");
+    } else {
+      alternatives.push("Weekly Standup", "Technical Sync");
+    }
+
+    return {
+      suggested_title: fallbackTitle,
+      alternatives: alternatives.slice(0, 3),
+    };
+  };
+
+  try {
+    const authToken = await getToken(authTokenParam);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
+    }
+
+    const body = JSON.stringify(ctx || {});
+    const endpoints = [
+      `${BACKEND_URL}/dashboard/meetings/${id}/suggest-title`,
+      `${BACKEND_URL}/api/dashboard/meetings/${id}/suggest-title`,
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers,
+          body,
+        });
+
+        if (res.ok) {
+          const text = await res.text();
+          const parsed = safeParse(text, null) as {
+            suggested_title?: string;
+            alternatives?: string[];
+          } | null;
+          if (parsed && parsed.suggested_title) {
+            return {
+              suggested_title: parsed.suggested_title,
+              alternatives: parsed.alternatives || [parsed.suggested_title],
+            };
+          }
+        }
+      } catch {
+        // try next endpoint
+      }
+    }
+
+    return generateFallback();
+  } catch {
+    return generateFallback();
+  }
 }
 
 export async function endMeeting(id: string) {

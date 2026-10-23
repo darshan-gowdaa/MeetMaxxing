@@ -7,7 +7,7 @@ export default function MemoryLoading() {
     <div className="flex flex-col min-h-screen bg-bg" aria-hidden="true">
       <div className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
         {/* Hero */}
-        <div className="rounded-[32px] bg-surface-container border border-border overflow-hidden p-8 flex flex-col items-center gap-4">
+        <div className="rounded-[32px] bg-surface-container-low border border-outline-variant/15 overflow-hidden p-8 flex flex-col items-center gap-4">
           <div className="md3-skeleton w-14 h-14 rounded-[20px]" />
           <div className="flex flex-col items-center gap-2 w-full">
             <div className="md3-skeleton h-6 w-56 max-w-full" />

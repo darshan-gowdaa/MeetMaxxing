@@ -28,6 +28,8 @@ export interface SelectableGridProps<T> {
   loading?: boolean;
   skeletonCount?: number;
   groupBy?: (item: T) => string;
+  gridClassName?: string;
+  compact?: boolean;
 }
 
 export function SelectableGrid<T>({
@@ -43,6 +45,8 @@ export function SelectableGrid<T>({
   loading = false,
   skeletonCount = 6,
   groupBy,
+  gridClassName,
+  compact = false,
 }: SelectableGridProps<T>) {
   
   const {
@@ -157,7 +161,7 @@ export function SelectableGrid<T>({
                 <h3 className="text-[13px] font-bold text-text-muted tracking-wider select-none">{group.title}</h3>
               </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={gridClassName || (compact ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")}>
                   {group.items.map((item) => {
                     const key = getKey(item);
                     const isSelected = selectedKeys.has(key);

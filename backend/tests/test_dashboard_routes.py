@@ -5,6 +5,7 @@ from backend.main import app
 from backend.core.auth import get_current_user
 
 VALID_MEETING_ID = "11111111-2222-3333-4444-555555555555"
+DIFFERENT_ORG_MEETING_ID = "22222222-3333-4444-5555-666666666666"
 
 
 class MockTable:
@@ -63,7 +64,16 @@ def mock_db():
                 "summary": "Audio and connection technical check. Speaker tested microphone setup with zero issues.",
                 "decisions": [{"text": "Proceed with deployment"}],
                 "action_items": [],
-            }
+            },
+            {
+                "id": DIFFERENT_ORG_MEETING_ID,
+                "org_id": "other-org-99",
+                "title": "Cross Org Sync",
+                "google_meet_link": "https://meet.google.com/abc-defg-hij",
+                "summary": "Cross org quarterly product review and strategic priorities.",
+                "decisions": [{"text": "Launch Q3"}],
+                "action_items": [],
+            },
         ]
     }
     return MockSupabase(store)
@@ -103,3 +113,41 @@ def test_suggest_meeting_title_not_found(client):
         "/dashboard/meetings/99999999-9999-9999-9999-999999999999/suggest-title"
     )
     assert resp.status_code == 404
+
+
+def test_suggest_meeting_title_api_prefix(client):
+    resp = client.post(f"/api/dashboard/meetings/{VALID_MEETING_ID}/suggest-title")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "suggested_title" in data
+    assert isinstance(data["suggested_title"], str)
+
+
+def test_suggest_meeting_title_org_fallback(client):
+    # Meeting belongs to "other-org-99", user belongs to "test-org-1"
+    resp = client.post(f"/dashboard/meetings/{DIFFERENT_ORG_MEETING_ID}/suggest-title")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "suggested_title" in data
+    assert isinstance(data["suggested_title"], str)
+
+
+def test_suggest_meeting_title_payload_fallback(client):
+    # Non-existent meeting ID, but client provides meetingContext in body
+    payload = {
+        "summary": "Sprint planning for mobile app redesign and release schedule.",
+        "current_title": "Sprint Sync",
+        "meet_code": "https://meet.google.com/xyz-uvw-rst",
+        "decisions": [{"text": "Ship v2 next Tuesday"}],
+    }
+    resp = client.post(
+        "/dashboard/meetings/99999999-9999-9999-9999-999999999999/suggest-title",
+        json=payload,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "suggested_title" in data
+    assert isinstance(data["suggested_title"], str)
+    assert len(data["suggested_title"]) > 0
+    assert "alternatives" in data
+    assert isinstance(data["alternatives"], list)

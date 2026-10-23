@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   RiVideoChatLine,
   RiTimeLine,
@@ -22,6 +23,27 @@ import FloatingPillToolbar from "@/components/molecules/FloatingPillToolbar";
 import { useDashboardManager } from "./_hooks/useDashboardManager";
 
 export default function Dashboard() {
+  const [compactCards, setCompactCards] = useState(false);
+
+  useEffect(() => {
+    const readCompact = () => {
+      try {
+        setCompactCards(localStorage.getItem("meetmaxxing_compact_cards") === "true");
+      } catch {}
+    };
+    readCompact();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "meetmaxxing_compact_cards") readCompact();
+    };
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("meetmaxxing_compact_change", readCompact);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("meetmaxxing_compact_change", readCompact);
+    };
+  }, []);
+
   const {
     meetings,
     loading,
@@ -79,6 +101,7 @@ export default function Dashboard() {
                   items={filtered}
                   loading={loading}
                   skeletonCount={6}
+                  compact={compactCards}
                   getKey={(m) => m.id}
                   getDate={(m) => (m.start_at && !isNaN(new Date(m.start_at).getTime()) ? new Date(m.start_at) : new Date(0))}
                   groupBy={sortBy === "date" ? undefined : () => ""}
@@ -159,6 +182,7 @@ export default function Dashboard() {
                       <MeetingCard
                         meeting={meeting}
                         index={filtered.indexOf(meeting)}
+                        compact={compactCards}
                         onDelete={setDeleteTarget}
                         onEdit={setEditTarget}
                         onSelect={() => onToggle()}
@@ -188,7 +212,14 @@ export default function Dashboard() {
           onSave={handleEdit}
           onCancel={() => setEditTarget(null)}
           busy={editBusy}
-          onSuggestAiTitle={() => suggestMeetingTitle(editTarget.id)}
+          onSuggestAiTitle={() =>
+            suggestMeetingTitle(editTarget.id, {
+              summary: editTarget.summary,
+              current_title: editTarget.title,
+              meet_code: editTarget.google_meet_link,
+              decisions: editTarget.decisions,
+            })
+          }
         />
       )}
     </div>

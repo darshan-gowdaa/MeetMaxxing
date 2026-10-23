@@ -4,7 +4,7 @@ Dashboard endpoints — meeting list, summaries, action items.
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from ..core.auth import get_current_user
 from ..core.database import get_meeting_record, get_supabase_admin
@@ -185,19 +185,65 @@ async def delete_meeting(
 @router.post("/meetings/{meeting_id}/suggest-title")
 async def suggest_meeting_title(
     meeting_id: str,
+    payload: dict | None = Body(default=None),
     user: dict = Depends(get_current_user),
 ):
     """Generate intelligent meeting titles from meeting summary and discussion context."""
     supabase = get_supabase_admin()
-    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    user_org_id = user.get("org_id") if isinstance(user, dict) else None
+    meeting = (
+        get_meeting_record(supabase, meeting_id, user_org_id) if user_org_id else None
+    )
     if not meeting:
+        meeting = get_meeting_record(supabase, meeting_id)
+
+    payload_data = payload if isinstance(payload, dict) else {}
+    has_payload_context = bool(
+        payload_data.get("summary")
+        or payload_data.get("current_title")
+        or payload_data.get("title")
+        or payload_data.get("meet_code")
+        or payload_data.get("google_meet_link")
+        or payload_data.get("decisions")
+    )
+
+    if not meeting and not has_payload_context:
         raise HTTPException(status_code=404, detail="Meeting not found")
 
-    summary = (meeting.get("summary") or "").strip()
-    decisions = meeting.get("decisions") or []
-    action_items = meeting.get("action_items") or []
-    meet_code = meeting.get("google_meet_link") or ""
-    current_title = meeting.get("title") or ""
+    meeting = meeting or {}
+
+    summary = (
+        (payload_data.get("summary") if payload_data.get("summary") else None)
+        or (meeting.get("summary") if meeting.get("summary") else None)
+        or ""
+    ).strip()
+    decisions = (
+        payload_data.get("decisions")
+        if payload_data.get("decisions") is not None
+        else (meeting.get("decisions") or [])
+    )
+    action_items = (
+        payload_data.get("action_items")
+        if payload_data.get("action_items") is not None
+        else (meeting.get("action_items") or [])
+    )
+    meet_code = (
+        payload_data.get("meet_code")
+        or payload_data.get("google_meet_link")
+        or meeting.get("google_meet_link")
+        or ""
+    )
+    current_title = (
+        payload_data.get("current_title")
+        or payload_data.get("title")
+        or meeting.get("title")
+        or ""
+    )
+
+    if not isinstance(decisions, list):
+        decisions = []
+    if not isinstance(action_items, list):
+        action_items = []
 
     decisions_summary = "; ".join(
         [d.get("text") if isinstance(d, dict) else str(d) for d in decisions[:3]]
@@ -260,9 +306,11 @@ async def suggest_meeting_title(
             if len(first_sent) > 50:
                 first_sent = first_sent[:47] + "..."
             suggested_title = first_sent
+        elif current_title and current_title != "Untitled Meeting":
+            suggested_title = current_title
         elif meet_code:
             clean = meet_code.replace("https://meet.google.com/", "").strip("/")
-            suggested_title = f"Sync: {clean}"
+            suggested_title = f"Sync: {clean}" if clean else "Team Discussion & Sync"
         else:
             suggested_title = "Team Discussion & Sync"
 

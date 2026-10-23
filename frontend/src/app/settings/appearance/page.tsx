@@ -95,6 +95,7 @@ export default function AppearancePage() {
   const handleCompactToggle = async (val: boolean) => {
     setCompactCards(val);
     localStorage.setItem("meetmaxxing_compact_cards", String(val));
+    window.dispatchEvent(new Event("meetmaxxing_compact_change"));
     if (!token) {
       showMessage(val ? "Compact meeting cards enabled" : "Standard meeting cards enabled", { variant: "default" });
       return;
@@ -122,6 +123,7 @@ export default function AppearancePage() {
     } else {
       document.documentElement.classList.remove("high-contrast");
     }
+    window.dispatchEvent(new Event("meetmaxxing_contrast_change"));
     if (!token) {
       showMessage(val ? "High contrast mode enabled" : "High contrast mode disabled", { variant: "default" });
       return;
@@ -148,7 +150,7 @@ export default function AppearancePage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-3xl">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
           Appearance
