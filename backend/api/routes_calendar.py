@@ -9,6 +9,7 @@ import urllib.parse
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
 
 from ..core.auth import get_current_user
 from ..core.config import settings
@@ -127,30 +128,102 @@ async def get_calendar_add_url(
     return {"gcal_url": gcal_url, "html_link": gcal_url, "status": "gcal_url_generated"}
 
 
-def _decode_state(state: str) -> str | None:
-    """Parse user_id from OAuth state parameter (json base64 or raw string)."""
+def _resolve_redirect_uri(
+    request: Request, client_redirect_uri: str | None = None
+) -> str:
+    """Determine the appropriate redirect URI for Google OAuth."""
+    allowed_hosts = {
+        "meetmaxxing-api.onrender.com",
+        "localhost",
+        "localhost:8000",
+        "127.0.0.1",
+        "127.0.0.1:8000",
+    }
+    if client_redirect_uri:
+        parsed = urllib.parse.urlparse(client_redirect_uri)
+        if parsed.netloc in allowed_hosts and parsed.path in {
+            "/calendar/callback",
+            "/api/calendar/callback",
+        }:
+            return client_redirect_uri
+
+    proto = request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or request.url.netloc
+    )
+
+    if any(h in host for h in ("localhost", "127.0.0.1")):
+        return f"http://{host}/calendar/callback"
+
+    if "onrender.com" in host:
+        return f"https://{host}/calendar/callback"
+
+    return (
+        settings.GOOGLE_REDIRECT_URI
+        or "https://meetmaxxing-api.onrender.com/calendar/callback"
+    )
+
+
+def _decode_state(state: str) -> dict:
+    """Parse OAuth state parameter into a dict with user_id, redirect_uri, and frontend_origin."""
     if not state:
-        return None
+        return {}
     try:
         padded = state + "=" * (-len(state) % 4)
         decoded = base64.urlsafe_b64decode(padded.encode()).decode("utf-8")
         try:
             payload = json.loads(decoded)
-            if isinstance(payload, dict) and "user_id" in payload:
-                return payload["user_id"]
+            if isinstance(payload, dict):
+                return payload
         except Exception:
             pass
         if decoded:
-            return decoded
+            return {"user_id": decoded}
     except Exception:
         pass
-    return state
+    return {"user_id": state}
+
+
+# ── GET /calendar/oauth-diagnostics ───────────────────────────────────────────
+@router.get("/oauth-diagnostics")
+async def get_calendar_oauth_diagnostics(request: Request):
+    """Return diagnostic info for Google Calendar OAuth configuration."""
+    active_redirect = _resolve_redirect_uri(request)
+    cid = settings.GOOGLE_CLIENT_ID or ""
+    client_id_preview = (
+        f"{cid[:10]}...{cid[-14:]}" if len(cid) > 24 else (cid or "not_configured")
+    )
+
+    return {
+        "status": (
+            "configured"
+            if bool(cid and settings.GOOGLE_CLIENT_SECRET)
+            else "incomplete"
+        ),
+        "client_id_preview": client_id_preview,
+        "active_redirect_uri": active_redirect,
+        "configured_redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "required_authorized_redirect_uris": [
+            "https://meetmaxxing-api.onrender.com/calendar/callback",
+            "https://meetmaxxing-api.onrender.com/api/calendar/callback",
+            "http://localhost:8000/calendar/callback",
+            "http://localhost:8000/api/calendar/callback",
+        ],
+        "google_cloud_console_url": "https://console.cloud.google.com/apis/credentials",
+    }
 
 
 # ── GET /calendar/auth-url & /calendar/connect ────────────────────────────────
 @router.get("/auth-url")
 @router.get("/connect")
-async def connect_calendar(user: dict = Depends(get_current_user)):
+async def connect_calendar(
+    request: Request,
+    redirect_uri: str | None = None,
+    frontend_origin: str | None = None,
+    user: dict = Depends(get_current_user),
+):
     """Redirect user to Google OAuth consent for Calendar API access."""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(
@@ -161,20 +234,98 @@ async def connect_calendar(user: dict = Depends(get_current_user)):
                 "in Google Cloud Console."
             ),
         )
-    state_payload = json.dumps({"user_id": user["user_id"]})
+
+    effective_redirect_uri = _resolve_redirect_uri(request, redirect_uri)
+    effective_frontend = (
+        frontend_origin
+        or request.headers.get("origin")
+        or request.headers.get("referer")
+        or settings.FRONTEND_URL
+        or "https://meetmaxxing.vercel.app"
+    )
+    parsed_frontend = urllib.parse.urlparse(effective_frontend)
+    if parsed_frontend.scheme and parsed_frontend.netloc:
+        effective_frontend = f"{parsed_frontend.scheme}://{parsed_frontend.netloc}"
+
+    state_payload = json.dumps(
+        {
+            "user_id": user["user_id"],
+            "redirect_uri": effective_redirect_uri,
+            "frontend_origin": effective_frontend,
+        }
+    )
     state = base64.urlsafe_b64encode(state_payload.encode()).decode()
-    auth_url = await get_calendar_auth_url(state=state)
-    return {"auth_url": auth_url, "state": state}
+
+    import inspect
+
+    sig = inspect.signature(get_calendar_auth_url)
+    if "redirect_uri" in sig.parameters:
+        auth_url = await get_calendar_auth_url(
+            state=state, redirect_uri=effective_redirect_uri
+        )
+    else:
+        auth_url = await get_calendar_auth_url(state=state)
+
+    return {
+        "auth_url": auth_url,
+        "state": state,
+        "redirect_uri": effective_redirect_uri,
+    }
 
 
 # ── GET /calendar/callback ────────────────────────────────────────────────────
 @router.get("/callback")
-async def calendar_callback(code: str, state: str = ""):
-    """Handle Google OAuth2 callback — exchange code for tokens."""
-    user_id = _decode_state(state)
+async def calendar_callback(
+    request: Request,
+    code: str | None = None,
+    error: str | None = None,
+    state: str = "",
+):
+    """Handle Google OAuth2 callback — exchange code for tokens & redirect to frontend."""
+    state_data = _decode_state(state)
+    user_id = state_data.get("user_id")
+    stored_redirect = state_data.get("redirect_uri") or _resolve_redirect_uri(request)
+    frontend_origin = (
+        state_data.get("frontend_origin")
+        or settings.FRONTEND_URL
+        or "https://meetmaxxing.vercel.app"
+    ).rstrip("/")
+
+    accept = request.headers.get("accept", "")
+    is_browser = "text/html" in accept
+
+    if error:
+        logging.warning(f"Google OAuth callback returned error: {error}")
+        if is_browser:
+            return RedirectResponse(
+                url=f"{frontend_origin}/settings/integrations?calendar_error={urllib.parse.quote(error)}",
+                status_code=302,
+            )
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+
+    if not code:
+        if is_browser:
+            return RedirectResponse(
+                url=f"{frontend_origin}/settings/integrations?calendar_error=missing_code",
+                status_code=302,
+            )
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+
     try:
-        tokens = await exchange_calendar_code(code)
+        import inspect
+
+        sig = inspect.signature(exchange_calendar_code)
+        if "redirect_uri" in sig.parameters:
+            tokens = await exchange_calendar_code(code, redirect_uri=stored_redirect)
+        else:
+            tokens = await exchange_calendar_code(code)
     except Exception as e:
+        logging.error(f"Failed to exchange calendar code: {e}")
+        if is_browser:
+            return RedirectResponse(
+                url=f"{frontend_origin}/settings/integrations?calendar_error={urllib.parse.quote(str(e))}",
+                status_code=302,
+            )
         raise HTTPException(
             status_code=400,
             detail=f"Calendar auth failed. Please try again or check your credentials: {e}",
@@ -190,6 +341,12 @@ async def calendar_callback(code: str, state: str = ""):
             ).execute()
         except Exception as e:
             logging.error(f"Failed to persist calendar_token for user {user_id}: {e}")
+
+    if is_browser:
+        return RedirectResponse(
+            url=f"{frontend_origin}/settings/integrations?calendar=connected",
+            status_code=302,
+        )
 
     return {
         "status": "connected",

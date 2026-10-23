@@ -9,7 +9,8 @@ import {
   RiSaveLine,
   RiVideoChatLine,
   RiApps2Line,
-  RiFileCopyLine
+  RiFileCopyLine,
+  RiInformationLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -97,6 +98,20 @@ export default function IntegrationsPage() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarActionLoading, setCalendarActionLoading] = useState(false);
+  const [showOAuthConfig, setShowOAuthConfig] = useState(false);
+  const [copiedCalendarRedirect, setCopiedCalendarRedirect] = useState(false);
+
+  // Compute canonical redirect URI to display for Google Cloud Console setup
+  const calendarRedirectUri = `${API_URL.replace(/\/api$/, "")}/calendar/callback`;
+
+  const handleCopyCalendarRedirect = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(calendarRedirectUri);
+      setCopiedCalendarRedirect(true);
+      showMessage("Authorized Redirect URI copied to clipboard", { variant: "success" });
+      setTimeout(() => setCopiedCalendarRedirect(false), 2000);
+    }
+  };
 
   // Zoom state
   const [zoomWebhook, setZoomWebhook] = useState("");
@@ -147,6 +162,22 @@ export default function IntegrationsPage() {
   useEffect(() => {
     fetchCalendarStatus();
 
+    // Check for OAuth callback query parameters
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const calStatus = params.get("calendar");
+      const calError = params.get("calendar_error");
+
+      if (calStatus === "connected") {
+        showMessage("Google Calendar connected successfully! Synced with your account.", { variant: "success" });
+        fetchCalendarStatus();
+        window.history.replaceState({}, "", window.location.pathname);
+      } else if (calError) {
+        showMessage(`Calendar connection failed: ${decodeURIComponent(calError)}`, { variant: "error" });
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+
     // Load persisted local integration settings
     const storedZoom = localStorage.getItem("meetmaxxing_zoom_webhook") || "";
     const storedSlack = localStorage.getItem("meetmaxxing_slack_webhook") || "";
@@ -173,7 +204,7 @@ export default function IntegrationsPage() {
         })
         .catch(() => {});
     }
-  }, [token, fetchCalendarStatus]);
+  }, [token, fetchCalendarStatus, showMessage]);
 
   const handleConnectCalendar = async () => {
     if (!token) {
@@ -182,11 +213,17 @@ export default function IntegrationsPage() {
     }
     setCalendarActionLoading(true);
     try {
-      let res = await fetch(`${API_URL}/api/calendar/auth-url`, {
+      const originParam = typeof window !== "undefined" ? encodeURIComponent(window.location.origin) : "";
+      let res = await fetch(`${API_URL}/api/calendar/auth-url?frontend_origin=${originParam}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
-        res = await fetch(`${API_URL}/calendar/connect`, {
+        res = await fetch(`${API_URL}/calendar/auth-url?frontend_origin=${originParam}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      if (!res.ok) {
+        res = await fetch(`${API_URL}/calendar/connect?frontend_origin=${originParam}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -369,69 +406,117 @@ export default function IntegrationsPage() {
 
           <div className="flex flex-col gap-4">
             {/* Google Calendar */}
-            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
-                  <GoogleCalendarLogo className="w-6 h-6" />
-                </div>
-                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <h3 className="text-base sm:text-lg font-bold text-text">Google Calendar</h3>
-                    {calendarLoading ? (
-                      <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold animate-pulse">
-                        Checking…
-                      </span>
-                    ) : calendarConnected ? (
-                      <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                        <RiCheckLine className="w-3.5 h-3.5" /> Connected
-                      </span>
-                    ) : (
-                      <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
-                        Disconnected
-                      </span>
-                    )}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+                    <GoogleCalendarLogo className="w-6 h-6" />
                   </div>
-                  <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                    Bi-directional sync for event conflict detection & follow-ups, meeting creation, and automated invites.
-                  </p>
+                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h3 className="text-base sm:text-lg font-bold text-text">Google Calendar</h3>
+                      {calendarLoading ? (
+                        <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold animate-pulse">
+                          Checking…
+                        </span>
+                      ) : calendarConnected ? (
+                        <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                          <RiCheckLine className="w-3.5 h-3.5" /> Connected
+                        </span>
+                      ) : (
+                        <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
+                          Disconnected
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                      Bi-directional sync for event conflict detection & follow-ups, meeting creation, and automated invites.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                  {calendarConnected ? (
+                    <button
+                      type="button"
+                      onClick={handleDisconnectCalendar}
+                      disabled={calendarActionLoading}
+                      className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {calendarActionLoading ? <Md3LoadingIndicator size="sm" className="text-risk" /> : null}
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectCalendar}
+                      disabled={calendarActionLoading || calendarLoading}
+                      className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      {calendarActionLoading ? (
+                        <Md3LoadingIndicator size="sm" className="text-on-primary" />
+                      ) : (
+                        <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
+                      )}
+                      Connect Calendar
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={fetchCalendarStatus}
+                    title="Refresh status"
+                    disabled={calendarLoading}
+                    className="p-3 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors cursor-pointer"
+                  >
+                    <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-                {calendarConnected ? (
-                  <button
-                    type="button"
-                    onClick={handleDisconnectCalendar}
-                    disabled={calendarActionLoading}
-                    className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform border border-risk/30 text-risk hover:bg-risk/10 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    {calendarActionLoading ? <Md3LoadingIndicator size="sm" className="text-risk" /> : null}
-                    Disconnect
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleConnectCalendar}
-                    disabled={calendarActionLoading || calendarLoading}
-                    className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                  >
-                    {calendarActionLoading ? (
-                      <Md3LoadingIndicator size="sm" className="text-on-primary" />
-                    ) : (
-                      <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
-                    )}
-                    Connect Calendar
-                  </button>
-                )}
+              {/* OAuth Setup & Redirect URI Helper */}
+              <div className="pt-2 border-t border-outline-variant/10 flex flex-col gap-2">
                 <button
                   type="button"
-                  onClick={fetchCalendarStatus}
-                  title="Refresh status"
-                  disabled={calendarLoading}
-                  className="p-3 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors cursor-pointer"
+                  onClick={() => setShowOAuthConfig(!showOAuthConfig)}
+                  className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors cursor-pointer self-start font-medium"
                 >
-                  <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
+                  <RiInformationLine className="w-4 h-4 shrink-0" />
+                  <span>{showOAuthConfig ? "Hide" : "Troubleshoot & view"} Google Cloud redirect URI</span>
                 </button>
+
+                {showOAuthConfig && (
+                  <div className="bg-surface-container-low/90 rounded-2xl p-4 border border-outline-variant/15 flex flex-col gap-3 text-xs text-text-muted animate-in fade-in duration-200">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-text font-semibold">
+                        Authorized Redirect URI required in Google Cloud Console:
+                      </p>
+                      <a
+                        href="https://console.cloud.google.com/apis/credentials"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline flex items-center gap-1 shrink-0 font-medium"
+                      >
+                        Open Console <RiExternalLinkLine className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 bg-surface-container-high/90 rounded-xl px-3 py-2 border border-outline-variant/20 font-mono text-xs text-text overflow-x-auto">
+                      <span className="flex-1 select-all break-all">{calendarRedirectUri}</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyCalendarRedirect}
+                        className="shrink-0 text-text-muted hover:text-text p-1 rounded-lg hover:bg-surface-container-highest transition-colors cursor-pointer"
+                        title="Copy redirect URI"
+                      >
+                        {copiedCalendarRedirect ? <RiCheckLine className="w-4 h-4 text-emerald-500" /> : <RiFileCopyLine className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    <p className="leading-relaxed">
+                      If you see <code className="text-risk font-mono bg-risk/10 px-1 py-0.5 rounded">Error 400: redirect_uri_mismatch</code>, add the exact URI above to your Google Cloud Console project under <strong>APIs &amp; Services &gt; Credentials &gt; OAuth 2.0 Client IDs &gt; Authorized redirect URIs</strong> and click Save.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -12,22 +12,38 @@ from googleapiclient.errors import HttpError
 from ..core.config import settings
 
 
-def _build_flow():
+def _build_flow(redirect_uri: str | None = None):
     """Build Google OAuth2 Flow from settings (shared by auth URL + code exchange)."""
     from google_auth_oauthlib.flow import Flow
+
+    effective_uri = redirect_uri or settings.GOOGLE_REDIRECT_URI
+    known_uris = list(
+        dict.fromkeys(
+            [
+                effective_uri,
+                settings.GOOGLE_REDIRECT_URI,
+                "https://meetmaxxing-api.onrender.com/calendar/callback",
+                "https://meetmaxxing-api.onrender.com/api/calendar/callback",
+                "http://localhost:8000/calendar/callback",
+                "http://localhost:8000/api/calendar/callback",
+                "http://127.0.0.1:8000/calendar/callback",
+                "http://127.0.0.1:8000/api/calendar/callback",
+            ]
+        )
+    )
 
     return Flow.from_client_config(
         {
             "web": {
                 "client_id": settings.GOOGLE_CLIENT_ID,
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "redirect_uris": [settings.GOOGLE_REDIRECT_URI],
+                "redirect_uris": known_uris,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
             }
         },
         scopes=settings.GOOGLE_CALENDAR_SCOPES,
-        redirect_uri=settings.GOOGLE_REDIRECT_URI,
+        redirect_uri=effective_uri,
     )
 
 
@@ -75,9 +91,11 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
         raise RuntimeError(f"Failed to create event: {e}")
 
 
-async def get_calendar_auth_url(state: str | None = None) -> str:
+async def get_calendar_auth_url(
+    state: str | None = None, redirect_uri: str | None = None
+) -> str:
     """Generate Google OAuth2 authorization URL for Calendar access."""
-    flow = _build_flow()
+    flow = _build_flow(redirect_uri=redirect_uri)
     auth_kwargs = {
         "access_type": "offline",
         "include_granted_scopes": "true",
@@ -89,11 +107,11 @@ async def get_calendar_auth_url(state: str | None = None) -> str:
     return auth_url
 
 
-async def exchange_calendar_code(code: str) -> dict:
+async def exchange_calendar_code(code: str, redirect_uri: str | None = None) -> dict:
     """Exchange OAuth2 authorization code for tokens."""
 
     def _exchange() -> dict:
-        flow = _build_flow()
+        flow = _build_flow(redirect_uri=redirect_uri)
         flow.fetch_token(code=code)
         creds = flow.credentials
         return {
