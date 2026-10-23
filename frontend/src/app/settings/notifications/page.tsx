@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Switch } from "@/components/atoms/Switch";
+import { M3Select } from "@/components/atoms/M3Select";
 import { SettingsListSkeleton } from "@/components/organisms/skeletons/SettingsListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -209,17 +210,18 @@ export default function NotificationsPage() {
               <p className="text-xs text-text-muted">
                 How far in advance to generate and deliver pre-meeting briefing packets
               </p>
-              <select
+              <M3Select
                 id="prep-lead-time"
                 value={notifs.prep_alerts_lead_time}
-                onChange={e => updateSelect('prep_alerts_lead_time', e.target.value)}
-                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer mt-1"
-              >
-                <option value="5m">5 minutes before</option>
-                <option value="10m">10 minutes before</option>
-                <option value="15m">15 minutes before</option>
-                <option value="30m">30 minutes before</option>
-              </select>
+                onChange={(val) => updateSelect('prep_alerts_lead_time', String(val))}
+                options={[
+                  { value: "5m", label: "5 minutes before" },
+                  { value: "10m", label: "10 minutes before" },
+                  { value: "15m", label: "15 minutes before" },
+                  { value: "30m", label: "30 minutes before" },
+                ]}
+                leadingIcon={RiTimeLine}
+              />
             </div>
 
             <div className="h-px w-full bg-outline-variant/15" />
@@ -232,19 +234,20 @@ export default function NotificationsPage() {
               <p className="text-xs text-text-muted">
                 Preferred time of day to receive your consolidated agenda and task digest
               </p>
-              <select
+              <M3Select
                 id="daily-digest-time"
                 value={notifs.daily_digest_time}
-                onChange={e => updateSelect('daily_digest_time', e.target.value)}
-                className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-4 py-3 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer mt-1"
-              >
-                <option value="07:00">07:00 AM (Early Morning)</option>
-                <option value="08:00">08:00 AM (Morning Prep)</option>
-                <option value="09:00">09:00 AM (Workday Start)</option>
-                <option value="10:00">10:00 AM (Late Morning)</option>
-                <option value="17:00">05:00 PM (End of Day)</option>
-                <option value="18:00">06:00 PM (Evening Wrap-up)</option>
-              </select>
+                onChange={(val) => updateSelect('daily_digest_time', String(val))}
+                options={[
+                  { value: "07:00", label: "07:00 AM (Early Morning)" },
+                  { value: "08:00", label: "08:00 AM (Morning Prep)" },
+                  { value: "09:00", label: "09:00 AM (Workday Start)" },
+                  { value: "10:00", label: "10:00 AM (Late Morning)" },
+                  { value: "17:00", label: "05:00 PM (End of Day)" },
+                  { value: "18:00", label: "06:00 PM (Evening Wrap-up)" },
+                ]}
+                leadingIcon={RiTimeLine}
+              />
             </div>
           </div>
         </div>

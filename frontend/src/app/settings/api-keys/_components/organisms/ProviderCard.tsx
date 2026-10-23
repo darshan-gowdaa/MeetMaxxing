@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RiAddLine, RiQuestionLine, RiPlugLine, RiPulseLine } from "@remixicon/react";
-import { Provider, ApiKey, PROVIDER_CONSOLE_URLS } from "../../types";
+import { Provider, ApiKey } from "../../types";
 import { ApiKeyBadge } from "../molecules/ApiKeyBadge";
 
 export function ProviderCard({
@@ -30,7 +30,6 @@ export function ProviderCard({
     openrouter: "openrouter.ai",
   };
   const domain = domains[provider.id];
-  const consoleUrl = PROVIDER_CONSOLE_URLS[provider.id] || provider.docs_url;
 
   const isFree =
     provider.pricing === "Free Tier" ||
@@ -73,16 +72,6 @@ export function ProviderCard({
                 {provider.pricing}
               </span>
             )}
-            {consoleUrl && (
-              <a
-                href={consoleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-primary hover:underline"
-              >
-                Get Key ↗
-              </a>
-            )}
           </div>
         </div>
       </div>
@@ -102,25 +91,34 @@ export function ProviderCard({
 
       {/* Column 3: Trailing Actions (fully accessible on touch & keyboard focus) */}
       <div className="flex items-center justify-end w-full md:w-auto gap-2 shrink-0 transition-opacity duration-200 mt-2 md:mt-0">
-        {/* Live Ping / Test button */}
+        {/* M3 Expressive Live Ping / Test button */}
         {apiKeys.length > 0 && activeKey && (
           <button
             type="button"
             onClick={() => onCheck(activeKey.id)}
             disabled={isChecking}
             aria-label={`Ping connection for ${provider.name}`}
-            className="h-10 px-3.5 rounded-full border border-border/80 hover:bg-surface2 text-[13px] font-semibold text-text transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-50 shadow-xs"
+            className="h-10 px-3.5 rounded-full border border-border/70 hover:bg-surface-container-high/60 active:scale-[0.98] text-[13px] font-semibold text-text transition-all flex items-center gap-2 focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-60 shadow-xs"
             title="Test connection and check latency"
           >
-            <RiPulseLine
-              className={`w-4 h-4 ${isChecking ? "animate-spin text-warning" : "text-primary"}`}
-              aria-hidden="true"
-            />
-            <span>Ping</span>
-            {activeKey.latency_ms !== undefined && activeKey.latency_ms !== null && (
-              <span className="text-[11px] font-mono text-text-muted font-bold">
-                {activeKey.latency_ms}ms
-              </span>
+            {isChecking ? (
+              <>
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                </span>
+                <span className="text-text-muted">Testing...</span>
+              </>
+            ) : (
+              <>
+                <RiPulseLine className="w-4 h-4 text-primary" aria-hidden="true" />
+                <span>Ping</span>
+                {activeKey.latency_ms !== undefined && activeKey.latency_ms !== null && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-primary-container/60 text-on-primary-container font-mono text-[11px] font-bold">
+                    {activeKey.latency_ms}ms
+                  </span>
+                )}
+              </>
             )}
           </button>
         )}

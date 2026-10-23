@@ -2,12 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { 
-  RiGoogleLine, 
-  RiCalendarLine, 
-  RiVideoChatLine, 
-  RiVidiconLine, 
-  RiSlackLine, 
-  RiNotionLine, 
   RiCheckLine, 
   RiExternalLinkLine, 
   RiRefreshLine,
@@ -21,6 +15,80 @@ import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+
+/** Official 4-color Google Calendar logo (Blue/Green/Yellow/Red calendar icon with "31") */
+function GoogleCalendarLogo({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Google Calendar logo">
+      {/* White background base plate */}
+      <path d="M390.736 121.264H121.264V390.736H390.736V121.264Z" fill="white" />
+      {/* Red corner fold (Bottom Right) */}
+      <path d="M390.736 512L512 390.736L451.368 380.392L390.736 390.736L379.67 446.196L390.736 512Z" fill="#EA4335" />
+      {/* Green corner fold (Bottom Left) */}
+      <path d="M0 390.736V471.578C0 493.912 18.088 512 40.42 512H121.264L133.714 451.368L121.264 390.736L55.198 380.392L0 390.736Z" fill="#188038" />
+      {/* Blue corner fold (Top Right) */}
+      <path d="M512 121.264V40.42C512 18.088 493.912 0 471.58 0H390.736C383.36 30.072 379.671 52.2027 379.67 66.392C379.67 80.58 383.359 98.8707 390.736 121.264C417.556 128.944 437.767 132.784 451.368 132.784C464.969 132.784 485.18 128.945 512 121.264Z" fill="#1967D2" />
+      {/* Yellow quadrant (Mid-Right) */}
+      <path d="M512 121.264H390.736V390.736H512V121.264Z" fill="#FBBC04" />
+      {/* Green quadrant (Bottom-Center) */}
+      <path d="M390.736 390.736H121.264V512H390.736V390.736Z" fill="#34A853" />
+      {/* Blue main/top-left block */}
+      <path d="M390.736 0H40.422C18.088 0 0 18.088 0 40.42V390.736H121.264V121.264H390.736V0Z" fill="#4285F4" />
+      {/* Number "3" and "1" Paths in Google Blue */}
+      <path d="M176.54 330.308C166.468 323.504 159.494 313.568 155.688 300.428L179.066 290.796C181.186 298.88 184.891 305.145 190.182 309.592C195.436 314.038 201.836 316.228 209.314 316.228C216.959 316.228 223.527 313.903 229.018 309.254C234.51 304.606 237.272 298.678 237.272 291.504C237.272 284.16 234.375 278.164 228.582 273.516C222.788 268.868 215.512 266.544 206.822 266.544H193.314V243.404H205.44C212.917 243.404 219.216 241.382 224.336 237.338C229.456 233.298 232.016 227.772 232.016 220.732C232.016 214.468 229.726 209.482 225.146 205.744C220.566 202.004 214.77 200.118 207.73 200.118C200.86 200.118 194.954 202.004 190.012 205.776C185.07 209.548 181.652 215.11 179.758 222.464L156.938 213.112C160.058 200.804 167.34 190.868 178.784 183.304C190.228 175.74 204.094 171.958 220.382 171.958C232.69 171.958 243.088 174.686 251.576 180.142C260.064 185.598 264.308 193.006 264.308 202.366C264.308 209.11 261.984 215.008 257.336 220.06C252.688 225.112 246.658 228.608 239.246 230.548V232.072C247.936 234.012 254.91 238.072 260.168 244.252C265.426 250.432 268.055 258.112 268.055 267.292C268.055 277.624 264.442 286.29 257.216 293.29C249.99 300.29 240.406 305.144 228.464 307.852V308.236C239.696 311.112 248.51 316.592 254.906 324.676C261.302 332.76 264.5 342.344 264.5 353.428C264.5 363.38 260.916 371.99 253.748 379.258C246.58 386.526 236.932 392.052 224.804 395.836C212.676 399.62 199.198 401.512 184.37 401.512C167.3 401.512 152.26 398.71 139.25 393.106C126.24 387.502 116.35 379.162 109.58 368.086L132.188 353.428C136.628 361.028 143.208 367.056 151.928 371.512C160.648 375.968 171.106 378.196 183.302 378.196C193.934 378.196 203.042 376.66 210.626 373.588C218.21 370.516 224.036 366.19 228.104 360.61C232.172 355.03 234.206 348.334 234.206 340.522C234.206 331.666 231.134 324.498 224.99 319.018C218.846 313.538 210.65 310.222 200.402 309.07L176.54 330.308Z" fill="#1967D2" />
+      <path d="M309.927 396.676V184.18H338.457V396.676H309.927Z" fill="#1967D2" />
+    </svg>
+  );
+}
+
+/** Official 4-color Google Meet camera logo (Green/Yellow/Red/Blue camera) */
+function GoogleMeetLogo({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 622 512" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Google Meet logo">
+      <path d="M351.419 255.568L411.978 324.79L493.418 376.827L507.584 256.005L493.418 137.908L410.418 183.621L351.419 255.568Z" fill="#00832D" />
+      <path d="M0.00283051 365.583V468.541C0.00283051 492.049 19.0851 511.136 42.5983 511.136H145.556L166.876 433.344L145.556 365.583L74.9198 344.263L0.00283051 365.583Z" fill="#0066DA" />
+      <path d="M145.556 0L0.00283051 145.554L74.9247 166.822L145.556 145.554L166.488 78.7145L145.556 0Z" fill="#E94235" />
+      <path d="M0.00526047 365.629H145.556V145.551H0.00526047V365.629Z" fill="#2684FC" />
+      <path d="M586.398 61.6293L493.416 137.91V376.827L586.782 453.404C600.758 464.352 621.204 454.374 621.204 436.607V78.0861C621.204 60.1224 600.271 50.193 586.396 61.6317" fill="#00AC47" />
+      <path d="M351.419 255.568V365.583H145.556V511.136H450.825C474.338 511.136 493.418 492.049 493.418 468.541V376.827L351.419 255.568Z" fill="#00AC47" />
+      <path d="M450.825 0H145.556V145.554H351.419V255.568L493.42 137.905V42.5979C493.42 19.0847 474.338 0 450.825 0" fill="#FFBA00" />
+    </svg>
+  );
+}
+
+/** Official Zoom camera icon in Zoom Blue `#0B5CFF` */
+function ZoomLogo({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Zoom logo">
+      <path
+        d="M4.5 10.5C4.5 8.84315 5.84315 7.5 7.5 7.5H18.5C20.1569 7.5 21.5 8.84315 21.5 10.5V13.2L26.3 9.8C27.1 9.25 28.2 9.8 28.2 10.75V21.25C28.2 22.2 27.1 22.75 26.3 22.2L21.5 18.8V21.5C21.5 23.1569 20.1569 24.5 18.5 24.5H7.5C5.84315 24.5 4.5 23.1569 4.5 21.5V10.5Z"
+        fill="#0B5CFF"
+      />
+    </svg>
+  );
+}
+
+/** Official 4-color Slack hashtag logo (Red/Yellow/Green/Blue lozenges) */
+function SlackLogo({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Slack logo">
+      <path d="M22 12a6 6 0 1 1 6-6v6zM22 16a6 6 0 0 1 0 12H6a6 6 0 1 1 0-12z" fill="#36C5F0" />
+      <path d="M48 22a6 6 0 1 1 6 6h-6zM32 6a6 6 0 1 1 12 0v16a6 6 0 0 1-12 0z" fill="#2EB67D" />
+      <path d="M38 48a6 6 0 1 1-6 6v-6zM54 32a6 6 0 0 1 0 12H38a6 6 0 1 1 0-12z" fill="#ECB22E" />
+      <path d="M12 38a6 6 0 1 1-6-6h6zM16 38a6 6 0 1 1 12 0v16a6 6 0 0 1-12 0z" fill="#E01E5A" />
+    </svg>
+  );
+}
+
+/** Official Notion "N" icon */
+function NotionLogo({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 256 268" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Notion logo">
+      <path fill="#FFF" d="M16.092 11.538 164.09.608c18.179-1.56 22.85-.508 34.28 7.801l47.243 33.282C253.406 47.414 256 48.975 256 55.207v182.527c0 11.439-4.155 18.205-18.696 19.24L65.44 267.378c-10.913.517-16.11-1.043-21.825-8.327L8.826 213.814C2.586 205.487 0 199.254 0 191.97V29.726c0-9.352 4.155-17.153 16.092-18.188Z" />
+      <path fill="currentColor" d="M164.09.608 16.092 11.538C4.155 12.573 0 20.374 0 29.726v162.245c0 7.284 2.585 13.516 8.826 21.843l34.789 45.237c5.715 7.284 10.912 8.844 21.825 8.327l171.864-10.404c14.532-1.035 18.696-7.801 18.696-19.24V55.207c0-5.911-2.336-7.614-9.21-12.66l-1.185-.856L198.37 8.409C186.94.1 182.27-.952 164.09.608ZM69.327 52.22c-14.033.945-17.216 1.159-25.186-5.323L23.876 30.778c-2.06-2.086-1.026-4.69 4.163-5.207l142.274-10.395c11.947-1.043 18.17 3.12 22.842 6.758l24.401 17.68c1.043.525 3.638 3.637.517 3.637L71.146 52.095l-1.819.125Zm-16.36 183.954V81.222c0-6.767 2.077-9.887 8.3-10.413L230.02 60.93c5.724-.517 8.31 3.12 8.31 9.879v153.917c0 6.767-1.044 12.49-10.387 13.008l-161.487 9.361c-9.343.517-13.489-2.594-13.489-10.921ZM212.377 89.53c1.034 4.681 0 9.362-4.681 9.897l-7.783 1.542v114.404c-6.758 3.637-12.981 5.715-18.18 5.715-8.308 0-10.386-2.604-16.609-10.396l-50.898-80.079v77.476l16.1 3.646s0 9.362-12.989 9.362l-35.814 2.077c-1.043-2.086 0-7.284 3.63-8.318l9.351-2.595V109.823l-12.98-1.052c-1.044-4.68 1.55-11.439 8.826-11.965l38.426-2.585 52.958 81.113v-71.76l-13.498-1.552c-1.043-5.733 3.111-9.896 8.3-10.404l35.84-2.087Z" />
+    </svg>
+  );
+}
 
 export default function IntegrationsPage() {
   const { session } = useAuth();
@@ -100,11 +168,12 @@ export default function IntegrationsPage() {
       })
         .then(res => res.json())
         .then(data => {
-          const intg = data.notifications?.integrations || {};
+          const intg = data.integrations || data.notifications?.integrations || {};
           if (intg.zoom_webhook) setZoomWebhook(intg.zoom_webhook);
           if (intg.slack_webhook) setSlackWebhook(intg.slack_webhook);
           if (intg.notion_api_key) setNotionApiKey(intg.notion_api_key);
-          if (intg.notion_database_id) setNotionDbId(intg.notion_database_id);
+          if (intg.notion_db_id) setNotionDbId(intg.notion_db_id);
+          else if (intg.notion_database_id) setNotionDbId(intg.notion_database_id);
         })
         .catch(() => {});
     }
@@ -178,7 +247,12 @@ export default function IntegrationsPage() {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            notifications: { integrations: { zoom_webhook: zoomWebhook } }
+            integrations: {
+              zoom_webhook: zoomWebhook,
+              slack_webhook: slackWebhook,
+              notion_api_key: notionApiKey,
+              notion_db_id: notionDbId,
+            }
           })
         });
       } catch {}
@@ -196,7 +270,12 @@ export default function IntegrationsPage() {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            notifications: { integrations: { slack_webhook: slackWebhook } }
+            integrations: {
+              zoom_webhook: zoomWebhook,
+              slack_webhook: slackWebhook,
+              notion_api_key: notionApiKey,
+              notion_db_id: notionDbId,
+            }
           })
         });
       } catch {}
@@ -239,11 +318,11 @@ export default function IntegrationsPage() {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            notifications: {
-              integrations: {
-                notion_api_key: notionApiKey,
-                notion_database_id: notionDbId
-              }
+            integrations: {
+              zoom_webhook: zoomWebhook,
+              slack_webhook: slackWebhook,
+              notion_api_key: notionApiKey,
+              notion_db_id: notionDbId,
             }
           })
         });
@@ -268,8 +347,8 @@ export default function IntegrationsPage() {
         {/* 1. Google Calendar Integration */}
         <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start gap-4 flex-1">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-              <RiCalendarLine className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+              <GoogleCalendarLogo className="w-6 h-6" />
             </div>
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2.5">
@@ -315,7 +394,7 @@ export default function IntegrationsPage() {
                 {calendarActionLoading ? (
                   <Md3LoadingIndicator size="sm" className="text-on-primary" />
                 ) : (
-                  <RiGoogleLine className="w-4 h-4" />
+                  <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
                 )}
                 Connect Calendar
               </button>
@@ -335,8 +414,8 @@ export default function IntegrationsPage() {
         {/* 2. Google Meet Integration */}
         <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start gap-4 flex-1">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-              <RiVideoChatLine className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+              <GoogleMeetLogo className="w-6 h-6" />
             </div>
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2.5">
@@ -367,8 +446,8 @@ export default function IntegrationsPage() {
         <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <RiVidiconLine className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-2xl bg-[#0B5CFF]/10 border border-[#0B5CFF]/20 flex items-center justify-center shrink-0 shadow-xs">
+                <ZoomLogo className="w-6 h-6" />
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2.5">
@@ -414,8 +493,8 @@ export default function IntegrationsPage() {
         <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <RiSlackLine className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+                <SlackLogo className="w-6 h-6" />
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2.5">
@@ -470,8 +549,8 @@ export default function IntegrationsPage() {
         <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 hover:bg-surface-container/80 transition-all duration-300 shadow-none flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <RiNotionLine className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs text-text">
+                <NotionLogo className="w-6 h-6 text-text" />
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2.5">

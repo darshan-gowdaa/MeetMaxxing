@@ -101,10 +101,50 @@ class MockTable:
         return Result([])
 
 
+class MockStorageBucket:
+    def __init__(self, name: str):
+        self.name = name
+        self.files = {}
+
+    def upload(self, path: str, file, file_options=None):
+        self.files[path] = file
+        return {"Key": path}
+
+    def get_public_url(self, path: str):
+        return f"https://mock-supabase.co/storage/v1/object/public/{self.name}/{path}"
+
+
+class MockStorage:
+    def __init__(self):
+        self.buckets = {}
+
+    def from_(self, name: str):
+        if name not in self.buckets:
+            self.buckets[name] = MockStorageBucket(name)
+        return self.buckets[name]
+
+
+class MockAuthAdmin:
+    def __init__(self):
+        self.updated_users = {}
+
+    def update_user_by_id(self, uid: str, attributes: dict):
+        self.updated_users[uid] = attributes
+        return {"id": uid}
+
+
+class MockAuth:
+    def __init__(self):
+        self.admin = MockAuthAdmin()
+
+
 class MockSupabaseAdmin:
     def __init__(self, data_store: dict, should_fail_theme: bool = False):
         self.store = data_store
         self.should_fail_theme = should_fail_theme
+        self.storage = MockStorage()
+        self.auth = MockAuth()
+        self.supabase_url = "https://mock-supabase.co"
 
     def table(self, name: str):
         return MockTable(name, self.store, self.should_fail_theme)
@@ -484,3 +524,140 @@ def test_calendar_disconnect(auth_client, monkeypatch):
     assert resp.status_code == 200
     assert resp.json()["success"] is True
     assert store["users"][0]["calendar_token"] is None
+
+
+# ── Alias Normalization & Avatar Upload Tests ─────────────────────────────────
+def test_patch_settings_aliases_and_integrations(auth_client, monkeypatch):
+    client, user = auth_client
+    store = {"users": [{"id": user["user_id"], "email": user["email"]}]}
+    mock_db = MockSupabaseAdmin(store)
+    monkeypatch.setattr(
+        "backend.api.routes_settings.get_supabase_admin",
+        lambda: mock_db,
+    )
+
+    alias_payload = {
+        "compact_meeting_cards": True,
+        "high_contrast_mode": True,
+        "meeting_duration": 45,
+        "display_name": "Jane Doe",
+        "avatar_url": "https://cdn.example.com/jane.jpg",
+        "integrations": {
+            "zoom_webhook": "https://hooks.zoom.us/test",
+            "slack_webhook": "https://hooks.slack.com/services/T/B/X",
+            "notion_api_key": "ntn_secret_999",
+            "notion_db_id": "notion-db-123",
+        },
+    }
+
+    resp = client.patch("/api/settings/", json=alias_payload)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    # Aliases returned in pairs with identical boolean / int values
+    assert data["compact_view"] is True
+    assert data["compact_meeting_cards"] is True
+    assert data["high_contrast"] is True
+    assert data["high_contrast_mode"] is True
+    assert data["default_meeting_duration"] == 45
+    assert data["meeting_duration"] == 45
+    assert data["name"] == "Jane Doe"
+    assert data["avatar_url"] == "https://cdn.example.com/jane.jpg"
+
+    assert data["integrations"] == {
+        "zoom_webhook": "https://hooks.zoom.us/test",
+        "slack_webhook": "https://hooks.slack.com/services/T/B/X",
+        "notion_api_key": "ntn_secret_999",
+        "notion_db_id": "notion-db-123",
+    }
+
+    # Verify normalized fields stored in DB notifications JSONB
+    notifs = store["users"][0]["notifications"]
+    assert notifs["compact_view"] is True
+    assert notifs["high_contrast"] is True
+    assert notifs["default_meeting_duration"] == 45
+    assert notifs["name"] == "Jane Doe"
+    assert notifs["avatar_url"] == "https://cdn.example.com/jane.jpg"
+    assert notifs["integrations"]["notion_db_id"] == "notion-db-123"
+
+    # Verify auth admin metadata synced
+    assert (
+        mock_db.auth.admin.updated_users[user["user_id"]]["user_metadata"]["name"]
+        == "Jane Doe"
+    )
+    assert (
+        mock_db.auth.admin.updated_users[user["user_id"]]["user_metadata"]["avatar_url"]
+        == "https://cdn.example.com/jane.jpg"
+    )
+
+
+def test_post_avatar_json(auth_client, monkeypatch):
+    client, user = auth_client
+    store = {"users": [{"id": user["user_id"]}]}
+    mock_db = MockSupabaseAdmin(store)
+    monkeypatch.setattr(
+        "backend.api.routes_settings.get_supabase_admin",
+        lambda: mock_db,
+    )
+
+    resp = client.post(
+        "/api/settings/avatar",
+        json={"avatar_url": "https://images.example.com/avatars/u1.png"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["avatar_url"] == "https://images.example.com/avatars/u1.png"
+    assert body["success"] is True
+
+    # Persisted to users notifications
+    assert (
+        store["users"][0]["notifications"]["avatar_url"]
+        == "https://images.example.com/avatars/u1.png"
+    )
+    # Synced to auth admin metadata
+    assert (
+        mock_db.auth.admin.updated_users[user["user_id"]]["user_metadata"]["avatar_url"]
+        == "https://images.example.com/avatars/u1.png"
+    )
+
+
+def test_post_avatar_multipart(auth_client, monkeypatch):
+    client, user = auth_client
+    store = {"users": [{"id": user["user_id"]}]}
+    mock_db = MockSupabaseAdmin(store)
+    monkeypatch.setattr(
+        "backend.api.routes_settings.get_supabase_admin",
+        lambda: mock_db,
+    )
+
+    fake_file_bytes = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
+    resp = client.post(
+        "/api/settings/avatar",
+        files={"file": ("profile_pic.png", fake_file_bytes, "image/png")},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["success"] is True
+    assert "avatars/" in body["avatar_url"]
+
+    # Persisted to notifications
+    saved_url = store["users"][0]["notifications"]["avatar_url"]
+    assert saved_url == body["avatar_url"]
+
+    # Storage bucket recorded file
+    storage_bucket = mock_db.storage.from_("avatars")
+    assert len(storage_bucket.files) == 1
+    assert any(user["user_id"] in k for k in storage_bucket.files)
+
+
+def test_post_avatar_empty_error(auth_client, monkeypatch):
+    client, user = auth_client
+    store = {"users": [{"id": user["user_id"]}]}
+    mock_db = MockSupabaseAdmin(store)
+    monkeypatch.setattr(
+        "backend.api.routes_settings.get_supabase_admin",
+        lambda: mock_db,
+    )
+
+    resp = client.post("/api/settings/avatar", json={"avatar_url": ""})
+    assert resp.status_code == 400

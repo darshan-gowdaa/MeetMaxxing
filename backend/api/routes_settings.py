@@ -4,7 +4,7 @@ Settings endpoints.
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from loguru import logger
 
 from ..core.auth import get_current_user
@@ -25,12 +25,59 @@ def _format_settings_response(user_data: dict) -> dict:
         else notifs
     )
 
+    compact_val = bool(
+        notifs.get("compact_view")
+        if "compact_view" in notifs
+        else notifs.get("compact_meeting_cards", False)
+    )
+    high_contrast_val = bool(
+        notifs.get("high_contrast")
+        if "high_contrast" in notifs
+        else notifs.get("high_contrast_mode", False)
+    )
+    duration_val = int(
+        notifs.get("default_meeting_duration")
+        if "default_meeting_duration" in notifs
+        else notifs.get("meeting_duration", 30)
+    )
+
+    raw_integrations = notifs.get("integrations")
+    if not isinstance(raw_integrations, dict):
+        raw_integrations = (
+            user_data.get("integrations")
+            if isinstance(user_data.get("integrations"), dict)
+            else {}
+        )
+    notion_db = str(
+        raw_integrations.get("notion_db_id")
+        or raw_integrations.get("notion_database_id")
+        or ""
+    )
+    integrations_dict = {
+        "zoom_webhook": str(raw_integrations.get("zoom_webhook") or ""),
+        "slack_webhook": str(raw_integrations.get("slack_webhook") or ""),
+        "notion_api_key": str(raw_integrations.get("notion_api_key") or ""),
+        "notion_db_id": notion_db,
+    }
+
+    name_val = str(
+        notifs.get("name")
+        or notifs.get("display_name")
+        or user_data.get("name")
+        or user_data.get("display_name")
+        or ""
+    )
+    avatar_val = str(notifs.get("avatar_url") or user_data.get("avatar_url") or "")
+
     return {
         "theme": user_data.get("theme") or notifs.get("theme") or "system",
-        "compact_view": bool(notifs.get("compact_view", False)),
-        "high_contrast": bool(notifs.get("high_contrast", False)),
+        "compact_view": compact_val,
+        "compact_meeting_cards": compact_val,
+        "high_contrast": high_contrast_val,
+        "high_contrast_mode": high_contrast_val,
         "timezone": str(notifs.get("timezone", "UTC")),
-        "default_meeting_duration": int(notifs.get("default_meeting_duration", 30)),
+        "default_meeting_duration": duration_val,
+        "meeting_duration": duration_val,
         "auto_extract_actions": bool(notifs.get("auto_extract_actions", True)),
         "language": str(notifs.get("language", "en")),
         "summary_style": str(notifs.get("summary_style", "concise")),
@@ -55,6 +102,9 @@ def _format_settings_response(user_data: dict) -> dict:
             ),
         },
         "org_name": str(notifs.get("org_name", user_data.get("org_name", ""))),
+        "name": name_val,
+        "avatar_url": avatar_val,
+        "integrations": integrations_dict,
     }
 
 
@@ -92,14 +142,21 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
     valid_keys = {
         "theme",
         "compact_view",
+        "compact_meeting_cards",
         "high_contrast",
+        "high_contrast_mode",
         "timezone",
         "default_meeting_duration",
+        "meeting_duration",
         "auto_extract_actions",
         "language",
         "summary_style",
         "notifications",
         "org_name",
+        "integrations",
+        "avatar_url",
+        "name",
+        "display_name",
     }
     if not any(k in updates for k in valid_keys):
         raise HTTPException(status_code=400, detail="No valid fields")
@@ -134,10 +191,7 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
 
     # Scalar settings
     for key in [
-        "compact_view",
-        "high_contrast",
         "timezone",
-        "default_meeting_duration",
         "auto_extract_actions",
         "language",
         "summary_style",
@@ -145,6 +199,46 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
     ]:
         if key in updates:
             new_notifs[key] = updates[key]
+
+    # Normalize client aliases into new_notifs
+    if "compact_view" in updates:
+        new_notifs["compact_view"] = bool(updates["compact_view"])
+    if "compact_meeting_cards" in updates:
+        new_notifs["compact_view"] = bool(updates["compact_meeting_cards"])
+
+    if "high_contrast" in updates:
+        new_notifs["high_contrast"] = bool(updates["high_contrast"])
+    if "high_contrast_mode" in updates:
+        new_notifs["high_contrast"] = bool(updates["high_contrast_mode"])
+
+    if "default_meeting_duration" in updates:
+        new_notifs["default_meeting_duration"] = int(
+            updates["default_meeting_duration"]
+        )
+    if "meeting_duration" in updates:
+        new_notifs["default_meeting_duration"] = int(updates["meeting_duration"])
+
+    if "name" in updates:
+        new_notifs["name"] = str(updates["name"])
+    if "display_name" in updates:
+        new_notifs["name"] = str(updates["display_name"])
+
+    if "avatar_url" in updates:
+        new_notifs["avatar_url"] = str(updates["avatar_url"] or "")
+
+    if "integrations" in updates and isinstance(updates["integrations"], dict):
+        existing_intg = {}
+        if isinstance(new_notifs.get("integrations"), dict):
+            existing_intg.update(new_notifs["integrations"])
+        intg_updates = updates["integrations"]
+        for ik in ["zoom_webhook", "slack_webhook", "notion_api_key", "notion_db_id"]:
+            if ik in intg_updates:
+                existing_intg[ik] = str(intg_updates[ik] or "")
+        if "notion_database_id" in intg_updates and "notion_db_id" not in intg_updates:
+            existing_intg["notion_db_id"] = str(
+                intg_updates["notion_database_id"] or ""
+            )
+        new_notifs["integrations"] = existing_intg
 
     if "theme" in updates:
         new_notifs["theme"] = updates["theme"]
@@ -207,11 +301,174 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
                 status_code=500, detail=f"Failed to update settings: {e}"
             )
 
+    # Sync name / avatar_url to auth metadata if present
+    meta_updates = {}
+    if "name" in updates or "display_name" in updates:
+        meta_updates["name"] = new_notifs.get("name", "")
+        meta_updates["full_name"] = new_notifs.get("name", "")
+    if "avatar_url" in updates:
+        meta_updates["avatar_url"] = new_notifs.get("avatar_url", "")
+    if meta_updates:
+        try:
+            if hasattr(supabase, "auth") and hasattr(supabase.auth, "admin"):
+                supabase.auth.admin.update_user_by_id(
+                    user["user_id"],
+                    {"user_metadata": meta_updates},
+                )
+        except Exception as e:
+            logger.debug(f"[Settings] Could not sync user metadata: {e}")
+
     updated_row = res.data[0] if (res and getattr(res, "data", None)) else curr_data
     merged_data = {**updated_row, "notifications": new_notifs}
     if "theme" in updates:
         merged_data["theme"] = updates["theme"]
     return _format_settings_response(merged_data)
+
+
+@router.post("/avatar")
+async def update_avatar(
+    request: Request,
+    user: dict = Depends(get_current_user),
+):
+    """Update user avatar from JSON url or multipart file upload."""
+    supabase = get_supabase_admin()
+    user_id = user["user_id"]
+
+    content_type = request.headers.get("content-type", "")
+    avatar_url: str | None = None
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                avatar_url = body.get("avatar_url")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
+    elif (
+        "multipart/form-data" in content_type
+        or "application/x-www-form-urlencoded" in content_type
+    ):
+        try:
+            form = await request.form()
+            file = form.get("file") or form.get("avatar")
+            if hasattr(file, "read") and hasattr(file, "filename") and file.filename:
+                contents = await file.read()
+                filename = file.filename or "avatar.png"
+                ext = filename.split(".")[-1].lower() if "." in filename else "png"
+                destination_path = (
+                    f"{user_id}-{int(datetime.now(UTC).timestamp())}.{ext}"
+                )
+                content_type_header = (
+                    getattr(file, "content_type", None) or f"image/{ext}"
+                )
+                try:
+                    storage_bucket = supabase.storage.from_("avatars")
+                    storage_bucket.upload(
+                        destination_path,
+                        contents,
+                        {"content-type": content_type_header, "upsert": "true"},
+                    )
+                    avatar_url = storage_bucket.get_public_url(destination_path)
+                except Exception as upload_err:
+                    logger.warning(f"[Avatar] Storage upload failed: {upload_err}")
+                    supabase_url = getattr(
+                        supabase, "supabase_url", "https://supabase.co"
+                    ).rstrip("/")
+                    avatar_url = f"{supabase_url}/storage/v1/object/public/avatars/{destination_path}"
+            else:
+                avatar_url = form.get("avatar_url")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid form data: {e}")
+    else:
+        # Fallback inspection: attempt JSON first, then form
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                avatar_url = body.get("avatar_url")
+        except Exception:
+            try:
+                form = await request.form()
+                file = form.get("file") or form.get("avatar")
+                if (
+                    hasattr(file, "read")
+                    and hasattr(file, "filename")
+                    and file.filename
+                ):
+                    contents = await file.read()
+                    filename = file.filename or "avatar.png"
+                    ext = filename.split(".")[-1].lower() if "." in filename else "png"
+                    destination_path = (
+                        f"{user_id}-{int(datetime.now(UTC).timestamp())}.{ext}"
+                    )
+                    content_type_header = (
+                        getattr(file, "content_type", None) or f"image/{ext}"
+                    )
+                    try:
+                        storage_bucket = supabase.storage.from_("avatars")
+                        storage_bucket.upload(
+                            destination_path,
+                            contents,
+                            {"content-type": content_type_header, "upsert": "true"},
+                        )
+                        avatar_url = storage_bucket.get_public_url(destination_path)
+                    except Exception as upload_err:
+                        logger.warning(f"[Avatar] Storage upload failed: {upload_err}")
+                        supabase_url = getattr(
+                            supabase, "supabase_url", "https://supabase.co"
+                        ).rstrip("/")
+                        avatar_url = f"{supabase_url}/storage/v1/object/public/avatars/{destination_path}"
+                else:
+                    avatar_url = form.get("avatar_url")
+            except Exception:
+                avatar_url = None
+
+    if not avatar_url or not str(avatar_url).strip():
+        raise HTTPException(status_code=400, detail="avatar_url or file is required")
+
+    avatar_url = str(avatar_url).strip()
+
+    # 1. Fetch current user notifications
+    curr_data = {}
+    try:
+        curr_res = (
+            supabase.table("users").select("notifications").eq("id", user_id).execute()
+        )
+        curr_data = curr_res.data[0] if curr_res.data else {}
+    except Exception:
+        curr_data = {}
+
+    curr_notifs = curr_data.get("notifications") or {}
+    if not isinstance(curr_notifs, dict):
+        curr_notifs = {}
+
+    new_notifs = dict(curr_notifs)
+    new_notifs["avatar_url"] = avatar_url
+
+    # Save avatar_url to users.notifications via Supabase admin
+    try:
+        if curr_data:
+            supabase.table("users").update({"notifications": new_notifs}).eq(
+                "id", user_id
+            ).execute()
+        else:
+            supabase.table("users").upsert(
+                {"id": user_id, "notifications": new_notifs}
+            ).execute()
+    except Exception as e:
+        logger.error(f"[Avatar] Failed updating users notifications: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update avatar: {e}")
+
+    # 2. Sync to Supabase auth user metadata if possible
+    try:
+        if hasattr(supabase, "auth") and hasattr(supabase.auth, "admin"):
+            supabase.auth.admin.update_user_by_id(
+                user_id,
+                {"user_metadata": {"avatar_url": avatar_url}},
+            )
+    except Exception as e:
+        logger.debug(f"[Avatar] Could not sync avatar_url to auth metadata: {e}")
+
+    return {"avatar_url": avatar_url, "success": True}
 
 
 @router.post("/export")

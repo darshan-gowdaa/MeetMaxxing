@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useSnackbar } from '@/components/providers/SnackbarProvider';
 import { SelectionCard } from "@/components/molecules/SelectionCard";
 import { Switch } from "@/components/atoms/Switch";
+import { M3Select } from "@/components/atoms/M3Select";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
@@ -197,18 +198,13 @@ export default function GeneralPreferences() {
           </button>
         </div>
 
-        <select
+        <M3Select
           value={timezone}
-          onChange={e => saveTimezone(e.target.value)}
-          aria-label="Primary timezone"
-          className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-5 py-4 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer"
-        >
-          {timezoneOptions.map(tz => (
-            <option key={tz} value={tz}>
-              {tz}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => saveTimezone(String(val))}
+          options={timezoneOptions.map(tz => ({ value: tz, label: tz }))}
+          placeholder="Select primary timezone"
+          leadingIcon={RiCompass3Line}
+        />
       </section>
 
       {/* Default Meeting Duration */}
@@ -222,17 +218,17 @@ export default function GeneralPreferences() {
           </p>
         </div>
 
-        <select
+        <M3Select
           value={duration}
-          onChange={e => saveDuration(Number(e.target.value))}
-          aria-label="Default meeting duration"
-          className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-5 py-4 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer"
-        >
-          <option value={15}>15 minutes (Quick Standup)</option>
-          <option value={30}>30 minutes (Standard Meeting)</option>
-          <option value={45}>45 minutes (In-depth Review)</option>
-          <option value={60}>60 minutes (Workshop / Sync)</option>
-        </select>
+          onChange={(val) => saveDuration(Number(val))}
+          options={[
+            { value: 15, label: "15 minutes (Quick Standup)" },
+            { value: 30, label: "30 minutes (Standard Meeting)" },
+            { value: 45, label: "45 minutes (In-depth Review)" },
+            { value: 60, label: "60 minutes (Workshop / Sync)" },
+          ]}
+          leadingIcon={RiTimerLine}
+        />
       </section>
 
       {/* Auto-extract Action Items */}
@@ -259,18 +255,18 @@ export default function GeneralPreferences() {
         <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
           <RiTranslate2 className="w-4 h-4 text-primary" /> Default Meeting Language
         </h2>
-        <select
+        <M3Select
           value={lang}
-          onChange={e => saveLang(e.target.value)}
-          aria-label="Default meeting language"
-          className="w-full bg-surface-container-high/60 border border-outline-variant/40 rounded-[20px] px-5 py-4 text-sm font-medium text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:bg-surface-container-high transition-colors appearance-none cursor-pointer"
-        >
-          <option value="en">English</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
-          <option value="ja">Japanese</option>
-        </select>
+          onChange={(val) => saveLang(String(val))}
+          options={[
+            { value: "en", label: "English (Global / US / UK)" },
+            { value: "es", label: "Spanish (Español)" },
+            { value: "fr", label: "French (Français)" },
+            { value: "de", label: "German (Deutsch)" },
+            { value: "ja", label: "Japanese (日本語)" },
+          ]}
+          leadingIcon={RiTranslate2}
+        />
       </section>
 
       {/* Summary Style */}

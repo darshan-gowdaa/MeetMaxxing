@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   RiSparklingFill,
   RiKey2Fill,
-  RiArrowDownSLine,
   RiFlashlightLine,
   RiInformationLine,
   RiAddLine,
@@ -16,6 +15,7 @@ import {
 import { ApiKey } from "../../types";
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
+import { M3Select } from "@/components/atoms/M3Select";
 
 export interface ModelMeta {
   id: string;
@@ -637,25 +637,18 @@ export function ModelSelection({
               </label>
 
               <div className="relative max-w-xl">
-                <select
+                <M3Select
                   id="model-select"
-                  aria-label="Preferred model"
                   value={modelId}
-                  onChange={(e) => updatePrefs({ model_id: e.target.value })}
-                  className="appearance-none w-full bg-surface-container-highest/60 hover:bg-surface-container-highest/80 border-2 border-border/80 focus:border-primary rounded-[20px] px-4 pt-5 pb-2 text-[15px] font-semibold text-text focus:outline-none transition-all cursor-pointer shadow-xs"
-                >
-                  <option value="" disabled>
-                    Choose a model
-                  </option>
-                  {availableModelsForProvider.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name || m.id} ({m.costPerMeeting})
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                  <RiArrowDownSLine className="w-5 h-5" />
-                </div>
+                  onChange={(val) => updatePrefs({ model_id: String(val) })}
+                  placeholder="Choose an AI model"
+                  leadingIcon={RiCpuLine}
+                  options={availableModelsForProvider.map((m) => ({
+                    value: m.id,
+                    label: m.name || m.id,
+                    description: `Est: ${m.costPerMeeting}`,
+                  }))}
+                />
               </div>
             </div>
 
