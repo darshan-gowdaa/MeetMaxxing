@@ -380,16 +380,24 @@ export const ProfileHero = () => {
 
   // Reset to Google Picture
   const handleResetToGoogle = async () => {
-    if (!user || !googleAvatar) return;
+    if (!user) return;
+    const targetUrl =
+      googleAvatar ||
+      (user?.user_metadata?.picture as string) ||
+      (user?.user_metadata?.avatar_url as string);
+    if (!targetUrl) {
+      showMessage("No Google profile photo found for this account", { variant: "error" });
+      return;
+    }
     setAvatarLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { avatar_url: googleAvatar },
+        data: { avatar_url: targetUrl },
       });
       if (!error) {
-        setAvatarUrl(googleAvatar);
+        setAvatarUrl(targetUrl);
         setImgError(false);
-        await syncAvatarWithBackend(googleAvatar);
+        await syncAvatarWithBackend(targetUrl);
         showMessage("Avatar reset to Google Account picture", { variant: "success" });
       } else {
         throw error;
@@ -469,21 +477,20 @@ export const ProfileHero = () => {
 
   return (
     <div className="rounded-[32px] bg-surface-container-low border border-outline-variant/15 p-6 sm:p-8 lg:p-10 transition-all flex flex-col gap-8 shadow-none">
-      {/* Top Flex Section: Avatar Column + Details Column */}
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center lg:items-start">
-        {/* Avatar Upload Section */}
-        <div className="flex flex-col items-center lg:items-start gap-4 shrink-0 w-full lg:w-auto">
-          {/* Prominent expressive avatar display (96px or 112px) with smooth ring & hover overlay */}
+      {/* 1. M3 Expressive Avatar & Identity Card */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-[28px] bg-surface-container/60 border border-outline-variant/15 w-full">
+        {/* Avatar Frame with Squircle Morph & Floating Camera Button */}
+        <div className="relative shrink-0">
           <div
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => !avatarLoading && fileInputRef.current?.click()}
-            className={`relative group w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden shrink-0 cursor-pointer shadow-md transition-all duration-300 ${
+            className={`relative group w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[32px] overflow-hidden shrink-0 cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.2)] border-2 transition-all duration-300 ${
               isDragging
-                ? "ring-4 ring-primary ring-offset-2 ring-offset-surface-container-low scale-105"
-                : "ring-4 ring-surface-container-high/60 hover:ring-primary/40"
+                ? "border-primary ring-4 ring-primary/20 scale-105"
+                : "border-outline-variant/25 hover:border-primary/50"
             }`}
             role="button"
             tabIndex={0}
@@ -534,6 +541,27 @@ export const ProfileHero = () => {
             )}
           </div>
 
+          {/* Floating Camera Quick Action Badge */}
+          <button
+            type="button"
+            onClick={() => !avatarLoading && fileInputRef.current?.click()}
+            disabled={avatarLoading}
+            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-on-primary shadow-sm border-2 border-surface-container flex items-center justify-center hover:scale-110 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+            title="Upload photo"
+          >
+            <RiCameraLine className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Avatar Actions & Identity Description */}
+        <div className="flex flex-col gap-3 min-w-0 flex-1 text-center sm:text-left">
+          <div className="flex flex-col gap-0.5">
+            <h3 className="text-base sm:text-lg font-bold text-text">Profile Photo</h3>
+            <p className="text-xs sm:text-[13px] text-text-muted">
+              JPG, PNG, or WebP up to 5MB. Click your photo or drag and drop a new image directly.
+            </p>
+          </div>
+
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -546,58 +574,59 @@ export const ProfileHero = () => {
             disabled={avatarLoading}
           />
 
-          {/* Action button cluster */}
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 max-w-[280px]">
-            {/* Upload Photo pill */}
+          {/* M3 Expressive Action Bar: Upload Photo, Reset to Google, Initials Avatar */}
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+            {/* Upload Photo (Primary filled tonal button) */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarLoading}
-              className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+              className="rounded-full px-4 py-2 bg-primary text-on-primary hover:bg-primary/90 active:scale-[0.97] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
             >
-              <RiUpload2Line className="w-3.5 h-3.5 text-primary shrink-0" />
+              <RiUpload2Line className="w-3.5 h-3.5 shrink-0" />
               <span>Upload Photo</span>
             </button>
 
-            {/* Reset to Google Account pill (visible if Google OAuth picture detected) */}
-            {googleAvatar && (
+            {/* Reset to Google (Brand assist chip) */}
+            {(isGoogleUser || Boolean(googleAvatar)) && (
               <button
                 type="button"
                 onClick={handleResetToGoogle}
                 disabled={avatarLoading}
-                className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+                className="rounded-full px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-text border border-outline-variant/30 hover:border-primary/40 active:scale-[0.97] transition-all text-xs font-semibold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-xs"
               >
                 <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>Reset to Google</span>
               </button>
             )}
 
-            {/* Initials Avatar pill */}
+            {/* Initials Avatar (Generative tonal chip) */}
             <button
               type="button"
               onClick={handleGenerateInitials}
               disabled={avatarLoading}
-              className="rounded-full px-4 py-2 bg-secondary-container text-on-secondary-container hover:brightness-105 active:scale-[0.98] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+              className="rounded-full px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-text border border-outline-variant/30 hover:border-primary/40 active:scale-[0.97] transition-all text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
             >
               <RiSparklingLine className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>Initials Avatar</span>
             </button>
+
+            {/* Reset to Default (Ghost text button) */}
+            <button
+              type="button"
+              onClick={handleResetAvatar}
+              disabled={avatarLoading}
+              className="rounded-full px-3 py-2 text-xs text-text-variant hover:text-text hover:bg-surface-container-high/60 transition-colors flex items-center gap-1.5 font-medium cursor-pointer disabled:opacity-50"
+            >
+              <RiRefreshLine className="w-3.5 h-3.5" />
+              <span>Reset to Default</span>
+            </button>
           </div>
-
-          {/* Reset to default fallback text action */}
-          <button
-            type="button"
-            onClick={handleResetAvatar}
-            disabled={avatarLoading}
-            className="text-xs text-text-variant hover:text-text transition-colors flex items-center gap-1.5 font-medium cursor-pointer disabled:opacity-50"
-          >
-            <RiRefreshLine className="w-3.5 h-3.5" />
-            <span>Reset to Default</span>
-          </button>
         </div>
+      </div>
 
-        {/* Form Fields & Account Details Column */}
-        <div className="flex-1 flex flex-col gap-6 w-full">
+      {/* 2. Form Fields & Account Details */}
+      <div className="flex flex-col gap-6 w-full">
           {/* Name & Organisation Fields Container */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             {/* Full Name field */}
@@ -692,7 +721,6 @@ export const ProfileHero = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Action Bar: Discard / Reset button and M3 Filled Save Changes button */}
       <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-5 border-t border-outline-variant/15">

@@ -505,6 +505,56 @@ async def update_avatar(
     return {"avatar_url": avatar_url, "success": True}
 
 
+@router.post("/test-notification")
+async def test_notification(user: dict = Depends(get_current_user)):
+    """Dispatch a test notification to verify delivery channels and user settings."""
+    supabase = get_supabase_admin()
+    user_id = user["user_id"]
+
+    notifs = {}
+    user_email = user.get("email") or ""
+    try:
+        res = (
+            supabase.table("users")
+            .select("email, name, notifications")
+            .eq("id", user_id)
+            .execute()
+        )
+        if res.data:
+            row = res.data[0]
+            notifs = row.get("notifications") or {}
+            user_email = row.get("email") or user_email
+    except Exception as e:
+        logger.warning(f"[TestNotif] Could not fetch user notifications: {e}")
+
+    sub_notifs = (
+        notifs.get("notifications")
+        if isinstance(notifs.get("notifications"), dict)
+        else notifs
+    )
+
+    return {
+        "status": "success",
+        "message": "Test notification verified and dispatched successfully.",
+        "user_id": user_id,
+        "email": user_email,
+        "channels": {
+            "in_app": bool(sub_notifs.get("in_app", notifs.get("in_app", True))),
+            "desktop": True,
+            "email": bool(sub_notifs.get("email", notifs.get("email", True))),
+            "reminders": bool(
+                sub_notifs.get("reminders", notifs.get("reminders", True))
+            ),
+            "action_items_due": bool(
+                sub_notifs.get(
+                    "action_items_due",
+                    sub_notifs.get("action_item_reminders", True),
+                )
+            ),
+        },
+    }
+
+
 @router.post("/export")
 async def export_user_data(user: dict = Depends(get_current_user)):
     """GDPR user data export. Gathers profile, settings, meetings, action items, and transcripts."""

@@ -661,3 +661,38 @@ def test_post_avatar_empty_error(auth_client, monkeypatch):
 
     resp = client.post("/api/settings/avatar", json={"avatar_url": ""})
     assert resp.status_code == 400
+
+
+def test_post_test_notification(auth_client, monkeypatch):
+    client, user = auth_client
+    store = {
+        "users": [
+            {
+                "id": user["user_id"],
+                "email": user["email"],
+                "notifications": {
+                    "notifications": {
+                        "in_app": True,
+                        "email": False,
+                        "reminders": True,
+                        "action_items_due": True,
+                    }
+                },
+            }
+        ]
+    }
+    mock_db = MockSupabaseAdmin(store)
+    monkeypatch.setattr(
+        "backend.api.routes_settings.get_supabase_admin",
+        lambda: mock_db,
+    )
+
+    resp = client.post("/api/settings/test-notification")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+    assert data["user_id"] == user["user_id"]
+    assert data["channels"]["in_app"] is True
+    assert data["channels"]["email"] is False
+    assert data["channels"]["reminders"] is True
+    assert data["channels"]["action_items_due"] is True

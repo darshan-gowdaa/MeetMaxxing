@@ -8,7 +8,8 @@ import {
   RiCalendarCheckLine,
   RiTimeLine,
   RiSendPlaneLine,
-  RiCheckboxCircleLine
+  RiCheckboxCircleLine,
+  RiSparklingLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -63,12 +64,38 @@ function readCachedNotifs(): Notifications {
 }
 
 export default function NotificationsPage() {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const token = session?.access_token;
   const { showMessage } = useSnackbar();
   
   const [notifs, setNotifs] = useState<Notifications>(readCachedNotifs);
   const [loading, setLoading] = useState(false);
+  const [testBusy, setTestBusy] = useState(false);
+  const [permissionState, setPermissionState] = useState<"default" | "granted" | "denied" | "unsupported">("default");
+
+  // Detect browser notification permission status on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPermissionState(Notification.permission);
+    } else {
+      setPermissionState("unsupported");
+    }
+  }, []);
+
+  const requestBrowserPermission = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    try {
+      const res = await Notification.requestPermission();
+      setPermissionState(res);
+      if (res === "granted") {
+        showMessage("Desktop notifications enabled successfully", { variant: "success" });
+      } else if (res === "denied") {
+        showMessage("Desktop alerts blocked. You can enable them in browser site settings.", { variant: "error" });
+      }
+    } catch (e) {
+      console.warn("Failed to request notification permission:", e);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -116,6 +143,11 @@ export default function NotificationsPage() {
     try {
       localStorage.setItem("meetmaxxing_notifications", JSON.stringify(newNotifs));
     } catch {}
+
+    // When enabling in_app, prompt for browser permission if still default
+    if (key === "in_app" && !previous && permissionState === "default") {
+      requestBrowserPermission();
+    }
 
     if (!token) {
       showMessage("Notification preference updated locally", { variant: "default" });
@@ -177,16 +209,85 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleSendTestNotification = async () => {
+    setTestBusy(true);
+    try {
+      // 1. In-app toast trigger
+      showMessage("MeetMaxxing notification test: Upcoming meeting alert & action items active! 🚀", { variant: "success" });
+
+      // 2. Desktop notification trigger if granted
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          try {
+            new Notification("MeetMaxxing Alert Test", {
+              body: "Your notifications are configured and active! Meeting prep briefings and action item digests will arrive on schedule.",
+              icon: "/icon.png",
+            });
+          } catch (e) {
+            console.warn("Desktop notification trigger error:", e);
+          }
+        } else if (Notification.permission === "default") {
+          const res = await Notification.requestPermission();
+          setPermissionState(res);
+          if (res === "granted") {
+            new Notification("MeetMaxxing Alert Test", {
+              body: "Desktop alerts verified and active!",
+              icon: "/icon.png",
+            });
+          }
+        }
+      }
+
+      // 3. Backend verification dispatch
+      if (token) {
+        const res = await fetch(`${API_URL}/api/settings/test-notification`, {
+          method: "POST",
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json" 
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.email) {
+            showMessage(`Test alert verified for account: ${data.email}`, { variant: "success" });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Test notification failed:", err);
+    } finally {
+      setTestBusy(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
       {/* Page Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
-          Notifications
-        </h1>
-        <p className="text-sm text-text-muted">
-          Manage alert channels, lead-time notifications, and daily summaries.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
+            Notifications
+          </h1>
+          <p className="text-sm text-text-muted">
+            Manage alert channels, lead-time notifications, and daily summaries.
+          </p>
+        </div>
+
+        {/* Test Notification Button */}
+        <button
+          type="button"
+          onClick={handleSendTestNotification}
+          disabled={testBusy}
+          className="rounded-full px-4 py-2.5 bg-primary text-on-primary hover:bg-primary/90 font-semibold text-xs sm:text-[13px] inline-flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.97] shrink-0 disabled:opacity-50 cursor-pointer"
+        >
+          {testBusy ? (
+            <span className="w-3.5 h-3.5 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <RiSparklingLine className="w-4 h-4 text-on-primary" />
+          )}
+          <span>Send Test Alert</span>
+        </button>
       </div>
       
       {loading ? (
@@ -195,15 +296,43 @@ export default function NotificationsPage() {
         <div className="flex flex-col gap-8">
           {/* Card 1: Delivery Channels */}
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <RiSendPlaneLine className="w-5 h-5" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <RiSendPlaneLine className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-lg sm:text-xl font-bold text-text">Delivery Channels</h2>
+                  <p className="text-xs sm:text-sm text-text-muted">
+                    Choose where and how MeetMaxxing reaches you with meeting updates.
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg sm:text-xl font-bold text-text">Delivery Channels</h2>
-                <p className="text-xs sm:text-sm text-text-muted">
-                  Choose where and how MeetMaxxing reaches you with meeting updates.
-                </p>
+
+              {/* Live Browser Permission Status Badge */}
+              <div className="shrink-0">
+                {permissionState === "granted" && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-success/10 text-success border border-success/20">
+                    <RiCheckboxCircleLine className="w-3.5 h-3.5" />
+                    <span>Browser Alerts Active</span>
+                  </span>
+                )}
+                {permissionState === "default" && (
+                  <button
+                    type="button"
+                    onClick={requestBrowserPermission}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <RiNotification3Line className="w-3.5 h-3.5" />
+                    <span>Enable Browser Alerts</span>
+                  </button>
+                )}
+                {permissionState === "denied" && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-risk/10 text-risk border border-risk/20" title="Notifications are blocked in your browser site permissions">
+                    <RiAlarmWarningLine className="w-3.5 h-3.5" />
+                    <span>Alerts Blocked in Browser</span>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -232,7 +361,9 @@ export default function NotificationsPage() {
                     <RiMailLine className="w-4 h-4 text-primary" /> Email Activity Recaps
                   </span>
                   <span className="text-xs sm:text-sm text-text-muted">
-                    Daily and post-meeting executive summary dispatches
+                    {user?.email 
+                      ? `Dispatched to ${user.email} after meetings finish and during daily digests` 
+                      : "Daily and post-meeting executive summary dispatches"}
                   </span>
                 </div>
                 <Switch 
@@ -278,7 +409,7 @@ export default function NotificationsPage() {
                 </label>
 
                 {/* Meeting Prep Lead Time attached right under */}
-                <div className="pt-3 border-t border-outline-variant/15 flex flex-col gap-2">
+                <div className={`pt-3 border-t border-outline-variant/15 flex flex-col gap-2 transition-opacity ${notifs.reminders ? "opacity-100" : "opacity-50"}`}>
                   <div className="flex items-center justify-between gap-2">
                     <label htmlFor="prep-lead-time" className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
                       <RiTimeLine className="w-3.5 h-3.5 text-primary" /> Meeting Prep Lead Time
