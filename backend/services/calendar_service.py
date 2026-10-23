@@ -4,6 +4,7 @@ Handles OAuth2 token management and event CRUD.
 """
 
 import base64
+from datetime import UTC, datetime, timedelta
 import json
 import logging
 import os
@@ -169,6 +170,70 @@ async def create_calendar_event(event_body: dict, token_data: dict) -> dict:
         raise RuntimeError(f"Calendar API error: {e.status_code} — {e.reason}")
     except Exception as e:
         raise RuntimeError(f"Failed to create event: {e}")
+
+
+async def list_upcoming_events(token_data: dict, max_results: int = 5) -> list[dict]:
+    """Fetch next upcoming calendar events for the connected user."""
+    if not token_data or not (
+        token_data.get("access_token") or token_data.get("refresh_token")
+    ):
+        return []
+
+    def _list() -> list[dict]:
+        service = _build_service(token_data)
+        now_iso = datetime.now(UTC).isoformat()
+        events_result = (
+            service.events()
+            .list(
+                calendarId="primary",
+                timeMin=now_iso,
+                maxResults=max_results,
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
+        )
+        items = events_result.get("items", [])
+        clean_events = []
+        for it in items:
+            start = it.get("start", {}).get("dateTime") or it.get("start", {}).get(
+                "date"
+            )
+            end = it.get("end", {}).get("dateTime") or it.get("end", {}).get("date")
+            clean_events.append(
+                {
+                    "id": it.get("id"),
+                    "summary": it.get("summary") or "Untitled Meeting",
+                    "start": start,
+                    "end": end,
+                    "html_link": it.get("htmlLink"),
+                    "hangout_link": it.get("hangoutLink"),
+                    "attendees_count": len(it.get("attendees") or []),
+                }
+            )
+        return clean_events
+
+    try:
+        return await run_in_threadpool(_list)
+    except Exception as e:
+        logging.warning(f"Failed to list calendar events: {e}")
+        return []
+
+
+async def create_test_event(token_data: dict) -> dict:
+    """Create a 15-min sample 'MeetMaxxing Copilot Sync Test' event to verify calendar integration."""
+    now = datetime.now(UTC) + timedelta(hours=1)
+    event_start = now.replace(minute=0, second=0, microsecond=0)
+    event_end = event_start + timedelta(minutes=15)
+
+    payload = {
+        "summary": "MeetMaxxing Copilot • Calendar Sync Test",
+        "description": "Test event verified and scheduled by MeetMaxxing AI meeting copilot.",
+        "start": {"dateTime": event_start.isoformat(), "timeZone": "UTC"},
+        "end": {"dateTime": event_end.isoformat(), "timeZone": "UTC"},
+        "reminders": {"useDefault": True},
+    }
+    return await create_calendar_event(payload, token_data)
 
 
 async def get_calendar_auth_url(

@@ -10,13 +10,35 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, Field
 
 from ..core.auth import get_current_user
 from ..core.config import settings
 from ..core.database import get_meeting_record, get_supabase_admin
-from ..services.calendar_service import exchange_calendar_code, get_calendar_auth_url
+from ..services.calendar_service import (
+    create_test_event,
+    exchange_calendar_code,
+    get_calendar_auth_url,
+    list_upcoming_events,
+)
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
+
+DEFAULT_CALENDAR_PREFERENCES = {
+    "auto_schedule_followups": True,
+    "followup_mode": "prompt",  # "prompt" or "auto"
+    "lead_days": 3,
+    "time_block_actions": True,
+    "context_sync": True,
+}
+
+
+class CalendarPreferencesRequest(BaseModel):
+    auto_schedule_followups: bool = True
+    followup_mode: str = "prompt"
+    lead_days: int = Field(default=3, ge=1, le=14)
+    time_block_actions: bool = True
+    context_sync: bool = True
 
 
 # ── Helper: build a Google Calendar "add event" URL (no OAuth required) ──────
@@ -393,18 +415,98 @@ async def get_calendar_status(user: dict = Depends(get_current_user)):
             "connected": False,
             "email": None,
             "last_synced_at": None,
+            "preferences": DEFAULT_CALENDAR_PREFERENCES,
         }
 
     token_email = calendar_token.get("email") or user_email
     last_synced = calendar_token.get("last_synced_at") or calendar_token.get(
         "synced_at"
     )
+    raw_prefs = calendar_token.get("preferences")
+    preferences = (
+        dict(DEFAULT_CALENDAR_PREFERENCES, **raw_prefs)
+        if isinstance(raw_prefs, dict)
+        else DEFAULT_CALENDAR_PREFERENCES
+    )
 
     return {
         "connected": True,
         "email": token_email,
         "last_synced_at": last_synced,
+        "preferences": preferences,
     }
+
+
+# ── GET /calendar/events ──────────────────────────────────────────────────────
+@router.get("/events")
+async def get_upcoming_calendar_events(user: dict = Depends(get_current_user)):
+    """Fetch next 5 upcoming calendar events for the connected user."""
+    supabase = get_supabase_admin()
+    try:
+        res = (
+            supabase.table("users")
+            .select("calendar_token")
+            .eq("id", user["user_id"])
+            .execute()
+        )
+        if not res.data or not res.data[0].get("calendar_token"):
+            return {"events": []}
+        calendar_token = res.data[0]["calendar_token"]
+        events = await list_upcoming_events(calendar_token, max_results=5)
+        return {"events": events}
+    except Exception as e:
+        logging.warning(f"Could not fetch upcoming calendar events: {e}")
+        return {"events": []}
+
+
+# ── POST /calendar/test-event ─────────────────────────────────────────────────
+@router.post("/test-event")
+async def create_calendar_test_event(user: dict = Depends(get_current_user)):
+    """Create a 15-minute test event on user's primary calendar to verify sync."""
+    supabase = get_supabase_admin()
+    res = (
+        supabase.table("users")
+        .select("calendar_token")
+        .eq("id", user["user_id"])
+        .execute()
+    )
+    if not res.data or not res.data[0].get("calendar_token"):
+        raise HTTPException(status_code=400, detail="Google Calendar is not connected")
+    calendar_token = res.data[0]["calendar_token"]
+    try:
+        created = await create_test_event(calendar_token)
+        return {
+            "status": "created",
+            "event_id": created.get("id"),
+            "html_link": created.get("htmlLink"),
+            "summary": created.get("summary"),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create test event: {e}")
+
+
+# ── POST /calendar/preferences ────────────────────────────────────────────────
+@router.post("/preferences")
+async def update_calendar_preferences(
+    body: CalendarPreferencesRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Save user calendar sub-options and automation preferences."""
+    supabase = get_supabase_admin()
+    res = (
+        supabase.table("users")
+        .select("calendar_token")
+        .eq("id", user["user_id"])
+        .execute()
+    )
+    if not res.data or not res.data[0].get("calendar_token"):
+        raise HTTPException(status_code=400, detail="Google Calendar is not connected")
+    token_dict = dict(res.data[0]["calendar_token"])
+    token_dict["preferences"] = body.model_dump()
+    supabase.table("users").update({"calendar_token": token_dict}).eq(
+        "id", user["user_id"]
+    ).execute()
+    return {"status": "updated", "preferences": body.model_dump()}
 
 
 # ── POST /calendar/disconnect ─────────────────────────────────────────────────
