@@ -316,10 +316,12 @@ async def calendar_callback(
         import inspect
 
         sig = inspect.signature(exchange_calendar_code)
+        kwargs = {}
         if "redirect_uri" in sig.parameters:
-            tokens = await exchange_calendar_code(code, redirect_uri=stored_redirect)
-        else:
-            tokens = await exchange_calendar_code(code)
+            kwargs["redirect_uri"] = stored_redirect
+        if "code_verifier" in sig.parameters and state_data.get("code_verifier"):
+            kwargs["code_verifier"] = state_data["code_verifier"]
+        tokens = await exchange_calendar_code(code, **kwargs)
     except Exception as e:
         logging.error(f"Failed to exchange calendar code: {e}")
         if is_browser:

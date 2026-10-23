@@ -12,7 +12,7 @@ from googleapiclient.errors import HttpError
 from ..core.config import settings
 
 
-def _build_flow(redirect_uri: str | None = None):
+def _build_flow(redirect_uri: str | None = None, code_verifier: str | None = None):
     """Build Google OAuth2 Flow from settings (shared by auth URL + code exchange)."""
     from google_auth_oauthlib.flow import Flow
 
@@ -38,7 +38,7 @@ def _build_flow(redirect_uri: str | None = None):
         )
     )
 
-    return Flow.from_client_config(
+    flow = Flow.from_client_config(
         {
             "web": {
                 "client_id": settings.GOOGLE_CLIENT_ID,
@@ -51,6 +51,12 @@ def _build_flow(redirect_uri: str | None = None):
         scopes=settings.GOOGLE_CALENDAR_SCOPES,
         redirect_uri=effective_uri,
     )
+    # Confidential web client with client_secret does not require PKCE code_challenge;
+    # disabling autogenerate prevents "Missing code verifier" when exchanging code across requests.
+    flow.autogenerate_code_verifier = False
+    if code_verifier:
+        flow.code_verifier = code_verifier
+    return flow
 
 
 def _build_service(token_data: dict):
@@ -113,11 +119,15 @@ async def get_calendar_auth_url(
     return auth_url
 
 
-async def exchange_calendar_code(code: str, redirect_uri: str | None = None) -> dict:
+async def exchange_calendar_code(
+    code: str,
+    redirect_uri: str | None = None,
+    code_verifier: str | None = None,
+) -> dict:
     """Exchange OAuth2 authorization code for tokens."""
 
     def _exchange() -> dict:
-        flow = _build_flow(redirect_uri=redirect_uri)
+        flow = _build_flow(redirect_uri=redirect_uri, code_verifier=code_verifier)
         flow.fetch_token(code=code)
         creds = flow.credentials
         return {
