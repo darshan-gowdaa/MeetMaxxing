@@ -103,7 +103,9 @@ def _format_settings_response(user_data: dict) -> dict:
             "digest_time": str(
                 sub_notifs.get(
                     "digest_time",
-                    sub_notifs.get("daily_digest_time", notifs.get("digest_time", "09:00")),
+                    sub_notifs.get(
+                        "daily_digest_time", notifs.get("digest_time", "09:00")
+                    ),
                 )
             ),
         },
@@ -267,17 +269,25 @@ async def update_settings(updates: dict, user: dict = Depends(get_current_user))
     if "notifications" in updates and isinstance(updates["notifications"], dict):
         client_notifs = dict(updates["notifications"])
         if "action_items_due" in client_notifs:
-            client_notifs["action_item_reminders"] = bool(client_notifs["action_items_due"])
+            client_notifs["action_item_reminders"] = bool(
+                client_notifs["action_items_due"]
+            )
         if "action_item_reminders" in client_notifs:
-            client_notifs["action_items_due"] = bool(client_notifs["action_item_reminders"])
+            client_notifs["action_items_due"] = bool(
+                client_notifs["action_item_reminders"]
+            )
         if "prep_alerts_lead_time" in client_notifs:
-            val_clean = str(client_notifs["prep_alerts_lead_time"]).replace("m", "").strip()
+            val_clean = (
+                str(client_notifs["prep_alerts_lead_time"]).replace("m", "").strip()
+            )
             try:
                 client_notifs["prep_lead_time_minutes"] = int(val_clean)
             except ValueError:
                 pass
         if "prep_lead_time_minutes" in client_notifs:
-            client_notifs["prep_alerts_lead_time"] = f"{client_notifs['prep_lead_time_minutes']}m"
+            client_notifs["prep_alerts_lead_time"] = (
+                f"{client_notifs['prep_lead_time_minutes']}m"
+            )
         if "daily_digest_time" in client_notifs:
             client_notifs["digest_time"] = str(client_notifs["daily_digest_time"])
         if "digest_time" in client_notifs:
