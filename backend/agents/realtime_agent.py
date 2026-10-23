@@ -72,14 +72,28 @@ async def run_realtime_agent(
         meeting_id,
         last_n=settings.REALTIME_WINDOW_MINUTES * 20,
     )
-    chunks = [c for c in raw_chunks if c.get("source") != "audio"]
+    # Prefer DOM caption chunks; if none, use audio-transcribed chunks as fallback
+    dom_chunks = [c for c in raw_chunks if c.get("source") != "audio"]
+    chunks = dom_chunks if dom_chunks else raw_chunks
+
+    # Fall back to DB transcript_data if Redis rolling window is empty
+    if not chunks:
+        try:
+            from ..core.database import get_meeting_record, get_supabase_admin
+
+            m_rec = get_meeting_record(get_supabase_admin(), meeting_id)
+            if m_rec and m_rec.get("transcript_data"):
+                chunks = list(m_rec.get("transcript_data") or [])
+        except Exception:
+            pass
+
     chunks = chunks[-(settings.REALTIME_WINDOW_MINUTES * 10) :]
 
     if not chunks:
         return {
             "meeting_id": meeting_id,
             "suggestions": [
-                "Listening for spoken speech... Turn on Google Meet Captions (CC) at the bottom right to begin real-time AI analysis."
+                "Listening for spoken speech... Turn on Google Meet Captions (CC) or enable audio capture to begin real-time AI analysis."
             ],
             "risks": [],
             "next_questions": ["Waiting for speaker utterance..."],

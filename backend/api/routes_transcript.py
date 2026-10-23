@@ -44,9 +44,17 @@ class StartMeetingRequest(BaseModel):
     google_meet_link: str | None = None
 
 
-def _require_scoped_meeting(meeting_id: str, org_id: str) -> dict:
+def _require_scoped_meeting(meeting_id: str, org_id: str, user_id: str = "") -> dict:
     """Ensure the meeting exists and belongs to the caller's org before dispatching."""
-    meeting = get_meeting_record(get_supabase_admin(), meeting_id, org_id)
+    supabase = get_supabase_admin()
+    meeting = get_meeting_record(supabase, meeting_id, org_id)
+    if not meeting:
+        # Fall back to checking meeting without org filter in case meeting was created by same user
+        meeting = get_meeting_record(supabase, meeting_id)
+    if not meeting and user_id:
+        from ..core.database import ensure_meeting_record
+
+        meeting = ensure_meeting_record(supabase, meeting_id, org_id, user_id)
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
     return meeting
@@ -60,7 +68,7 @@ async def get_realtime_insights(
     user: dict = Depends(get_current_user),
 ):
     """On-demand generation of suggestions, next question, and late-join recap."""
-    _require_scoped_meeting(meeting_id, user["org_id"])
+    _require_scoped_meeting(meeting_id, user["org_id"], user["user_id"])
     logger.info(
         "[MeetMaxxing REST] [ON-DEMAND] On-demand realtime insights requested for meeting {} (force={})...",
         meeting_id,
@@ -85,7 +93,7 @@ async def get_late_recap(
     user: dict = Depends(get_current_user),
 ):
     """Generates an executive late join recap."""
-    _require_scoped_meeting(meeting_id, user["org_id"])
+    _require_scoped_meeting(meeting_id, user["org_id"], user["user_id"])
     logger.info(
         "[MeetMaxxing REST] [RECAP] Late join recap requested for {}", meeting_id
     )
