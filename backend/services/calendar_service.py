@@ -23,11 +23,17 @@ def _build_flow(redirect_uri: str | None = None):
                 effective_uri,
                 settings.GOOGLE_REDIRECT_URI,
                 "https://meetmaxxing-api.onrender.com/calendar/callback",
+                "https://meetmaxxing-api.onrender.com/calendar/callback/",
                 "https://meetmaxxing-api.onrender.com/api/calendar/callback",
+                "https://meetmaxxing-api.onrender.com/api/calendar/callback/",
                 "http://localhost:8000/calendar/callback",
+                "http://localhost:8000/calendar/callback/",
                 "http://localhost:8000/api/calendar/callback",
+                "http://localhost:8000/api/calendar/callback/",
                 "http://127.0.0.1:8000/calendar/callback",
+                "http://127.0.0.1:8000/calendar/callback/",
                 "http://127.0.0.1:8000/api/calendar/callback",
+                "http://127.0.0.1:8000/api/calendar/callback/",
             ]
         )
     )

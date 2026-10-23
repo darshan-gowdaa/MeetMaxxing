@@ -275,6 +275,7 @@ async def connect_calendar(
 
 # ── GET /calendar/callback ────────────────────────────────────────────────────
 @router.get("/callback")
+@router.get("/callback/")
 async def calendar_callback(
     request: Request,
     code: str | None = None,
