@@ -32,7 +32,7 @@
   "content_scripts": [
     {
       "matches": ["https://meet.google.com/*"],
-      "js": ["config.js", "content.js"],
+      "js": ["config.js", "compat.js", "content-captions.js", "content-ui.js", "content-panel.js", "content.js"],
       "css": ["styles/injected-panel.css"],
       "run_at": "document_end"
     },
