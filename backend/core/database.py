@@ -56,8 +56,9 @@ def get_meeting_record(supabase, meeting_id: str, org_id: str = None) -> dict | 
         res = query.order("created_at", desc=True).execute()
         if res.data:
             return res.data[0]
-    except Exception:
-        pass
+    except Exception as e:
+        from loguru import logger
+        logger.warning("[DB] get_meeting_record query failed: {}", e)
 
     return None
 

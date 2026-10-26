@@ -1,4 +1,4 @@
-import json
+﻿import json
 import time
 
 import redis.asyncio as aioredis
@@ -105,27 +105,29 @@ async def append_transcript_chunk(meeting_id: str, chunk: dict) -> None:
     r = await _get_redis()
     key = f"transcript:{meeting_id}"
 
-    last_raw = await r.lrange(key, -1, -1)
+    last_raw = await r.lrange(key, -3, -1)
     if last_raw:
-        try:
-            last_item = json.loads(last_raw[0])
-            if last_item.get("speaker") == chunk.get("speaker"):
-                last_text = last_item.get("text", "").strip()
-                new_text = chunk.get("text", "").strip()
-                if last_text == new_text or last_text.startswith(new_text):
-                    return
-                if new_text.startswith(last_text) or (
-                    len(new_text) > len(last_text) and new_text[:15] == last_text[:15]
-                ):
-                    if isinstance(r, MemoryRedis):
-                        _memory_store[key][-1] = json.dumps(chunk)
-                    else:
-                        await r.rpop(key)
-                        await r.rpush(key, json.dumps(chunk))
-                    await r.expire(key, TRANSCRIPT_TTL)
-                    return
-        except Exception:
-            pass
+        for raw_item in reversed(last_raw):
+            try:
+                last_item = json.loads(raw_item)
+                if last_item.get("speaker") == chunk.get("speaker"):
+                    last_text = last_item.get("text", "").strip()
+                    new_text = chunk.get("text", "").strip()
+                    if last_text == new_text or last_text.startswith(new_text):
+                        return
+                    if new_text.startswith(last_text) or (
+                        len(new_text) > len(last_text) and new_text[:15] == last_text[:15]
+                    ):
+                        # Replace only the last element (not any of the 3)
+                        if isinstance(r, MemoryRedis):
+                            _memory_store[key][-1] = json.dumps(chunk)
+                        else:
+                            await r.rpop(key)
+                            await r.rpush(key, json.dumps(chunk))
+                        await r.expire(key, TRANSCRIPT_TTL)
+                        return
+            except Exception:
+                pass
 
     await r.rpush(key, json.dumps(chunk))
     await r.expire(key, TRANSCRIPT_TTL)

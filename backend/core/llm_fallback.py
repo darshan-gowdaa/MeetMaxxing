@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import json
 from typing import Any
 
@@ -20,7 +20,9 @@ def get_http_client() -> httpx.AsyncClient:
     loop = asyncio.get_running_loop()
     if _http_client is None or _http_client.is_closed or _http_client_loop is not loop:
         # httpx.AsyncClient is loop-bound; recreate if the running loop changed.
-        _http_client = httpx.AsyncClient(timeout=20.0)
+        _http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(connect=3.0, read=20.0, write=5.0, pool=5.0)
+        )
         _http_client_loop = loop
     return _http_client
 
@@ -266,7 +268,7 @@ async def generate_content_with_fallback(
                         "X-Title": "MeetMaxxing",
                     },
                     provider="openrouter",
-                    timeout=7.0,
+                    timeout=6.0,
                 )
                 if text:
                     rate_limiter.record_success("openrouter")
@@ -301,7 +303,7 @@ async def generate_content_with_fallback(
                     max_tokens,
                     response_format_json,
                     provider="groq",
-                    timeout=6.0,
+                    timeout=5.0,
                 )
                 if text:
                     rate_limiter.record_success("groq")

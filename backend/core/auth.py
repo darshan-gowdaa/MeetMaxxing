@@ -11,6 +11,20 @@ bearer_scheme = HTTPBearer(auto_error=False)
 # SHA256(token) -> (expires_at, user_dict)
 _TOKEN_CACHE: dict[str, tuple[float, dict]] = {}
 _TOKEN_CACHE_TTL = 60.0  # seconds
+_TOKEN_CACHE_MAX = 512
+
+
+def _prune_token_cache() -> None:
+    """Evict expired entries; also cap total size to prevent unbounded growth."""
+    now = time.time()
+    expired_keys = [k for k, (exp, _) in _TOKEN_CACHE.items() if now >= exp]
+    for k in expired_keys:
+        del _TOKEN_CACHE[k]
+    # Hard cap: remove oldest entries if still over limit
+    if len(_TOKEN_CACHE) > _TOKEN_CACHE_MAX:
+        overage = len(_TOKEN_CACHE) - _TOKEN_CACHE_MAX
+        for k in list(_TOKEN_CACHE.keys())[:overage]:
+            del _TOKEN_CACHE[k]
 
 
 async def get_user_from_token(token: str) -> dict:
@@ -25,6 +39,7 @@ async def get_user_from_token(token: str) -> dict:
 
     now = time.time()
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    _prune_token_cache()
     cached = _TOKEN_CACHE.get(token_hash)
     if cached and now < cached[0]:
         return cached[1]

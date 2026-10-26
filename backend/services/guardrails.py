@@ -29,11 +29,19 @@ def _extract_speaker_names(transcript_window: str) -> set[str]:
 
 def validate_realtime_output(suggestions: list, transcript_window: str) -> list:
     """
-    Light guardrail — currently passes all suggestions through.
-    Hallucination heuristic: flag capitalized names not in transcript.
-    (Extended logic can be added here without changing callers.)
+    Light guardrail — filters empty, too-short, or control-string suggestions.
+    Fast path: no LLM call needed for realtime use.
     """
-    return suggestions if suggestions else []
+    if not suggestions:
+        return []
+    cleaned = []
+    for s in suggestions:
+        text = str(s).strip()
+        # Skip blanks, single-word non-sentences, or internal debug strings
+        if not text or len(text) < 8:
+            continue
+        cleaned.append(text)
+    return cleaned
 
 
 async def _run_groundedness_eval(

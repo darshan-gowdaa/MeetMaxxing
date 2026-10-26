@@ -286,6 +286,7 @@ async def _run_end_pipeline(
     user_id: str,
 ) -> None:
     """Background task — full post-meeting processing pipeline."""
+    final_title: str = title or "Untitled Meeting"
     logger.info(f"[MeetMaxxing END PIPELINE] Starting pipeline for {meeting_id}...")
     supabase = get_supabase_admin()
 
@@ -642,11 +643,7 @@ async def _run_end_pipeline(
             AgentTrigger.SEND_EMAIL,
             {
                 "meeting_id": target_id or meeting_id,
-                "meeting_title": (
-                    final_title
-                    if "final_title" in locals()
-                    else (title or "Untitled Meeting")
-                ),
+                "meeting_title": final_title,
                 "attendees": attendees,
                 "summary": final_summary.get("summary", ""),
                 "action_items": [
