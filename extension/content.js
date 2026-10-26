@@ -87,12 +87,11 @@ const CONTAINER_QUERY = CONTAINER_SELECTORS.join(', ');
 // ─── Find speaker near a text element ─────────────────────────────────────────
 function findSpeaker(textEl) {
   if (!textEl) return "Participant";
-  const speakerQuery = SPEAKER_SELECTORS.join(",");
 
   // 1. Check siblings (speaker div precedes text div in Meet's structure)
   let sib = textEl.previousElementSibling;
   for (let i = 0; i < 6 && sib; i++, sib = sib.previousElementSibling) {
-    const s = sib.matches(speakerQuery) ? sib : sib.querySelector(speakerQuery);
+    const s = sib.matches(SPEAKER_QUERY) ? sib : sib.querySelector(SPEAKER_QUERY);
     if (s?.textContent?.trim()) {
       const name = s.textContent.trim();
       if (name.length < 50 && !isIgnorePhrase(name)) return name;
@@ -105,7 +104,7 @@ function findSpeaker(textEl) {
     if (node.dataset?.senderName && !isIgnorePhrase(node.dataset.senderName)) return node.dataset.senderName;
     if (node.dataset?.selfName && !isIgnorePhrase(node.dataset.selfName)) return node.dataset.selfName;
     
-    const s = node.querySelector(speakerQuery);
+    const s = node.querySelector(SPEAKER_QUERY);
     if (s && s !== textEl && !textEl.contains(s) && s.textContent?.trim()) {
       const name = s.textContent.trim();
       if (name.length < 50 && !isIgnorePhrase(name) && !name.includes(textEl.textContent?.trim())) {
@@ -121,7 +120,7 @@ function findSpeaker(textEl) {
   // 3. Fallback: check inside closest caption container
   const container = textEl.closest(CONTAINER_SELECTORS.join(","));
   if (container) {
-    const s = container.querySelector(speakerQuery);
+    const s = container.querySelector(SPEAKER_QUERY);
     if (s && s !== textEl && !textEl.contains(s) && s.textContent?.trim()) {
       const name = s.textContent.trim();
       if (name.length < 50 && !isIgnorePhrase(name)) return name;
@@ -785,6 +784,7 @@ function endMeeting() {
   // Flush all pending utterances before ending
   for (const sp of [...utteranceMap.keys()]) flushUtterance(sp);
   if (captionObserver) { try { captionObserver.disconnect(); } catch (e) {} captionObserver = null; }
+  if (targetedContainerObserver) { try { targetedContainerObserver.disconnect(); } catch (e) {} targetedContainerObserver = null; }
   if (autoCcInterval) { clearInterval(autoCcInterval); autoCcInterval = null; }
   
   const toggleBtn = document.getElementById("mm-caption-visibility-btn");
@@ -870,7 +870,7 @@ document.addEventListener("click", (e) => {
     }
   }
 
-  if (location.hostname.includes("meet.google.com") && location.pathname.length > 4 && !location.pathname.includes("landing")) {
+  if (isInCallSession && location.hostname.includes("meet.google.com") && location.pathname.length > 4 && !location.pathname.includes("landing")) {
     safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
   }
 }, { capture: true });
@@ -896,7 +896,6 @@ function handleUrlChange() {
   if (location.href !== lastUrl) {
     lastUrl = location.href;
     detectMeetingState();
-    setTimeout(tryInjectPanel, 1000);
   }
 }
 window.addEventListener("popstate", handleUrlChange);
@@ -951,6 +950,7 @@ function injectMeetMaxxingPanel() {
   
   // Toggle logic
   let isCollapsed = localStorage.getItem('mm_panel_collapsed') === 'true';
+  const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
   
   function applyState() {
     const pathEl = toggleTab.querySelector('#mm-toggle-path');
@@ -979,7 +979,6 @@ function injectMeetMaxxingPanel() {
   applyState();
   
   // Listen for toggle from background (browser action click)
-  const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
   runtimeAPI.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'TOGGLE_PANEL' || msg.type === 'TOGGLE_PANEL_OPEN') {
       if (msg.type === 'TOGGLE_PANEL_OPEN') {
@@ -995,7 +994,8 @@ function injectMeetMaxxingPanel() {
 // Inject panel when on Google Meet call page (has /room path)
 function tryInjectPanel() {
   // Only inject if we're in an active meeting (URL has the meeting code)
-  const onMeetCall = window.location.pathname.length > 1 && !window.location.pathname.startsWith('/landing');
+  const p = window.location.pathname;
+  const onMeetCall = p.length > 4 && !p.startsWith('/landing') && !p.startsWith('/home') && !p.startsWith('/new') && !p.startsWith('/about');
   const panel = document.getElementById('mm-panel-root');
   
   if (onMeetCall) {

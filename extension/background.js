@@ -293,9 +293,9 @@ function setupKeepaliveAlarm() {
 function handleMeetingEnd() {
   const meetingIdToEnd = activeMeetingId;
   if (meetingIdToEnd) {
-    fetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
+    authFetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: "Google Meet", attendees: [], max_participants: activeMeetingMaxParticipants }),
     }).catch(() => {});
   }
@@ -616,11 +616,12 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     };
 
     if (activeMeetingId) {
+      const capturedMaxParticipants = activeMeetingMaxParticipants;
       activeMeetingId = null;
       authFetch(`${BASE}/meeting/${meetingIdToEnd}/end`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [], max_participants: msg.maxParticipants || activeMeetingMaxParticipants || 1 }),
+        body: JSON.stringify({ title: msg.title || "Google Meet", attendees: [], max_participants: msg.maxParticipants || capturedMaxParticipants || 1 }),
       }).then(finishEnd).catch(finishEnd);
       return true;
     }

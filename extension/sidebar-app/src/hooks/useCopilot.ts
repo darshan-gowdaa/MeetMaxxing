@@ -186,6 +186,8 @@ export function useCopilot() {
             if (res.copilot_state.recap) setRecap(res.copilot_state.recap);
             if (res.copilot_state.error || res.copilot_state.error_message) {
               setErrorMessage(res.copilot_state.error || res.copilot_state.error_message);
+            } else {
+              setErrorMessage("");
             }
           }
           if (res.currentMeetingId) {
@@ -242,7 +244,7 @@ export function useCopilot() {
     };
 
     wakeAndCheck();
-    pollTimer = setInterval(wakeAndCheck, 5000);
+    pollTimer = setInterval(wakeAndCheck, 30000);
 
     return () => {
       isMounted = false;
