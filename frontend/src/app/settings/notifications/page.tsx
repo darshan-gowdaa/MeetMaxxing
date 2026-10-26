@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { 
-  RiMailLine, 
   RiNotification3Line, 
   RiAlarmWarningLine, 
-  RiCalendarCheckLine,
-  RiTimeLine,
-  RiSendPlaneLine,
   RiCheckboxCircleLine,
   RiSparklingLine
 } from "@remixicon/react";
@@ -297,16 +293,11 @@ export default function NotificationsPage() {
           {/* Card 1: Delivery Channels */}
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <RiSendPlaneLine className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-lg sm:text-xl font-bold text-text">Delivery Channels</h2>
-                  <p className="text-xs sm:text-sm text-text-muted">
-                    Choose where and how MeetMaxxing reaches you with meeting updates.
-                  </p>
-                </div>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg sm:text-xl font-bold text-text">Delivery Channels</h2>
+                <p className="text-xs sm:text-sm text-text-muted">
+                  Choose where and how MeetMaxxing reaches you with meeting updates.
+                </p>
               </div>
 
               {/* Live Browser Permission Status Badge */}
@@ -340,8 +331,8 @@ export default function NotificationsPage() {
               {/* In-App & Desktop Alerts */}
               <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
                 <div className="flex flex-col">
-                  <span className="font-bold text-base text-text flex items-center gap-2">
-                    <RiNotification3Line className="w-4 h-4 text-primary" /> In-App & Desktop Alerts
+                  <span className="font-bold text-base text-text">
+                    In-App & Desktop Alerts
                   </span>
                   <span className="text-xs sm:text-sm text-text-muted">
                     Real-time toasts and desktop notification prompts
@@ -357,8 +348,8 @@ export default function NotificationsPage() {
               {/* Email Activity Recaps */}
               <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
                 <div className="flex flex-col">
-                  <span className="font-bold text-base text-text flex items-center gap-2">
-                    <RiMailLine className="w-4 h-4 text-primary" /> Email Activity Recaps
+                  <span className="font-bold text-base text-text">
+                    Email Activity Recaps
                   </span>
                   <span className="text-xs sm:text-sm text-text-muted">
                     {user?.email 
@@ -377,16 +368,11 @@ export default function NotificationsPage() {
 
           {/* Card 2: Meeting & Action Reminders */}
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <RiAlarmWarningLine className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Action Reminders</h2>
-                <p className="text-xs sm:text-sm text-text-muted">
-                  Configure automated alerts for upcoming meetings and task target dates.
-                </p>
-              </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Action Reminders</h2>
+              <p className="text-xs sm:text-sm text-text-muted">
+                Configure automated alerts for upcoming meetings and task target dates.
+              </p>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -394,8 +380,8 @@ export default function NotificationsPage() {
               <div className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex flex-col gap-4">
                 <label className="flex items-center justify-between gap-4 cursor-pointer">
                   <div className="flex flex-col">
-                    <span className="font-bold text-base text-text flex items-center gap-2">
-                      <RiCalendarCheckLine className="w-4 h-4 text-primary" /> Upcoming Meeting Alerts
+                    <span className="font-bold text-base text-text">
+                      Upcoming Meeting Alerts
                     </span>
                     <span className="text-xs sm:text-sm text-text-muted">
                       Direct alerts before scheduled meetings begin
@@ -411,8 +397,8 @@ export default function NotificationsPage() {
                 {/* Meeting Prep Lead Time attached right under */}
                 <div className={`pt-3 border-t border-outline-variant/15 flex flex-col gap-2 transition-opacity ${notifs.reminders ? "opacity-100" : "opacity-50"}`}>
                   <div className="flex items-center justify-between gap-2">
-                    <label htmlFor="prep-lead-time" className="text-xs font-semibold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
-                      <RiTimeLine className="w-3.5 h-3.5 text-primary" /> Meeting Prep Lead Time
+                    <label htmlFor="prep-lead-time" className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Meeting Prep Lead Time
                     </label>
                     <span className="text-xs text-text-muted">Pre-call briefing delivery</span>
                   </div>
@@ -421,7 +407,6 @@ export default function NotificationsPage() {
                     value={notifs.prep_alerts_lead_time}
                     onChange={(val) => updateSelect('prep_alerts_lead_time', String(val))}
                     options={PREP_LEAD_TIME_OPTIONS}
-                    leadingIcon={RiTimeLine}
                     disabled={!notifs.reminders}
                   />
                 </div>
@@ -430,8 +415,8 @@ export default function NotificationsPage() {
               {/* Action Items Due Reminders */}
               <label className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer">
                 <div className="flex flex-col">
-                  <span className="font-bold text-base text-text flex items-center gap-2">
-                    <RiCheckboxCircleLine className="w-4 h-4 text-primary" /> Action Items Due Reminders
+                  <span className="font-bold text-base text-text">
+                    Action Items Due Reminders
                   </span>
                   <span className="text-xs sm:text-sm text-text-muted">
                     Reminders when extracted commitments approach deadlines
@@ -448,22 +433,17 @@ export default function NotificationsPage() {
 
           {/* Card 3: Digest & Schedule Timing */}
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <RiTimeLine className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg sm:text-xl font-bold text-text">Digest & Schedule Timing</h2>
-                <p className="text-xs sm:text-sm text-text-muted">
-                  Set your daily schedule for receiving compiled agendas and priority task digests.
-                </p>
-              </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg sm:text-xl font-bold text-text">Digest & Schedule Timing</h2>
+              <p className="text-xs sm:text-sm text-text-muted">
+                Set your daily schedule for receiving compiled agendas and priority task digests.
+              </p>
             </div>
 
             <div className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label htmlFor="daily-digest-time" className="text-sm font-bold text-text flex items-center gap-2">
-                  <RiTimeLine className="w-4 h-4 text-primary" /> Daily Digest Time
+                <label htmlFor="daily-digest-time" className="text-sm font-bold text-text">
+                  Daily Digest Time
                 </label>
                 <p className="text-xs text-text-muted">
                   Preferred time of day to receive your consolidated agenda and task digest
@@ -474,7 +454,6 @@ export default function NotificationsPage() {
                 value={notifs.daily_digest_time}
                 onChange={(val) => updateSelect('daily_digest_time', String(val))}
                 options={DIGEST_TIME_OPTIONS}
-                leadingIcon={RiTimeLine}
               />
             </div>
           </section>

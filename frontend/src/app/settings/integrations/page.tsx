@@ -5,11 +5,9 @@ import Link from "next/link";
 import { 
   RiCheckLine, 
   RiExternalLinkLine, 
-  RiRefreshLine,
+  RiArrowRightSLine,
   RiSendPlaneLine,
   RiSaveLine,
-  RiVideoChatLine,
-  RiApps2Line,
   RiFileCopyLine,
   RiArrowRightLine
 } from "@remixicon/react";
@@ -382,16 +380,11 @@ export default function IntegrationsPage() {
       <div className="flex flex-col gap-8">
         {/* Section 1: Meeting & Calendar Platforms */}
         <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <RiVideoChatLine className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Calendar Platforms</h2>
-              <p className="text-xs sm:text-sm text-text-muted">
-                Connect video calling and scheduling tools for live transcription and calendar sync.
-              </p>
-            </div>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Calendar Platforms</h2>
+            <p className="text-xs sm:text-sm text-text-muted">
+              Connect video calling and scheduling tools for live transcription and calendar sync.
+            </p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -455,38 +448,27 @@ export default function IntegrationsPage() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleConnectCalendar}
-                        disabled={calendarActionLoading || calendarLoading}
-                        className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                      >
-                        {calendarActionLoading ? (
-                          <Md3LoadingIndicator size="sm" className="text-on-primary" />
-                        ) : (
-                          <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
-                        )}
-                        Connect Calendar
-                      </button>
-                      <Link
-                        href="/settings/integrations/google-calendar"
-                        className="rounded-full px-4 py-3 font-medium text-xs text-text-muted hover:text-text hover:bg-surface-container-high transition-colors flex items-center gap-1"
-                      >
-                        Details
-                        <RiArrowRightLine className="w-3.5 h-3.5" />
-                      </Link>
-                    </>
+                    <button
+                      type="button"
+                      onClick={handleConnectCalendar}
+                      disabled={calendarActionLoading || calendarLoading}
+                      className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-primary text-on-primary hover:brightness-110 shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      {calendarActionLoading ? (
+                        <Md3LoadingIndicator size="sm" className="text-on-primary" />
+                      ) : (
+                        <GoogleCalendarLogo className="w-4 h-4 shrink-0" />
+                      )}
+                      Connect Calendar
+                    </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={fetchCalendarStatus}
-                    title="Refresh status"
-                    disabled={calendarLoading}
-                    className="p-2.5 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors cursor-pointer"
+                  <Link
+                    href="/settings/integrations/google-calendar"
+                    title="Google Calendar settings"
+                    className="p-2.5 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors flex items-center justify-center cursor-pointer shrink-0"
                   >
-                    <RiRefreshLine className={`w-4 h-4 ${calendarLoading ? 'animate-spin' : ''}`} />
-                  </button>
+                    <RiArrowRightSLine className="w-5 h-5 text-text-muted hover:text-text transition-colors" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -500,6 +482,9 @@ export default function IntegrationsPage() {
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2.5">
                     <h3 className="text-base sm:text-lg font-bold text-text">Google Meet</h3>
+                    <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                      BETA
+                    </span>
                     <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
                       <RiCheckLine className="w-3.5 h-3.5" /> Built-in / Ready
                     </span>
@@ -532,6 +517,9 @@ export default function IntegrationsPage() {
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2.5">
                       <h3 className="text-base sm:text-lg font-bold text-text">Zoom</h3>
+                      <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                        BETA
+                      </span>
                       {zoomWebhook ? (
                         <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
                           <RiCheckLine className="w-3.5 h-3.5" /> Configured
@@ -583,16 +571,11 @@ export default function IntegrationsPage() {
 
         {/* Section 2: Workspaces & Collaboration */}
         <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <RiApps2Line className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg sm:text-xl font-bold text-text">Workspaces & Collaboration</h2>
-              <p className="text-xs sm:text-sm text-text-muted">
-                Deliver meeting digests, action items, and executive summaries to your team workspaces.
-              </p>
-            </div>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg sm:text-xl font-bold text-text">Workspaces & Collaboration</h2>
+            <p className="text-xs sm:text-sm text-text-muted">
+              Deliver meeting digests, action items, and executive summaries to your team workspaces.
+            </p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -606,6 +589,9 @@ export default function IntegrationsPage() {
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2.5">
                       <h3 className="text-base sm:text-lg font-bold text-text">Slack</h3>
+                      <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                        BETA
+                      </span>
                       {slackWebhook ? (
                         <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
                           <RiCheckLine className="w-3.5 h-3.5" /> Webhook Active
@@ -662,6 +648,9 @@ export default function IntegrationsPage() {
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2.5">
                       <h3 className="text-base sm:text-lg font-bold text-text">Notion</h3>
+                      <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                        BETA
+                      </span>
                       {notionApiKey ? (
                         <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
                           <RiCheckLine className="w-3.5 h-3.5" /> Workspace Ready

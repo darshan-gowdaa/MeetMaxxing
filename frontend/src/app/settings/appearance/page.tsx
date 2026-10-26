@@ -5,11 +5,7 @@ import { useEffect, useState } from "react";
 import { 
   RiSunLine, 
   RiMoonLine, 
-  RiComputerLine, 
-  RiLayoutGridLine, 
-  RiEyeLine,
-  RiPaletteLine,
-  RiContrastLine
+  RiComputerLine 
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -163,16 +159,11 @@ export default function AppearancePage() {
       
       {/* Card 1: Color Scheme & Theme */}
       <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-            <RiPaletteLine className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h2 className="text-base sm:text-lg font-bold text-text">Color Scheme & Theme</h2>
-            <p className="text-xs sm:text-sm text-text-muted font-medium">
-              Choose your preferred interface theme across light, dark, and operating system matching.
-            </p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-base sm:text-lg font-bold text-text">Color Scheme & Theme</h2>
+          <p className="text-xs sm:text-sm text-text-muted font-medium">
+            Choose your preferred interface theme across light, dark, and operating system matching.
+          </p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Theme selection">
@@ -191,16 +182,11 @@ export default function AppearancePage() {
 
       {/* Card 2: Display Density & Visual Accessibility */}
       <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-            <RiEyeLine className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h2 className="text-base sm:text-lg font-bold text-text">Display Density & Visual Accessibility</h2>
-            <p className="text-xs sm:text-sm text-text-muted font-medium">
-              Fine-tune interface density and visual contrast for optimal legibility.
-            </p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-base sm:text-lg font-bold text-text">Display Density & Visual Accessibility</h2>
+          <p className="text-xs sm:text-sm text-text-muted font-medium">
+            Fine-tune interface density and visual contrast for optimal legibility.
+          </p>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -212,16 +198,11 @@ export default function AppearancePage() {
             }}
             className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer select-none"
           >
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                <RiLayoutGridLine className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-sm sm:text-base text-text">Compact Meeting Cards</span>
-                <span className="text-xs sm:text-sm text-text-muted">
-                  Fit more cards on screen by condensing paddings and badge metadata
-                </span>
-              </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-sm sm:text-base text-text">Compact Meeting Cards</span>
+              <span className="text-xs sm:text-sm text-text-muted">
+                Fit more cards on screen by condensing paddings and badge metadata
+              </span>
             </div>
             <Switch 
               checked={compactCards}
@@ -241,16 +222,11 @@ export default function AppearancePage() {
             }}
             className="bg-surface-container/70 rounded-[24px] p-5 border border-outline-variant/15 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors cursor-pointer select-none"
           >
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                <RiContrastLine className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-sm sm:text-base text-text">High Contrast Mode</span>
-                <span className="text-xs sm:text-sm text-text-muted">
-                  Sharpen borders, text contrast, and interactive focus states
-                </span>
-              </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-sm sm:text-base text-text">High Contrast Mode</span>
+              <span className="text-xs sm:text-sm text-text-muted">
+                Sharpen borders, text contrast, and interactive focus states
+              </span>
             </div>
             <Switch 
               checked={highContrast}

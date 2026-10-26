@@ -5,14 +5,7 @@ import {
   RiFileTextLine, 
   RiFileList3Line, 
   RiFlashlightLine, 
-  RiTranslate2, 
-  RiTimeLine, 
-  RiTimerLine, 
-  RiCompass3Line, 
-  RiSparklingLine,
-  RiBrainLine,
-  RiCalendarEventLine,
-  RiGlobalLine
+  RiCompass3Line 
 } from '@remixicon/react';
 
 import { useAuth } from '@/lib/auth-context';
@@ -172,8 +165,8 @@ export default function GeneralPreferences() {
       {/* SECTION 1: AI Notes & Synthesis */}
       <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-            <RiBrainLine className="w-4 h-4 text-primary" /> AI Notes & Synthesis
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
+            AI Notes & Synthesis
           </h2>
           <p className="text-xs text-text-muted">
             Configure how intelligence models analyze transcripts and structure meeting summaries.
@@ -182,8 +175,8 @@ export default function GeneralPreferences() {
 
         {/* Summary Style Selection */}
         <div className="flex flex-col gap-3">
-          <label className="text-[14px] font-bold text-text flex items-center gap-2">
-            <RiFileList3Line className="w-4 h-4 text-primary" /> Default Summary Style
+          <label className="text-[14px] font-bold text-text">
+            Default Summary Style
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup">
             {summaryOptions.map(opt => (
@@ -204,8 +197,8 @@ export default function GeneralPreferences() {
         <div className="pt-2 border-t border-outline-variant/10">
           <label className="flex items-center justify-between gap-4 cursor-pointer">
             <div className="flex flex-col">
-              <span className="font-bold text-base text-text flex items-center gap-2">
-                <RiSparklingLine className="w-4 h-4 text-primary" /> Auto-extract Action Items
+              <span className="font-bold text-base text-text">
+                Auto-extract Action Items
               </span>
               <span className="text-xs sm:text-sm text-text-muted">
                 Automatically detect commitments, assignees, and deadlines from live transcripts
@@ -223,8 +216,8 @@ export default function GeneralPreferences() {
       {/* SECTION 2: Scheduling & Calendar Defaults */}
       <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-            <RiCalendarEventLine className="w-4 h-4 text-primary" /> Scheduling & Defaults
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
+            Scheduling & Defaults
           </h2>
           <p className="text-xs text-text-muted">
             Set default meeting lengths and time references for follow-up coordination.
@@ -234,8 +227,8 @@ export default function GeneralPreferences() {
         {/* Primary Timezone */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <label className="text-[14px] font-bold text-text flex items-center gap-2">
-              <RiTimeLine className="w-4 h-4 text-primary" /> Primary Timezone
+            <label className="text-[14px] font-bold text-text">
+              Primary Timezone
             </label>
             <button
               type="button"
@@ -251,15 +244,14 @@ export default function GeneralPreferences() {
             onChange={(val) => updateSetting("timezone", String(val), "Timezone")}
             options={timezoneOptions.map(tz => ({ value: tz, label: tz }))}
             placeholder="Select primary timezone"
-            leadingIcon={RiCompass3Line}
           />
         </div>
 
         {/* Default Meeting Duration */}
         <div className="flex flex-col gap-3 pt-2 border-t border-outline-variant/10">
           <div className="flex flex-col gap-1">
-            <label className="text-[14px] font-bold text-text flex items-center gap-2">
-              <RiTimerLine className="w-4 h-4 text-primary" /> Default Meeting Duration
+            <label className="text-[14px] font-bold text-text">
+              Default Meeting Duration
             </label>
             <p className="text-xs text-text-muted">
               Standard block assigned when scheduling follow-up meetings or events
@@ -274,7 +266,6 @@ export default function GeneralPreferences() {
               { value: 45, label: "45 minutes (In-depth Review)" },
               { value: 60, label: "60 minutes (Workshop / Sync)" },
             ]}
-            leadingIcon={RiTimerLine}
           />
         </div>
       </section>
@@ -282,8 +273,8 @@ export default function GeneralPreferences() {
       {/* SECTION 3: Regional & Localization */}
       <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-            <RiGlobalLine className="w-4 h-4 text-primary" /> Regional & Localization
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
+            Regional & Localization
           </h2>
           <p className="text-xs text-text-muted">
             Preferred language for transcripts, summaries, and generated meeting notes.
@@ -291,8 +282,8 @@ export default function GeneralPreferences() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="text-[14px] font-bold text-text flex items-center gap-2">
-            <RiTranslate2 className="w-4 h-4 text-primary" /> Primary Language
+          <label className="text-[14px] font-bold text-text">
+            Primary Language
           </label>
           <M3Select
             value={settings.language}
@@ -304,7 +295,6 @@ export default function GeneralPreferences() {
               { value: "de", label: "German (Deutsch)" },
               { value: "ja", label: "Japanese (日本語)" },
             ]}
-            leadingIcon={RiTranslate2}
           />
         </div>
       </section>
