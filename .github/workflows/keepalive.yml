@@ -1,9 +1,9 @@
 name: Keep Services Active
-# Pings Supabase and Render periodically to prevent Supabase 7-day inactivity pause
+# Pings Supabase, Render, and Qdrant periodically to prevent free-tier inactivity suspension
 
 on:
   schedule:
-    # Runs at 06:00 UTC every 2 days
+    # Runs at 06:00 UTC every 2 days (well within Qdrant 7-day and Supabase 7-day cutoff)
     - cron: '0 6 */2 * *'
   workflow_dispatch:
 
@@ -18,9 +18,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Ping Supabase and Render
+      - name: Ping Supabase and Qdrant
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://gcslaozkazuhdqctefpn.supabase.co' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          RENDER_API_URL: ${{ secrets.RENDER_API_URL || 'https://meetmaxxing-api.onrender.com' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: node scripts/ping-supabase.js

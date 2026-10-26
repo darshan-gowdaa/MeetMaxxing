@@ -88,17 +88,7 @@ async def _get_redis() -> aioredis.Redis | MemoryRedis:
         _fallback_since = time.time()
         _redis_instance = None
         return MemoryRedis()
-    if _is_fallback and (time.time() - _fallback_since) < _FALLBACK_RETRY_SECONDS:
-        return MemoryRedis()
-    r = aioredis.Redis(connection_pool=_get_pool())
-    try:
-        await r.ping()
-        _is_fallback = False
-        return r
-    except Exception:
-        _is_fallback = True
-        _fallback_since = time.time()
-        return MemoryRedis()
+
 
 
 async def set_meeting_alias(id1: str, id2: str) -> None:

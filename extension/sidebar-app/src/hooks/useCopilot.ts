@@ -175,16 +175,18 @@ export function useCopilot() {
             });
           }
           if (res.copilot_state) {
-            setSuggestions(res.copilot_state.suggestions || []);
+            if (res.copilot_state.suggestions && Array.isArray(res.copilot_state.suggestions)) {
+              setSuggestions(res.copilot_state.suggestions);
+            }
             if (res.copilot_state.next_questions && Array.isArray(res.copilot_state.next_questions)) {
               setNextQuestions(res.copilot_state.next_questions);
             } else if (res.copilot_state.next_question) {
               setNextQuestions(Array.isArray(res.copilot_state.next_question) ? res.copilot_state.next_question : [String(res.copilot_state.next_question)]);
-            } else {
-              setNextQuestions([]);
             }
-            setRecap(res.copilot_state.recap || "");
-            if (res.copilot_state.error_message) setErrorMessage(res.copilot_state.error_message);
+            if (res.copilot_state.recap) setRecap(res.copilot_state.recap);
+            if (res.copilot_state.error || res.copilot_state.error_message) {
+              setErrorMessage(res.copilot_state.error || res.copilot_state.error_message);
+            }
           }
           if (res.currentMeetingId) {
             setMeetingId(res.currentMeetingId);
@@ -295,6 +297,9 @@ export function useCopilot() {
             setIsEnding(false);
           } else {
             setIsProcessing(false);
+            if (res?.error) {
+              setErrorMessage(res.error);
+            }
             if (res?.data) {
               handleCopilotUpdate(res.data);
             }

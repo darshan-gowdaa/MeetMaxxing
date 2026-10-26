@@ -79,6 +79,11 @@ const CONTAINER_SELECTORS = [
   '.TBMuR'
 ];
 
+// Pre-joined queries for DRY performance
+const TEXT_QUERY = TEXT_SELECTORS.join(', ');
+const SPEAKER_QUERY = SPEAKER_SELECTORS.join(', ');
+const CONTAINER_QUERY = CONTAINER_SELECTORS.join(', ');
+
 // ─── Find speaker near a text element ─────────────────────────────────────────
 function findSpeaker(textEl) {
   if (!textEl) return "Participant";
@@ -313,8 +318,7 @@ function trackUtterance(speaker, rawText) {
 
 // ─── Scan caption container and update per-speaker live text ─────────────────
 function scanCaptions() {
-  const containerQuery = CONTAINER_SELECTORS.join(", ");
-  const containers = document.querySelectorAll(containerQuery);
+  const containers = document.querySelectorAll(CONTAINER_QUERY);
 
   for (const c of containers) {
     if (c.closest('.rHGeGc-aPP78e, button, [role="menu"], [role="dialog"], [role="listbox"]')) continue;
@@ -326,11 +330,11 @@ function scanCaptions() {
     for (const u of utteranceBlocks) {
       if (u.closest('.IMKgW, .GvZY2, button, .VfPpkd-PtP14e')) continue;
 
-      const sEl = u.querySelector('.NWpY1d, .KcIKyf, [jsname="r4nke"], .zs7s8d, .KF4T6b');
+      const sEl = u.querySelector(SPEAKER_QUERY);
       const speaker = sEl?.textContent?.trim() || findSpeaker(u) || "You";
 
-      const tEl = u.querySelector('.ygicle, .VbkSUe, [jsname="tgaKEf"], [jsname="YSxPC"], .CNusmb');
-      const rawText = (tEl || u).innerText || (tEl || u).textContent;
+      const tEl = u.querySelector(TEXT_QUERY);
+      const rawText = (tEl || u).textContent;
 
       if (rawText?.trim()) {
         trackUtterance(speaker, rawText);
@@ -340,10 +344,10 @@ function scanCaptions() {
 
     // Fallback for older Meet structures without .nMcdL
     if (!foundBlocks) {
-      const textEls = c.querySelectorAll('.ygicle, .VbkSUe, [jsname="tgaKEf"], [jsname="YSxPC"], [jsname="bltWBb"], .CNusmb');
+      const textEls = c.querySelectorAll(TEXT_QUERY);
       for (const t of textEls) {
         if (t.closest('.IMKgW, .GvZY2, button, .VfPpkd-PtP14e, [role="menu"]')) continue;
-        const rawText = t.innerText || t.textContent;
+        const rawText = t.textContent;
         if (rawText?.trim()) {
           const speaker = findSpeaker(t) || "You";
           trackUtterance(speaker, rawText);
@@ -385,21 +389,46 @@ function onMutation(mutations) {
   scanDebounce = setTimeout(scanCaptions, 200);
 }
 
-// ─── Start the observer ────────────────────────────────────────────────────────
+// ─── Targeted caption observation for peak performance ────────────────────────
+let targetedContainerObserver = null;
+
+function attachTargetedCaptionObserver() {
+  const container = document.querySelector(CONTAINER_QUERY);
+  if (!container || container === targetedContainerObserver?.target) return;
+  
+  if (targetedContainerObserver) {
+    try { targetedContainerObserver.disconnect(); } catch (e) {}
+  }
+  
+  targetedContainerObserver = new MutationObserver(onMutation);
+  targetedContainerObserver.observe(container, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+  });
+  targetedContainerObserver.target = container;
+  console.log("[MeetMaxxing] Attached targeted caption container observer");
+}
+
 function startCaptionObserver() {
   if (captionObserver) { try { captionObserver.disconnect(); } catch (e) {} captionObserver = null; }
+  if (targetedContainerObserver) { try { targetedContainerObserver.disconnect(); } catch (e) {} targetedContainerObserver = null; }
 
   // Flush any pending utterances from a previous session
   for (const sp of [...utteranceMap.keys()]) flushUtterance(sp);
 
   if (document.body) {
-    captionObserver = new MutationObserver(onMutation);
+    // Only listen for childList changes on body (detecting container addition/removal), NOT characterData on full body!
+    captionObserver = new MutationObserver((mutations) => {
+      attachTargetedCaptionObserver();
+      onMutation(mutations);
+    });
     captionObserver.observe(document.body, {
       subtree: true,
       childList: true,
-      characterData: true,
     });
-    console.log("[MeetMaxxing] Observer active — utterance-complete mode");
+    attachTargetedCaptionObserver();
+    console.log("[MeetMaxxing] Body childList observer active");
   }
 
   // Immediate baseline scan
@@ -407,47 +436,121 @@ function startCaptionObserver() {
 }
 
 // ─── Meeting lifecycle ─────────────────────────────────────────────────────────
-let consentGiven = false;
+let consentGiven = (typeof localStorage !== "undefined" && localStorage.getItem("mm_consent_granted") === "true");
+let isInCallSession = false;
+let consecutiveLeaveChecks = 0;
+
+// Positive signal: User is actively inside a live Google Meet call
+function isActuallyInCall() {
+  const leaveBtn = document.querySelector('button[aria-label*="Leave call" i], button[data-tooltip*="Leave call" i], button[jsname="CQyAgc"]');
+  if (leaveBtn && leaveBtn.offsetParent !== null) return true;
+
+  const callControls = document.querySelector('div[role="region"][aria-label*="Call controls" i], div[jscontroller="kAPstf"], div.crqnQb');
+  const micOrCam = document.querySelector('button[aria-label*="microphone" i], button[aria-label*="camera" i], button[data-tooltip*="microphone" i], button[data-tooltip*="camera" i]');
+  const participantCount = document.querySelector('.uGOf1d, [jsname="Nqj9L"]');
+
+  if (callControls && micOrCam) return true;
+  if (participantCount && micOrCam) return true;
+  if (leaveBtn) return true;
+  return false;
+}
+
+// Pre-join lobby detection: user is setting up audio/video or granting camera/mic permissions
+function isPreJoinLobby() {
+  if (isActuallyInCall()) return false;
+
+  const buttons = document.querySelectorAll('button, div[role="button"]');
+  for (const b of buttons) {
+    const txt = (b.innerText || b.textContent || "").trim().toLowerCase();
+    if (txt === "join now" || txt === "ask to join" || txt === "join and use a phone for audio" || txt === "switch here") {
+      return true;
+    }
+  }
+
+  const headings = document.querySelectorAll('h1, h2, h3, div[role="heading"]');
+  for (const h of headings) {
+    const txt = (h.textContent || "").trim().toLowerCase();
+    if (txt.includes("ready to join?") || txt.includes("check your audio and video") || txt.includes("getting ready")) {
+      return true;
+    }
+  }
+
+  if (document.querySelector('div[data-is-prejoin="true"], div[jscontroller="H4pA6c"]')) {
+    return true;
+  }
+  return false;
+}
+
+// Verified meeting end screen: user has actually left the call
+function isActuallyLeftMeeting() {
+  if (isActuallyInCall() || isPreJoinLobby()) return false;
+
+  if (document.querySelector('[data-is-leave-page="true"]')) return true;
+
+  const headings = document.querySelectorAll('h1, h2, .roSPhc, div[role="heading"]');
+  for (const h of headings) {
+    const txt = (h.textContent || "").trim().toLowerCase();
+    if (
+      txt.includes("you left the meeting") ||
+      txt.includes("you've been removed from the meeting") ||
+      txt.includes("you are no longer in the meeting") ||
+      txt.includes("the meeting has ended")
+    ) {
+      return true;
+    }
+  }
+
+  const onMeetRoom = location.hostname.includes("meet.google.com") &&
+                     location.pathname.length > 4 &&
+                     !location.pathname.includes("landing") &&
+                     !location.pathname.includes("home");
+  if (!onMeetRoom) return true;
+
+  return false;
+}
 
 function showConsentUI(onAccept) {
-  if (document.getElementById("meetmaxxing-consent-overlay")) return;
+  if (consentGiven || document.getElementById("meetmaxxing-consent-overlay")) return;
 
   const overlay = document.createElement("div");
   overlay.id = "meetmaxxing-consent-overlay";
   overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(19, 19, 20, 0.85); backdrop-filter: blur(12px);
-    z-index: 999999; display: flex; align-items: center; justify-content: center;
+    position: fixed; bottom: 24px; right: 24px; z-index: 999999;
     font-family: 'Inter', 'Google Sans', system-ui, sans-serif;
+    animation: mm-slide-up 0.3s cubic-bezier(0, 0, 0.2, 1);
   `;
 
   const modal = document.createElement("div");
   modal.style.cssText = `
-    background: #1e1f20; border: 1px solid rgba(227, 227, 227, 0.12);
-    border-radius: 32px; padding: 40px; width: 100%; max-width: 440px;
-    box-shadow: 0 24px 48px rgba(0,0,0,0.4); text-align: center;
-    color: #e3e3e3; animation: mm-slide-up 0.3s cubic-bezier(0, 0, 0.2, 1);
+    background: #1e1f20; border: 1px solid rgba(227, 227, 227, 0.16);
+    border-radius: 24px; padding: 22px; width: 330px;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.5); text-align: left;
+    color: #e3e3e3;
   `;
 
   modal.innerHTML = `
     <style>
       @keyframes mm-slide-up { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-      .mm-btn { padding: 14px 28px; border-radius: 99px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-      .mm-btn-primary { background: #a8c7fa; color: #0842a0; flex: 1; }
-      .mm-btn-primary:hover { background: #d3e3fd; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(168, 199, 250, 0.2); }
+      .mm-btn { padding: 9px 18px; border-radius: 99px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+      .mm-btn-primary { background: #a8c7fa; color: #0842a0; }
+      .mm-btn-primary:hover { background: #d3e3fd; transform: translateY(-1px); }
       .mm-btn-primary:active { transform: scale(0.97); }
       .mm-btn-secondary { background: transparent; color: #a8c7fa; border: 1px solid rgba(168, 199, 250, 0.3); }
-      .mm-btn-secondary:hover { background: rgba(168, 199, 250, 0.08); transform: translateY(-1px); }
-      .mm-btn-secondary:active { transform: scale(0.97); }
+      .mm-btn-secondary:hover { background: rgba(168, 199, 250, 0.08); }
     </style>
-    <div style="width: 72px; height: 72px; background: #0842a0; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 8px 24px rgba(8, 66, 160, 0.3);">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="#a8c7fa"><path d="M11 2L11.5 5.51869C11.8906 8.26786 14.1039 10.3708 16.8687 10.6382L20.5 10.9893L16.8687 11.3404C14.1039 11.6078 11.8906 13.7107 11.5 16.4599L11 19.9786L10.5 16.4599C10.1094 13.7107 7.8961 11.6078 5.13134 11.3404L1.5 10.9893L5.13134 10.6382C7.8961 10.3708 10.1094 8.26786 10.5 5.51869L11 2ZM18.5 14L18.675 15.2285C18.8117 16.1907 19.5863 16.9278 20.554 17.0215L22 17.1614L20.554 17.3013C19.5863 17.3949 18.8117 18.132 18.675 19.0943L18.5 20.3228L18.325 19.0943C18.1883 18.132 17.4137 17.3949 16.446 17.3013L15 17.1614L16.446 17.0215C17.4137 16.9278 18.1883 16.1907 18.325 15.2285L18.5 14Z"></path></svg>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+      <div style="width: 36px; height: 36px; background: #0842a0; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#a8c7fa"><path d="M11 2L11.5 5.51869C11.8906 8.26786 14.1039 10.3708 16.8687 10.6382L20.5 10.9893L16.8687 11.3404C14.1039 11.6078 11.8906 13.7107 11.5 16.4599L11 19.9786L10.5 16.4599C10.1094 13.7107 7.8961 11.6078 5.13134 11.3404L1.5 10.9893L5.13134 10.6382C7.8961 10.3708 10.1094 8.26786 10.5 5.51869L11 2Z"></path></svg>
+      </div>
+      <div>
+        <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: #fff;">MeetMaxxing AI</h3>
+        <span style="font-size: 11px; color: #a8c7fa;">AI Meeting Copilot</span>
+      </div>
     </div>
-    <h2 style="margin: 0 0 12px; font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -0.5px;">MeetMaxxing AI</h2>
-    <p style="margin: 0 0 32px; font-size: 15px; line-height: 1.6; color: #c4c7c5;">
-      To provide meeting intelligence and memory, this extension requires your consent to transcribe captions during this call.
+    <p style="margin: 0 0 16px; font-size: 12px; line-height: 1.5; color: #c4c7c5;">
+      Transcribes live captions during this call to provide real-time suggestions and executive recaps.
     </p>
-    <div style="display: flex; gap: 12px; justify-content: center;">
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
       <button id="mm-decline-btn" class="mm-btn mm-btn-secondary">Decline</button>
       <button id="mm-accept-btn" class="mm-btn mm-btn-primary">Allow & Start</button>
     </div>
@@ -456,13 +559,15 @@ function showConsentUI(onAccept) {
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  document.getElementById("mm-accept-btn").addEventListener("click", () => {
+  document.getElementById("mm-accept-btn")?.addEventListener("click", () => {
     overlay.remove();
+    consentGiven = true;
+    try { localStorage.setItem("mm_consent_granted", "true"); } catch (e) {}
     safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
-    onAccept();
+    if (onAccept) onAccept();
   });
 
-  document.getElementById("mm-decline-btn").addEventListener("click", () => {
+  document.getElementById("mm-decline-btn")?.addEventListener("click", () => {
     overlay.remove();
     console.log("[MeetMaxxing] Consent declined. Extension inactive.");
   });
@@ -596,11 +701,14 @@ function startMeeting() {
   if (!consentGiven) {
     showConsentUI(() => {
       consentGiven = true;
+      try { localStorage.setItem("mm_consent_granted", "true"); } catch (e) {}
       startMeeting();
     });
     return;
   }
 
+  isInCallSession = true;
+  consecutiveLeaveChecks = 0;
   meetingStartTime = Date.now();
   maxParticipants = 1;
   autoEnableCC();
@@ -634,16 +742,14 @@ function startMeeting() {
 
   console.log("[MeetMaxxing] Meeting started:", meetingId, "(Code:", meetCode, ")");
 
-  // Polling fallback to detect if user left the meeting but URL didn't change
+  // Polling check: Only exit when confirmed absent across multiple checks, NEVER on a fixed 15s timer
   if (endCheckInterval) clearInterval(endCheckInterval);
   endCheckInterval = setInterval(() => {
-    if (!meetingId) {
-      clearInterval(endCheckInterval);
-      endCheckInterval = null;
+    if (!meetingId || !isInCallSession) {
       return;
     }
     
-    // Track max participants
+    // Track max participants while inside the call
     const participantCountEl = document.querySelector('.uGOf1d') || document.querySelector('[jsname="Nqj9L"]');
     if (participantCountEl && participantCountEl.innerText) {
       const count = parseInt(participantCountEl.innerText, 10);
@@ -653,36 +759,32 @@ function startMeeting() {
       }
     }
 
-    const text = document.body.innerText || "";
-    const isEndScreen = text.includes("You left the meeting") || 
-                        text.includes("Return to home screen") || 
-                        text.includes("Rejoin") || 
-                        text.includes("You're no longer in the meeting") ||
-                        document.querySelector('[data-is-leave-page="true"]') || 
-                        (document.querySelector('.roSPhc') && text.includes("left"));
-                        
-    // If the main bottom control bar is missing, we probably left
-    const hasControlBar = document.querySelector('[aria-label="Leave call"], button[data-tooltip*="Leave"]');
-
-    if (isEndScreen || (!hasControlBar && meetingStartTime && (Date.now() - meetingStartTime > 15000))) {
-      console.log("[MeetMaxxing] Detected meeting end screen or missing controls.");
-      clearInterval(endCheckInterval);
-      endCheckInterval = null;
-      endMeeting();
+    // Verify true exit: require 3 consecutive affirmative checks (6s total)
+    if (isActuallyLeftMeeting()) {
+      consecutiveLeaveChecks++;
+      if (consecutiveLeaveChecks >= 3) {
+        console.log("[MeetMaxxing] Confirmed meeting end screen across multiple checks.");
+        clearInterval(endCheckInterval);
+        endCheckInterval = null;
+        endMeeting();
+      }
+    } else {
+      consecutiveLeaveChecks = 0;
     }
   }, 2000);
 }
 
 function endMeeting() {
-  if (!meetingId) return;
+  if (!meetingId && !isInCallSession) return;
+  isInCallSession = false;
+  consecutiveLeaveChecks = 0;
   clearTimeout(scanDebounce);
-  // Clean up polling timers so they don't keep firing after the meeting ends.
   if (endCheckInterval) { clearInterval(endCheckInterval); endCheckInterval = null; }
   if (visibilityAttachInterval) { clearInterval(visibilityAttachInterval); visibilityAttachInterval = null; }
+  
   // Flush all pending utterances before ending
   for (const sp of [...utteranceMap.keys()]) flushUtterance(sp);
   if (captionObserver) { try { captionObserver.disconnect(); } catch (e) {} captionObserver = null; }
-
   if (autoCcInterval) { clearInterval(autoCcInterval); autoCcInterval = null; }
   
   const toggleBtn = document.getElementById("mm-caption-visibility-btn");
@@ -692,43 +794,79 @@ function endMeeting() {
     hideCaptionsStyle = null;
   }
 
-  safeSendMessage({ type: "END_MEETING", meetingId, title: document.title, maxParticipants });
-
+  const endingId = meetingId;
   meetingId = null;
+  if (endingId) {
+    safeSendMessage({ type: "END_MEETING", meetingId: endingId, title: document.title, maxParticipants });
+  }
+
   if (chrome.runtime && chrome.runtime.id) {
     chrome.storage.local.remove("currentMeetingId");
   }
-  console.log("[MeetMaxxing] Meeting ended.");
+  console.log("[MeetMaxxing] Meeting ended cleanly.");
 }
 
 // ─── Meeting detection ─────────────────────────────────────────────────────────
 function detectMeetingState() {
-  const isMeeting =
+  const onMeetRoom =
     location.hostname.includes("meet.google.com") &&
     location.pathname.length > 4 &&
     !location.pathname.includes("landing") &&
     !location.pathname.includes("home");
 
-  if (isMeeting) {
-    if (!meetingId) {
+  if (!onMeetRoom) {
+    if (isInCallSession || meetingId) {
+      endMeeting();
+    }
+    return;
+  }
+
+  // If in pre-join lobby (camera/mic preview, join button), wait for user to enter call
+  if (isPreJoinLobby()) {
+    console.log("[MeetMaxxing] Pre-join lobby active. Awaiting user entrance...");
+    tryInjectPanel();
+    return;
+  }
+
+  // If in active call, start meeting session
+  if (isActuallyInCall()) {
+    consecutiveLeaveChecks = 0;
+    if (!isInCallSession || !meetingId) {
+      console.log("[MeetMaxxing] In-call controls active! Starting session...");
       startMeeting();
     } else if (!captionObserver) {
       startCaptionObserver();
     }
     safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
-  } else if (!isMeeting && meetingId) {
-    endMeeting();
+    tryInjectPanel();
+    return;
   }
 }
 
-// Attach user gesture listener to catch join clicks and ensure side panel pops open immediately
+// Attach user gesture listener for join & leave button clicks
 document.addEventListener("click", (e) => {
   const target = e.target;
+  
+  // Catch Join Now / Ask to Join clicks
+  if (target && target.closest && target.closest('button, [role="button"]')) {
+    const btn = target.closest('button, [role="button"]');
+    const txt = (btn.innerText || btn.textContent || "").trim().toLowerCase();
+    if (txt === "join now" || txt === "ask to join" || txt === "switch here") {
+      console.log("[MeetMaxxing] User clicked Join Now. Polling for in-call state...");
+      setTimeout(detectMeetingState, 1500);
+      setTimeout(detectMeetingState, 3500);
+    }
+  }
+
   // Detect Leave Call button clicks as an early signal
-  if (target && target.closest && target.closest('[aria-label="Leave call"], [data-tooltip="Leave call"], button[aria-label*="Leave"], button[data-tooltip*="Leave"], .VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.ftVzxd, i[aria-label="Leave call"]')) {
+  if (target && target.closest && target.closest('[aria-label*="Leave call" i], [data-tooltip*="Leave call" i], button[aria-label*="Leave" i], button[data-tooltip*="Leave" i], .VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.ftVzxd, i[aria-label*="Leave call" i]')) {
     console.log("[MeetMaxxing] User clicked Leave call.");
-    if (meetingId) {
-      setTimeout(() => endMeeting(), 1500); // Give it a moment to flush and process
+    if (meetingId || isInCallSession) {
+      setTimeout(() => {
+        if (isActuallyLeftMeeting()) {
+          endMeeting();
+        }
+      }, 1500);
     }
   }
 
@@ -752,15 +890,18 @@ if (chrome.runtime && chrome.runtime.id) {
   detectMeetingState();
 }
 
-// SPA navigation
+// SPA navigation: Hook popstate, hashchange, and lightweight timer instead of unthrottled full-DOM MutationObserver
 let lastUrl = location.href;
-new MutationObserver(() => {
-  if (location.href !== lastUrl) { 
-    lastUrl = location.href; 
-    detectMeetingState(); 
+function handleUrlChange() {
+  if (location.href !== lastUrl) {
+    lastUrl = location.href;
+    detectMeetingState();
     setTimeout(tryInjectPanel, 1000);
   }
-}).observe(document, { subtree: true, childList: true });
+}
+window.addEventListener("popstate", handleUrlChange);
+window.addEventListener("hashchange", handleUrlChange);
+setInterval(handleUrlChange, 1000);
 
 // ─── Firefox DOM Panel Injection ─────────────────────────────────────────────
 // Injects a collapsible side panel into Google Meet DOM for Firefox (and Chrome fallback)

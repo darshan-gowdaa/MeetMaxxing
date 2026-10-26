@@ -25,16 +25,17 @@ _consecutive_unchanged: dict[str, int] = {}
 _SYSTEM_PROMPT = """You are MeetMaxxing, an AI meeting copilot giving LIVE assistance to the speaker in a meeting.
 
 Your job:
-1. SUGGESTIONS ("What to answer") — 1-2 precise, direct, and actionable talking points the user should say right now in response to the current discussion. Must be extremely concise.
-2. RISKS — Flag any red flags in the conversation. 1-2 max. Only flag real issues visible in the text.
-3. NEXT_QUESTIONS ("Suggestion of what to Ask") — Exactly 2 highly strategic, thought-provoking questions to ask next based on the conversation context.
+1. SUGGESTIONS ("What to answer") — 1-2 precise, direct, and actionable talking points the user should say right now in response to the current discussion. Must be extremely concise. Even if conversation is in early stages or brief, formulate helpful, context-relevant talking points.
+2. RISKS — Flag any red flags or blockers in the conversation (1-2 max). If none, return empty array.
+3. NEXT_QUESTIONS ("Suggestion of what to Ask") — Exactly 2 highly strategic, thought-provoking questions to ask next to advance the meeting.
 
 CRITICAL RULES:
-- Only reference names, numbers, and facts that EXPLICITLY appear in the transcript or Uploaded Meeting Context Documents.
-- Do NOT invent any statements, names, or commitments not in the text.
-- If no risks, return empty array for risks.
+- Ground suggestions and questions in the actual conversation context or meeting topic.
+- Do NOT invent commitments or names not in the text.
+- If conversation is just beginning, suggest good opening remarks or agenda clarification.
+- Never return empty suggestions or empty next_questions.
 
-Respond ONLY in valid JSON matching this exact schema. Do NOT include markdown code blocks or ```json wrappers. Just raw JSON:
+Respond ONLY in valid JSON matching this exact schema:
 {
   "suggestions": ["...", "..."],
   "risks": ["..."],
@@ -96,8 +97,12 @@ async def run_realtime_agent(
                 "Listening for spoken speech... Turn on Google Meet Captions (CC) or enable audio capture to begin real-time AI analysis."
             ],
             "risks": [],
-            "next_questions": ["Waiting for speaker utterance..."],
+            "next_questions": [
+                "What is the main agenda or target outcome for today's call?",
+                "Are all required stakeholders present or do we need to sync asynchronously?"
+            ],
             "transcript_chunks": 0,
+            "powered_by": "MeetMaxxing AI",
         }
 
     now = time.time()
@@ -198,6 +203,14 @@ async def run_realtime_agent(
         raw_suggs = [raw_suggs]
     validated_suggs = validate_realtime_output(raw_suggs, transcript_text)
 
+    # Intelligent fallback if LLM returned empty list
+    final_suggs = [str(s).strip() for s in validated_suggs if s and str(s).strip()]
+    if not final_suggs:
+        final_suggs = [
+            "Acknowledge the points made so far and ask the speaker to elaborate on next steps.",
+            "Summarize key takeaways to ensure team alignment before moving to the next topic."
+        ]
+
     raw_risks = result.get("risks") or []
     if isinstance(raw_risks, str):
         raw_risks = [raw_risks]
@@ -205,12 +218,18 @@ async def run_realtime_agent(
     raw_nq = result.get("next_questions") or result.get("next_question") or []
     if isinstance(raw_nq, str):
         raw_nq = [raw_nq]
+    final_nq = [str(q).strip() for q in raw_nq if q and str(q).strip()]
+    if not final_nq:
+        final_nq = [
+            "What is the expected timeline and primary owner for this milestone?",
+            "Are there any immediate blockers or dependencies we need to resolve?"
+        ]
 
     res = {
         "meeting_id": meeting_id,
-        "suggestions": [str(s) for s in validated_suggs if s],
-        "risks": [str(r) for r in raw_risks if r],
-        "next_questions": [str(q) for q in raw_nq if q],
+        "suggestions": final_suggs,
+        "risks": [str(r).strip() for r in raw_risks if r and str(r).strip()],
+        "next_questions": final_nq,
         "transcript_chunks": len(chunks),
         "powered_by": result.get("powered_by", "Unknown API"),
     }

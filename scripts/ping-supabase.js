@@ -39,9 +39,41 @@ function loadEnv() {
 
 loadEnv();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gcslaozkazuhdqctefpn.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const BACKEND_URL = (process.env.RENDER_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://meetmaxxing-api.onrender.com');
+const QDRANT_URL = process.env.QDRANT_URL;
+const QDRANT_KEY = process.env.QDRANT_API_KEY;
+
+async function pingQdrant() {
+  if (!QDRANT_URL) {
+    console.warn('[Keepalive] QDRANT_URL not set. Skipping Qdrant ping.');
+    return;
+  }
+
+  const endpoint = `${QDRANT_URL.replace(/\/$/, '')}/collections`;
+  console.log(`[Keepalive] Pinging Qdrant API: ${endpoint}`);
+
+  try {
+    const headers = {};
+    if (QDRANT_KEY) {
+      headers['api-key'] = QDRANT_KEY;
+    }
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers,
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const count = data?.result?.collections?.length ?? 0;
+      console.log(`[Keepalive] Qdrant ping succeeded: HTTP ${res.status} (${count} collections)`);
+    } else {
+      console.warn(`[Keepalive] Qdrant returned status ${res.status}`);
+    }
+  } catch (err) {
+    console.error('[Keepalive] Qdrant ping failed:', err.message);
+  }
+}
 
 async function pingSupabase() {
   if (!SUPABASE_KEY) {
@@ -91,7 +123,7 @@ async function pingRender() {
 async function run() {
   console.log('[Keepalive] Starting scheduled health ping...');
   await pingSupabase();
-  await pingRender();
+  await pingQdrant();
   console.log('[Keepalive] Finished.');
 }
 

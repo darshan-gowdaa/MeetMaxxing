@@ -304,32 +304,43 @@ function handleMeetingEnd() {
   activeMeetingId = null;
   activeMeetTabId = null;
   activeMeetingMaxParticipants = 1;
+  cachedTranscript = [];
+  if (transcriptFlushTimer) { clearTimeout(transcriptFlushTimer); transcriptFlushTimer = null; }
   ext.storage.remove(STORAGE_CLEAR_KEYS);
   ext.broadcast({ type: "MEETING_ENDED", meetingId: meetingIdToEnd });
 }
 
-// Persist + forward transcript chunk to storage
-async function persistChunk(chunk) {
-  const res = await ext.storage.get(["transcript"]);
-  const prev = Array.isArray(res.transcript) ? res.transcript : [];
+// In-memory transcript buffer to prevent async storage write races & reduce storage churn
+let cachedTranscript = [];
+let transcriptFlushTimer = null;
+
+function flushTranscriptToStorage() {
+  if (transcriptFlushTimer) {
+    clearTimeout(transcriptFlushTimer);
+    transcriptFlushTimer = null;
+  }
+  ext.storage.set({ transcript: [...cachedTranscript] });
+}
+
+function persistChunk(chunk) {
   const now = Date.now();
-  const updated = [...prev];
-  if (updated.length > 0) {
-    const last = updated[updated.length - 1];
+  if (cachedTranscript.length > 0) {
+    const last = cachedTranscript[cachedTranscript.length - 1];
     if (last.speaker === (chunk.speaker || "Speaker") && now - (last.timestamp || 0) < 15000) {
       const newText = (chunk.text || "").trim();
       if (newText.startsWith(last.text) || last.text.startsWith(newText) || newText.includes(last.text)) {
-        updated[updated.length - 1] = {
+        cachedTranscript[cachedTranscript.length - 1] = {
           ...last,
           text: newText.length > last.text.length ? newText : last.text,
           timestamp: now,
         };
-        return ext.storage.set({ transcript: updated });
+        if (!transcriptFlushTimer) transcriptFlushTimer = setTimeout(flushTranscriptToStorage, 300);
+        return;
       }
     }
   }
-  updated.push({ speaker: chunk.speaker || "Speaker", text: (chunk.text || "").trim(), timestamp: now, source: chunk.source });
-  return ext.storage.set({ transcript: updated });
+  cachedTranscript.push({ speaker: chunk.speaker || "Speaker", text: (chunk.text || "").trim(), timestamp: now, source: chunk.source });
+  if (!transcriptFlushTimer) transcriptFlushTimer = setTimeout(flushTranscriptToStorage, 300);
 }
 
 // Build recap text from raw backend response
@@ -377,6 +388,11 @@ async function rehydrateState() {
 
   // Meeting: re-attach only if a Meet tab is actually still open; otherwise the
   // stored id is stale from a crash and would leave the worker confused.
+  const storedTrans = await ext.storage.get(["transcript"]);
+  if (Array.isArray(storedTrans.transcript)) {
+    cachedTranscript = storedTrans.transcript;
+  }
+
   const meet = await ext.storage.get(["currentMeetingId"]);
   if (meet.currentMeetingId) {
     ext.tabs.query({ url: "*://meet.google.com/*" }, (tabs) => {
@@ -519,9 +535,9 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ success: true, meetingId: activeMeetingId });
       };
 
-      fetch(`${BASE}/ingest/start`, {
+      authFetch(`${BASE}/ingest/start`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, attendees: [], meet_code: meetCode, google_meet_link: meetCode }),
       }).then((r) => r.json()).then(afterStart).catch(onFail);
     });
@@ -653,26 +669,45 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           ]);
 
           let realtimeData = {};
-          try {
-            if (realtimeRes && realtimeRes.ok) {
+          let realtimeError = "";
+
+          if (realtimeRes && realtimeRes.ok) {
+            try {
               realtimeData = await realtimeRes.json();
+            } catch (e) {
+              realtimeError = "Failed to parse realtime insights";
             }
-          } catch (e) {}
+          } else if (realtimeRes) {
+            try {
+              const errBody = await realtimeRes.json();
+              realtimeError = errBody.detail || errBody.error || `HTTP ${realtimeRes.status}`;
+            } catch (e) {
+              realtimeError = `Server error (${realtimeRes.status})`;
+            }
+          }
 
           let recapData = {};
-          try {
-            if (recapRes && recapRes.ok) {
+          if (recapRes && recapRes.ok) {
+            try {
               recapData = await recapRes.json();
-            }
-          } catch (e) {}
+            } catch (e) {}
+          }
+
+          if (realtimeError && (!realtimeData.suggestions || !realtimeData.suggestions.length)) {
+            realtimeData.error = realtimeError;
+          }
 
           const formattedRecap = buildRecapText(recapData, targetId);
           realtimeData.recap = formattedRecap.recap;
-          if (formattedRecap.powered_by) realtimeData.powered_by = formattedRecap.powered_by;
+          if (formattedRecap.powered_by && !realtimeData.powered_by) {
+            realtimeData.powered_by = formattedRecap.powered_by;
+          }
           await pushUpdate(realtimeData, targetId);
           sendResponse({ success: true, data: realtimeData });
         } catch (err) {
-          sendResponse({ success: false, error: String(err) });
+          const errMsg = String(err.message || err);
+          await pushUpdate({ error: errMsg }, targetId);
+          sendResponse({ success: false, error: errMsg, data: { error: errMsg } });
         }
       })();
       return true;
