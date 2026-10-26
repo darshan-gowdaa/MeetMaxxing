@@ -17,6 +17,7 @@ import { useSnackbar } from '@/components/providers/SnackbarProvider';
 import { Switch } from "@/components/atoms/Switch";
 import { M3Select } from "@/components/atoms/M3Select";
 import { M3SegmentedButton } from "@/components/atoms/M3SegmentedButton";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
@@ -226,7 +227,7 @@ export default function GeneralPreferences() {
             title="Reset general settings back to system defaults"
           >
             {resetting ? (
-              <span className="w-3.5 h-3.5 border-2 border-text border-t-transparent rounded-full animate-spin" />
+              <Md3LoadingIndicator size="sm" className="text-text" />
             ) : (
               <RiRestartLine className="w-3.5 h-3.5 text-text-muted" />
             )}

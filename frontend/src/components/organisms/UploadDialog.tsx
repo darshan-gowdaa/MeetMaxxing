@@ -3,7 +3,8 @@
 import { useEffect, useState } from"react";
 import { createPortal } from"react-dom";
 import { RiUploadCloud2Line, RiCloseLine, RiFileTextLine, RiFilePdfLine, RiFileWordLine } from"@remixicon/react";
-import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { M3LinearProgress } from "@/components/atoms/M3LinearProgress";
 import { useDialogA11y } from"@/hooks/useDialogA11y";
 
 export default function UploadDialog({
@@ -73,12 +74,17 @@ export default function UploadDialog({
  </p>
 
  {busy ? (
- <div className="flex flex-col items-center justify-center py-12 px-6 border-2 border-primary/20 rounded-2xl bg-surface2 mb-6">
+ <div className="flex flex-col items-center justify-center py-10 px-6 border border-border/80 rounded-2xl bg-surface2 mb-6 gap-3">
  <Md3LoadingIndicator size="lg"/>
- <p className="text-[14px] font-bold text-primary mt-6 mb-1">Uploading & Indexing Files...</p>
- <p className="text-[12px] text-text-muted text-center max-w-xs">
+ <div className="text-center">
+ <p className="text-[14px] font-bold text-text mb-1">Uploading & Indexing Files...</p>
+ <p className="text-[12px] text-text-muted max-w-xs">
  Extracting text and generating embeddings. Please wait.
  </p>
+ </div>
+ <div className="w-full max-w-xs mt-2">
+ <M3LinearProgress mode="indeterminate" />
+ </div>
  </div>
  ) : (
  <>

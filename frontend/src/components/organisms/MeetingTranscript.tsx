@@ -16,6 +16,7 @@ import {
   RiUserLine as UserIcon,
 } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { M3LinearProgress } from "@/components/atoms/M3LinearProgress";
 import { copyToClipboard } from "@/lib/clipboard";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import type { Meeting } from "@/types";
@@ -510,6 +511,9 @@ export default function MeetingTranscript({
             <div className="flex flex-col items-center justify-center py-16 gap-4 animate-fade-scale w-full bg-surface-container/20 rounded-[24px]">
               <Md3LoadingIndicator size="lg" className="text-primary" />
               <LoadingPhrases />
+              <div className="w-full max-w-xs px-2">
+                <M3LinearProgress mode="indeterminate" />
+              </div>
               <p className="text-xs text-text-variant italic max-w-sm text-center">
                 Processing your raw transcript to remove filler words, fix grammar, and perfect diarization. This may take up to a minute...
               </p>

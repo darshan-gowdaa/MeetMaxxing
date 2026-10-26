@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Switch } from "@/components/atoms/Switch";
 import { M3Select } from "@/components/atoms/M3Select";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { SettingsListSkeleton } from "@/components/organisms/skeletons/SettingsListSkeleton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -280,7 +281,7 @@ export default function NotificationsPage() {
           className="rounded-full px-4 py-2.5 bg-primary text-on-primary hover:bg-primary/90 font-semibold text-xs sm:text-[13px] inline-flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.97] shrink-0 disabled:opacity-50 cursor-pointer"
         >
           {testBusy ? (
-            <span className="w-3.5 h-3.5 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+            <Md3LoadingIndicator size="sm" className="text-on-primary" />
           ) : (
             <RiSparklingLine className="w-4 h-4 text-on-primary" />
           )}

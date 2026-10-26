@@ -16,6 +16,7 @@ import { ApiKey } from "../../types";
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { M3Select } from "@/components/atoms/M3Select";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export interface ModelMeta {
   id: string;
@@ -619,8 +620,8 @@ export function ModelSelection({
 
             {/* Dynamic model loader indicator */}
             {loadingModels && (
-              <div className="flex items-center gap-2 p-3 rounded-2xl bg-surface2/40 border border-border/40 animate-pulse text-xs text-text-muted">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <div className="flex items-center gap-2 p-3 rounded-2xl bg-surface2/40 border border-border/40 text-xs text-text-muted">
+                <Md3LoadingIndicator size="sm" className="text-primary" />
                 <span>
                   Querying live models from {PROVIDER_NAMES[selectedProvider] || selectedProvider}...
                 </span>

@@ -1,91 +1,73 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import {
-  M3Animator,
-  setupCanvas,
-  drawIndicator,
-  getMorphedShape,
-} from "@alerix/m3-loading-indicator";
+import { useEffect, useState } from "react";
+import { M3eLoadingIndicator } from "@m3e/react/loading-indicator";
+
+export interface Md3LoadingIndicatorProps {
+  size?: "sm" | "md" | "lg";
+  variant?: "uncontained" | "contained";
+  className?: string;
+}
 
 /**
- * MD3 Expressive Loading Indicator.
- * Shape-morphing and motion to capture attention.
- * With `prefers-reduced-motion: reduce` it renders a single static frame
- * (the shape still communicates "loading" without continuous motion).
+ * Official Material 3 Expressive Loading Indicator from M3E (@m3e/react/loading-indicator).
+ * Spec: https://matraic.github.io/m3e/#/components/loading-indicator.html
+ * Expressive shape-morphing indicator designed for short, ongoing processes.
  */
 export function Md3LoadingIndicator({
   size = "md",
+  variant = "uncontained",
   className = "",
-}: {
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}) {
-  const sizeMap = {
-    sm: 20,
-    md: 48,
-    lg: 64,
-  };
-
-  const pxSize = sizeMap[size];
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+}: Md3LoadingIndicatorProps) {
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    setMounted(true);
+  }, []);
 
-    const ctx = setupCanvas(canvas, pxSize);
-    const animator = new M3Animator();
-    let animationFrameId: number;
+  const sizeMap = {
+    sm: 20,
+    md: 36,
+    lg: 48,
+  };
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const px = sizeMap[size];
 
-    const drawStatic = () => {
-      const computedColor = getComputedStyle(canvas).color || "#6750A4";
-      try {
-        drawIndicator(ctx, pxSize, getMorphedShape(0), 0, {
-          color: computedColor,
-          sizeRatio: 0.79,
-          contained: false,
-        });
-      } catch {
-        // If a static frame can't be drawn, the empty container still
-        // announces "Loading" via role="status".
-      }
-    };
-
-    if (reduced) {
-      drawStatic();
-      return;
-    }
-
-    const render = (timestamp: number) => {
-      animator.update(timestamp);
-      const shape = getMorphedShape(animator.morph);
-
-      const computedColor = getComputedStyle(canvas).color || "#6750A4";
-      drawIndicator(ctx, pxSize, shape, animator.rotation, {
-        color: computedColor,
-        sizeRatio: 0.79,
-        contained: false,
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    animationFrameId = requestAnimationFrame(render);
-
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [pxSize]);
+  if (!mounted) {
+    // Fast lightweight fallback during SSR / initial hydration
+    return (
+      <div
+        role="status"
+        aria-label="Loading"
+        className={`inline-flex items-center justify-center shrink-0 ${className}`}
+        style={{ width: px, height: px }}
+      >
+        <span
+          className="rounded-full border-2 border-current border-t-transparent animate-spin"
+          style={{ width: Math.max(px * 0.75, 12), height: Math.max(px * 0.75, 12) }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
       role="status"
       aria-label="Loading"
-      className={`relative flex items-center justify-center ${className}`}
-      style={{ width: pxSize, height: pxSize }}
+      className={`inline-flex items-center justify-center shrink-0 ${className}`}
+      style={{
+        width: px,
+        height: px,
+        // Map M3E token CSS variables to theme colors and size
+        ["--m3e-loading-indicator-active-indicator-size" as string]: `${px}px`,
+        ["--m3e-loading-indicator-active-indicator-color" as string]: "currentColor",
+        ["--m3e-loading-indicator-contained-container-size" as string]: `${px}px`,
+      }}
     >
-      <canvas ref={canvasRef} style={{ width: pxSize, height: pxSize }} />
+      <M3eLoadingIndicator
+        variant={variant}
+        className="w-full h-full flex items-center justify-center"
+      />
     </div>
   );
 }

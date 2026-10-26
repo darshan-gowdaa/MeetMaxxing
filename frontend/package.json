@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@alerix/m3-loading-indicator": "^1.0.5",
+    "@lit/react": "^1.0.8",
+    "@m3e/react": "^2.10.2",
+    "@m3e/web": "^2.10.2",
     "@remixicon/react": "^4.9.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
@@ -17,6 +20,7 @@
     "date-fns": "^4.4.0",
     "framer-motion": "^12.42.2",
     "jspdf": "^4.2.1",
+    "lit": "^3.3.3",
     "next": "^16.3.8",
     "next-themes": "^0.4.6",
     "ogl": "^1.0.11",

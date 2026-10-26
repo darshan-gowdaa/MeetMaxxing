@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import {
   RiRefreshLine,
   RiBuildingLine,
@@ -535,7 +536,7 @@ export const ProfileHero = () => {
             {/* Loading Spinner Overlay */}
             {avatarLoading && (
               <div className="absolute inset-0 bg-surface-container-highest/85 backdrop-blur-[2px] flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1.5">
-                <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <Md3LoadingIndicator size="md" className="text-primary" />
                 <span className="text-[10px] tracking-wide text-text">Updating...</span>
               </div>
             )}
@@ -742,7 +743,7 @@ export const ProfileHero = () => {
         >
           {saving ? (
             <>
-              <span className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+              <Md3LoadingIndicator size="sm" className="text-on-primary" />
               <span>Saving Changes...</span>
             </>
           ) : (

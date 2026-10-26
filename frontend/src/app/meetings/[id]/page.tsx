@@ -18,6 +18,8 @@ import MeetingDecisions from "@/components/organisms/MeetingDecisions";
 import MeetingActionItems from "@/components/organisms/MeetingActionItems";
 import MeetingFollowUpForm from "@/components/organisms/MeetingFollowUpForm";
 import { M3Breadcrumb } from "@/components/atoms/M3Breadcrumb";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { M3LinearProgress } from "@/components/atoms/M3LinearProgress";
 import { useMeetingManager } from "./_hooks/useMeetingManager";
 
 type ViewTab = "notes" | "transcript" | "overview";
@@ -67,15 +69,13 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="min-h-screen bg-bg flex flex-col justify-center items-center px-4">
         <div className="rounded-[28px] bg-surface-container-low border border-outline-variant/15 p-8 max-w-md mx-auto text-center flex flex-col items-center gap-6">
-          {errorMsg ? (
+          {errorMsg && !coldStart ? (
             <div className="w-16 h-16 rounded-full bg-risk-container text-on-risk-container flex items-center justify-center mb-2">
-              <span className="text-risk font-bold text-2xl">{coldStart ? "..." : "!"}</span>
+              <span className="text-risk font-bold text-2xl">!</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
-              <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
-              <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+            <div className="flex flex-col items-center justify-center gap-3">
+              <Md3LoadingIndicator size="lg" className="text-primary" />
             </div>
           )}
           <div className="flex flex-col items-center gap-2">
@@ -93,6 +93,11 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-[11px] text-text-muted max-w-xs text-center">
                 This page will retry automatically once the backend wakes up.
               </p>
+            )}
+            {(!errorMsg || coldStart) && (
+              <div className="w-full max-w-xs mt-2">
+                <M3LinearProgress mode="indeterminate" />
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3 mt-4">
