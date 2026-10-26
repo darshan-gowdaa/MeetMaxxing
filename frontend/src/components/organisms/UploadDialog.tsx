@@ -47,7 +47,7 @@ export default function UploadDialog({
 	 };
 
 	 return createPortal(
-	 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+	 <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
 	 <div className="absolute inset-0 bg-bg/80"onClick={!busy ? onCancel : undefined} aria-hidden="true" />
 	 <div
 	 ref={panelRef}
@@ -55,13 +55,14 @@ export default function UploadDialog({
 	 aria-modal="true"
 	 aria-labelledby={titleId}
 	 tabIndex={-1}
-	 className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-lg w-full border border-border animate-fade-scale shadow-sm focus:outline-none"
+	 className="relative z-10 w-full max-w-lg bg-surface-container-highest rounded-t-[28px] sm:rounded-[28px] rounded-b-none sm:rounded-b-[28px] p-5 sm:p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 border-t sm:border border-border shadow-2xl animate-fade-scale focus:outline-none"
 	 >
+	 <div className="w-8 h-1 rounded-full bg-outline-variant/40 mx-auto mb-3 sm:hidden shrink-0" aria-hidden="true" />
 	 <div className="flex justify-between items-center mb-4">
 	 <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
 	 <RiUploadCloud2Line className="w-5 h-5 text-primary" aria-hidden="true"/>
 	 </div>
-	 <button onClick={onCancel} disabled={busy} aria-label="Close upload dialog" className="text-text-muted hover:text-text p-1 disabled:opacity-50">
+	 <button onClick={onCancel} disabled={busy} aria-label="Close upload dialog" className="min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation text-text-muted hover:text-text p-1 disabled:opacity-50">
 	 <RiCloseLine className="w-5 h-5" aria-hidden="true"/>
 	 </button>
 	 </div>
@@ -130,7 +131,7 @@ export default function UploadDialog({
 	 <button
 	 onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
 	 aria-label={`Remove ${file.name}`}
-	 className="p-2 text-text-muted hover:text-risk shrink-0"
+	 className="min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation p-2 text-text-muted hover:text-risk shrink-0"
 	 >
 	 <RiCloseLine className="w-4 h-4" aria-hidden="true"/>
 	 </button>
@@ -145,14 +146,14 @@ export default function UploadDialog({
  <button
  onClick={onCancel}
  disabled={busy}
- className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80 disabled:opacity-50"
+ className="flex-1 h-12 sm:h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80 disabled:opacity-50 touch-manipulation"
  >
  Cancel
  </button>
  <button
  onClick={() => files.length > 0 && onUpload(files)}
  disabled={busy || files.length === 0}
- className="flex-1 h-11 rounded-full bg-primary text-on-primary text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:opacity-80 disabled:opacity-50"
+ className="flex-1 h-12 sm:h-11 rounded-full bg-primary text-on-primary text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-125 active:opacity-80 disabled:opacity-50 touch-manipulation"
  >
  {busy ? <Md3LoadingIndicator size="sm"/> : <RiUploadCloud2Line className="w-4 h-4"/>}
  {busy ?"Uploading…": `Upload ${files.length} File${files.length !== 1 ? 's' : ''}`}

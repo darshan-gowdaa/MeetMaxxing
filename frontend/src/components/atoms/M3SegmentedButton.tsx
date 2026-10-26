@@ -36,7 +36,7 @@ export function M3SegmentedButton<T extends string | number>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={`inline-flex items-center p-1 rounded-full bg-surface-container-low border border-outline-variant/20 shadow-xs max-w-full overflow-x-auto ${className}`}
+      className={`inline-flex items-center p-1 rounded-full bg-surface-container-low border border-outline-variant/20 shadow-xs max-w-full overflow-x-auto touch-pan-x no-scrollbar ${className}`}
     >
       {options.map((opt) => {
         const isSelected = opt.value === value;
@@ -51,7 +51,7 @@ export function M3SegmentedButton<T extends string | number>({
             aria-checked={isSelected}
             disabled={opt.disabled}
             onClick={() => !opt.disabled && onChange(opt.value)}
-            className={`flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 outline-none select-none cursor-pointer whitespace-nowrap active:scale-[0.98] ${
+            className={`flex items-center justify-center gap-2 min-h-[44px] sm:min-h-0 touch-manipulation px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 outline-none select-none cursor-pointer whitespace-nowrap active:scale-[0.98] ${
               isSelected
                 ? "bg-primary-container text-on-primary-container font-bold shadow-xs"
                 : "text-text-muted hover:text-text hover:bg-surface-container-high/60"

@@ -14,6 +14,7 @@ import {
   RiSparklingLine,
 } from "@remixicon/react";
 import type { Meeting } from "@/types";
+import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 export default function MeetingCard({
   meeting,
@@ -142,7 +143,7 @@ export default function MeetingCard({
               e.stopPropagation();
               setMenuOpen((o) => !o);
             }}
-            className="w-8 h-8 rounded-full bg-surface2 hover:bg-surface3 flex items-center justify-center transition-colors border border-border shadow-xs active:scale-[0.96]"
+            className="w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-surface2 hover:bg-surface3 flex items-center justify-center transition-colors border border-border shadow-xs active:scale-[0.96] touch-manipulation"
             aria-label="Meeting options"
           >
             <RiMoreLine className="w-4 h-4 text-text-muted" />
@@ -151,7 +152,7 @@ export default function MeetingCard({
           <Link
             href={`/meetings/${meeting.id}`}
             aria-label={`Open meeting ${displayTitle}`}
-            className="w-8 h-8 rounded-full bg-surface2 hover:bg-primary-container flex items-center justify-center transition-colors group-hover:text-primary"
+            className="w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-surface2 hover:bg-primary-container flex items-center justify-center transition-colors group-hover:text-primary touch-manipulation"
           >
             <RiArrowRightLine className="w-4 h-4 text-text-muted group-hover:text-primary" />
           </Link>
@@ -215,7 +216,7 @@ export default function MeetingCard({
       <div className="absolute top-4 right-4 z-20" ref={menuRef}>
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen((o) => !o); }}
-          className="w-10 h-10 rounded-2xl bg-surface2 hover:bg-surface3 flex items-center justify-center spring-colors border border-border shadow-sm active:scale-[0.97]"
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-2xl bg-surface2 hover:bg-surface3 flex items-center justify-center spring-colors border border-border shadow-sm active:scale-[0.97] touch-manipulation"
           aria-label="Meeting options"
         >
           <RiMoreLine className="w-4 h-4 text-text-muted" />
@@ -282,11 +283,7 @@ export default function MeetingCard({
           </p>
         ) : meeting.status === "active" || meeting.status === "processing" ? (
           <div className="flex-1 flex flex-col items-start justify-center gap-2 mt-1">
-            <div className="flex items-center gap-1.5 ml-0.5">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: "-0.3s" }}></div>
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: "-0.15s" }}></div>
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
-            </div>
+            <Md3LoadingIndicator size="sm" className="text-primary" />
             <p className="text-[11.5px] text-text-muted font-medium animate-pulse">
               {meeting.status === "processing" ? "AI is generating executive summary…" : "AI is processing transcript…"}
             </p>

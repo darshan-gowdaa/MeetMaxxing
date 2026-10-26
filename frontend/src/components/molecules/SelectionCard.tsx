@@ -23,7 +23,7 @@ export function SelectionCard({
       }}
       role="radio"
       aria-checked={selected}
-      className={`flex flex-row sm:flex-col items-center sm:justify-center w-full gap-4 sm:gap-3 py-3 sm:py-6 px-4 sm:px-4 ${
+      className={`flex flex-row sm:flex-col items-center sm:justify-center w-full gap-4 sm:gap-3 py-3 sm:py-6 px-4 sm:px-4 cursor-pointer touch-manipulation min-h-[48px] ${
         selected
           ? 'border-2 border-primary bg-primary-container text-on-primary-container rounded-[24px] shadow-none active:scale-[0.98] transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)]'
           : 'border border-outline-variant/30 bg-surface-container hover:bg-surface-container-high text-text-muted hover:border-primary/40 rounded-[24px] active:scale-[0.98] transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)]'

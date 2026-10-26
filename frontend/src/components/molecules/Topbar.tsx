@@ -177,7 +177,7 @@ export default function Topbar() {
       {/* Mobile Bottom Navigation Bar (MD3 Expressive, fixed directly to viewport bottom) */}
       <nav
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border flex items-center justify-around gap-1 min-h-[4rem] pb-safe px-1.5 shadow-lg"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border flex items-center justify-around gap-1 h-[calc(5rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] px-1.5 shadow-lg"
       >
         {(user
           ? MOBILE_NAV_TABS
@@ -207,21 +207,21 @@ export default function Topbar() {
               key={tab.id}
               href={tab.href}
               aria-current={isActive ? "page" : undefined}
-              className="relative flex flex-col items-center justify-center h-full py-1 rounded-xl group outline-none flex-1 active:scale-[0.96] transition-transform min-w-0"
+              className="relative flex flex-col items-center justify-center h-full py-1 rounded-xl group outline-none flex-1 active:scale-[0.96] transition-transform min-w-0 touch-manipulation"
             >
-              <div className="flex flex-col items-center justify-center gap-0.5 z-10 relative">
+              <div className="flex flex-col items-center justify-center gap-1 z-10 relative">
                 <span
-                  className={`flex items-center justify-center w-12 h-7 rounded-full transition-all duration-200 ${
+                  className={`flex items-center justify-center w-16 h-8 rounded-full transition-all duration-200 ${
                     isActive
-                      ? "bg-secondary-container text-on-secondary-container shadow-xs font-semibold"
-                      : "text-text-muted group-hover:bg-surface-container-high group-hover:text-text"
+                      ? "bg-secondary-container text-on-secondary-container"
+                      : "text-text-muted hover:text-text"
                   }`}
                 >
                   <IconComponent className="w-5 h-5" aria-hidden="true" />
                 </span>
                 <span
-                  className={`text-[11px] leading-tight truncate max-w-[64px] text-center transition-colors ${
-                    isActive ? "text-text font-bold" : "text-text-muted group-hover:text-text font-medium"
+                  className={`text-xs leading-none truncate max-w-[64px] text-center transition-colors ${
+                    isActive ? "font-bold text-text" : "font-medium text-text-muted"
                   }`}
                 >
                   {label}

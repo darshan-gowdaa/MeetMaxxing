@@ -34,7 +34,7 @@ export function DeleteDialog({
 	 if (!mounted) return null;
 
 	 return createPortal(
-	 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+	 <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
 	 {/* Scrim */}
 	 <div
 	 className="absolute inset-0 bg-bg/80"
@@ -48,8 +48,9 @@ export function DeleteDialog({
 	 aria-modal="true"
 	 aria-labelledby={titleId}
 	 tabIndex={-1}
-	 className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-sm w-full border border-border animate-fade-scale shadow-sm focus:outline-none"
+	 className="relative z-10 w-full max-w-lg sm:max-w-sm bg-surface-container-highest rounded-t-[28px] sm:rounded-[28px] rounded-b-none sm:rounded-b-[28px] p-5 sm:p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 border-t sm:border border-border shadow-2xl animate-fade-scale focus:outline-none"
 	 >
+	 <div className="w-8 h-1 rounded-full bg-outline-variant/40 mx-auto mb-3 sm:hidden shrink-0" aria-hidden="true" />
 	 {/* Icon */}
 	 <div className="w-12 h-12 rounded-full bg-risk-container flex items-center justify-center mx-auto mb-4">
 	 <RiDeleteBinLine className="w-6 h-6 text-risk"/>
@@ -63,14 +64,14 @@ export function DeleteDialog({
  <div className="flex gap-3">
  <button
  onClick={onCancel}
- className="flex-1 h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80"
+ className="flex-1 h-12 sm:h-11 rounded-full border border-border text-sm font-semibold text-text spring-colors hover:bg-surface2 active:opacity-80 touch-manipulation"
  >
  Cancel
  </button>
           <button
             onClick={onConfirm}
             disabled={busy}
-            className="flex-1 h-11 rounded-full bg-risk text-on-risk text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-110 active:opacity-80 disabled:opacity-60"
+            className="flex-1 h-12 sm:h-11 rounded-full bg-risk text-on-risk text-sm font-semibold spring flex items-center justify-center gap-2 hover:brightness-110 active:opacity-80 disabled:opacity-60 touch-manipulation"
           >
             {busy ? <Md3LoadingIndicator size="sm" /> : <RiDeleteBinLine className="w-4 h-4" />}
             {busy ? "Deleting…" : "Delete"}

@@ -370,18 +370,20 @@ export default function IntegrationsPage() {
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
       {/* Page Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
-          Integrations Hub
-        </h1>
-        <p className="text-sm text-text-muted">
-          Connect your calendar, meeting platforms, and team workspaces for automated recaps and scheduling.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
+            Integrations
+          </h1>
+          <p className="text-sm text-text-muted">
+            Connect your calendar, meeting platforms, and team workspaces for automated recaps and scheduling.
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-8">
         {/* Section 1: Meeting & Calendar Platforms */}
-        <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
+        <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-8 flex flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="text-lg sm:text-xl font-bold text-text flex items-center gap-2">
               <RiVideoChatLine className="w-5 h-5 text-primary" />

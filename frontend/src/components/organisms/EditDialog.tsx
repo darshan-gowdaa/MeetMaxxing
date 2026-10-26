@@ -89,7 +89,7 @@ export default function EditDialog({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-bg/80 backdrop-blur-xs" onClick={onCancel} aria-hidden="true" />
       <div
         ref={panelRef}
@@ -97,8 +97,9 @@ export default function EditDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative z-10 bg-surface-container-highest rounded-[32px] p-6 max-w-md w-full border border-outline-variant/20 animate-fade-scale shadow-2xl focus:outline-none"
+        className="relative z-10 w-full max-w-lg sm:max-w-md bg-surface-container-highest rounded-t-[28px] sm:rounded-[32px] rounded-b-none sm:rounded-b-[32px] p-5 sm:p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 border-t sm:border border-border sm:border-outline-variant/20 shadow-2xl animate-fade-scale focus:outline-none"
       >
+        <div className="w-8 h-1 rounded-full bg-outline-variant/40 mx-auto mb-3 sm:hidden shrink-0" aria-hidden="true" />
         <div className="w-12 h-12 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center mx-auto mb-3 shadow-xs">
           <RiEditLine className="w-6 h-6 text-primary" />
         </div>
@@ -138,7 +139,7 @@ export default function EditDialog({
           aria-label={`${itemName} title`}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
-          className={`w-full h-12 bg-surface-container border rounded-2xl px-4 text-base sm:text-sm text-text placeholder:text-text-muted focus:outline-none transition-colors mb-1 ${
+          className={`w-full h-12 bg-surface-container border rounded-2xl px-4 text-[16px] sm:text-sm text-text placeholder:text-text-muted focus:outline-none transition-colors mb-1 ${
             error ? "border-risk focus:border-risk" : "border-outline-variant/20 focus:border-primary"
           }`}
           placeholder={`${itemName} title…`}
@@ -184,7 +185,7 @@ export default function EditDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 h-11 rounded-full border border-outline-variant/20 text-sm font-semibold text-text transition-colors hover:bg-surface-container active:scale-[0.98] cursor-pointer"
+            className="flex-1 h-12 sm:h-11 rounded-full border border-outline-variant/20 text-sm font-semibold text-text transition-colors hover:bg-surface-container active:scale-[0.98] cursor-pointer touch-manipulation"
           >
             Cancel
           </button>
@@ -192,7 +193,7 @@ export default function EditDialog({
             type="button"
             onClick={() => title.trim() && onSave(title.trim())}
             disabled={busy || !title.trim()}
-            className="flex-1 h-11 rounded-full bg-primary-container text-on-primary-container text-sm font-bold transition-all flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-xs"
+            className="flex-1 h-12 sm:h-11 rounded-full bg-primary-container text-on-primary-container text-sm font-bold transition-all flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-xs touch-manipulation"
           >
             {busy ? <Md3LoadingIndicator size="sm" /> : <RiCheckLine className="w-4 h-4" />}
             <span>{busy ? "Saving…" : "Save"}</span>

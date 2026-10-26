@@ -186,7 +186,7 @@ export function ActionButton({
       <button
         type="button"
         disabled
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm bg-secondary-container/70 text-on-secondary-container cursor-wait opacity-90 ${className}`}
+        className={`min-h-[44px] sm:min-h-0 touch-manipulation inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm bg-secondary-container/70 text-on-secondary-container cursor-wait opacity-90 ${className}`}
       >
         <Md3LoadingIndicator size="sm" />
         <span>{label}…</span>
@@ -199,7 +199,7 @@ export function ActionButton({
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-success-container text-on-success-container shadow-sm cursor-pointer hover:brightness-105 ${className}`}
+        className={`min-h-[44px] sm:min-h-0 touch-manipulation inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-success-container text-on-success-container shadow-sm cursor-pointer hover:brightness-105 ${className}`}
       >
         <Check className="w-4 h-4 text-success" />
         <span>{successLabel}</span>
@@ -212,7 +212,7 @@ export function ActionButton({
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-risk-container text-on-risk-container shadow-sm hover:brightness-105 cursor-pointer ${className}`}
+        className={`min-h-[44px] sm:min-h-0 touch-manipulation inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 bg-risk-container text-on-risk-container shadow-sm hover:brightness-105 cursor-pointer ${className}`}
       >
         <AlertTriangle className="w-4 h-4 text-risk" />
         <span>{errorLabel}</span>
@@ -229,7 +229,7 @@ export function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 cursor-pointer ${variantStyle} ${className}`}
+      className={`min-h-[44px] sm:min-h-0 touch-manipulation inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all duration-200 cursor-pointer ${variantStyle} ${className}`}
     >
       <Icon className="w-4 h-4 shrink-0" />
       <span>{label}</span>

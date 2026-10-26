@@ -14,7 +14,7 @@ export function Switch({ checked, onCheckedChange, disabled, className = "", ...
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onCheckedChange?.(!checked)}
-      className={`relative inline-flex h-8 w-[52px] shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
+      className={`relative inline-flex h-8 w-[52px] shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors duration-200 touch-manipulation before:absolute before:-inset-2 before:content-[''] disabled:cursor-not-allowed disabled:opacity-50 ${
         checked ? "border-primary bg-primary" : "border-outline bg-surface-container-highest"
       } ${className}`}
       {...props}

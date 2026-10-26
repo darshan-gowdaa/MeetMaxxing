@@ -12,7 +12,7 @@ export interface Md3LoadingIndicatorProps {
 /**
  * Official Material 3 Expressive Loading Indicator from M3E (@m3e/react/loading-indicator).
  * Spec: https://matraic.github.io/m3e/#/components/loading-indicator.html
- * Expressive shape-morphing indicator designed for short, ongoing processes.
+ * Expressive shape-morphing indicator that spins and morphs across multiple shapes.
  */
 export function Md3LoadingIndicator({
   size = "md",
@@ -26,27 +26,21 @@ export function Md3LoadingIndicator({
   }, []);
 
   const sizeMap = {
-    sm: 20,
-    md: 36,
+    sm: 22,
+    md: 38,
     lg: 48,
   };
 
   const px = sizeMap[size];
 
   if (!mounted) {
-    // Fast lightweight fallback during SSR / initial hydration
     return (
       <div
         role="status"
         aria-label="Loading"
         className={`inline-flex items-center justify-center shrink-0 ${className}`}
         style={{ width: px, height: px }}
-      >
-        <span
-          className="rounded-full border-2 border-current border-t-transparent animate-spin"
-          style={{ width: Math.max(px * 0.75, 12), height: Math.max(px * 0.75, 12) }}
-        />
-      </div>
+      />
     );
   }
 
@@ -59,14 +53,23 @@ export function Md3LoadingIndicator({
         width: px,
         height: px,
         // Map M3E token CSS variables to theme colors and size
-        ["--m3e-loading-indicator-active-indicator-size" as string]: `${px}px`,
+        ["--m3e-loading-indicator-size" as string]: `${px}px`,
+        ["--m3e-loading-indicator-container-size" as string]: `${px}px`,
         ["--m3e-loading-indicator-active-indicator-color" as string]: "currentColor",
-        ["--m3e-loading-indicator-contained-container-size" as string]: `${px}px`,
+        ["--m3e-loading-indicator-contained-active-indicator-color" as string]: "currentColor",
       }}
     >
       <M3eLoadingIndicator
         variant={variant}
         className="w-full h-full flex items-center justify-center"
+        style={{
+          width: `${px}px`,
+          height: `${px}px`,
+          ["--m3e-loading-indicator-size" as string]: `${px}px`,
+          ["--m3e-loading-indicator-container-size" as string]: `${px}px`,
+          ["--m3e-loading-indicator-active-indicator-color" as string]: "currentColor",
+          ["--m3e-loading-indicator-contained-active-indicator-color" as string]: "currentColor",
+        }}
       />
     </div>
   );

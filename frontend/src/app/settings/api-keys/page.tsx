@@ -115,16 +115,16 @@ export default function ApiKeysPage() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
       <ApiKeysHero onAdd={handleScrollToProviders} />
 
       {loading ? (
-        <>
+        <div className="flex flex-col gap-8">
           <ModelSelectionSkeleton />
           <ProviderListSkeleton />
-        </>
+        </div>
       ) : (
-        <>
+        <div className="flex flex-col gap-8">
           <ModelSelection keys={keys} onAddKey={handleScrollToProviders} />
 
           <div className="flex flex-col gap-8">
@@ -198,7 +198,7 @@ export default function ApiKeysPage() {
  </div>
  </div>
  </div>
- </>
+ </div>
  )}
 
  {/* Dialogs & Drawers */}

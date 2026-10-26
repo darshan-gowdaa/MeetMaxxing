@@ -144,7 +144,7 @@ export function AddKeyDialog({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       {/* backdrop with surrounding blur */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -167,8 +167,9 @@ export function AddKeyDialog({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ duration: 0.2, ease: [0.38, 1.21, 0.22, 1] }}
-        className="relative z-10 bg-surface-container-highest/95 backdrop-blur-xl rounded-[28px] sm:rounded-[32px] shadow-2xl border border-border/80 w-full max-w-md p-6 sm:p-7 focus:outline-none my-auto"
+        className="relative z-10 bg-surface-container-highest/95 backdrop-blur-xl rounded-t-[28px] sm:rounded-[32px] rounded-b-none sm:rounded-b-[32px] shadow-2xl border-t sm:border border-border/80 w-full max-w-lg sm:max-w-md p-5 sm:p-7 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-7 focus:outline-none my-0 sm:my-auto max-h-[92vh] sm:max-h-none overflow-y-auto"
       >
+        <div className="w-8 h-1 rounded-full bg-outline-variant/40 mx-auto mb-3 sm:hidden shrink-0" aria-hidden="true" />
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             {domain ? (
@@ -194,7 +195,7 @@ export function AddKeyDialog({
             type="button"
             onClick={onCancel}
             aria-label="Close dialog"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface2 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation rounded-full text-text-muted hover:text-text hover:bg-surface2 transition-colors"
           >
             <RiCloseLine className="w-5 h-5" />
           </button>
@@ -273,7 +274,7 @@ export function AddKeyDialog({
                   setTestResult(null);
                 }}
                 placeholder={provider.pattern}
-                className={`w-full bg-surface2 dark:bg-surface-container-low border rounded-xl px-4 py-2.5 pr-12 text-sm text-text focus:outline-none transition-colors ${
+                className={`w-full bg-surface2 dark:bg-surface-container-low border rounded-xl px-4 py-2.5 pr-12 text-[16px] sm:text-sm text-text focus:outline-none transition-colors ${
                   patternValidation === null
                     ? "border-border focus:border-primary"
                     : patternValidation.isValid
@@ -285,7 +286,7 @@ export function AddKeyDialog({
                 type="button"
                 onClick={() => setShowKey((s) => !s)}
                 aria-label={showKey ? "Hide API key" : "Show API key"}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation rounded-full text-text-muted hover:text-text transition-colors"
               >
                 {showKey ? (
                   <RiEyeOffLine className="w-4 h-4" aria-hidden="true" />
@@ -327,7 +328,7 @@ export function AddKeyDialog({
               value={labelValue}
               onChange={(e) => setLabelValue(e.target.value)}
               placeholder="e.g. Personal, Work"
-              className="w-full bg-surface2 dark:bg-surface-container-low border border-border rounded-xl px-4 py-2.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-surface2 dark:bg-surface-container-low border border-border rounded-xl px-4 py-2.5 text-[16px] sm:text-sm text-text focus:outline-none focus:border-primary transition-colors"
             />
           </div>
 
@@ -423,14 +424,14 @@ export function AddKeyDialog({
                 type="button"
                 onClick={onCancel}
                 disabled={saving}
-                className="px-5 py-2 rounded-full hover:bg-surface2 text-[14px] font-medium text-text transition-colors disabled:opacity-50"
+                className="px-5 h-12 sm:h-11 rounded-full hover:bg-surface2 text-[14px] font-medium text-text transition-colors disabled:opacity-50 flex items-center justify-center touch-manipulation"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving || (patternValidation !== null && !patternValidation.isValid)}
-                className="px-6 py-2 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-all min-w-[100px] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm active:scale-[0.98]"
+                className="px-6 h-12 sm:h-11 rounded-full bg-primary text-on-primary text-[14px] font-medium hover:bg-primary/90 transition-all min-w-[100px] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm active:scale-[0.98] touch-manipulation"
               >
                 {saving ? <Md3LoadingIndicator size="sm" className="text-on-primary" /> : "Save Key"}
               </button>

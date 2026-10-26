@@ -351,8 +351,8 @@ body {
 }
 
 @keyframes md3-shimmer {
-  0%   { background-position:  200% center; }
-  100% { background-position: -200% center; }
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @keyframes md3-ripple {
@@ -417,16 +417,27 @@ body {
     0 16px 40px -16px #dbb9fd30;
 }
 
-/* ── Shimmer Skeleton ─────────────────────────────────────────────────────── */
+/* ── Shimmer Skeleton (Material 3 continuous smooth wave) ─────────────────── */
+.m3-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-container-high) 20%,
+    var(--surface-container-highest) 35%,
+    var(--surface-container-high) 50%
+  );
+  background-size: 200% 100%;
+  animation: md3-shimmer 2s ease-in-out infinite;
+}
+
 .md3-skeleton {
   background: linear-gradient(
     90deg,
-    var(--surface-container) 35%,
-    color-mix(in srgb, var(--surface-container-high) 40%, var(--surface-container)) 50%,
-    var(--surface-container) 65%
+    var(--surface-container-high) 20%,
+    var(--surface-container-highest) 35%,
+    var(--surface-container-high) 50%
   );
   background-size: 200% 100%;
-  animation: md3-shimmer 1.5s ease-in-out infinite;
+  animation: md3-shimmer 2s ease-in-out infinite;
   border-radius: 12px;
 }
 
@@ -677,6 +688,7 @@ summary:focus-visible,
 
   /* Looping transform/paint animations stop */
   .md3-circular-circle,
+  .m3-skeleton,
   .md3-skeleton,
   .md3-float {
     animation: none;

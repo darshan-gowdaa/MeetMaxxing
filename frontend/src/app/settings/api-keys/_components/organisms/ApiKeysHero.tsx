@@ -1,23 +1,25 @@
-import { RiAddLine } from"@remixicon/react";
+import { RiAddLine } from "@remixicon/react";
 
 export function ApiKeysHero({ onAdd }: { onAdd: () => void }) {
- return (
- <div className="relative overflow-hidden bg-surface border border-border rounded-[24px] sm:rounded-[28px] p-5 sm:p-8 mb-6 sm:mb-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
- <div className="flex flex-col gap-2 max-w-xl relative z-10">
- <h1 className="text-[28px] sm:text-[32px] lg:text-[40px] font-black tracking-tight text-text leading-none">API Keys</h1>
- <p className="text-[14px] sm:text-[15px] text-text-muted leading-relaxed">
- Your keys stay yours. We encrypt every key before it touches our database and only decrypt it in memory, for the seconds it takes to call the provider. We never view, log, or share your API keys.
- </p>
- </div>
- <div className="relative z-10 shrink-0">
-        <button 
-          onClick={onAdd}
-          className="h-12 px-6 rounded-full bg-primary text-on-primary font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-sm border border-border w-full md:w-auto active:scale-[0.98]"
-        >
-          <RiAddLine className="w-5 h-5"/> Add Key
-        </button>
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
+          API Keys
+        </h1>
+        <p className="text-sm text-text-muted">
+          Connect AI model providers and manage encrypted credentials. Your keys are never logged.
+        </p>
       </div>
-      <div className="absolute right-0 top-0 w-64 h-64 bg-primary/10 rounded-full blur-[60px] translate-x-1/3 pointer-events-none"></div>
- </div>
- );
+
+      <button
+        type="button"
+        onClick={onAdd}
+        className="rounded-full px-4 py-2.5 bg-primary text-on-primary hover:bg-primary/90 font-semibold text-xs sm:text-[13px] inline-flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.97] shrink-0 cursor-pointer"
+      >
+        <RiAddLine className="w-4 h-4 text-on-primary" />
+        <span>Add Key</span>
+      </button>
+    </div>
+  );
 }

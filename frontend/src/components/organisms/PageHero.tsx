@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { M3Skeleton } from "@/components/atoms/M3Skeleton";
 
 export interface PageHeroStat {
   loading?: boolean;
@@ -48,7 +49,7 @@ export default function PageHero({
           {stats.map((stat, i) => (
             <div key={i} className="flex flex-col items-center justify-center flex-1 sm:flex-none min-w-0 sm:min-w-[6rem] px-3 sm:px-4 h-18 sm:h-20 rounded-[20px] bg-surface2 border border-border">
               {stat.loading ? (
-                <div className="w-8 h-8 rounded-xl md3-skeleton mb-1" />
+                <M3Skeleton variant="rounded" className="w-8 h-8 rounded-xl mb-1" />
               ) : (
                 <span className="text-xl sm:text-2xl font-bold text-text">
                   {stat.value}

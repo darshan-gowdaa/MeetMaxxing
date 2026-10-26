@@ -14,9 +14,9 @@ import {
 
 import { useAuth } from '@/lib/auth-context';
 import { useSnackbar } from '@/components/providers/SnackbarProvider';
+import { SelectionCard } from "@/components/molecules/SelectionCard";
 import { Switch } from "@/components/atoms/Switch";
 import { M3Select } from "@/components/atoms/M3Select";
-import { M3SegmentedButton } from "@/components/atoms/M3SegmentedButton";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -189,7 +189,8 @@ export default function GeneralPreferences() {
     : [settings.timezone, ...COMMON_TIMEZONES];
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-5xl">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
@@ -236,8 +237,9 @@ export default function GeneralPreferences() {
         </div>
       </div>
 
-      {/* SECTION 1: AI Notes & Synthesis */}
-      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+      <div className="flex flex-col gap-8">
+        {/* SECTION 1: AI Notes & Synthesis */}
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <RiBrainLine className="w-4 h-4 text-primary" />
@@ -248,25 +250,23 @@ export default function GeneralPreferences() {
           </p>
         </div>
 
-        {/* Summary Style Selection via M3 Expressive Segmented Button */}
+        {/* Summary Style Selection */}
         <div className="flex flex-col gap-3">
           <label className="text-[14px] font-bold text-text">
             Default Summary Style
           </label>
-          <div className="flex flex-col gap-2">
-            <M3SegmentedButton
-              options={summaryOptions.map(opt => ({
-                value: opt.id,
-                label: opt.label,
-                icon: opt.icon,
-              }))}
-              value={settings.summary_style}
-              onChange={(id) => updateSetting("summary_style", id, "Summary style")}
-              aria-label="Default Summary Style"
-            />
-            <p className="text-xs text-text-muted">
-              {summaryOptions.find(o => o.id === settings.summary_style)?.desc}
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup">
+            {summaryOptions.map(opt => (
+              <SelectionCard
+                key={opt.id}
+                id={opt.id}
+                label={opt.label}
+                description={opt.desc}
+                icon={opt.icon}
+                selected={settings.summary_style === opt.id}
+                onClick={(id) => updateSetting("summary_style", id, "Summary style")}
+              />
+            ))}
           </div>
         </div>
 
@@ -291,7 +291,7 @@ export default function GeneralPreferences() {
       </section>
 
       {/* SECTION 2: Scheduling & Calendar Defaults */}
-      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <RiCalendarEventLine className="w-4 h-4 text-primary" />
@@ -349,7 +349,7 @@ export default function GeneralPreferences() {
       </section>
 
       {/* SECTION 3: Regional & Localization */}
-      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+      <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <RiGlobalLine className="w-4 h-4 text-primary" />
@@ -377,6 +377,7 @@ export default function GeneralPreferences() {
           />
         </div>
       </section>
+      </div>
     </div>
   );
 }

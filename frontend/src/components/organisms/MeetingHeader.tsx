@@ -326,7 +326,7 @@ export default function MeetingHeader({
 
   return (
     <>
-      <header className="relative z-20 bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 shadow-none transition-all">
+      <header className="relative z-20 bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-6 lg:p-8 shadow-none transition-all">
         {/* Ambient tonal accent with contained overflow */}
         <div
           className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none"
@@ -391,7 +391,7 @@ export default function MeetingHeader({
                   onClick={() => setIsEditOpen(true)}
                   aria-label="Edit meeting title"
                   title="Edit meeting title"
-                  className="p-1.5 rounded-full text-text-muted hover:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 shrink-0 cursor-pointer"
+                  className="min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation p-1.5 rounded-full text-text-muted hover:text-primary hover:bg-surface-container-highest transition-colors active:scale-95 shrink-0 cursor-pointer"
                 >
                   <RiEditLine className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 </button>

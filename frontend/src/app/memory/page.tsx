@@ -9,6 +9,7 @@ import {
   RiCloseLine,
 } from "@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { M3Skeleton } from "@/components/atoms/M3Skeleton";
 import { useMemoryManager } from "./_hooks/useMemoryManager";
 import { ResultCard } from "./_components/ResultCard";
 
@@ -95,7 +96,7 @@ export default function MemoryPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {loadingSuggestions ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-[68px] rounded-[32px] bg-surface-container-highest animate-pulse" />
+                  <M3Skeleton key={i} variant="rounded" className="h-[68px] rounded-2xl" />
                 ))
               ) : (
                 suggestions.map((q) => (

@@ -65,7 +65,7 @@ export default function ViewContentDialog({
 	 if (!mounted) return null;
 
 	 return createPortal(
-	 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+	 <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
 	 <div className="absolute inset-0 bg-bg/80"onClick={onClose} aria-hidden="true" />
 	 <div
 	 ref={panelRef}
@@ -73,8 +73,9 @@ export default function ViewContentDialog({
 	 aria-modal="true"
 	 aria-labelledby={titleId}
 	 tabIndex={-1}
-	 className="relative z-10 bg-surface-container-highest rounded-[28px] p-5 md:p-6 max-w-3xl w-full h-[80vh] flex flex-col border border-border animate-fade-scale shadow-sm focus:outline-none"
+	 className="relative z-10 w-full max-w-lg sm:max-w-3xl bg-surface-container-highest rounded-t-[28px] sm:rounded-[28px] rounded-b-none sm:rounded-b-[28px] p-5 sm:p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 border-t sm:border border-border shadow-2xl h-[85vh] sm:h-[80vh] flex flex-col animate-fade-scale focus:outline-none"
 	 >
+	 <div className="w-8 h-1 rounded-full bg-outline-variant/40 mx-auto mb-3 sm:hidden shrink-0" aria-hidden="true" />
 	 <div className="flex justify-between items-center mb-4 shrink-0">
 	 <div className="flex items-center gap-3">
 	 <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
@@ -84,7 +85,7 @@ export default function ViewContentDialog({
 	 {filename}
 	 </h2>
 	 </div>
-	 <button onClick={onClose} aria-label="Close file preview" className="text-text-muted hover:text-text p-1 bg-surface2 hover:bg-surface3 rounded-full transition-colors">
+	 <button onClick={onClose} aria-label="Close file preview" className="min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation text-text-muted hover:text-text p-1 bg-surface2 hover:bg-surface3 rounded-full transition-colors">
 	 <RiCloseLine className="w-6 h-6" aria-hidden="true"/>
 	 </button>
 	 </div>

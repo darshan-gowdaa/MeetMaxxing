@@ -12,8 +12,8 @@ import {
 
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
+import { SelectionCard } from "@/components/molecules/SelectionCard";
 import { Switch } from "@/components/atoms/Switch";
-import { M3SegmentedButton } from "@/components/atoms/M3SegmentedButton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
@@ -149,18 +149,22 @@ export default function AppearancePage() {
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
-          Appearance
-        </h1>
-        <p className="text-sm text-text-muted">
-          Customize interface theme, display density, and visual accessibility.
-        </p>
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
+            Appearance
+          </h1>
+          <p className="text-sm text-text-muted">
+            Customize interface theme, display density, and visual accessibility.
+          </p>
+        </div>
       </div>
-      
-      {/* Card 1: Color Scheme & Theme */}
-      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+
+      <div className="flex flex-col gap-8">
+        {/* Card 1: Color Scheme & Theme */}
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1">
           <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
             <RiPaletteLine className="w-5 h-5 text-primary" />
@@ -171,22 +175,22 @@ export default function AppearancePage() {
           </p>
         </div>
         
-        <div className="flex flex-col gap-2">
-          <M3SegmentedButton
-            options={options.map((opt) => ({
-              value: opt.id,
-              label: opt.label,
-              icon: opt.icon,
-            }))}
-            value={theme || "system"}
-            onChange={handleThemeChange}
-            aria-label="Theme selection"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Theme selection">
+          {options.map((opt) => (
+            <SelectionCard
+              key={opt.id}
+              id={opt.id}
+              label={opt.label}
+              icon={opt.icon}
+              selected={theme === opt.id}
+              onClick={handleThemeChange}
+            />
+          ))}
         </div>
       </div>
 
       {/* Card 2: Display Density & Visual Accessibility */}
-      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
+      <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-4 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1">
           <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
             <RiEyeLine className="w-5 h-5 text-primary" />
@@ -245,5 +249,6 @@ export default function AppearancePage() {
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

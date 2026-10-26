@@ -141,7 +141,7 @@ function SnackbarHost({
       key={snackbar.id}
       role="status"
       aria-live="polite"
-      className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[80] w-full max-w-md px-4 pointer-events-none"
+      className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-[80] w-full max-w-md px-4 pointer-events-none"
     >
       {/* Enter: .animate-slide-up (flattened under reduced-motion). Exit: fade via m3e token. */}
       <div

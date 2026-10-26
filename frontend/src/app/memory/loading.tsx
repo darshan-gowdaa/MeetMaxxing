@@ -1,6 +1,8 @@
+import { M3Skeleton } from "@/components/atoms/M3Skeleton";
+
 /**
  * Memory route skeleton — hero card + search bar + suggestion chips,
- * mirroring the real layout.
+ * mirroring the real layout adhering to Material 3 & M3E guidelines.
  */
 export default function MemoryLoading() {
   return (
@@ -8,22 +10,22 @@ export default function MemoryLoading() {
       <div className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
         {/* Hero */}
         <div className="rounded-[32px] bg-surface-container-low border border-outline-variant/15 overflow-hidden p-8 flex flex-col items-center gap-4">
-          <div className="md3-skeleton w-14 h-14 rounded-[20px]" />
+          <M3Skeleton variant="rounded" className="w-14 h-14 rounded-[20px]" />
           <div className="flex flex-col items-center gap-2 w-full">
-            <div className="md3-skeleton h-6 w-56 max-w-full" />
-            <div className="md3-skeleton h-3.5 w-72 max-w-full" />
+            <M3Skeleton variant="text" className="h-6 w-56 max-w-full" />
+            <M3Skeleton variant="text" className="h-3.5 w-72 max-w-full" />
           </div>
         </div>
 
         {/* Search bar */}
-        <div className="md3-skeleton h-14 w-full rounded-2xl" />
+        <M3Skeleton variant="rounded" className="h-14 w-full rounded-2xl" />
 
         {/* Suggestion chips */}
         <div className="flex flex-col gap-3">
-          <div className="md3-skeleton h-3 w-36" />
+          <M3Skeleton variant="text" className="h-3 w-36" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="md3-skeleton h-[68px] rounded-2xl" />
+              <M3Skeleton key={i} variant="rounded" className="h-[68px] rounded-2xl" />
             ))}
           </div>
         </div>
