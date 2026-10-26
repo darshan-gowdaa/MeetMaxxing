@@ -5,7 +5,11 @@ import {
   RiFileTextLine, 
   RiFileList3Line, 
   RiFlashlightLine, 
-  RiCompass3Line 
+  RiCompass3Line,
+  RiBrainLine,
+  RiCalendarEventLine,
+  RiGlobalLine,
+  RiRestartLine
 } from '@remixicon/react';
 
 import { useAuth } from '@/lib/auth-context';
@@ -85,6 +89,8 @@ export default function GeneralPreferences() {
   const { showMessage } = useSnackbar();
 
   const [settings, setSettings] = useState<GeneralSettings>(readCachedSettings);
+  const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   // Sync with backend on mount
   useEffect(() => {
@@ -117,15 +123,45 @@ export default function GeneralPreferences() {
       return;
     }
 
+    setSaving(true);
     try {
-      await fetch(`${API_URL}/api/settings/`, {
+      const res = await fetch(`${API_URL}/api/settings/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ [key]: value })
       });
+      if (!res.ok) throw new Error("Failed to save");
       showMessage(`${label} updated`, { variant: "success" });
     } catch {
       showMessage(`Failed to save ${label.toLowerCase()} to cloud`, { variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleResetToDefaults = async () => {
+    setResetting(true);
+    try {
+      if (token) {
+        const res = await fetch(`${API_URL}/api/settings/reset`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          await fetch(`${API_URL}/api/settings/`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(DEFAULT_SETTINGS)
+          });
+        }
+      }
+      setSettings(DEFAULT_SETTINGS);
+      persistSettingsLocally(DEFAULT_SETTINGS);
+      showMessage("Settings reset to defaults", { variant: "success" });
+    } catch {
+      showMessage("Failed to reset settings to cloud", { variant: "error" });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -153,20 +189,58 @@ export default function GeneralPreferences() {
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-5xl">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
-          General Preferences
-        </h1>
-        <p className="text-sm text-text-muted">
-          Manage AI note synthesis, scheduling defaults, timezones, and regional language.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[28px] sm:text-3xl font-black text-text tracking-tight">
+            General Preferences
+          </h1>
+          <p className="text-sm text-text-muted">
+            Manage AI note synthesis, scheduling defaults, timezones, and regional language.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Cloud Sync State Pill */}
+          {saving ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+              Saving...
+            </span>
+          ) : token ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Synced with cloud
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container-highest text-text-muted border border-outline-variant/20">
+              Saved locally
+            </span>
+          )}
+
+          {/* Reset to Defaults Button */}
+          <button
+            type="button"
+            onClick={handleResetToDefaults}
+            disabled={resetting || saving}
+            className="rounded-full px-4 py-2 border border-outline-variant/30 hover:bg-surface-container-high text-text text-xs font-semibold active:scale-[0.98] transition-all inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Reset general settings back to system defaults"
+          >
+            {resetting ? (
+              <span className="w-3.5 h-3.5 border-2 border-text border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <RiRestartLine className="w-3.5 h-3.5 text-text-muted" />
+            )}
+            <span>Reset to Defaults</span>
+          </button>
+        </div>
       </div>
 
       {/* SECTION 1: AI Notes & Synthesis */}
       <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
-            AI Notes & Synthesis
+          <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+            <RiBrainLine className="w-4 h-4 text-primary" />
+            AI Notes &amp; Synthesis
           </h2>
           <p className="text-xs text-text-muted">
             Configure how intelligence models analyze transcripts and structure meeting summaries.
@@ -216,8 +290,9 @@ export default function GeneralPreferences() {
       {/* SECTION 2: Scheduling & Calendar Defaults */}
       <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
-            Scheduling & Defaults
+          <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+            <RiCalendarEventLine className="w-4 h-4 text-primary" />
+            Scheduling &amp; Defaults
           </h2>
           <p className="text-xs text-text-muted">
             Set default meeting lengths and time references for follow-up coordination.
@@ -273,8 +348,9 @@ export default function GeneralPreferences() {
       {/* SECTION 3: Regional & Localization */}
       <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1 border-b border-outline-variant/15 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
-            Regional & Localization
+          <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+            <RiGlobalLine className="w-4 h-4 text-primary" />
+            Regional &amp; Localization
           </h2>
           <p className="text-xs text-text-muted">
             Preferred language for transcripts, summaries, and generated meeting notes.

@@ -41,19 +41,23 @@ def format_settings_response(user_data: dict) -> dict:
 
     compact_val = bool(
         notifs.get("compact_view")
-        if "compact_view" in notifs
+        if notifs.get("compact_view") is not None
         else notifs.get("compact_meeting_cards", False)
     )
     high_contrast_val = bool(
         notifs.get("high_contrast")
-        if "high_contrast" in notifs
+        if notifs.get("high_contrast") is not None
         else notifs.get("high_contrast_mode", False)
     )
-    duration_val = int(
+    duration_raw = (
         notifs.get("default_meeting_duration")
-        if "default_meeting_duration" in notifs
+        if notifs.get("default_meeting_duration") is not None
         else notifs.get("meeting_duration", 30)
     )
+    try:
+        duration_val = int(duration_raw) if duration_raw is not None else 30
+    except (ValueError, TypeError):
+        duration_val = 30
 
     raw_integrations = notifs.get("integrations")
     if not isinstance(raw_integrations, dict):
@@ -83,29 +87,41 @@ def format_settings_response(user_data: dict) -> dict:
     )
     avatar_val = str(notifs.get("avatar_url") or user_data.get("avatar_url") or "")
 
+    raw_lead = (
+        sub_notifs.get("prep_lead_time_minutes")
+        if sub_notifs.get("prep_lead_time_minutes") is not None
+        else notifs.get("prep_lead_time_minutes", 15)
+    )
+    try:
+        prep_lead_val = int(raw_lead) if raw_lead is not None else 15
+    except (ValueError, TypeError):
+        prep_lead_val = 15
+
+    auto_extract_val = (
+        bool(notifs["auto_extract_actions"])
+        if notifs.get("auto_extract_actions") is not None
+        else True
+    )
+
     return {
         "theme": user_data.get("theme") or notifs.get("theme") or "system",
         "compact_view": compact_val,
         "compact_meeting_cards": compact_val,
         "high_contrast": high_contrast_val,
         "high_contrast_mode": high_contrast_val,
-        "timezone": str(notifs.get("timezone", "UTC")),
+        "timezone": str(notifs.get("timezone") or "UTC"),
         "default_meeting_duration": duration_val,
         "meeting_duration": duration_val,
-        "auto_extract_actions": bool(notifs.get("auto_extract_actions", True)),
-        "language": str(notifs.get("language", "en")),
-        "summary_style": str(notifs.get("summary_style", "concise")),
+        "auto_extract_actions": auto_extract_val,
+        "language": str(notifs.get("language") or "en"),
+        "summary_style": str(notifs.get("summary_style") or "concise"),
         "notifications": {
             "email": bool(sub_notifs.get("email", notifs.get("email", True))),
             "reminders": bool(
                 sub_notifs.get("reminders", notifs.get("reminders", True))
             ),
             "in_app": bool(sub_notifs.get("in_app", notifs.get("in_app", True))),
-            "prep_lead_time_minutes": int(
-                sub_notifs.get(
-                    "prep_lead_time_minutes", notifs.get("prep_lead_time_minutes", 15)
-                )
-            ),
+            "prep_lead_time_minutes": prep_lead_val,
             "action_item_reminders": bool(
                 sub_notifs.get(
                     "action_item_reminders",
@@ -195,13 +211,15 @@ def persist_user_settings(supabase, user_id: str, updates: dict) -> dict:
     # Scalar settings
     for key in [
         "timezone",
-        "auto_extract_actions",
         "language",
         "summary_style",
         "org_name",
     ]:
         if key in updates:
-            new_notifs[key] = updates[key]
+            new_notifs[key] = str(updates[key])
+
+    if "auto_extract_actions" in updates:
+        new_notifs["auto_extract_actions"] = bool(updates["auto_extract_actions"])
 
     # Normalize client aliases into new_notifs
     if "compact_view" in updates:
@@ -215,11 +233,17 @@ def persist_user_settings(supabase, user_id: str, updates: dict) -> dict:
         new_notifs["high_contrast"] = bool(updates["high_contrast_mode"])
 
     if "default_meeting_duration" in updates:
-        new_notifs["default_meeting_duration"] = int(
-            updates["default_meeting_duration"]
-        )
+        try:
+            new_notifs["default_meeting_duration"] = int(
+                updates["default_meeting_duration"]
+            )
+        except (ValueError, TypeError):
+            pass
     if "meeting_duration" in updates:
-        new_notifs["default_meeting_duration"] = int(updates["meeting_duration"])
+        try:
+            new_notifs["default_meeting_duration"] = int(updates["meeting_duration"])
+        except (ValueError, TypeError):
+            pass
 
     if "name" in updates:
         new_notifs["name"] = str(updates["name"])
@@ -655,11 +679,17 @@ def reset_user_account_data(supabase, user_id: str) -> dict:
             {"theme": "system", "notifications": default_notifications}
         ).eq("id", user_id).execute()
     except Exception:
-        supabase.table("users").update({"notifications": default_notifications}).eq(
-            "id", user_id
-        ).execute()
+        try:
+            supabase.table("users").update({"notifications": default_notifications}).eq(
+                "id", user_id
+            ).execute()
+        except Exception as e:
+            logger.warning(f"[SettingsReset] Failed updating users table: {e}")
 
     return {
         "success": True,
         "message": "Account preferences and settings reset successfully.",
+        "settings": format_settings_response(
+            {"theme": "system", "notifications": default_notifications}
+        ),
     }

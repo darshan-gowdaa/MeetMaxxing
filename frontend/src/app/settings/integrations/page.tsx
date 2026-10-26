@@ -9,7 +9,9 @@ import {
   RiSendPlaneLine,
   RiSaveLine,
   RiFileCopyLine,
-  RiArrowRightLine
+  RiArrowRightLine,
+  RiVideoChatLine,
+  RiApps2Line
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -329,7 +331,7 @@ export default function IntegrationsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: "🚀 *MeetMaxxing* integration test: Webhook connection successful!"
+          text: "*MeetMaxxing* integration test: Webhook connection successful!"
         }),
         mode: "no-cors"
       });
@@ -381,14 +383,48 @@ export default function IntegrationsPage() {
         {/* Section 1: Meeting & Calendar Platforms */}
         <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Calendar Platforms</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-text flex items-center gap-2">
+              <RiVideoChatLine className="w-5 h-5 text-primary" />
+              Meeting & Calendar Platforms
+            </h2>
             <p className="text-xs sm:text-sm text-text-muted">
               Connect video calling and scheduling tools for live transcription and calendar sync.
             </p>
           </div>
 
           <div className="flex flex-col gap-4">
-            {/* Google Calendar */}
+            {/* 1. Google Meet */}
+            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
+                  <GoogleMeetLogo className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h3 className="text-base sm:text-lg font-bold text-text">Google Meet</h3>
+                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
+                      <RiCheckLine className="w-3.5 h-3.5" /> Built-in / Ready
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                    Built-in real-time captioning &amp; live assistant directly in Google Meet tabs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                <a
+                  href="https://meet.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text inline-flex items-center gap-1.5"
+                >
+                  Open Google Meet <RiExternalLinkLine className="w-3.5 h-3.5 text-text-muted" />
+                </a>
+              </div>
+            </div>
+
+            {/* 2. Google Calendar */}
             <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col gap-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
                 <div className="flex items-start gap-4 flex-1">
@@ -473,41 +509,7 @@ export default function IntegrationsPage() {
               </div>
             </div>
 
-            {/* Google Meet */}
-            <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="w-12 h-12 rounded-2xl bg-surface-container-high/80 border border-outline-variant/20 flex items-center justify-center shrink-0 shadow-xs">
-                  <GoogleMeetLogo className="w-6 h-6" />
-                </div>
-                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <h3 className="text-base sm:text-lg font-bold text-text">Google Meet</h3>
-                    <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
-                      BETA
-                    </span>
-                    <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                      <RiCheckLine className="w-3.5 h-3.5" /> Built-in / Ready
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                    Built-in real-time captioning & live assistant directly in Google Meet tabs.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-                <a
-                  href="https://meet.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-transform bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/30 text-text inline-flex items-center gap-1.5"
-                >
-                  Open Google Meet <RiExternalLinkLine className="w-3.5 h-3.5 text-text-muted" />
-                </a>
-              </div>
-            </div>
-
-            {/* Zoom */}
+            {/* 3. Zoom */}
             <div className="bg-surface-container/70 rounded-[24px] p-5 sm:p-6 border border-outline-variant/15 hover:bg-surface-container transition-all duration-300 flex flex-col gap-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="flex items-start gap-4">
@@ -531,7 +533,7 @@ export default function IntegrationsPage() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm text-text-muted">
-                      Cloud recordings & webhook intake via Zoom Marketplace webhook or server-to-server OAuth.
+                      Cloud recordings &amp; webhook intake via Zoom Marketplace webhook or server-to-server OAuth.
                     </p>
                   </div>
                 </div>
@@ -572,7 +574,10 @@ export default function IntegrationsPage() {
         {/* Section 2: Workspaces & Collaboration */}
         <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg sm:text-xl font-bold text-text">Workspaces & Collaboration</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-text flex items-center gap-2">
+              <RiApps2Line className="w-5 h-5 text-primary" />
+              Workspaces & Collaboration
+            </h2>
             <p className="text-xs sm:text-sm text-text-muted">
               Deliver meeting digests, action items, and executive summaries to your team workspaces.
             </p>

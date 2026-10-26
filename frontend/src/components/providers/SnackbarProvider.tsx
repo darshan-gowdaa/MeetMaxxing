@@ -133,26 +133,29 @@ function SnackbarHost({
 }) {
   if (!snackbar) return null;
 
+  // Defensive emoji stripping ensuring strict compliance with no-emoji design rule
+  const cleanMessage = snackbar.message.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF]/g, "").trim();
+
   return (
     <div
       key={snackbar.id}
       role="status"
       aria-live="polite"
-      className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[80] w-full max-w-sm px-4"
-      onMouseEnter={() => {
-        if (!leaving) onPaused(true);
-      }}
-      onMouseLeave={() => onPaused(false)}
-      onFocusCapture={() => {
-        if (!leaving) onPaused(true);
-      }}
-      onBlurCapture={() => onPaused(false)}
+      className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[80] w-full max-w-md px-4 pointer-events-none"
     >
       {/* Enter: .animate-slide-up (flattened under reduced-motion). Exit: fade via m3e token. */}
       <div
+        onMouseEnter={() => {
+          if (!leaving) onPaused(true);
+        }}
+        onMouseLeave={() => onPaused(false)}
+        onFocusCapture={() => {
+          if (!leaving) onPaused(true);
+        }}
+        onBlurCapture={() => onPaused(false)}
         className={`${
           leaving ? "snackbar-exit" : "animate-slide-up"
-        } flex items-center gap-3 bg-surface-container-highest text-text border border-border shadow-lg rounded-2xl pl-4 pr-2 py-3`}
+        } pointer-events-auto flex items-center gap-3 bg-surface-container-highest text-text border border-outline-variant/20 shadow-md rounded-[20px] px-4 py-3 sm:px-5 sm:py-3.5 transition-all duration-200`}
       >
         {snackbar.variant === "success" && (
           <RiCheckboxCircleFill className="w-5 h-5 shrink-0 text-success" aria-hidden="true" />
@@ -160,14 +163,14 @@ function SnackbarHost({
         {snackbar.variant === "error" && (
           <RiErrorWarningFill className="w-5 h-5 shrink-0 text-risk" aria-hidden="true" />
         )}
-        <p className="flex-1 text-[13px] font-medium leading-snug min-w-0">
-          {snackbar.message}
+        <p className="flex-1 text-[13px] font-medium leading-relaxed min-w-0 text-text">
+          {cleanMessage}
         </p>
         {snackbar.action && (
           <button
             type="button"
             onClick={() => snackbar.action?.onClick()}
-            className="shrink-0 h-9 px-3 rounded-full text-[13px] font-bold uppercase tracking-wide text-primary hover:bg-primary-dim spring-colors active:opacity-80"
+            className="shrink-0 h-8 px-3.5 rounded-full text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
           >
             {snackbar.action.label}
           </button>

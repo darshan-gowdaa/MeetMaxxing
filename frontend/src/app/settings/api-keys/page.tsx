@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
+import { RiKey2Line, RiPlugLine } from "@remixicon/react";
 import { useAuth } from "@/lib/auth-context";
 import { Provider, ApiKey } from "./types";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
@@ -130,7 +131,8 @@ export default function ApiKeysPage() {
             {providers.filter(p => keys.some(k => k.provider_id === p.id)).length > 0 && (
               <div id="configured-providers" className="flex flex-col gap-3 scroll-mt-24">
                 <div className="flex flex-col gap-1 px-1">
-                  <h2 className="text-base font-bold text-text">
+                  <h2 className="text-base font-bold text-text flex items-center gap-2">
+                    <RiKey2Line className="w-4 h-4 text-primary" />
                     Configured Providers
                   </h2>
                   <p className="text-xs text-text-muted">
@@ -161,7 +163,8 @@ export default function ApiKeysPage() {
 
             <div id="available-providers" className="flex flex-col gap-3 scroll-mt-24">
               <div className="flex flex-col gap-1 px-1">
-                <h2 className="text-base font-bold text-text">
+                <h2 className="text-base font-bold text-text flex items-center gap-2">
+                  <RiPlugLine className="w-4 h-4 text-primary" />
                   Available Providers
                 </h2>
                 <p className="text-xs text-text-muted">

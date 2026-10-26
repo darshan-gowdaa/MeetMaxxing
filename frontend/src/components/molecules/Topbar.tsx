@@ -292,35 +292,59 @@ function ProfileDropdown({ user, signOut }: { user: { email?: string; user_metad
 
   const avatarUrl = user?.user_metadata?.avatar_url;
   const initial = user?.email?.[0].toUpperCase() || "U";
+  const displayName = user?.user_metadata?.name || user?.email?.split("@")[0] || "Profile";
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        ref={triggerRef}
-        onClick={() => setOpenState(o => !o)}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown" && !openState) {
-            e.preventDefault();
-            setOpenState(true);
-            requestAnimationFrame(() => {
-              ref.current?.querySelector<HTMLElement>(MENU_ITEM_SELECTOR)?.focus();
-            });
-          }
-        }}
-        aria-haspopup="menu"
-        aria-expanded={openState}
-        aria-label={openState ? "Close account menu" : "Open account menu"}
-        className="flex items-center gap-2 p-1 pr-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest transition-colors outline-none"
-      >
-        <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary-container text-on-primary-container font-medium text-sm" aria-hidden="true">
-          {avatarUrl ? (
-            <Image src={avatarUrl} alt="" width={32} height={32} />
-          ) : (
-            initial
-          )}
-        </span>
-        <RiArrowDownSLine className="w-5 h-5 text-text-muted" aria-hidden="true" />
-      </button>
+      {/* Material 3 Expressive Split Button for Profile & Settings */}
+      <div className="inline-flex items-center rounded-full bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/20 p-0.5 shadow-xs transition-colors">
+        <Link
+          href="/settings/profile"
+          className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-l-full hover:bg-surface-container-highest/80 transition-colors text-text group outline-none"
+          title="Open Profile"
+        >
+          <span className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center bg-primary-container text-on-primary-container font-semibold text-xs shrink-0 shadow-xs" aria-hidden="true">
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt="" width={28} height={28} />
+            ) : (
+              initial
+            )}
+          </span>
+          <span className="text-[13px] font-bold text-text truncate max-w-[96px] hidden sm:inline">
+            {displayName}
+          </span>
+        </Link>
+
+        {/* Divider */}
+        <div className="w-[1px] h-4 bg-outline-variant/30 my-auto shrink-0" aria-hidden="true" />
+
+        {/* Secondary Action Trigger (Settings Menu) */}
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpenState(o => !o)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" && !openState) {
+              e.preventDefault();
+              setOpenState(true);
+              requestAnimationFrame(() => {
+                ref.current?.querySelector<HTMLElement>(MENU_ITEM_SELECTOR)?.focus();
+              });
+            }
+          }}
+          aria-haspopup="menu"
+          aria-expanded={openState}
+          aria-label={openState ? "Close settings menu" : "Open settings menu"}
+          className="flex items-center justify-center w-8 h-8 rounded-r-full hover:bg-surface-container-highest/80 transition-colors text-text-muted hover:text-text cursor-pointer outline-none"
+        >
+          <RiArrowDownSLine
+            className={`w-4 h-4 transition-transform duration-200 ${
+              openState ? "rotate-180 text-text" : ""
+            }`}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
 
       <AnimatePresence>
         {openState && (

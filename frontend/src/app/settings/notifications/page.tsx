@@ -5,7 +5,9 @@ import {
   RiNotification3Line, 
   RiAlarmWarningLine, 
   RiCheckboxCircleLine,
-  RiSparklingLine
+  RiSparklingLine,
+  RiSendPlaneLine,
+  RiTimeLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -209,7 +211,7 @@ export default function NotificationsPage() {
     setTestBusy(true);
     try {
       // 1. In-app toast trigger
-      showMessage("MeetMaxxing notification test: Upcoming meeting alert & action items active! 🚀", { variant: "success" });
+      showMessage("MeetMaxxing notification test: Upcoming meeting alert & action items active.", { variant: "success" });
 
       // 2. Desktop notification trigger if granted
       if (typeof window !== "undefined" && "Notification" in window) {
@@ -294,7 +296,10 @@ export default function NotificationsPage() {
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex flex-col gap-1">
-                <h2 className="text-lg sm:text-xl font-bold text-text">Delivery Channels</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-text flex items-center gap-2">
+                  <RiSendPlaneLine className="w-5 h-5 text-primary" />
+                  Delivery Channels
+                </h2>
                 <p className="text-xs sm:text-sm text-text-muted">
                   Choose where and how MeetMaxxing reaches you with meeting updates.
                 </p>
@@ -369,7 +374,10 @@ export default function NotificationsPage() {
           {/* Card 2: Meeting & Action Reminders */}
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg sm:text-xl font-bold text-text">Meeting & Action Reminders</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-text flex items-center gap-2">
+                <RiAlarmWarningLine className="w-5 h-5 text-primary" />
+                Meeting &amp; Action Reminders
+              </h2>
               <p className="text-xs sm:text-sm text-text-muted">
                 Configure automated alerts for upcoming meetings and task target dates.
               </p>
@@ -434,7 +442,10 @@ export default function NotificationsPage() {
           {/* Card 3: Digest & Schedule Timing */}
           <section className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg sm:text-xl font-bold text-text">Digest & Schedule Timing</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-text flex items-center gap-2">
+                <RiTimeLine className="w-5 h-5 text-primary" />
+                Digest &amp; Schedule Timing
+              </h2>
               <p className="text-xs sm:text-sm text-text-muted">
                 Set your daily schedule for receiving compiled agendas and priority task digests.
               </p>

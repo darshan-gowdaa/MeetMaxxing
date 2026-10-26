@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { 
   RiSunLine, 
   RiMoonLine, 
-  RiComputerLine 
+  RiComputerLine,
+  RiPaletteLine,
+  RiEyeLine
 } from "@remixicon/react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -160,7 +162,10 @@ export default function AppearancePage() {
       {/* Card 1: Color Scheme & Theme */}
       <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1">
-          <h2 className="text-base sm:text-lg font-bold text-text">Color Scheme & Theme</h2>
+          <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <RiPaletteLine className="w-5 h-5 text-primary" />
+            Color Scheme &amp; Theme
+          </h2>
           <p className="text-xs sm:text-sm text-text-muted font-medium">
             Choose your preferred interface theme across light, dark, and operating system matching.
           </p>
@@ -183,7 +188,10 @@ export default function AppearancePage() {
       {/* Card 2: Display Density & Visual Accessibility */}
       <div className="bg-surface-container-low rounded-[28px] border border-outline-variant/15 p-6 sm:p-8 flex flex-col gap-6 shadow-none">
         <div className="flex flex-col gap-1">
-          <h2 className="text-base sm:text-lg font-bold text-text">Display Density & Visual Accessibility</h2>
+          <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <RiEyeLine className="w-5 h-5 text-primary" />
+            Display Density &amp; Visual Accessibility
+          </h2>
           <p className="text-xs sm:text-sm text-text-muted font-medium">
             Fine-tune interface density and visual contrast for optimal legibility.
           </p>
