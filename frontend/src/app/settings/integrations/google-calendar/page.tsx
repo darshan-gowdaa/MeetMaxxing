@@ -7,7 +7,6 @@ import {
   RiCheckLine,
   RiExternalLinkLine,
   RiRefreshLine,
-  RiArrowRightSLine,
   RiArrowLeftLine,
   RiCalendarLine,
   RiTimeLine,
@@ -20,6 +19,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { M3Breadcrumb } from "@/components/atoms/M3Breadcrumb";
 
 const API_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
@@ -424,25 +424,13 @@ function GoogleCalendarContent() {
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
       {/* M3 Expressive Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-muted">
-        <Link
-          href="/settings"
-          className="hover:text-primary transition-colors flex items-center gap-1 font-medium"
-        >
-          Settings
-        </Link>
-        <RiArrowRightSLine className="w-3.5 h-3.5 text-outline-variant/60 shrink-0" />
-        <Link
-          href="/settings/integrations"
-          className="hover:text-primary transition-colors flex items-center gap-1 font-medium"
-        >
-          Integrations
-        </Link>
-        <RiArrowRightSLine className="w-3.5 h-3.5 text-outline-variant/60 shrink-0" />
-        <span className="text-text font-bold bg-surface-container-high/80 px-2.5 py-0.5 rounded-full">
-          Google Calendar
-        </span>
-      </nav>
+      <M3Breadcrumb
+        items={[
+          { label: "Settings", href: "/settings" },
+          { label: "Integrations", href: "/settings/integrations" },
+          { label: "Google Calendar" },
+        ]}
+      />
 
       {/* Hero Header with M3 Tokens */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">

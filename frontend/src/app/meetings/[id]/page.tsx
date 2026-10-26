@@ -17,6 +17,7 @@ import MeetingSummary from "@/components/organisms/MeetingSummary";
 import MeetingDecisions from "@/components/organisms/MeetingDecisions";
 import MeetingActionItems from "@/components/organisms/MeetingActionItems";
 import MeetingFollowUpForm from "@/components/organisms/MeetingFollowUpForm";
+import { M3Breadcrumb } from "@/components/atoms/M3Breadcrumb";
 import { useMeetingManager } from "./_hooks/useMeetingManager";
 
 type ViewTab = "notes" | "transcript" | "overview";
@@ -130,6 +131,15 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+        {/* Material 3 Expressive Breadcrumb */}
+        <M3Breadcrumb
+          items={[
+            { label: "Dashboard", href: "/" },
+            { label: "Meetings", href: "/" },
+            { label: meeting.title || "Meeting Overview" },
+          ]}
+        />
+
         {/* Meeting Header */}
         <MeetingHeader
           meeting={meeting}

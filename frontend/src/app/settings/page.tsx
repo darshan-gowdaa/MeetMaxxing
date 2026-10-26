@@ -14,9 +14,9 @@ import {
 
 import { useAuth } from '@/lib/auth-context';
 import { useSnackbar } from '@/components/providers/SnackbarProvider';
-import { SelectionCard } from "@/components/molecules/SelectionCard";
 import { Switch } from "@/components/atoms/Switch";
 import { M3Select } from "@/components/atoms/M3Select";
+import { M3SegmentedButton } from "@/components/atoms/M3SegmentedButton";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
@@ -247,23 +247,25 @@ export default function GeneralPreferences() {
           </p>
         </div>
 
-        {/* Summary Style Selection */}
+        {/* Summary Style Selection via M3 Expressive Segmented Button */}
         <div className="flex flex-col gap-3">
           <label className="text-[14px] font-bold text-text">
             Default Summary Style
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup">
-            {summaryOptions.map(opt => (
-              <SelectionCard
-                key={opt.id}
-                id={opt.id}
-                label={opt.label}
-                description={opt.desc}
-                icon={opt.icon}
-                selected={settings.summary_style === opt.id}
-                onClick={(id) => updateSetting("summary_style", id, "Summary style")}
-              />
-            ))}
+          <div className="flex flex-col gap-2">
+            <M3SegmentedButton
+              options={summaryOptions.map(opt => ({
+                value: opt.id,
+                label: opt.label,
+                icon: opt.icon,
+              }))}
+              value={settings.summary_style}
+              onChange={(id) => updateSetting("summary_style", id, "Summary style")}
+              aria-label="Default Summary Style"
+            />
+            <p className="text-xs text-text-muted">
+              {summaryOptions.find(o => o.id === settings.summary_style)?.desc}
+            </p>
           </div>
         </div>
 
