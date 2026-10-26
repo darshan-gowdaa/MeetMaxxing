@@ -99,7 +99,7 @@ async def run_realtime_agent(
             "risks": [],
             "next_questions": [
                 "What is the main agenda or target outcome for today's call?",
-                "Are all required stakeholders present or do we need to sync asynchronously?"
+                "Are all required stakeholders present or do we need to sync asynchronously?",
             ],
             "transcript_chunks": 0,
             "powered_by": "MeetMaxxing AI",
@@ -208,7 +208,7 @@ async def run_realtime_agent(
     if not final_suggs:
         final_suggs = [
             "Acknowledge the points made so far and ask the speaker to elaborate on next steps.",
-            "Summarize key takeaways to ensure team alignment before moving to the next topic."
+            "Summarize key takeaways to ensure team alignment before moving to the next topic.",
         ]
 
     raw_risks = result.get("risks") or []
@@ -222,7 +222,7 @@ async def run_realtime_agent(
     if not final_nq:
         final_nq = [
             "What is the expected timeline and primary owner for this milestone?",
-            "Are there any immediate blockers or dependencies we need to resolve?"
+            "Are there any immediate blockers or dependencies we need to resolve?",
         ]
 
     res = {

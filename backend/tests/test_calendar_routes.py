@@ -105,7 +105,7 @@ async def test_calendar_callback_success_redirect():
             "token_uri": "https://oauth2.googleapis.com/token",
             "scopes": ["https://www.googleapis.com/auth/calendar.events"],
         }
-        mock_table = AsyncMock()
+        mock_table = MagicMock()
         mock_supabase.return_value.table.return_value = mock_table
         mock_table.update.return_value = mock_table
         mock_table.eq.return_value = mock_table

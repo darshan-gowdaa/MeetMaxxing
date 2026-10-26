@@ -58,6 +58,7 @@ def get_meeting_record(supabase, meeting_id: str, org_id: str = None) -> dict | 
             return res.data[0]
     except Exception as e:
         from loguru import logger
+
         logger.warning("[DB] get_meeting_record query failed: {}", e)
 
     return None

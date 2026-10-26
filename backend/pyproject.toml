@@ -34,3 +34,11 @@ dependencies = [
 dev = [
     "ruff>=0.16.10",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:PyPDF2.*",
+    "ignore::DeprecationWarning:google.genai.*",
+    "ignore::DeprecationWarning:supabase.*",
+    "ignore::DeprecationWarning:postgrest.*",
+]

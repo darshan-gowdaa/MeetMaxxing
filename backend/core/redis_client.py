@@ -1,4 +1,4 @@
-﻿import json
+import json
 import time
 
 import redis.asyncio as aioredis
@@ -90,7 +90,6 @@ async def _get_redis() -> aioredis.Redis | MemoryRedis:
         return MemoryRedis()
 
 
-
 async def set_meeting_alias(id1: str, id2: str) -> None:
     """Link UUID meeting ID and Google Meet code alias in Redis."""
     if not id1 or not id2 or id1 == id2:
@@ -116,7 +115,8 @@ async def append_transcript_chunk(meeting_id: str, chunk: dict) -> None:
                     if last_text == new_text or last_text.startswith(new_text):
                         return
                     if new_text.startswith(last_text) or (
-                        len(new_text) > len(last_text) and new_text[:15] == last_text[:15]
+                        len(new_text) > len(last_text)
+                        and new_text[:15] == last_text[:15]
                     ):
                         # Replace only the last element (not any of the 3)
                         if isinstance(r, MemoryRedis):
