@@ -126,6 +126,38 @@ async def run_end_pipeline(
             title or (meeting_row.get("title") if meeting_row else ""), google_code
         )
 
+        # Load user settings preferences (summary style, language, auto extract actions, duration, timezone, integrations)
+        user_settings_notifs = {}
+        if user_id:
+            try:
+                user_res = await asyncio.to_thread(
+                    lambda: (
+                        supabase.table("users")
+                        .select("notifications")
+                        .eq("id", user_id)
+                        .execute()
+                    )
+                )
+                if user_res.data:
+                    user_settings_notifs = user_res.data[0].get("notifications") or {}
+            except Exception as e:
+                logger.warning(
+                    f"Could not load user settings for meeting pipeline: {e}"
+                )
+
+        summary_style = user_settings_notifs.get("summary_style") or "concise"
+        language_pref = user_settings_notifs.get("language") or "en"
+        auto_extract_actions = bool(
+            user_settings_notifs.get("auto_extract_actions", True)
+        )
+        default_duration = int(
+            user_settings_notifs.get("default_meeting_duration", 30) or 30
+        )
+        user_timezone = str(user_settings_notifs.get("timezone", "UTC") or "UTC")
+        email_enabled = bool(user_settings_notifs.get("email", True))
+        integrations_cfg = user_settings_notifs.get("integrations") or {}
+        slack_webhook = integrations_cfg.get("slack_webhook") or ""
+
         # gen summary
         logger.info(
             f"Dispatching MEETING_END for {meeting_id} with {len(utterances)} utterances"
@@ -138,6 +170,9 @@ async def run_end_pipeline(
                 "attendees": attendees,
                 "utterances": utterances,
                 "user_id": user_id,
+                "summary_style": summary_style,
+                "language": language_pref,
+                "extract_actions": auto_extract_actions,
             },
         )
         logger.info(f"Dispatch MEETING_END returned for {meeting_id}")
@@ -403,6 +438,8 @@ async def run_end_pipeline(
                                 "token": calendar_token,
                                 "org_id": org_id,
                                 "user_id": user_id,
+                                "default_duration": default_duration,
+                                "user_timezone": user_timezone,
                             },
                         )
                         await asyncio.to_thread(
@@ -416,8 +453,14 @@ async def run_end_pipeline(
                 except Exception as e:
                     logger.warning(f"Could not persist scheduling_result: {e}")
 
-        # Task 3: Send recap email with full action item metadata
+        # Task 3: Send recap email with full action item metadata (respecting user settings)
         async def _send_recap_email():
+            if not email_enabled:
+                logger.info(
+                    f"Skipping recap email for {user_id} (email notifications disabled in settings)"
+                )
+                return
+
             email_result = await dispatch(
                 AgentTrigger.SEND_EMAIL,
                 {
@@ -436,11 +479,82 @@ async def run_end_pipeline(
             else:
                 logger.warning(f"Email send result: {email_result}")
 
+        # Task 4: Dispatch formatted Slack recap if user configured slack_webhook integration
+        async def _send_slack_recap():
+            if not slack_webhook:
+                return
+            try:
+                import httpx
+
+                actions_list = [
+                    f"• *{ai.get('text', '')}* (Owner: _{ai.get('owner', 'Unassigned')}_)"
+                    for ai in (final_summary.get("action_items") or [])[:5]
+                ]
+                actions_snippet = (
+                    "\n".join(actions_list)
+                    if actions_list
+                    else "_No immediate action items._"
+                )
+
+                decisions_list = [
+                    f"• {d.get('text', '')}" if isinstance(d, dict) else f"• {d}"
+                    for d in (final_summary.get("decisions") or [])[:3]
+                ]
+                decisions_snippet = (
+                    "\n".join(decisions_list)
+                    if decisions_list
+                    else "_No formal decisions logged._"
+                )
+
+                slack_payload = {
+                    "text": f"📋 *Meeting Recap: {final_title}*",
+                    "blocks": [
+                        {
+                            "type": "header",
+                            "text": {
+                                "type": "plain_text",
+                                "text": f"📋 {final_title[:150]}",
+                            },
+                        },
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": f"*Summary:*\n{final_summary.get('summary', 'Meeting completed.')[:1000]}",
+                            },
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Decisions:*\n{decisions_snippet}",
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Key Action Items:*\n{actions_snippet}",
+                                },
+                            ],
+                        },
+                    ],
+                }
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.post(slack_webhook, json=slack_payload)
+                    if resp.status_code < 400:
+                        logger.info("Slack webhook recap delivered successfully.")
+                    else:
+                        logger.warning(
+                            f"Slack webhook returned status {resp.status_code}"
+                        )
+            except Exception as slack_err:
+                logger.warning(f"Failed to deliver Slack notification: {slack_err}")
+
         # Run post-meeting processing tasks concurrently
         await asyncio.gather(
             _store_memories(),
             _schedule_followup(),
             _send_recap_email(),
+            _send_slack_recap(),
             return_exceptions=True,
         )
 

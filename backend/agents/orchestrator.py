@@ -27,6 +27,9 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 attendees=payload.get("attendees", []),
                 utterances=payload.get("utterances"),
                 user_id=payload.get("user_id", ""),
+                summary_style=payload.get("summary_style", "concise"),
+                language=payload.get("language", "en"),
+                extract_actions=payload.get("extract_actions", True),
             )
         elif trigger == AgentTrigger.REALTIME_TICK:
             from .realtime_agent import run_realtime_agent
@@ -69,6 +72,8 @@ async def dispatch(trigger: AgentTrigger, payload: dict) -> dict:
                 calendar_token=payload.get("token", {}),
                 org_id=payload.get("org_id", ""),
                 user_id=payload.get("user_id", ""),
+                default_duration=payload.get("default_duration", 30),
+                user_timezone=payload.get("user_timezone", "UTC"),
             )
         elif trigger == AgentTrigger.MEMORY_QUERY:
             from .memory_agent import run_memory_agent

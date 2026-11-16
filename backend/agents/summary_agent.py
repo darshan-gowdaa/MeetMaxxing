@@ -54,6 +54,43 @@ Respond ONLY in this exact JSON schema. Do NOT include markdown code blocks or `
 }"""
 
 
+def _build_system_prompt(
+    summary_style: str = "concise",
+    language: str = "en",
+    extract_actions: bool = True,
+) -> str:
+    prompt = _SYSTEM_PROMPT
+    additions = []
+
+    if summary_style == "detailed":
+        additions.append(
+            "- SUMMARY STYLE: Provide an in-depth, comprehensive multi-paragraph summary covering all discussions, context, arguments, and outcomes."
+        )
+    elif summary_style == "action-focused":
+        additions.append(
+            "- SUMMARY STYLE: Provide a high-density, action-oriented briefing strictly prioritizing deliverables, owners, timeline constraints, and decisions."
+        )
+    else:
+        additions.append(
+            "- SUMMARY STYLE: Provide a clear, high-level 3-5 sentence executive summary."
+        )
+
+    if language and language.lower() not in {"en", "english"}:
+        additions.append(
+            f"- LANGUAGE REQUIREMENT: Produce all descriptive output fields (title, summary, key_topics, decisions.text, action_items.text) in the target language code '{language}'."
+        )
+
+    if not extract_actions:
+        additions.append(
+            "- ACTION ITEMS: Action item extraction is disabled by user settings. Return an empty list for 'action_items': []."
+        )
+
+    if additions:
+        prompt = prompt + "\n\nUSER CONFIGURATION DIRECTIVES:\n" + "\n".join(additions)
+
+    return prompt
+
+
 def _format_full_transcript(utterances: list[dict]) -> str:
     lines = []
     for utt in utterances:
@@ -113,6 +150,9 @@ async def run_summary_agent(
     attendees: list[str] | None = None,
     utterances: list[dict] | None = None,
     user_id: str | None = None,
+    summary_style: str = "concise",
+    language: str = "en",
+    extract_actions: bool = True,
 ) -> dict:
     """
     Main entry point — loads full transcript, generates structured summary.
@@ -136,7 +176,11 @@ async def run_summary_agent(
 
         raw, powered_by = await generate_content_with_fallback(
             prompt=prompt,
-            system_instruction=_SYSTEM_PROMPT,
+            system_instruction=_build_system_prompt(
+                summary_style=summary_style,
+                language=language,
+                extract_actions=extract_actions,
+            ),
             response_format_json=True,
             max_tokens=4096,
             bypass_cache=True,
@@ -153,6 +197,8 @@ async def run_summary_agent(
         )
         result.setdefault("decisions", [])
         result.setdefault("action_items", [])
+        if not extract_actions:
+            result["action_items"] = []
         result.setdefault("follow_up", {"required": False})
         result["powered_by"] = powered_by
     except Exception as e:

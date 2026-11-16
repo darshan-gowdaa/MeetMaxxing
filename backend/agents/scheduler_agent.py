@@ -44,6 +44,8 @@ async def run_scheduler_agent(
     calendar_token: dict,
     org_id: str,
     user_id: str = "",
+    default_duration: int = 30,
+    user_timezone: str = "UTC",
 ) -> dict:
     """
     Given summary agent output, schedule a follow-up calendar event.
@@ -66,6 +68,8 @@ async def run_scheduler_agent(
 
     prompt = (
         f"Today is: {today_utc}\n"
+        f"User Preferred Duration: {default_duration} minutes\n"
+        f"User Timezone: {user_timezone or 'UTC'}\n"
         f"Suggested topic: {suggested_topic}\n"
         f"Meeting summary:\n{meeting_summary}\n\n"
         f"Action items:\n{action_items_text}\n\n"
@@ -112,7 +116,8 @@ async def run_scheduler_agent(
     elif event_start.weekday() == 6:  # sunday -> monday
         event_start += timedelta(days=1)
 
-    event_end = event_start + timedelta(minutes=event_plan.get("duration_minutes", 30))
+    chosen_duration = int(event_plan.get("duration_minutes") or default_duration or 30)
+    event_end = event_start + timedelta(minutes=chosen_duration)
     final_attendees = list(
         set(event_plan.get("attendees", []) + (suggested_attendees or attendee_emails))
     )

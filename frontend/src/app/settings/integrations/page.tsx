@@ -522,11 +522,11 @@ export default function IntegrationsPage() {
                     <div className="flex items-center gap-2.5">
                       <h3 className="text-base sm:text-lg font-bold text-text">Zoom</h3>
                       <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
-                        BETA
+                        COMING SOON
                       </span>
                       {zoomWebhook ? (
                         <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                          <RiCheckLine className="w-3.5 h-3.5" /> Configured
+                          <RiCheckLine className="w-3.5 h-3.5" /> Credentials Saved
                         </span>
                       ) : (
                         <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
@@ -535,7 +535,7 @@ export default function IntegrationsPage() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm text-text-muted">
-                      Cloud recordings &amp; webhook intake via Zoom Marketplace webhook or server-to-server OAuth.
+                      Cloud recordings &amp; webhook intake (In active development — credentials saved securely for upcoming release).
                     </p>
                   </div>
                 </div>
@@ -610,7 +610,7 @@ export default function IntegrationsPage() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm text-text-muted">
-                      Incoming webhook URL for automated meeting recap channel dispatches.
+                      Direct incoming webhook dispatches formatted meeting recaps, decisions, and action items to your Slack channel on meeting end.
                     </p>
                   </div>
                 </div>
@@ -656,11 +656,11 @@ export default function IntegrationsPage() {
                     <div className="flex items-center gap-2.5">
                       <h3 className="text-base sm:text-lg font-bold text-text">Notion</h3>
                       <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
-                        BETA
+                        COMING SOON
                       </span>
                       {notionApiKey ? (
                         <span className="bg-success-container text-on-success-container rounded-full px-3.5 py-1 text-xs font-semibold flex items-center gap-1.5">
-                          <RiCheckLine className="w-3.5 h-3.5" /> Workspace Ready
+                          <RiCheckLine className="w-3.5 h-3.5" /> Credentials Saved
                         </span>
                       ) : (
                         <span className="bg-surface-container-highest text-text-muted rounded-full px-3.5 py-1 text-xs font-semibold">
@@ -669,7 +669,7 @@ export default function IntegrationsPage() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm text-text-muted">
-                      Automated database sync for meeting notes & transcripts.
+                      Automated database sync for meeting notes &amp; action items (In active development — credentials saved securely for upcoming release).
                     </p>
                   </div>
                 </div>
