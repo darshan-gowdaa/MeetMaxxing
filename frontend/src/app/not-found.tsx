@@ -7,15 +7,15 @@ import { M3Button } from "@/components/atoms/M3Button";
 
 /**
  * Minimalist Material 3 Expressive 404 Not Found Page.
- * - Zero shapes, zero logos.
- * - Perfectly fitted to viewport with zero scrollbars across all screen sizes.
- * - High-contrast Display 404 typography.
+ * - Perfectly centered vertically and horizontally across all viewports.
+ * - Fixed positioning below topbar to prevent CSS flex height collapse.
+ * - Zero scrollbars, zero shapes, zero logos.
  * - Dual M3 action buttons (Filled + Tonal).
  */
 export default function NotFound() {
   const router = useRouter();
 
-  // Ensure body scrollbars remain suppressed while viewing 404
+  // Suppress any body scrollbars while viewing 404
   React.useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -25,8 +25,8 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="flex-1 w-full flex flex-col items-center justify-center px-4 py-6 sm:px-6 text-center select-none overflow-hidden my-auto">
-      <div className="w-full max-w-md mx-auto text-center flex flex-col items-center animate-fade-scale">
+    <div className="fixed inset-0 top-16 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-0 flex flex-col items-center justify-center px-4 text-center select-none overflow-hidden bg-bg z-20">
+      <div className="w-full max-w-md mx-auto text-center flex flex-col items-center justify-center animate-fade-scale">
         {/* Display Code */}
         <h1 className="text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-text leading-none select-none mb-3 sm:mb-4">
           404
