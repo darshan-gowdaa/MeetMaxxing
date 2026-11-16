@@ -155,7 +155,9 @@ def decode_state(state: str) -> dict:
                         hashlib.sha256,
                     ).hexdigest()[:16]
                     if not hmac.compare_digest(payload["sig"], expected):
-                        logging.warning("OAuth state HMAC signature mismatch — possible tampering")
+                        logging.warning(
+                            "OAuth state HMAC signature mismatch — possible tampering"
+                        )
                 return payload
         except Exception:
             pass
@@ -294,9 +296,12 @@ async def handle_calendar_callback(
             tokens_to_store = dict(tokens)
             tokens_to_store.setdefault("last_synced_at", datetime.now(UTC).isoformat())
             await asyncio.to_thread(
-                lambda: supabase.table("users").update({"calendar_token": tokens_to_store}).eq(
-                    "id", user_id
-                ).execute()
+                lambda: (
+                    supabase.table("users")
+                    .update({"calendar_token": tokens_to_store})
+                    .eq("id", user_id)
+                    .execute()
+                )
             )
         except Exception as e:
             logging.error(f"Failed to persist calendar_token for user {user_id}: {e}")
@@ -484,14 +489,19 @@ async def schedule_calendar_followup(supabase, meeting_id: str, user: dict) -> d
 
     try:
         await asyncio.to_thread(
-            lambda: supabase.table("meetings").update(
-                {
-                    "scheduling_result": {
-                        "status": "gcal_url_generated",
-                        "html_link": gcal_url,
+            lambda: (
+                supabase.table("meetings")
+                .update(
+                    {
+                        "scheduling_result": {
+                            "status": "gcal_url_generated",
+                            "html_link": gcal_url,
+                        }
                     }
-                }
-            ).eq("id", meeting_id).execute()
+                )
+                .eq("id", meeting_id)
+                .execute()
+            )
         )
     except Exception as e:
         logging.warning(

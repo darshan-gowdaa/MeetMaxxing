@@ -61,7 +61,11 @@ async def get_user_from_token(token: str) -> dict:
                     "email": payload.get("email"),
                 }
                 exp_claim = payload.get("exp")
-                cache_ttl = min(_TOKEN_CACHE_TTL, max(1.0, float(exp_claim) - now)) if exp_claim else _TOKEN_CACHE_TTL
+                cache_ttl = (
+                    min(_TOKEN_CACHE_TTL, max(1.0, float(exp_claim) - now))
+                    if exp_claim
+                    else _TOKEN_CACHE_TTL
+                )
                 if cache_ttl >= 1.0:
                     _TOKEN_CACHE[token_hash] = (now + cache_ttl, user_info)
                 return user_info
@@ -91,8 +95,16 @@ async def get_user_from_token(token: str) -> dict:
             org_id = user.id
 
         user_info = {"user_id": user.id, "org_id": org_id, "email": user.email}
-        exp_claim = payload.get("exp") if "payload" in locals() and isinstance(payload, dict) else None
-        cache_ttl = min(_TOKEN_CACHE_TTL, max(1.0, float(exp_claim) - now)) if exp_claim else _TOKEN_CACHE_TTL
+        exp_claim = (
+            payload.get("exp")
+            if "payload" in locals() and isinstance(payload, dict)
+            else None
+        )
+        cache_ttl = (
+            min(_TOKEN_CACHE_TTL, max(1.0, float(exp_claim) - now))
+            if exp_claim
+            else _TOKEN_CACHE_TTL
+        )
         if cache_ttl >= 1.0:
             _TOKEN_CACHE[token_hash] = (now + cache_ttl, user_info)
         return user_info

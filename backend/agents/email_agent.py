@@ -30,7 +30,9 @@ def _format_decisions_html(decisions: list) -> str:
         if isinstance(item, dict):
             text = html.escape(str(item.get("text", "")))
             decided_by = html.escape(str(item.get("decided_by", "Team")))
-            confidence = html.escape(str((item.get("confidence") or "high").capitalize()))
+            confidence = html.escape(
+                str((item.get("confidence") or "high").capitalize())
+            )
         else:
             text = html.escape(str(item))
             decided_by = "Team"
@@ -66,7 +68,9 @@ def _format_action_items_html(items: list) -> str:
     for item in items:
         if isinstance(item, dict):
             text = html.escape(str(item.get("text") or item.get("description") or ""))
-            owner = html.escape(str(item.get("owner") or item.get("owner_name") or "Unassigned"))
+            owner = html.escape(
+                str(item.get("owner") or item.get("owner_name") or "Unassigned")
+            )
             priority = html.escape(str((item.get("priority") or "medium").capitalize()))
             due = html.escape(str(item.get("due_date") or "Not specified"))
         else:

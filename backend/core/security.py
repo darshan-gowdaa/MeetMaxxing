@@ -65,7 +65,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Periodic prune to prevent unbounded growth of inactive client IPs
         if now - self._last_pruned > 300.0 or len(self._windows) > 5000:
             self._last_pruned = now
-            stale_ips = [k for k, timestamps in list(self._windows.items()) if not timestamps or timestamps[-1] < now - 300.0]
+            stale_ips = [
+                k
+                for k, timestamps in list(self._windows.items())
+                if not timestamps or timestamps[-1] < now - 300.0
+            ]
             for k in stale_ips:
                 self._windows.pop(k, None)
 

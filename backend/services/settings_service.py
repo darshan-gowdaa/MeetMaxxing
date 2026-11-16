@@ -5,6 +5,7 @@ User settings persistence, profile preference validation, avatar uploads, and GD
 from datetime import UTC, datetime
 from fastapi import HTTPException, Request
 from loguru import logger
+from ..core.config import settings
 
 VALID_SETTINGS_KEYS = {
     "theme",
@@ -352,7 +353,9 @@ def persist_user_settings(supabase, user_id: str, updates: dict) -> dict:
             else:
                 fallback_updates["id"] = user_id
                 if "email" not in fallback_updates:
-                    fallback_updates["email"] = db_updates.get("email", f"{user_id}@{settings.APP_DOMAIN}")
+                    fallback_updates["email"] = db_updates.get(
+                        "email", f"{user_id}@{settings.APP_DOMAIN}"
+                    )
                 res = supabase.table("users").upsert(fallback_updates).execute()
         except Exception as e:
             raise HTTPException(
@@ -408,11 +411,16 @@ async def process_avatar_request(supabase, user_id: str, request: Request) -> di
             if hasattr(file, "read") and hasattr(file, "filename") and file.filename:
                 contents = await file.read()
                 if len(contents) > MAX_AVATAR_SIZE:
-                    raise HTTPException(status_code=413, detail="Avatar file too large (max 5MB)")
+                    raise HTTPException(
+                        status_code=413, detail="Avatar file too large (max 5MB)"
+                    )
                 filename = file.filename or "avatar.png"
                 ext = filename.split(".")[-1].lower() if "." in filename else "png"
                 if ext not in ALLOWED_AVATAR_EXTENSIONS:
-                    raise HTTPException(status_code=415, detail="Invalid file type. Allowed: png, jpg, jpeg, webp")
+                    raise HTTPException(
+                        status_code=415,
+                        detail="Invalid file type. Allowed: png, jpg, jpeg, webp",
+                    )
                 destination_path = (
                     f"{user_id}-{int(datetime.now(UTC).timestamp())}.{ext}"
                 )

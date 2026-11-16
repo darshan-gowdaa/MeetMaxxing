@@ -50,9 +50,12 @@ async def run_end_pipeline(
         if target_id and is_valid_uuid(target_id):
             try:
                 await asyncio.to_thread(
-                    lambda: supabase.table("meetings").update({"status": "processing"}).eq(
-                        "id", target_id
-                    ).execute()
+                    lambda: (
+                        supabase.table("meetings")
+                        .update({"status": "processing"})
+                        .eq("id", target_id)
+                        .execute()
+                    )
                 )
             except Exception:
                 pass
@@ -102,9 +105,12 @@ async def run_end_pipeline(
             )
             if target_id and is_valid_uuid(target_id):
                 await asyncio.to_thread(
-                    lambda: supabase.table("meetings").update({"status": "no_transcript"}).eq(
-                        "id", target_id
-                    ).execute()
+                    lambda: (
+                        supabase.table("meetings")
+                        .update({"status": "no_transcript"})
+                        .eq("id", target_id)
+                        .execute()
+                    )
                 )
             # DO NOT RETURN, continue pipeline to generate summary
 
@@ -238,17 +244,22 @@ async def run_end_pipeline(
                     final_attendees_list.append(f"Participant {i}")
 
             await asyncio.to_thread(
-                lambda: supabase.table("meetings").update(
-                    {
-                        "title": final_title,
-                        "summary": final_sum_text,
-                        "attendees": final_attendees_list,
-                        "decisions": final_summary.get("decisions", []),
-                        "follow_up": final_summary.get("follow_up", {}),
-                        "guardrail_score": guardrail_result.score,
-                        "status": final_status,
-                    }
-                ).eq("id", target_id).execute()
+                lambda: (
+                    supabase.table("meetings")
+                    .update(
+                        {
+                            "title": final_title,
+                            "summary": final_sum_text,
+                            "attendees": final_attendees_list,
+                            "decisions": final_summary.get("decisions", []),
+                            "follow_up": final_summary.get("follow_up", {}),
+                            "guardrail_score": guardrail_result.score,
+                            "status": final_status,
+                        }
+                    )
+                    .eq("id", target_id)
+                    .execute()
+                )
             )
 
         # save action items in a single batch
@@ -352,11 +363,13 @@ async def run_end_pipeline(
             if not calendar_token:
                 try:
                     user_res = await asyncio.to_thread(
-                        lambda: supabase.table("users")
-                        .select("calendar_token")
-                        .eq("id", user_id)
-                        .single()
-                        .execute()
+                        lambda: (
+                            supabase.table("users")
+                            .select("calendar_token")
+                            .eq("id", user_id)
+                            .single()
+                            .execute()
+                        )
                     )
                     if user_res.data:
                         calendar_token = user_res.data.get("calendar_token")
@@ -367,14 +380,19 @@ async def run_end_pipeline(
                 try:
                     if not calendar_token or not calendar_token.get("access_token"):
                         await asyncio.to_thread(
-                            lambda: supabase.table("meetings").update(
-                                {
-                                    "scheduling_result": {
-                                        "status": "skipped",
-                                        "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders.",
+                            lambda: (
+                                supabase.table("meetings")
+                                .update(
+                                    {
+                                        "scheduling_result": {
+                                            "status": "skipped",
+                                            "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders.",
+                                        }
                                     }
-                                }
-                            ).eq("id", canonical_meeting_id).execute()
+                                )
+                                .eq("id", canonical_meeting_id)
+                                .execute()
+                            )
                         )
                     else:
                         schedule_result = await dispatch(
@@ -388,9 +406,12 @@ async def run_end_pipeline(
                             },
                         )
                         await asyncio.to_thread(
-                            lambda: supabase.table("meetings").update(
-                                {"scheduling_result": schedule_result}
-                            ).eq("id", canonical_meeting_id).execute()
+                            lambda: (
+                                supabase.table("meetings")
+                                .update({"scheduling_result": schedule_result})
+                                .eq("id", canonical_meeting_id)
+                                .execute()
+                            )
                         )
                 except Exception as e:
                     logger.warning(f"Could not persist scheduling_result: {e}")
@@ -431,12 +452,17 @@ async def run_end_pipeline(
             local_target = locals().get("target_id") or meeting_id
             if local_target and is_valid_uuid(local_target):
                 await asyncio.to_thread(
-                    lambda: supabase.table("meetings").update(
-                        {
-                            "status": "completed",
-                            "summary": "An error occurred while generating the meeting summary. Please try again later.",
-                        }
-                    ).eq("id", local_target).execute()
+                    lambda: (
+                        supabase.table("meetings")
+                        .update(
+                            {
+                                "status": "completed",
+                                "summary": "An error occurred while generating the meeting summary. Please try again later.",
+                            }
+                        )
+                        .eq("id", local_target)
+                        .execute()
+                    )
                 )
         except Exception as inner_e:
             logger.error(f"Failed to update error status for {meeting_id}: {inner_e}")

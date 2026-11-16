@@ -90,7 +90,9 @@ def ensure_meeting_record(
 
     # Coerce placeholders to valid UUIDs where possible
     effective_user_id = user_id if (user_id and is_valid_uuid(user_id)) else None
-    effective_org_id = org_id if (org_id and is_valid_uuid(org_id)) else effective_user_id
+    effective_org_id = (
+        org_id if (org_id and is_valid_uuid(org_id)) else effective_user_id
+    )
 
     insert_data = {
         "id": m_id,
@@ -117,14 +119,18 @@ def ensure_meeting_record(
         if res.data:
             return res.data[0]
     except Exception as e:
-        logger.warning("[DB] Insert meeting failed: {}, retrying without optional fields", e)
+        logger.warning(
+            "[DB] Insert meeting failed: {}, retrying without optional fields", e
+        )
         insert_data.pop("google_meet_link", None)
         try:
             res = supabase.table("meetings").insert(insert_data).execute()
             if res.data:
                 return res.data[0]
         except Exception as retry_e:
-            logger.error("[DB] Failed to insert meeting in ensure_meeting_record: {}", retry_e)
+            logger.error(
+                "[DB] Failed to insert meeting in ensure_meeting_record: {}", retry_e
+            )
 
     return {
         "id": m_id,

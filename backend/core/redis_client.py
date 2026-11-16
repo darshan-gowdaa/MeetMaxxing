@@ -115,8 +115,7 @@ async def append_transcript_chunk(meeting_id: str, chunk: dict) -> None:
                 if last_text == new_text or last_text.startswith(new_text):
                     return
                 if new_text.startswith(last_text) or (
-                    len(new_text) > len(last_text)
-                    and new_text[:15] == last_text[:15]
+                    len(new_text) > len(last_text) and new_text[:15] == last_text[:15]
                 ):
                     # Strictly replace only the immediate last element
                     if isinstance(r, MemoryRedis):

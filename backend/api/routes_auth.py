@@ -56,10 +56,17 @@ async def get_me(user: dict = Depends(get_current_user)):
 async def delete_me(user: dict = Depends(get_current_user)):
     """Delete current user."""
     import asyncio
+
     # 1. Delete public.users record (which cascades to meetings, api keys, etc)
     try:
         await asyncio.to_thread(
-            lambda: get_supabase_admin().table("users").delete().eq("id", user["user_id"]).execute()
+            lambda: (
+                get_supabase_admin()
+                .table("users")
+                .delete()
+                .eq("id", user["user_id"])
+                .execute()
+            )
         )
     except Exception as e:
         logging.warning(f"Failed to delete public.users record: {e}")

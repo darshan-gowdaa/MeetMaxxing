@@ -80,7 +80,9 @@ async def generate_late_join_recap(
         }
 
     transcript_text = _format_transcript(chunks)
-    prompt = f"Generate a late join recap for the following transcript:\n\n{transcript_text}"
+    prompt = (
+        f"Generate a late join recap for the following transcript:\n\n{transcript_text}"
+    )
 
     try:
         raw, powered_by = await generate_content_with_fallback(

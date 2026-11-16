@@ -132,7 +132,9 @@ async def run_scheduler_agent(
         },
     }
 
-    if not event_plan.get("has_explicit_date_time") and not event_plan.get("suggested_date_offset_days"):
+    if not event_plan.get("has_explicit_date_time") and not event_plan.get(
+        "suggested_date_offset_days"
+    ):
         return {
             "scheduled": False,
             "needs_user_input": True,

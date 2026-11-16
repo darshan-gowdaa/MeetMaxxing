@@ -154,7 +154,9 @@ def _build_service(token_data: dict, user_id: str | None = None):
                     {"calendar_token": refreshed_data}
                 ).eq("id", uid).execute()
             except Exception as e:
-                logging.warning(f"Could not persist refreshed calendar token for {uid}: {e}")
+                logging.warning(
+                    f"Could not persist refreshed calendar token for {uid}: {e}"
+                )
     return build("calendar", "v3", credentials=creds)
 
 

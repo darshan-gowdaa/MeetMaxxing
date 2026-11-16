@@ -132,15 +132,15 @@ async def _ensure_collection_internal(client: AsyncQdrantClient) -> None:
             except Exception:
                 pass
 
-        await asyncio.gather(
-            *[_create_index(f, s) for f, s in indexed_fields]
-        )
+        await asyncio.gather(*[_create_index(f, s) for f, s in indexed_fields])
     _collection_ensured = True
 
 
 async def upsert_memories(points: list[MemoryPoint]) -> None:
     """Batch upsert memory points into Qdrant."""
-    valid_points = [p for p in points if p is not None and getattr(p, "vector", None) is not None]
+    valid_points = [
+        p for p in points if p is not None and getattr(p, "vector", None) is not None
+    ]
     if not valid_points:
         return
     await ensure_collection()

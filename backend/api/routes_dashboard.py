@@ -38,7 +38,9 @@ async def list_meetings(
             .execute()
         )
     )
-    total_meetings = result.count if result.count is not None else len(result.data or [])
+    total_meetings = (
+        result.count if result.count is not None else len(result.data or [])
+    )
 
     return {
         "meetings": result.data or [],
@@ -61,7 +63,12 @@ async def get_meeting_detail(
     target_id = meeting["id"]
 
     actions = await asyncio.to_thread(
-        lambda: supabase.table("action_items").select("*").eq("meeting_id", target_id).execute()
+        lambda: (
+            supabase.table("action_items")
+            .select("*")
+            .eq("meeting_id", target_id)
+            .execute()
+        )
     )
 
     # Sort by priority (high → medium → low) then status (open → in_progress → done)
@@ -169,9 +176,13 @@ async def delete_meeting(
 
     # Delete associated action items first (if no cascade in DB)
     await asyncio.to_thread(
-        lambda: supabase.table("action_items").delete().eq("meeting_id", target_id).eq(
-            "org_id", user["org_id"]
-        ).execute()
+        lambda: (
+            supabase.table("action_items")
+            .delete()
+            .eq("meeting_id", target_id)
+            .eq("org_id", user["org_id"])
+            .execute()
+        )
     )
     # Delete meeting
     result = await asyncio.to_thread(

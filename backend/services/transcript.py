@@ -55,19 +55,26 @@ async def persist_transcript_to_db(meeting_id: str, utterances: list[dict]) -> N
     supabase = get_supabase_admin()
     target_uuid = meeting_id
     if not is_valid_uuid(meeting_id):
-        record = await asyncio.to_thread(lambda: get_meeting_record(supabase, meeting_id))
+        record = await asyncio.to_thread(
+            lambda: get_meeting_record(supabase, meeting_id)
+        )
         if record and record.get("id"):
             target_uuid = record["id"]
         else:
             return
 
     await asyncio.to_thread(
-        lambda: supabase.table("meetings").update(
-            {
-                "transcript_data": utterances,
-                "end_at": datetime.now(UTC).isoformat(),
-            }
-        ).eq("id", target_uuid).execute()
+        lambda: (
+            supabase.table("meetings")
+            .update(
+                {
+                    "transcript_data": utterances,
+                    "end_at": datetime.now(UTC).isoformat(),
+                }
+            )
+            .eq("id", target_uuid)
+            .execute()
+        )
     )
 
 

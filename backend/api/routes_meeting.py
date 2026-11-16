@@ -172,11 +172,13 @@ async def schedule_followup(
     }
 
     await asyncio.to_thread(
-        lambda: supabase.table("meetings")
-        .update({"scheduling_result": schedule_result})
-        .eq("id", meeting_id)
-        .eq("org_id", user["org_id"])
-        .execute()
+        lambda: (
+            supabase.table("meetings")
+            .update({"scheduling_result": schedule_result})
+            .eq("id", meeting_id)
+            .eq("org_id", user["org_id"])
+            .execute()
+        )
     )
 
     return {"status": "success", "scheduling_result": schedule_result}
@@ -267,11 +269,13 @@ Raw transcript:
 
             combined = raw_chunks + refined_list
             await asyncio.to_thread(
-                lambda: supabase.table("meetings")
-                .update({"transcript_data": combined})
-                .eq("id", target_id)
-                .eq("org_id", user["org_id"])
-                .execute()
+                lambda: (
+                    supabase.table("meetings")
+                    .update({"transcript_data": combined})
+                    .eq("id", target_id)
+                    .eq("org_id", user["org_id"])
+                    .execute()
+                )
             )
             return {"status": "success", "transcript_data": combined}
         else:

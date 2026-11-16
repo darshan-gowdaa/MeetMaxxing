@@ -111,9 +111,13 @@ async def generate_content_with_fallback(
     user_id: str | None = None,
 ) -> tuple[str, str]:
     # handles routing queries to available llm providers in priority order
-    cache_key_prompt = f"{user_id or 'global'}:{system_instruction}:{response_format_json}:{prompt}"
+    cache_key_prompt = (
+        f"{user_id or 'global'}:{system_instruction}:{response_format_json}:{prompt}"
+    )
     if not bypass_cache:
-        cached = await rate_limiter.get_cached_response(cache_key_prompt, "fallback", temperature)
+        cached = await rate_limiter.get_cached_response(
+            cache_key_prompt, "fallback", temperature
+        )
         if cached:
             return cached["text"], cached["provider"]
 
@@ -317,7 +321,9 @@ async def generate_content_with_fallback(
 
     # 4. Perplexity (live search and reasoning model)
     perplexity_key = settings.PERPLEXITY_API_KEY
-    if not _is_placeholder(perplexity_key) and await rate_limiter.acquire("perplexity", wait=False):
+    if not _is_placeholder(perplexity_key) and await rate_limiter.acquire(
+        "perplexity", wait=False
+    ):
         try:
             pplx_tokens = max(max_tokens, 30)
             text = await _call_openai_compat(
