@@ -1,5 +1,6 @@
 export * from "./M3Button";
 export * from "./M3EmptyState";
+export * from "./M3Shape";
 export * from "./M3Skeleton";
 export * from "./M3Breadcrumb";
 export * from "./M3LinearProgress";
