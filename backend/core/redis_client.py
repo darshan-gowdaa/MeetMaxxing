@@ -103,39 +103,56 @@ async def append_transcript_chunk(meeting_id: str, chunk: dict) -> None:
     """Append a serialized transcript chunk to the live meeting Redis list with deduplication."""
     r = await _get_redis()
     key = f"transcript:{meeting_id}"
+    chunk_json = json.dumps(chunk)
 
-    last_raw = await r.lrange(key, -3, -1)
+    last_raw = await r.lrange(key, -1, -1)
     if last_raw:
-        for raw_item in reversed(last_raw):
-            try:
-                last_item = json.loads(raw_item)
-                if last_item.get("speaker") == chunk.get("speaker"):
-                    last_text = last_item.get("text", "").strip()
-                    new_text = chunk.get("text", "").strip()
-                    if last_text == new_text or last_text.startswith(new_text):
-                        return
-                    if new_text.startswith(last_text) or (
-                        len(new_text) > len(last_text)
-                        and new_text[:15] == last_text[:15]
-                    ):
-                        # Replace only the last element (not any of the 3)
-                        if isinstance(r, MemoryRedis):
-                            _memory_store[key][-1] = json.dumps(chunk)
-                        else:
-                            await r.rpop(key)
-                            await r.rpush(key, json.dumps(chunk))
-                        await r.expire(key, TRANSCRIPT_TTL)
-                        return
-            except Exception:
-                pass
+        try:
+            last_item = json.loads(last_raw[0])
+            if last_item.get("speaker") == chunk.get("speaker"):
+                last_text = last_item.get("text", "").strip()
+                new_text = chunk.get("text", "").strip()
+                if last_text == new_text or last_text.startswith(new_text):
+                    return
+                if new_text.startswith(last_text) or (
+                    len(new_text) > len(last_text)
+                    and new_text[:15] == last_text[:15]
+                ):
+                    # Strictly replace only the immediate last element
+                    if isinstance(r, MemoryRedis):
+                        if _memory_store.get(key):
+                            _memory_store[key][-1] = chunk_json
+                    else:
+                        pipe = r.pipeline(transaction=True)
+                        pipe.rpop(key)
+                        pipe.rpush(key, chunk_json)
+                        pipe.expire(key, TRANSCRIPT_TTL)
+                        await pipe.execute()
+                    await r.expire(key, TRANSCRIPT_TTL)
 
-    await r.rpush(key, json.dumps(chunk))
+                    alias = await r.get(f"meeting_alias:{meeting_id}")
+                    if alias:
+                        alias_key = f"transcript:{alias}"
+                        if isinstance(r, MemoryRedis):
+                            if _memory_store.get(alias_key):
+                                _memory_store[alias_key][-1] = chunk_json
+                        else:
+                            pipe = r.pipeline(transaction=True)
+                            pipe.rpop(alias_key)
+                            pipe.rpush(alias_key, chunk_json)
+                            pipe.expire(alias_key, TRANSCRIPT_TTL)
+                            await pipe.execute()
+                    return
+        except Exception:
+            pass
+
+    await r.rpush(key, chunk_json)
     await r.expire(key, TRANSCRIPT_TTL)
 
     # Mirror to alias key if one exists
     alias = await r.get(f"meeting_alias:{meeting_id}")
     if alias:
-        await r.rpush(f"transcript:{alias}", json.dumps(chunk))
+        await r.rpush(f"transcript:{alias}", chunk_json)
         await r.expire(f"transcript:{alias}", TRANSCRIPT_TTL)
 
 

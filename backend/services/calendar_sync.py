@@ -2,8 +2,11 @@
 Google Calendar synchronization helpers, OAuth client utilities, and diagnostics.
 """
 
+import asyncio
 import base64
 from datetime import UTC, datetime, timedelta
+import hashlib
+import hmac
 import json
 import logging
 import urllib.parse
@@ -144,6 +147,15 @@ def decode_state(state: str) -> dict:
         try:
             payload = json.loads(decoded)
             if isinstance(payload, dict):
+                if "sig" in payload:
+                    key = (settings.APP_SECRET_KEY or "fallback-secret").encode()
+                    expected = hmac.new(
+                        key,
+                        f"{payload.get('user_id')}:{payload.get('redirect_uri')}".encode(),
+                        hashlib.sha256,
+                    ).hexdigest()[:16]
+                    if not hmac.compare_digest(payload["sig"], expected):
+                        logging.warning("OAuth state HMAC signature mismatch — possible tampering")
                 return payload
         except Exception:
             pass
@@ -200,13 +212,19 @@ def prepare_calendar_auth(
     if parsed_frontend.scheme and parsed_frontend.netloc:
         effective_frontend = f"{parsed_frontend.scheme}://{parsed_frontend.netloc}"
 
-    state_payload = json.dumps(
-        {
-            "user_id": user_id,
-            "redirect_uri": effective_redirect_uri,
-            "frontend_origin": effective_frontend,
-        }
-    )
+    state_dict = {
+        "user_id": user_id,
+        "redirect_uri": effective_redirect_uri,
+        "frontend_origin": effective_frontend,
+    }
+    key = (settings.APP_SECRET_KEY or "fallback-secret").encode()
+    state_dict["sig"] = hmac.new(
+        key,
+        f"{user_id}:{effective_redirect_uri}".encode(),
+        hashlib.sha256,
+    ).hexdigest()[:16]
+
+    state_payload = json.dumps(state_dict)
     state = base64.urlsafe_b64encode(state_payload.encode()).decode()
     return state, effective_redirect_uri
 
@@ -275,9 +293,11 @@ async def handle_calendar_callback(
         try:
             tokens_to_store = dict(tokens)
             tokens_to_store.setdefault("last_synced_at", datetime.now(UTC).isoformat())
-            supabase.table("users").update({"calendar_token": tokens_to_store}).eq(
-                "id", user_id
-            ).execute()
+            await asyncio.to_thread(
+                lambda: supabase.table("users").update({"calendar_token": tokens_to_store}).eq(
+                    "id", user_id
+                ).execute()
+            )
         except Exception as e:
             logging.error(f"Failed to persist calendar_token for user {user_id}: {e}")
 
@@ -417,12 +437,14 @@ async def schedule_calendar_followup(supabase, meeting_id: str, user: dict) -> d
 
     calendar_token = None
     try:
-        user_result = (
-            supabase.table("users")
-            .select("calendar_token")
-            .eq("id", user["user_id"])
-            .single()
-            .execute()
+        user_result = await asyncio.to_thread(
+            lambda: (
+                supabase.table("users")
+                .select("calendar_token")
+                .eq("id", user["user_id"])
+                .single()
+                .execute()
+            )
         )
         if user_result.data:
             calendar_token = user_result.data.get("calendar_token")
@@ -461,14 +483,16 @@ async def schedule_calendar_followup(supabase, meeting_id: str, user: dict) -> d
     )
 
     try:
-        supabase.table("meetings").update(
-            {
-                "scheduling_result": {
-                    "status": "gcal_url_generated",
-                    "html_link": gcal_url,
+        await asyncio.to_thread(
+            lambda: supabase.table("meetings").update(
+                {
+                    "scheduling_result": {
+                        "status": "gcal_url_generated",
+                        "html_link": gcal_url,
+                    }
                 }
-            }
-        ).eq("id", meeting_id).execute()
+            ).eq("id", meeting_id).execute()
+        )
     except Exception as e:
         logging.warning(
             f"Could not persist scheduling_result (column may be missing): {e}"

@@ -7,10 +7,8 @@ from fastapi import APIRouter, Depends, Request
 from ..core.auth import get_current_user
 from ..core.database import get_supabase_admin
 from ..services.settings_service import (
-    _format_settings_response,
     export_gdpr_user_data,
     fetch_user_settings,
-    format_settings_response,
     get_test_notification_status,
     persist_user_settings,
     process_avatar_request,

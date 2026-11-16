@@ -30,6 +30,7 @@ Respond ONLY in JSON:
   "title": "Follow-up: [topic]",
   "description": "...",
   "duration_minutes": 30,
+  "start_datetime_iso": "YYYY-MM-DDTHH:MM:SSZ or null",
   "suggested_date_offset_days": 5,
   "attendees": ["email1@example.com"],
   "reminder_minutes_before": [10, 1440],
@@ -64,7 +65,6 @@ async def run_scheduler_agent(
     today_utc = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     prompt = (
-        f"{_SYSTEM_PROMPT}\n\n"
         f"Today is: {today_utc}\n"
         f"Suggested topic: {suggested_topic}\n"
         f"Meeting summary:\n{meeting_summary}\n\n"
@@ -77,7 +77,8 @@ async def run_scheduler_agent(
         from ..core.llm_fallback import generate_content_with_fallback
 
         raw, powered_by = await generate_content_with_fallback(
-            prompt,
+            prompt=prompt,
+            system_instruction=_SYSTEM_PROMPT,
             response_format_json=True,
             bypass_cache=False,
             max_tokens=600,
@@ -131,12 +132,12 @@ async def run_scheduler_agent(
         },
     }
 
-    if not event_plan.get("has_explicit_date_time", True):
+    if not event_plan.get("has_explicit_date_time") and not event_plan.get("suggested_date_offset_days"):
         return {
             "scheduled": False,
             "needs_user_input": True,
             "suggested_payload": calendar_payload,
-            "reason": "No explicit date/time mentioned in meeting.",
+            "reason": "No explicit date/time or suggested offset mentioned in meeting.",
         }
 
     try:

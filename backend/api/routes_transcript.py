@@ -49,8 +49,15 @@ def _require_scoped_meeting(meeting_id: str, org_id: str, user_id: str = "") -> 
     supabase = get_supabase_admin()
     meeting = get_meeting_record(supabase, meeting_id, org_id)
     if not meeting:
-        # Fall back to checking meeting without org filter in case meeting was created by same user
-        meeting = get_meeting_record(supabase, meeting_id)
+        # Fall back to checking meeting without org filter only if meeting belongs to caller
+        unscoped = get_meeting_record(supabase, meeting_id)
+        if unscoped:
+            m_org = unscoped.get("org_id")
+            m_user = unscoped.get("user_id")
+            if (org_id and m_org == org_id) or (user_id and m_user == user_id):
+                meeting = unscoped
+            else:
+                raise HTTPException(status_code=403, detail="Access denied to meeting")
     if not meeting and user_id:
         from ..core.database import ensure_meeting_record
 
@@ -168,6 +175,10 @@ async def ingest_audio_chunk(
     transcript_text = ""
     try:
         audio_bytes = base64.b64decode(req.audio_base64)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 audio data")
+
+    try:
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         # generate_content is synchronous — offload so it doesn't block the event loop.
         response = await asyncio.to_thread(
@@ -189,7 +200,6 @@ async def ingest_audio_chunk(
             try:
                 import httpx
 
-                audio_bytes = base64.b64decode(req.audio_base64)
                 ext = "webm" if "webm" in req.mime_type else "wav"
                 files = {"file": (f"chunk.{ext}", audio_bytes, req.mime_type)}
                 data = {
@@ -297,9 +307,10 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
 
     try:
         user = await get_user_from_token(token or "")
+        _require_scoped_meeting(meeting_id, user["org_id"], user["user_id"])
     except HTTPException:
         logger.warning(
-            "[MeetMaxxing WS] [AUTH] Rejected unauthenticated connection for meeting {}",
+            "[MeetMaxxing WS] [AUTH] Rejected unauthorized or unauthenticated connection for meeting {}",
             meeting_id,
         )
         await websocket.close(code=WS_CLOSE_UNAUTHORIZED, reason="Unauthorized")
@@ -328,7 +339,11 @@ async def transcript_websocket(websocket: WebSocket, meeting_id: str):
     try:
         while True:
             data = await websocket.receive_text()
-            raw = json.loads(data)
+            try:
+                raw = json.loads(data)
+            except (json.JSONDecodeError, TypeError):
+                await websocket.send_json({"error": "invalid JSON format"})
+                continue
             if raw.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
                 continue

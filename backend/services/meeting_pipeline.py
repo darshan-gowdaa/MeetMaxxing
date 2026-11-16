@@ -49,9 +49,11 @@ async def run_end_pipeline(
         # Mark as processing immediately
         if target_id and is_valid_uuid(target_id):
             try:
-                supabase.table("meetings").update({"status": "processing"}).eq(
-                    "id", target_id
-                ).execute()
+                await asyncio.to_thread(
+                    lambda: supabase.table("meetings").update({"status": "processing"}).eq(
+                        "id", target_id
+                    ).execute()
+                )
             except Exception:
                 pass
 
@@ -98,10 +100,12 @@ async def run_end_pipeline(
             logger.warning(
                 f"No utterances found for meeting {meeting_id}, proceeding with empty transcript to ensure summary generation."
             )
-            if target_id:
-                supabase.table("meetings").update({"status": "no_transcript"}).eq(
-                    "id", target_id
-                ).execute()
+            if target_id and is_valid_uuid(target_id):
+                await asyncio.to_thread(
+                    lambda: supabase.table("meetings").update({"status": "no_transcript"}).eq(
+                        "id", target_id
+                    ).execute()
+                )
             # DO NOT RETURN, continue pipeline to generate summary
 
         if google_code:
@@ -233,17 +237,19 @@ async def run_end_pipeline(
                 for i in range(current_count + 1, max_participants + 1):
                     final_attendees_list.append(f"Participant {i}")
 
-            supabase.table("meetings").update(
-                {
-                    "title": final_title,
-                    "summary": final_sum_text,
-                    "attendees": final_attendees_list,
-                    "decisions": final_summary.get("decisions", []),
-                    "follow_up": final_summary.get("follow_up", {}),
-                    "guardrail_score": guardrail_result.score,
-                    "status": final_status,
-                }
-            ).eq("id", target_id).execute()
+            await asyncio.to_thread(
+                lambda: supabase.table("meetings").update(
+                    {
+                        "title": final_title,
+                        "summary": final_sum_text,
+                        "attendees": final_attendees_list,
+                        "decisions": final_summary.get("decisions", []),
+                        "follow_up": final_summary.get("follow_up", {}),
+                        "guardrail_score": guardrail_result.score,
+                        "status": final_status,
+                    }
+                ).eq("id", target_id).execute()
+            )
 
         # save action items in a single batch
         if target_id:
@@ -287,122 +293,135 @@ async def run_end_pipeline(
                 except Exception as e:
                     logger.error(f"Failed to batch insert action items: {e}")
 
-        # embed for qdrant
-        chunks = chunk_transcript(utterances)
-        decisions_list = final_summary.get("decisions") or []
-        texts_to_embed = [c["text"] for c in chunks] if chunks else []
-        dec_texts = [d["text"] for d in decisions_list if d.get("text")]
+        canonical_meeting_id = target_id or meeting_id
 
-        all_vectors = await embed_batch(texts_to_embed + dec_texts)
-        chunk_vectors = all_vectors[: len(texts_to_embed)]
-        dec_vectors = all_vectors[len(texts_to_embed) :]
+        # Task 1: Embed and store memories in Qdrant
+        async def _store_memories():
+            chunks = chunk_transcript(utterances)
+            decisions_list = final_summary.get("decisions") or []
+            texts_to_embed = [c["text"] for c in chunks] if chunks else []
+            dec_texts = [d["text"] for d in decisions_list if d.get("text")]
 
-        memory_points = []
-        if chunks:
-            for i, (chunk, vec) in enumerate(zip(chunks, chunk_vectors)):
+            all_vectors = await embed_batch(texts_to_embed + dec_texts)
+            chunk_vectors = all_vectors[: len(texts_to_embed)]
+            dec_vectors = all_vectors[len(texts_to_embed) :]
+
+            memory_points = []
+            if chunks:
+                for i, (chunk, vec) in enumerate(zip(chunks, chunk_vectors)):
+                    memory_points.append(
+                        MemoryPoint(
+                            id=str(uuid.uuid4()),
+                            vector=vec,
+                            text=chunk["text"],
+                            org_id=org_id,
+                            user_id=user_id,
+                            meeting_id=canonical_meeting_id,
+                            memory_type=MemoryType.TRANSCRIPT_CHUNK,
+                            meeting_date=today,
+                            speaker_name=chunk.get("speaker_name", ""),
+                            timestamp_ms=chunk.get("timestamp_ms", 0),
+                        )
+                    )
+
+            # Store decisions
+            for dec, vec in zip(decisions_list, dec_vectors):
+                if not vec:
+                    continue
                 memory_points.append(
                     MemoryPoint(
                         id=str(uuid.uuid4()),
                         vector=vec,
-                        text=chunk["text"],
+                        text=dec.get("text", ""),
                         org_id=org_id,
                         user_id=user_id,
-                        meeting_id=meeting_id,
-                        memory_type=MemoryType.TRANSCRIPT_CHUNK,
+                        meeting_id=canonical_meeting_id,
+                        memory_type=MemoryType.DECISION,
                         meeting_date=today,
-                        speaker_name=chunk.get("speaker_name", ""),
-                        timestamp_ms=chunk.get("timestamp_ms", 0),
+                        speaker_name=dec.get("decided_by", ""),
+                        priority=2 if dec.get("confidence") == "high" else 1,
                     )
                 )
 
-        # Store decisions
-        for dec, vec in zip(decisions_list, dec_vectors):
-            if not vec:
-                continue
-            memory_points.append(
-                MemoryPoint(
-                    id=str(uuid.uuid4()),
-                    vector=vec,
-                    text=dec.get("text", ""),
-                    org_id=org_id,
-                    user_id=user_id,
-                    meeting_id=meeting_id,
-                    memory_type=MemoryType.DECISION,
-                    meeting_date=today,
-                    speaker_name=dec.get("decided_by", ""),
-                    priority=2 if dec.get("confidence") == "high" else 1,
-                )
+            if memory_points:
+                await upsert_memories(memory_points)
+
+        # Task 2: Schedule follow-up if requested
+        async def _schedule_followup():
+            nonlocal calendar_token
+            if not calendar_token:
+                try:
+                    user_res = await asyncio.to_thread(
+                        lambda: supabase.table("users")
+                        .select("calendar_token")
+                        .eq("id", user_id)
+                        .single()
+                        .execute()
+                    )
+                    if user_res.data:
+                        calendar_token = user_res.data.get("calendar_token")
+                except Exception:
+                    calendar_token = None
+
+            if final_summary.get("follow_up", {}).get("required"):
+                try:
+                    if not calendar_token or not calendar_token.get("access_token"):
+                        await asyncio.to_thread(
+                            lambda: supabase.table("meetings").update(
+                                {
+                                    "scheduling_result": {
+                                        "status": "skipped",
+                                        "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders.",
+                                    }
+                                }
+                            ).eq("id", canonical_meeting_id).execute()
+                        )
+                    else:
+                        schedule_result = await dispatch(
+                            AgentTrigger.SCHEDULE_FOLLOWUP,
+                            {
+                                "summary": final_summary,
+                                "attendees": attendees,
+                                "token": calendar_token,
+                                "org_id": org_id,
+                                "user_id": user_id,
+                            },
+                        )
+                        await asyncio.to_thread(
+                            lambda: supabase.table("meetings").update(
+                                {"scheduling_result": schedule_result}
+                            ).eq("id", canonical_meeting_id).execute()
+                        )
+                except Exception as e:
+                    logger.warning(f"Could not persist scheduling_result: {e}")
+
+        # Task 3: Send recap email with full action item metadata
+        async def _send_recap_email():
+            email_result = await dispatch(
+                AgentTrigger.SEND_EMAIL,
+                {
+                    "meeting_id": canonical_meeting_id,
+                    "meeting_title": final_title,
+                    "attendees": attendees,
+                    "summary": final_summary.get("summary", ""),
+                    "action_items": final_summary.get("action_items") or [],
+                    "send_immediately": True,
+                    "to_email": user_id,
+                    "user_id": user_id,
+                },
             )
+            if email_result.get("sent"):
+                logger.info("Email sent successfully to user.")
+            else:
+                logger.warning(f"Email send result: {email_result}")
 
-        if memory_points:
-            await upsert_memories(memory_points)
-
-        # schedule follow-up and send gmail reminder if needed
-        if not calendar_token:
-            try:
-                user_res = (
-                    supabase.table("users")
-                    .select("calendar_token")
-                    .eq("id", user_id)
-                    .single()
-                    .execute()
-                )
-                if user_res.data:
-                    calendar_token = user_res.data.get("calendar_token")
-            except Exception:
-                calendar_token = None
-
-        if final_summary.get("follow_up", {}).get("required") or attendees:
-            try:
-                if not calendar_token or not calendar_token.get("access_token"):
-                    supabase.table("meetings").update(
-                        {
-                            "scheduling_result": {
-                                "status": "skipped",
-                                "reason": "No Google Calendar OAuth token provided. Connect your Google Calendar in Settings to automatically send invites and follow-up reminders.",
-                            }
-                        }
-                    ).eq("id", target_id or meeting_id).execute()
-                else:
-                    schedule_result = await dispatch(
-                        AgentTrigger.SCHEDULE_FOLLOWUP,
-                        {
-                            "summary": final_summary,
-                            "attendees": attendees,
-                            "token": calendar_token,
-                            "org_id": org_id,
-                            "user_id": user_id,
-                        },
-                    )
-                    supabase.table("meetings").update(
-                        {"scheduling_result": schedule_result}
-                    ).eq("id", target_id or meeting_id).execute()
-            except Exception as e:
-                logger.warning(f"Could not persist scheduling_result: {e}")
-
-        # send notifications
-        # Send email to organizer
-        email_result = await dispatch(
-            AgentTrigger.SEND_EMAIL,
-            {
-                "meeting_id": target_id or meeting_id,
-                "meeting_title": final_title,
-                "attendees": attendees,
-                "summary": final_summary.get("summary", ""),
-                "action_items": [
-                    ai.get("text") for ai in (final_summary.get("action_items") or [])
-                ],
-                "send_immediately": True,
-                "to_email": user_id,
-                "user_id": user_id,
-            },
+        # Run post-meeting processing tasks concurrently
+        await asyncio.gather(
+            _store_memories(),
+            _schedule_followup(),
+            _send_recap_email(),
+            return_exceptions=True,
         )
-
-        # Log email result (skip saving to DB as column doesn't exist)
-        if email_result.get("sent"):
-            logger.info("Email sent successfully to user.")
-        else:
-            logger.warning(f"Email send result: {email_result}")
 
     except Exception as e:
         logger.error(
@@ -411,11 +430,13 @@ async def run_end_pipeline(
         try:
             local_target = locals().get("target_id") or meeting_id
             if local_target and is_valid_uuid(local_target):
-                supabase.table("meetings").update(
-                    {
-                        "status": "completed",
-                        "summary": "An error occurred while generating the meeting summary. Please try again later.",
-                    }
-                ).eq("id", local_target).execute()
+                await asyncio.to_thread(
+                    lambda: supabase.table("meetings").update(
+                        {
+                            "status": "completed",
+                            "summary": "An error occurred while generating the meeting summary. Please try again later.",
+                        }
+                    ).eq("id", local_target).execute()
+                )
         except Exception as inner_e:
             logger.error(f"Failed to update error status for {meeting_id}: {inner_e}")

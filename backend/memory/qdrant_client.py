@@ -121,27 +121,33 @@ async def _ensure_collection_internal(client: AsyncQdrantClient) -> None:
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        for field_name, schema_type in indexed_fields:
+
+        async def _create_index(f_name, s_type):
             try:
                 await client.create_payload_index(
                     collection_name=collection_name,
-                    field_name=field_name,
-                    field_schema=schema_type,
+                    field_name=f_name,
+                    field_schema=s_type,
                 )
             except Exception:
                 pass
+
+        await asyncio.gather(
+            *[_create_index(f, s) for f, s in indexed_fields]
+        )
     _collection_ensured = True
 
 
 async def upsert_memories(points: list[MemoryPoint]) -> None:
     """Batch upsert memory points into Qdrant."""
-    if not points:
+    valid_points = [p for p in points if p is not None and getattr(p, "vector", None) is not None]
+    if not valid_points:
         return
     await ensure_collection()
     client = await get_qdrant()
 
     qdrant_points = []
-    for p in points:
+    for p in valid_points:
         # Generate simple hash-based sparse vector from the text content
         words = p.text.lower().split()
         freq = collections.Counter(words)
@@ -171,11 +177,15 @@ async def upsert_memories(points: list[MemoryPoint]) -> None:
             )
         )
 
-    await client.upsert(
-        collection_name=settings.QDRANT_COLLECTION,
-        points=qdrant_points,
-        wait=True,
-    )
+    # Batch upsert in chunks of 64 points to avoid payload timeouts
+    BATCH_SIZE = 64
+    for i in range(0, len(qdrant_points), BATCH_SIZE):
+        batch = qdrant_points[i : i + BATCH_SIZE]
+        await client.upsert(
+            collection_name=settings.QDRANT_COLLECTION,
+            points=batch,
+            wait=True,
+        )
 
 
 async def search_memories(
@@ -256,17 +266,23 @@ async def search_memories(
             )
         )
     if memory_filter.date_from:
+        d_from = memory_filter.date_from
+        if "T" not in d_from:
+            d_from = f"{d_from}T00:00:00Z"
         must_conditions.append(
             qmodels.FieldCondition(
                 key="meeting_date",
-                range=qmodels.Range(gte=memory_filter.date_from),
+                range=qmodels.DatetimeRange(gte=d_from),
             )
         )
     if memory_filter.date_to:
+        d_to = memory_filter.date_to
+        if "T" not in d_to:
+            d_to = f"{d_to}T23:59:59Z"
         must_conditions.append(
             qmodels.FieldCondition(
                 key="meeting_date",
-                range=qmodels.Range(lte=memory_filter.date_to),
+                range=qmodels.DatetimeRange(lte=d_to),
             )
         )
 
@@ -284,12 +300,20 @@ async def search_memories(
     sparse_indices = [k for k, _ in sorted_items]
     sparse_values = [v for _, v in sorted_items]
 
+    prefetch_filter = qmodels.Filter(must=must_conditions) if must_conditions else None
+
     prefetch = [
-        qmodels.Prefetch(query=query_vector, using="dense", limit=limit),
+        qmodels.Prefetch(
+            query=query_vector,
+            using="dense",
+            limit=limit,
+            filter=prefetch_filter,
+        ),
         qmodels.Prefetch(
             query=qmodels.SparseVector(indices=sparse_indices, values=sparse_values),
             using="sparse",
             limit=limit,
+            filter=prefetch_filter,
         ),
     ]
 

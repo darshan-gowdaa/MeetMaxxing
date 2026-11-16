@@ -11,6 +11,7 @@
   "dependencies": {
     "@alerix/m3-loading-indicator": "^1.0.5",
     "@lit/react": "^1.0.8",
+    "@m3e/mcp": "^2.12.1",
     "@m3e/react": "^2.10.2",
     "@m3e/web": "^2.10.2",
     "@remixicon/react": "^4.9.0",

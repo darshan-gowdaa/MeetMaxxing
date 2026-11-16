@@ -21,9 +21,11 @@ Keep it extremely brief and professional. Do NOT output unnecessary details. Ret
   "who_said_what": ["Speaker A: ...", "Speaker B: ..."]
 }"""
 
-# In-process cache (not multi-worker safe)
-_last_recaps: dict[str, dict] = {}
-_last_recap_times: dict[str, float] = {}
+from cachetools import TTLCache
+
+# In-process cache bounded by TTLCache (evicts after 5 minutes)
+_last_recaps: TTLCache[str, dict] = TTLCache(maxsize=500, ttl=300)
+_last_recap_times: TTLCache[str, float] = TTLCache(maxsize=500, ttl=300)
 
 
 def _format_transcript(chunks: list[dict]) -> str:
@@ -33,7 +35,17 @@ def _format_transcript(chunks: list[dict]) -> str:
     if len(chunks) > 80:
         older = chunks[:-40]
         recent = chunks[-40:]
-        older_summary = f"[Earlier {len(older)} utterances summarized: Discussion occurred between {', '.join({c.get('speaker', 'Speaker') for c in older[:5]})}]"
+        all_older_speakers = {c.get("speaker", "Speaker") for c in older}
+        step = max(1, len(older) // 10)
+        sampled_excerpts = [
+            f"{c.get('speaker', 'Speaker')}: {c.get('text', '')[:80]}"
+            for c in older[::step][:10]
+        ]
+        older_summary = (
+            f"[Earlier {len(older)} utterances across {', '.join(all_older_speakers)}:\n"
+            + "\n".join(sampled_excerpts)
+            + "\n]"
+        )
         recent_lines = [
             f"{c.get('speaker', 'Unknown')}: {c.get('text', '')}" for c in recent
         ]
@@ -68,11 +80,12 @@ async def generate_late_join_recap(
         }
 
     transcript_text = _format_transcript(chunks)
-    prompt = f"{_SYSTEM_PROMPT}\n\nGenerate a late join recap for the following transcript:\n\n{transcript_text}"
+    prompt = f"Generate a late join recap for the following transcript:\n\n{transcript_text}"
 
     try:
         raw, powered_by = await generate_content_with_fallback(
-            prompt,
+            prompt=prompt,
+            system_instruction=_SYSTEM_PROMPT,
             response_format_json=True,
             bypass_cache=force,
             max_tokens=800,

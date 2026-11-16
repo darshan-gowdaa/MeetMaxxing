@@ -1,3 +1,4 @@
+import secrets
 from pathlib import Path
 
 from pydantic import AliasChoices, Field
@@ -43,8 +44,10 @@ class Settings(BaseSettings):
     )
     PERPLEXITY_API_KEY: str = ""
 
-    # Resend
+    # Resend & Email
     RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "MeetMaxxing <onboarding@resend.dev>"
+    APP_DOMAIN: str = "meetmaxxing.vercel.app"
 
     # Google Calendar OAuth2
     GOOGLE_CLIENT_ID: str = ""
@@ -64,7 +67,10 @@ class Settings(BaseSettings):
 
     # App
     APP_SECRET_KEY: str = "change-me-in-production"
-    KEK_SECRET: str = "0000000000000000000000000000000000000000000000000000000000000000"
+    KEK_SECRET: str = Field(
+        default_factory=lambda: secrets.token_hex(32),
+        description="Key Encryption Key (64-char hex string). Set in environment for production persistence.",
+    )
     FRONTEND_URL: str = "https://meetmaxxing.vercel.app"
     BACKEND_URL: str = "https://meetmaxxing-api.onrender.com"
     ENVIRONMENT: str = "development"

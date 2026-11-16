@@ -132,8 +132,8 @@ def _build_flow(redirect_uri: str | None = None, code_verifier: str | None = Non
     return flow
 
 
-def _build_service(token_data: dict):
-    """Build Google Calendar service from stored OAuth token dict."""
+def _build_service(token_data: dict, user_id: str | None = None):
+    """Build Google Calendar service from stored OAuth token dict, auto-persisting refreshed tokens."""
     creds = Credentials(
         token=token_data.get("access_token"),
         refresh_token=token_data.get("refresh_token"),
@@ -144,6 +144,17 @@ def _build_service(token_data: dict):
     )
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
+        uid = user_id or token_data.get("user_id")
+        if uid:
+            try:
+                from ..core.database import get_supabase_admin
+
+                refreshed_data = json.loads(creds.to_json())
+                get_supabase_admin().table("users").update(
+                    {"calendar_token": refreshed_data}
+                ).eq("id", uid).execute()
+            except Exception as e:
+                logging.warning(f"Could not persist refreshed calendar token for {uid}: {e}")
     return build("calendar", "v3", credentials=creds)
 
 

@@ -94,7 +94,7 @@ async def run_memory_agent(
 
     mem_filter = MemoryFilter(
         org_id=org_id,
-        user_id=filters.get("user_id", ""),
+        user_id=filters.get("user_id") or user_id,
         meeting_id=filters.get("meeting_id"),
         speaker_id=filters.get("speaker_id", ""),
         topic=filters.get("topic", ""),
@@ -182,23 +182,24 @@ async def run_memory_agent(
 
         from ..core.redis_client import get_full_transcript
 
-        for m_id in target_meeting_ids:
-            if m_id != "global":
-                try:
-                    utterances = await get_full_transcript(m_id)
-                    if utterances:
-                        formatted = "\n".join(
-                            [
-                                f"{u.get('speaker', 'Speaker')}: {u.get('text', '')}"
-                                for u in utterances
-                            ]
-                        )
-                        live_transcript_section += f"\n\n--- LIVE TRANSCRIPT FOR CURRENT MEETING ---\n{formatted}\n--- END OF LIVE TRANSCRIPT ---\n"
-                except Exception as e:
-                    logger.warning(f"Could not fetch live transcript for {m_id}: {e}")
+        valid_m_ids = [m for m in target_meeting_ids if m and m != "global"]
+        if valid_m_ids:
+            results = await asyncio.gather(
+                *[get_full_transcript(m) for m in valid_m_ids],
+                return_exceptions=True,
+            )
+            for m_id, utterances in zip(valid_m_ids, results):
+                if isinstance(utterances, list) and utterances:
+                    formatted = "\n".join(
+                        [
+                            f"{u.get('speaker', 'Speaker')}: {u.get('text', '')}"
+                            for u in utterances
+                        ]
+                    )
+                    live_transcript_section += f"\n\n--- LIVE TRANSCRIPT FOR CURRENT MEETING ---\n{formatted}\n--- END OF LIVE TRANSCRIPT ---\n"
 
     prompt = (
-        f"{_SYSTEM_PROMPT}\n\nQuestion: {question}\n\n"
+        f"Question: {question}\n\n"
         f"Retrieved semantic context from past meetings (most relevant chunks):\n"
         f"{context_block if context_block else '(No semantic matches found)'}"
         f"{db_section}\n"
@@ -213,9 +214,11 @@ async def run_memory_agent(
         from ..core.llm_fallback import generate_content_with_fallback
 
         raw, powered_by = await generate_content_with_fallback(
-            prompt,
-            response_format_json=True,
+            prompt=prompt,
+            system_instruction=_SYSTEM_PROMPT,
+            temperature=0.2,
             max_tokens=1024,
+            response_format_json=True,
             bypass_cache=False,
             user_id=user_id,
         )

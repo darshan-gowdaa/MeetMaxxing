@@ -9,6 +9,7 @@ import {
   RiSparklingLine,
   RiChat1Line,
   RiLayoutMasonryLine,
+  RiErrorWarningLine,
 } from "@remixicon/react";
 
 import MeetingTranscript from "@/components/organisms/MeetingTranscript";
@@ -20,6 +21,7 @@ import MeetingFollowUpForm from "@/components/organisms/MeetingFollowUpForm";
 import { M3Breadcrumb } from "@/components/atoms/M3Breadcrumb";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { M3LinearProgress } from "@/components/atoms/M3LinearProgress";
+import { M3EmptyState } from "@/components/atoms/M3EmptyState";
 import { useMeetingManager } from "./_hooks/useMeetingManager";
 
 type ViewTab = "notes" | "transcript" | "overview";
@@ -66,41 +68,46 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   }
 
   if (!meeting) {
+    if (errorMsg && !coldStart) {
+      return (
+        <div className="min-h-screen bg-bg flex flex-col justify-center items-center px-4">
+          <M3EmptyState
+            icon={RiErrorWarningLine}
+            title="Meeting Not Found or Inaccessible"
+            description={errorMsg || "The requested meeting session could not be retrieved from the server."}
+            actionLabel="Back to Dashboard"
+            actionHref="/"
+            actionIcon={ArrowLeft}
+            secondaryActionLabel="Try Again"
+            onSecondaryAction={loadMeeting}
+            className="max-w-md w-full"
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-bg flex flex-col justify-center items-center px-4">
         <div className="rounded-[28px] bg-surface-container-low border border-outline-variant/15 p-8 max-w-md mx-auto text-center flex flex-col items-center gap-6">
-          {errorMsg && !coldStart ? (
-            <div className="w-16 h-16 rounded-full bg-risk-container text-on-risk-container flex items-center justify-center mb-2">
-              <span className="text-risk font-bold text-2xl">!</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-3">
-              <Md3LoadingIndicator size="lg" className="text-primary" />
-            </div>
-          )}
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-[14px] text-text-muted font-medium tracking-wide">
-              {coldStart
-                ? "Backend is starting up — this can take up to a minute"
-                : errorMsg
-                ? "Failed to load meeting"
-                : "AI is processing this meeting transcript"}
-            </p>
-            {errorMsg && !coldStart && (
-              <p className="text-[11px] text-risk max-w-xs text-center">{errorMsg}</p>
-            )}
-            {coldStart && (
-              <p className="text-[11px] text-text-muted max-w-xs text-center">
-                This page will retry automatically once the backend wakes up.
-              </p>
-            )}
-            {(!errorMsg || coldStart) && (
-              <div className="w-full max-w-xs mt-2">
-                <M3LinearProgress mode="indeterminate" />
-              </div>
-            )}
+          <div className="flex flex-col items-center justify-center gap-3">
+            <Md3LoadingIndicator size="lg" className="text-primary" />
           </div>
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-[14px] text-text font-bold tracking-wide">
+              {coldStart
+                ? "Backend is warming up"
+                : "Processing meeting transcript"}
+            </p>
+            <p className="text-[12px] text-text-muted max-w-xs text-center leading-relaxed">
+              {coldStart
+                ? "The serverless instance is booting. This page will retry automatically once ready."
+                : "AI agents are generating structured decisions and action items from speaker turns."}
+            </p>
+            <div className="w-full max-w-xs mt-3">
+              <M3LinearProgress mode="indeterminate" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-2">
             <Link
               href="/"
               className="flex items-center gap-2 rounded-full bg-secondary-container text-on-secondary-container px-6 py-3 font-semibold text-sm active:scale-[0.98] transition-all"
@@ -110,7 +117,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
             </Link>
             <button
               onClick={loadMeeting}
-              className="w-11 h-11 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center active:scale-[0.98] transition-all"
+              className="w-11 h-11 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center active:scale-[0.98] transition-all cursor-pointer"
               title="Refresh"
               aria-label="Refresh meeting"
             >

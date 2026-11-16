@@ -2,6 +2,7 @@
 Meeting management endpoints — end meeting, trigger post-processing pipeline.
 """
 
+import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -110,12 +111,14 @@ async def schedule_followup(
 ):
     """Explicitly schedule a follow-up meeting using user's calendar token."""
     supabase = get_supabase_admin()
-    user_res = (
-        supabase.table("users")
-        .select("calendar_token")
-        .eq("id", user["user_id"])
-        .single()
-        .execute()
+    user_res = await asyncio.to_thread(
+        lambda: (
+            supabase.table("users")
+            .select("calendar_token")
+            .eq("id", user["user_id"])
+            .single()
+            .execute()
+        )
     )
     if not user_res.data or not user_res.data.get("calendar_token"):
         raise HTTPException(
@@ -168,9 +171,13 @@ async def schedule_followup(
         "attendees": req.attendees,
     }
 
-    supabase.table("meetings").update({"scheduling_result": schedule_result}).eq(
-        "id", meeting_id
-    ).execute()
+    await asyncio.to_thread(
+        lambda: supabase.table("meetings")
+        .update({"scheduling_result": schedule_result})
+        .eq("id", meeting_id)
+        .eq("org_id", user["org_id"])
+        .execute()
+    )
 
     return {"status": "success", "scheduling_result": schedule_result}
 
@@ -222,7 +229,11 @@ Raw transcript:
         import json
 
         refined_json_str, _ = await generate_content_with_fallback(
-            prompt, response_format_json=True, bypass_cache=True, max_tokens=8192
+            prompt,
+            response_format_json=True,
+            bypass_cache=True,
+            max_tokens=8192,
+            user_id=user["user_id"],
         )
 
         if not refined_json_str:
@@ -255,9 +266,13 @@ Raw transcript:
                     r["source"] = "dom"
 
             combined = raw_chunks + refined_list
-            supabase.table("meetings").update({"transcript_data": combined}).eq(
-                "id", target_id
-            ).execute()
+            await asyncio.to_thread(
+                lambda: supabase.table("meetings")
+                .update({"transcript_data": combined})
+                .eq("id", target_id)
+                .eq("org_id", user["org_id"])
+                .execute()
+            )
             return {"status": "success", "transcript_data": combined}
         else:
             raise TypeError("LLM did not return a list inside transcript")

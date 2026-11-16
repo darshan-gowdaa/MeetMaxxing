@@ -664,7 +664,10 @@ class PreflightTestRequest(BaseModel):
 
 
 @router.post("/test")
-async def test_key_preflight(req: PreflightTestRequest):
+async def test_key_preflight(
+    req: PreflightTestRequest,
+    user: dict = Depends(get_current_user),
+):
     """
     Transient preflight test endpoint testing key in-memory without persisting to DB.
     Measures latency in milliseconds and normalizes provider errors.
@@ -713,7 +716,10 @@ class FetchModelsRequest(BaseModel):
 
 
 @router.post("/models")
-async def post_fetch_models(req: FetchModelsRequest):
+async def post_fetch_models(
+    req: FetchModelsRequest,
+    user: dict = Depends(get_current_user),
+):
     """
     Fetch available models with an unsaved key during preflight/modal testing.
     Caches results in memory for 10 minutes to avoid rate limit spam.

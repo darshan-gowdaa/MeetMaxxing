@@ -55,14 +55,41 @@ async def get_me(user: dict = Depends(get_current_user)):
 @router.delete("/me")
 async def delete_me(user: dict = Depends(get_current_user)):
     """Delete current user."""
+    import asyncio
     # 1. Delete public.users record (which cascades to meetings, api keys, etc)
     try:
-        get_supabase_admin().table("users").delete().eq("id", user["user_id"]).execute()
+        await asyncio.to_thread(
+            lambda: get_supabase_admin().table("users").delete().eq("id", user["user_id"]).execute()
+        )
     except Exception as e:
         logging.warning(f"Failed to delete public.users record: {e}")
 
-    # 2. Delete from auth schema
-    get_supabase_admin().auth.admin.delete_user(user["user_id"])
+    # 2. Delete vectors from Qdrant
+    try:
+        from ..memory.qdrant_client import get_qdrant
+        from qdrant_client import models as qmodels
+
+        qdrant = await get_qdrant()
+        await qdrant.delete(
+            collection_name=settings.QDRANT_COLLECTION,
+            points_selector=qmodels.FilterSelector(
+                filter=qmodels.Filter(
+                    must=[
+                        qmodels.FieldCondition(
+                            key="user_id",
+                            match=qmodels.MatchValue(value=user["user_id"]),
+                        )
+                    ]
+                )
+            ),
+        )
+    except Exception as e:
+        logging.warning(f"Failed to delete user Qdrant points: {e}")
+
+    # 3. Delete from auth schema
+    await asyncio.to_thread(
+        lambda: get_supabase_admin().auth.admin.delete_user(user["user_id"])
+    )
     return {"deleted": True}
 
 

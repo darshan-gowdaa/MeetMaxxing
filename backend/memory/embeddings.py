@@ -79,42 +79,44 @@ async def embed_text(text: str) -> list[float]:
     _set_in_cache(text, vec)
     return vec
 
-    client = _get_client()
-    # embed_content is a synchronous network call — offload it so it doesn't
-    # block the FastAPI event loop.
-    result = await asyncio.to_thread(
-        client.models.embed_content,
-        model=settings.GEMINI_EMBEDDING_MODEL,
-        contents=text,
-        config=genai_types.EmbedContentConfig(
-            task_type="RETRIEVAL_DOCUMENT",
-            output_dimensionality=settings.EMBEDDING_DIM,
-        ),
-    )
-    vec = result.embeddings[0].values
-    _set_in_cache(text, vec)
-    return vec
-
 
 async def embed_query(text: str) -> list[float]:
     """Embed a query string (different task_type for better retrieval recall)."""
-    # Note: query embeddings might not be cached since they are highly variable and context-dependent
+    cached = _get_from_cache(f"query:{text}")
+    if cached:
+        return cached
+
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY in [
         "your-gemini-api-key",
         "mock-key",
     ]:
-        return await _fallback_vector(text)
+        vec = await _fallback_vector(text)
+        _set_in_cache(f"query:{text}", vec)
+        return vec
+
     client = _get_client()
-    result = await asyncio.to_thread(
-        client.models.embed_content,
-        model=settings.GEMINI_EMBEDDING_MODEL,
-        contents=text,
-        config=genai_types.EmbedContentConfig(
-            task_type="RETRIEVAL_QUERY",
-            output_dimensionality=settings.EMBEDDING_DIM,
-        ),
-    )
-    return result.embeddings[0].values
+    try:
+        result = await client.aio.models.embed_content(
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
+            config=genai_types.EmbedContentConfig(
+                task_type="RETRIEVAL_QUERY",
+                output_dimensionality=settings.EMBEDDING_DIM,
+            ),
+        )
+    except Exception:
+        result = await asyncio.to_thread(
+            client.models.embed_content,
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
+            config=genai_types.EmbedContentConfig(
+                task_type="RETRIEVAL_QUERY",
+                output_dimensionality=settings.EMBEDDING_DIM,
+            ),
+        )
+    vec = result.embeddings[0].values
+    _set_in_cache(f"query:{text}", vec)
+    return vec
 
 
 async def embed_batch(texts: list[str]) -> list[list[float]]:
@@ -248,16 +250,31 @@ def chunk_transcript(
                     "timestamp_ms": current_ts,
                 }
             )
-            # Overlap handling (simplistic)
-            if tokens > chunk_size:
-                # If a single speaker's turn is massive, just start new
-                current_text = []
-                token_count = 0
-            else:
-                # Keep last turn as overlap if it fits
-                last_line = current_text[-1]
+            # Overlap handling: if last turn fits under chunk_size, keep it as overlap
+            last_line = current_text[-1]
+            if len(last_line.split()) < chunk_size // 2:
                 current_text = [last_line]
                 token_count = len(last_line.split())
+            else:
+                current_text = []
+                token_count = 0
+
+        # If a single speaker's turn is massive, split it into bounded sub-chunks
+        if tokens > chunk_size:
+            words = text.split()
+            sub_size = max(20, chunk_size - 10)
+            for i in range(0, len(words), sub_size):
+                part = " ".join(words[i : i + sub_size])
+                chunks.append(
+                    {
+                        "text": f"{speaker}: {part}",
+                        "speaker_name": speaker,
+                        "timestamp_ms": ts,
+                    }
+                )
+            current_text = []
+            token_count = 0
+            continue
 
         if not current_text:
             current_ts = ts

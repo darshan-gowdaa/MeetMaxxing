@@ -111,8 +111,9 @@ async def generate_content_with_fallback(
     user_id: str | None = None,
 ) -> tuple[str, str]:
     # handles routing queries to available llm providers in priority order
+    cache_key_prompt = f"{user_id or 'global'}:{system_instruction}:{response_format_json}:{prompt}"
     if not bypass_cache:
-        cached = await rate_limiter.get_cached_response(prompt, "fallback", temperature)
+        cached = await rate_limiter.get_cached_response(cache_key_prompt, "fallback", temperature)
         if cached:
             return cached["text"], cached["provider"]
 
@@ -121,7 +122,7 @@ async def generate_content_with_fallback(
 
     async def _cache_and_return(text: str, provider_str: str) -> tuple[str, str]:
         await rate_limiter.set_cached_response(
-            prompt,
+            cache_key_prompt,
             "fallback",
             temperature,
             {"text": text, "provider": provider_str},
@@ -208,21 +209,24 @@ async def generate_content_with_fallback(
                             ),
                             timeout=5.0,
                         )
-                    except Exception:
-                        loop = asyncio.get_running_loop()
-                        response = await asyncio.wait_for(
-                            loop.run_in_executor(
-                                None,
-                                lambda m=g_model: client.models.generate_content(
-                                    model=m,
-                                    contents=prompt,
-                                    config=genai_types.GenerateContentConfig(
-                                        **config_kwargs
+                    except (RuntimeError, NotImplementedError) as re:
+                        if "event loop" in str(re).lower():
+                            loop = asyncio.get_running_loop()
+                            response = await asyncio.wait_for(
+                                loop.run_in_executor(
+                                    None,
+                                    lambda m=g_model: client.models.generate_content(
+                                        model=m,
+                                        contents=prompt,
+                                        config=genai_types.GenerateContentConfig(
+                                            **config_kwargs
+                                        ),
                                     ),
                                 ),
-                            ),
-                            timeout=5.0,
-                        )
+                                timeout=5.0,
+                            )
+                        else:
+                            raise
                     if response and response.text:
                         rate_limiter.record_success("gemini")
                         return await _cache_and_return(
@@ -283,11 +287,8 @@ async def generate_content_with_fallback(
 
     # 3. Groq (high speed inference)
     groq_key = settings.GROQ_API_KEY
-    if not _is_placeholder(groq_key) and await rate_limiter.acquire("groq"):
+    if not _is_placeholder(groq_key) and await rate_limiter.acquire("groq", wait=False):
         groq_models = [
-            "openai/gpt-oss-20b",
-            "groq/compound-mini",
-            "allam-2-7b",
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
         ]
@@ -316,7 +317,7 @@ async def generate_content_with_fallback(
 
     # 4. Perplexity (live search and reasoning model)
     perplexity_key = settings.PERPLEXITY_API_KEY
-    if not _is_placeholder(perplexity_key) and await rate_limiter.acquire("perplexity"):
+    if not _is_placeholder(perplexity_key) and await rate_limiter.acquire("perplexity", wait=False):
         try:
             pplx_tokens = max(max_tokens, 30)
             text = await _call_openai_compat(

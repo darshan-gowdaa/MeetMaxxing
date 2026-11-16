@@ -31,7 +31,7 @@ if __package__ is None or __package__ == "":
         sys.path.insert(0, _parent_dir)
     __package__ = "backend"
 
-from fastapi import FastAPI, Request, status
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -46,6 +46,7 @@ from .api.routes_meeting import router as meeting_router
 from .api.routes_memory import router as memory_router
 from .api.routes_settings import router as settings_router
 from .api.routes_transcript import router as transcript_router
+from .core.auth import get_current_user
 from .core.config import settings
 from .core.security import RateLimitMiddleware, validate_production_secrets
 from .memory.qdrant_client import ensure_collection
@@ -136,7 +137,7 @@ async def health():
 
 
 @app.get("/api/diagnostics")
-async def diagnostics():
+async def diagnostics(user: dict = Depends(get_current_user)):
     """Verify ADK (Google GenAI SDK), Lyzr Guardrails, and Qdrant memory status."""
     try:
         import lyzr

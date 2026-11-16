@@ -126,7 +126,7 @@ async def run_summary_agent(
 
     try:
         prompt = (
-            f"{_SYSTEM_PROMPT}\n\nMeeting: {title or 'Untitled'}\n"
+            f"Meeting: {title or 'Untitled'}\n"
             f"Attendees: {attendee_str}\n"
             f"Duration: {len(utterances)} utterances recorded\n\n"
             f"Full transcript:\n{transcript_text}\n\n"
@@ -135,7 +135,8 @@ async def run_summary_agent(
         from ..core.llm_fallback import generate_content_with_fallback
 
         raw, powered_by = await generate_content_with_fallback(
-            prompt,
+            prompt=prompt,
+            system_instruction=_SYSTEM_PROMPT,
             response_format_json=True,
             max_tokens=4096,
             bypass_cache=True,

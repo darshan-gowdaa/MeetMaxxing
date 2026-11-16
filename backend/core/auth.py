@@ -1,5 +1,6 @@
 import hashlib
 import time
+from cachetools import TTLCache
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
@@ -9,7 +10,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 # Short TTL cache for validated user tokens to eliminate repeated remote auth latency
 # SHA256(token) -> (expires_at, user_dict)
-_TOKEN_CACHE: dict[str, tuple[float, dict]] = {}
+_TOKEN_CACHE: TTLCache[str, tuple[float, dict]] = TTLCache(maxsize=512, ttl=60.0)
 _TOKEN_CACHE_TTL = 60.0  # seconds
 _TOKEN_CACHE_MAX = 512
 
@@ -17,14 +18,9 @@ _TOKEN_CACHE_MAX = 512
 def _prune_token_cache() -> None:
     """Evict expired entries; also cap total size to prevent unbounded growth."""
     now = time.time()
-    expired_keys = [k for k, (exp, _) in _TOKEN_CACHE.items() if now >= exp]
+    expired_keys = [k for k, (exp, _) in list(_TOKEN_CACHE.items()) if now >= exp]
     for k in expired_keys:
-        del _TOKEN_CACHE[k]
-    # Hard cap: remove oldest entries if still over limit
-    if len(_TOKEN_CACHE) > _TOKEN_CACHE_MAX:
-        overage = len(_TOKEN_CACHE) - _TOKEN_CACHE_MAX
-        for k in list(_TOKEN_CACHE.keys())[:overage]:
-            del _TOKEN_CACHE[k]
+        _TOKEN_CACHE.pop(k, None)
 
 
 async def get_user_from_token(token: str) -> dict:
@@ -64,7 +60,10 @@ async def get_user_from_token(token: str) -> dict:
                     "org_id": org_id,
                     "email": payload.get("email"),
                 }
-                _TOKEN_CACHE[token_hash] = (now + _TOKEN_CACHE_TTL, user_info)
+                exp_claim = payload.get("exp")
+                cache_ttl = min(_TOKEN_CACHE_TTL, max(1.0, float(exp_claim) - now)) if exp_claim else _TOKEN_CACHE_TTL
+                if cache_ttl >= 1.0:
+                    _TOKEN_CACHE[token_hash] = (now + cache_ttl, user_info)
                 return user_info
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail="Token expired")
@@ -92,7 +91,10 @@ async def get_user_from_token(token: str) -> dict:
             org_id = user.id
 
         user_info = {"user_id": user.id, "org_id": org_id, "email": user.email}
-        _TOKEN_CACHE[token_hash] = (now + _TOKEN_CACHE_TTL, user_info)
+        exp_claim = payload.get("exp") if "payload" in locals() and isinstance(payload, dict) else None
+        cache_ttl = min(_TOKEN_CACHE_TTL, max(1.0, float(exp_claim) - now)) if exp_claim else _TOKEN_CACHE_TTL
+        if cache_ttl >= 1.0:
+            _TOKEN_CACHE[token_hash] = (now + cache_ttl, user_info)
         return user_info
     except HTTPException:
         raise

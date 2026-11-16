@@ -6,9 +6,10 @@ Input:   meeting_id, summary, action_items, attendees
 Flow:    Draft email → format Markdown → send via Resend
 """
 
+import asyncio
+import html
 import logging
 import re
-import uuid
 
 import resend
 
@@ -27,11 +28,11 @@ def _format_decisions_html(decisions: list) -> str:
     rows = ""
     for item in decisions:
         if isinstance(item, dict):
-            text = item.get("text", "")
-            decided_by = item.get("decided_by", "Team")
-            confidence = (item.get("confidence") or "high").capitalize()
+            text = html.escape(str(item.get("text", "")))
+            decided_by = html.escape(str(item.get("decided_by", "Team")))
+            confidence = html.escape(str((item.get("confidence") or "high").capitalize()))
         else:
-            text = str(item)
+            text = html.escape(str(item))
             decided_by = "Team"
             confidence = "High"
 
@@ -64,12 +65,12 @@ def _format_action_items_html(items: list) -> str:
     rows = ""
     for item in items:
         if isinstance(item, dict):
-            text = item.get("text") or item.get("description") or ""
-            owner = item.get("owner") or item.get("owner_name") or "Unassigned"
-            priority = (item.get("priority") or "medium").capitalize()
-            due = item.get("due_date") or "Not specified"
+            text = html.escape(str(item.get("text") or item.get("description") or ""))
+            owner = html.escape(str(item.get("owner") or item.get("owner_name") or "Unassigned"))
+            priority = html.escape(str((item.get("priority") or "medium").capitalize()))
+            due = html.escape(str(item.get("due_date") or "Not specified"))
         else:
-            text = str(item)
+            text = html.escape(str(item))
             owner = "Unassigned"
             priority = "Medium"
             due = "Not specified"
@@ -103,10 +104,11 @@ def _build_email_html(
     meeting_id: str,
 ) -> str:
     # assembles the complete branded email layout
+    safe_title = html.escape(str(meeting_title or "Meeting Summary"))
+    escaped_summary = html.escape(str(summary or "No summary available."))
     summary_html = re.sub(
-        r"\*\*(.*?)\*\*", r"<strong>\1</strong>", summary or "No summary available."
-    )
-    summary_html = summary_html.replace("\n", "<br>")
+        r"\*\*(.*?)\*\*", r"<strong>\1</strong>", escaped_summary
+    ).replace("\n", "<br>")
     decisions_html = _format_decisions_html(decisions)
     action_items_html = _format_action_items_html(action_items)
 
@@ -117,7 +119,7 @@ def _build_email_html(
 <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden">
   <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:32px 40px">
     <h1 style="color:#fff;margin:0;font-size:24px">Meeting Summary</h1>
-    <p style="color:rgba(255,255,255,.85);margin:8px 0 0">{meeting_title}</p>
+    <p style="color:rgba(255,255,255,.85);margin:8px 0 0">{safe_title}</p>
   </div>
   <div style="padding:32px 40px">
     <h2 style="font-size:16px;color:#4a5568;text-transform:uppercase;letter-spacing:.05em">Summary</h2>
@@ -173,12 +175,14 @@ async def run_email_agent(
         if lookup_id:
             try:
                 supabase = get_supabase_admin()
-                res = (
-                    supabase.table("users")
-                    .select("email")
-                    .eq("id", lookup_id)
-                    .single()
-                    .execute()
+                res = await asyncio.to_thread(
+                    lambda: (
+                        supabase.table("users")
+                        .select("email")
+                        .eq("id", lookup_id)
+                        .single()
+                        .execute()
+                    )
                 )
                 if res.data and res.data.get("email"):
                     recipient_email = res.data["email"]
@@ -228,13 +232,15 @@ async def run_email_agent(
 
     try:
         resend.api_key = settings.RESEND_API_KEY
-        result = resend.Emails.send(
-            {
-                "from": "MeetMaxxing <noreply@meetmaxxing.app>",
-                "to": [recipient_email],
-                "subject": f"Meeting Summary: {meeting_title or 'Your Meeting'}",
-                "html": html_body,
-            }
+        result = await asyncio.to_thread(
+            lambda: resend.Emails.send(
+                {
+                    "from": settings.RESEND_FROM_EMAIL,
+                    "to": [recipient_email],
+                    "subject": f"Meeting Summary: {meeting_title or 'Your Meeting'}",
+                    "html": html_body,
+                }
+            )
         )
         logger.info(
             "[Email Agent] Email sent → %s (id: %s)", recipient_email, result.get("id")

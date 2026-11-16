@@ -58,7 +58,7 @@ async def run_docs_qa_agent(
 
     mem_filter = MemoryFilter(
         org_id=org_id,
-        user_id=filters.get("user_id", ""),
+        user_id=filters.get("user_id") or user_id,
         meeting_id=filters.get("meeting_id"),
         speaker_name=filters.get("speaker_name"),
         topic="uploaded_context",
@@ -72,7 +72,7 @@ async def run_docs_qa_agent(
     context_block, sources = _build_context_block(results)
 
     prompt = (
-        f"{_SYSTEM_PROMPT}\n\nQuestion: {question}\n\n"
+        f"Question: {question}\n\n"
         f"Retrieved context from documents:\n{context_block if context_block else '(No relevant document context found)'}\n\n"
         "Answer the question based on the document context above. Ensure valid JSON output:\n"
         '{\n  "answer": "...",\n  "confidence": "high|medium|low",\n  "sources_used": [0, 1]\n}'
@@ -82,9 +82,11 @@ async def run_docs_qa_agent(
         from ..core.llm_fallback import generate_content_with_fallback
 
         raw, powered_by = await generate_content_with_fallback(
-            prompt,
-            response_format_json=True,
+            prompt=prompt,
+            system_instruction=_SYSTEM_PROMPT,
+            temperature=0.2,
             max_tokens=1024,
+            response_format_json=True,
             bypass_cache=False,
             user_id=user_id,
         )

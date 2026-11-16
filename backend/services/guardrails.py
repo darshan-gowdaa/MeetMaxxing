@@ -106,7 +106,18 @@ async def validate_summary_output(
                 f"Action item owner '{owner}' not found in transcript speakers"
             )
 
-    eval_context = f"Transcript (first 2000 chars):\n{transcript[:2000]}"
+    if len(transcript) <= 6000:
+        eval_context = f"Transcript:\n{transcript}"
+    else:
+        part_len = 2000
+        start = transcript[:part_len]
+        mid_idx = len(transcript) // 2
+        middle = transcript[mid_idx - part_len // 2 : mid_idx + part_len // 2]
+        end = transcript[-part_len:]
+        eval_context = (
+            f"Transcript excerpts (start, middle, end):\n"
+            f"{start}\n\n[... middle discussion ...]\n{middle}\n\n[... concluding discussion ...]\n{end}"
+        )
     eval_content = (
         f"Summary: {summary_output.get('summary', '')}\n"
         f"Decisions: {[d.get('text') for d in decisions]}\n"

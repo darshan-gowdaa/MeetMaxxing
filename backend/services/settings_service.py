@@ -328,6 +328,16 @@ def persist_user_settings(supabase, user_id: str, updates: dict) -> dict:
             res = supabase.table("users").update(db_updates).eq("id", user_id).execute()
         else:
             db_updates["id"] = user_id
+            if "email" not in db_updates:
+                user_email = f"{user_id}@{settings.APP_DOMAIN}"
+                try:
+                    if hasattr(supabase, "auth") and hasattr(supabase.auth, "admin"):
+                        u_info = supabase.auth.admin.get_user_by_id(user_id)
+                        if u_info and hasattr(u_info, "user") and u_info.user.email:
+                            user_email = u_info.user.email
+                except Exception:
+                    pass
+                db_updates["email"] = user_email
             res = supabase.table("users").upsert(db_updates).execute()
     except Exception:
         fallback_updates = {"notifications": new_notifs}
@@ -341,6 +351,8 @@ def persist_user_settings(supabase, user_id: str, updates: dict) -> dict:
                 )
             else:
                 fallback_updates["id"] = user_id
+                if "email" not in fallback_updates:
+                    fallback_updates["email"] = db_updates.get("email", f"{user_id}@{settings.APP_DOMAIN}")
                 res = supabase.table("users").upsert(fallback_updates).execute()
         except Exception as e:
             raise HTTPException(
@@ -370,8 +382,12 @@ def persist_user_settings(supabase, user_id: str, updates: dict) -> dict:
     return format_settings_response(merged_data)
 
 
+MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_AVATAR_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+
 async def process_avatar_request(supabase, user_id: str, request: Request) -> dict:
-    """Update user avatar from JSON url or multipart file upload."""
+    """Update user avatar from JSON url or multipart file upload with validation."""
     content_type = request.headers.get("content-type", "")
     avatar_url: str | None = None
 
@@ -391,8 +407,12 @@ async def process_avatar_request(supabase, user_id: str, request: Request) -> di
             file = form.get("file") or form.get("avatar")
             if hasattr(file, "read") and hasattr(file, "filename") and file.filename:
                 contents = await file.read()
+                if len(contents) > MAX_AVATAR_SIZE:
+                    raise HTTPException(status_code=413, detail="Avatar file too large (max 5MB)")
                 filename = file.filename or "avatar.png"
                 ext = filename.split(".")[-1].lower() if "." in filename else "png"
+                if ext not in ALLOWED_AVATAR_EXTENSIONS:
+                    raise HTTPException(status_code=415, detail="Invalid file type. Allowed: png, jpg, jpeg, webp")
                 destination_path = (
                     f"{user_id}-{int(datetime.now(UTC).timestamp())}.{ext}"
                 )
@@ -486,9 +506,17 @@ async def process_avatar_request(supabase, user_id: str, request: Request) -> di
                 "id", user_id
             ).execute()
         else:
-            supabase.table("users").upsert(
-                {"id": user_id, "notifications": new_notifs}
-            ).execute()
+            upsert_payload = {"id": user_id, "notifications": new_notifs}
+            user_email = f"{user_id}@{settings.APP_DOMAIN}"
+            try:
+                if hasattr(supabase, "auth") and hasattr(supabase.auth, "admin"):
+                    u_info = supabase.auth.admin.get_user_by_id(user_id)
+                    if u_info and hasattr(u_info, "user") and u_info.user.email:
+                        user_email = u_info.user.email
+            except Exception:
+                pass
+            upsert_payload["email"] = user_email
+            supabase.table("users").upsert(upsert_payload).execute()
     except Exception as e:
         logger.error(f"[Avatar] Failed updating users notifications: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update avatar: {e}")

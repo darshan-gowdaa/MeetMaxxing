@@ -9,18 +9,18 @@ Governed by Lyzr light guardrail
 """
 
 import time
-
+from cachetools import TTLCache
 from loguru import logger
 
 from ..core.config import settings
 from ..core.redis_client import get_transcript_window
 from ..core.utils import parse_json_clean
 
-# In-process state (not multi-worker safe — Redis-backed solution needed for production scale)
-_last_call_times: dict[str, float] = {}
-_last_results: dict[str, dict] = {}
-_last_chunk_counts: dict[str, int] = {}
-_consecutive_unchanged: dict[str, int] = {}
+# In-process state bounded by TTLCache (evicts stale meetings after 1 hour)
+_last_call_times: TTLCache[str, float] = TTLCache(maxsize=1000, ttl=3600)
+_last_results: TTLCache[str, dict] = TTLCache(maxsize=1000, ttl=3600)
+_last_chunk_counts: TTLCache[str, int] = TTLCache(maxsize=1000, ttl=3600)
+_consecutive_unchanged: TTLCache[str, int] = TTLCache(maxsize=1000, ttl=3600)
 
 _SYSTEM_PROMPT = """You are MeetMaxxing, an AI meeting copilot giving LIVE assistance to the speaker in a meeting.
 
@@ -166,13 +166,14 @@ async def run_realtime_agent(
     except Exception as e:
         logger.debug("[Realtime Agent] Could not fetch uploaded context: {}", e)
 
-    prompt = f"{_SYSTEM_PROMPT}\n\n{context_block}{uploaded_context}\nNew transcript utterances:\n{transcript_text}"
+    prompt = f"{context_block}{uploaded_context}\nNew transcript utterances:\n{transcript_text}"
 
     try:
         from ..core.llm_fallback import generate_content_with_fallback
 
         raw, powered_by = await generate_content_with_fallback(
-            prompt,
+            prompt=prompt,
+            system_instruction=_SYSTEM_PROMPT,
             response_format_json=True,
             bypass_cache=force,
             max_tokens=600,

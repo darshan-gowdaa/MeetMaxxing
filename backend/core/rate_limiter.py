@@ -5,6 +5,7 @@ import random
 import time
 from dataclasses import dataclass
 from typing import Any
+from cachetools import TTLCache
 
 from .config import settings
 
@@ -86,8 +87,8 @@ class IntelligentRateLimiter:
         self.buckets: dict[str, TokenBucket] = {}
         self.health: dict[str, ProviderHealth] = {}
 
-        # Semantic Response Cache
-        self.cache: dict[str, CacheEntry] = {}
+        # Semantic Response Cache bounded by TTLCache
+        self.cache: TTLCache[str, CacheEntry] = TTLCache(maxsize=1000, ttl=300)
 
         self._cache_lock = asyncio.Lock()
 

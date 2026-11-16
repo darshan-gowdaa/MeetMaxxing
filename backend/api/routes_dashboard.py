@@ -2,6 +2,7 @@
 Dashboard endpoints — meeting list, summaries, action items.
 """
 
+import asyncio
 import logging
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -24,18 +25,20 @@ async def list_meetings(
 ):
     """List meetings for the authenticated user's org, newest first."""
     supabase = get_supabase_admin()
-    result = (
-        supabase.table("meetings")
-        .select(
-            "id, title, start_at, end_at, summary, status, attendees, guardrail_score",
-            count="exact",
+    result = await asyncio.to_thread(
+        lambda: (
+            supabase.table("meetings")
+            .select(
+                "id, title, start_at, end_at, summary, status, attendees, guardrail_score",
+                count="exact",
+            )
+            .eq("org_id", user["org_id"])
+            .order("start_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
         )
-        .eq("org_id", user["org_id"])
-        .order("start_at", desc=True)
-        .range(offset, offset + limit - 1)
-        .execute()
     )
-    total_meetings = len(result.data or [])
+    total_meetings = result.count if result.count is not None else len(result.data or [])
 
     return {
         "meetings": result.data or [],
@@ -57,8 +60,8 @@ async def get_meeting_detail(
 
     target_id = meeting["id"]
 
-    actions = (
-        supabase.table("action_items").select("*").eq("meeting_id", target_id).execute()
+    actions = await asyncio.to_thread(
+        lambda: supabase.table("action_items").select("*").eq("meeting_id", target_id).execute()
     )
 
     # Sort by priority (high → medium → low) then status (open → in_progress → done)
@@ -93,7 +96,7 @@ async def list_action_items(
     )
     if status != "all":
         query = query.eq("status", status)
-    result = query.execute()
+    result = await asyncio.to_thread(lambda: query.execute())
     return {"action_items": result.data or []}
 
 
@@ -118,12 +121,14 @@ async def update_action_item(
         )
     if not safe_updates:
         raise HTTPException(status_code=400, detail="No valid fields to update")
-    result = (
-        supabase.table("action_items")
-        .update(safe_updates)
-        .eq("id", item_id)
-        .eq("org_id", user["org_id"])
-        .execute()
+    result = await asyncio.to_thread(
+        lambda: (
+            supabase.table("action_items")
+            .update(safe_updates)
+            .eq("id", item_id)
+            .eq("org_id", user["org_id"])
+            .execute()
+        )
     )
     return result.data[0] if result.data else {}
 
@@ -138,12 +143,14 @@ async def update_meeting(
     supabase = get_supabase_admin()
     allowed = {"title", "summary"}
     safe_updates = {k: v for k, v in updates.items() if k in allowed}
-    result = (
-        supabase.table("meetings")
-        .update(safe_updates)
-        .eq("id", meeting_id)
-        .eq("org_id", user["org_id"])
-        .execute()
+    result = await asyncio.to_thread(
+        lambda: (
+            supabase.table("meetings")
+            .update(safe_updates)
+            .eq("id", meeting_id)
+            .eq("org_id", user["org_id"])
+            .execute()
+        )
     )
     return result.data[0] if result.data else {}
 
@@ -161,16 +168,20 @@ async def delete_meeting(
     target_id = meeting["id"]
 
     # Delete associated action items first (if no cascade in DB)
-    supabase.table("action_items").delete().eq("meeting_id", target_id).eq(
-        "org_id", user["org_id"]
-    ).execute()
+    await asyncio.to_thread(
+        lambda: supabase.table("action_items").delete().eq("meeting_id", target_id).eq(
+            "org_id", user["org_id"]
+        ).execute()
+    )
     # Delete meeting
-    result = (
-        supabase.table("meetings")
-        .delete()
-        .eq("id", target_id)
-        .eq("org_id", user["org_id"])
-        .execute()
+    result = await asyncio.to_thread(
+        lambda: (
+            supabase.table("meetings")
+            .delete()
+            .eq("id", target_id)
+            .eq("org_id", user["org_id"])
+            .execute()
+        )
     )
 
     # Delete associated memories from Qdrant

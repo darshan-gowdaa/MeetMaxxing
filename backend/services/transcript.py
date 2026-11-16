@@ -49,15 +49,26 @@ async def ingest_chunk(raw_chunk: dict, on_ai_chunk_ready=None) -> dict:
 
 async def persist_transcript_to_db(meeting_id: str, utterances: list[dict]) -> None:
     """Persist full transcript to Supabase after meeting ends."""
-    if not is_valid_uuid(meeting_id):
-        return
+    import asyncio
+    from ..core.database import get_meeting_record
+
     supabase = get_supabase_admin()
-    supabase.table("meetings").update(
-        {
-            "transcript_data": utterances,
-            "end_at": datetime.now(UTC).isoformat(),
-        }
-    ).eq("id", meeting_id).execute()
+    target_uuid = meeting_id
+    if not is_valid_uuid(meeting_id):
+        record = await asyncio.to_thread(lambda: get_meeting_record(supabase, meeting_id))
+        if record and record.get("id"):
+            target_uuid = record["id"]
+        else:
+            return
+
+    await asyncio.to_thread(
+        lambda: supabase.table("meetings").update(
+            {
+                "transcript_data": utterances,
+                "end_at": datetime.now(UTC).isoformat(),
+            }
+        ).eq("id", target_uuid).execute()
+    )
 
 
 async def create_meeting_record(
@@ -68,6 +79,7 @@ async def create_meeting_record(
     google_meet_link: str = "",
 ) -> dict:
     """Create a meeting record in Supabase and return it."""
+    import asyncio
     from ..core.redis_client import set_meeting_alias
 
     final_title = generate_meeting_title(title, google_meet_link)
@@ -91,11 +103,15 @@ async def create_meeting_record(
         insert_data["google_meet_link"] = clean_code
 
     try:
-        result = supabase.table("meetings").insert(insert_data).execute()
+        result = await asyncio.to_thread(
+            lambda: supabase.table("meetings").insert(insert_data).execute()
+        )
     except Exception as e:
         if "google_meet_link" in str(e):
             insert_data.pop("google_meet_link", None)
-            result = supabase.table("meetings").insert(insert_data).execute()
+            result = await asyncio.to_thread(
+                lambda: supabase.table("meetings").insert(insert_data).execute()
+            )
         else:
             raise
 

@@ -31,6 +31,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         # ip -> list of timestamps
         self._windows: dict[str, deque[float]] = defaultdict(deque)
+        self._last_pruned: float = time.time()
 
     def _get_client_ip(self, request: Request) -> str:
         # Honour X-Forwarded-For from reverse proxy (Render/Vercel)
@@ -61,6 +62,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         window_s, max_req = self._limit_for(path)
 
         now = time.time()
+        # Periodic prune to prevent unbounded growth of inactive client IPs
+        if now - self._last_pruned > 300.0 or len(self._windows) > 5000:
+            self._last_pruned = now
+            stale_ips = [k for k, timestamps in list(self._windows.items()) if not timestamps or timestamps[-1] < now - 300.0]
+            for k in stale_ips:
+                self._windows.pop(k, None)
+
         cutoff = now - window_s
         hits = self._windows[ip]
 

@@ -32,9 +32,11 @@ TEST_USER = {"user_id": "test-user-byok-preflight", "org_id": "test-org"}
 def clean_caches():
     _MODELS_CACHE.clear()
     invalidate_user_byok_cache(TEST_USER["user_id"])
+    app.dependency_overrides[get_current_user] = lambda: TEST_USER
     yield
     _MODELS_CACHE.clear()
     invalidate_user_byok_cache(TEST_USER["user_id"])
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 # ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ import { SelectableGrid } from "@/components/organisms/SelectableGrid";
 import DashboardHero from "@/components/organisms/DashboardHero";
 import FloatingPillToolbar from "@/components/molecules/FloatingPillToolbar";
 import { useDashboardManager } from "./_hooks/useDashboardManager";
+import { M3EmptyState } from "@/components/atoms/M3EmptyState";
 
 export default function Dashboard() {
   const [compactCards, setCompactCards] = useState(false);
@@ -107,19 +108,17 @@ export default function Dashboard() {
                   groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
                   emptyState={
-                    <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[32px] border border-dashed border-border bg-surface-dim text-center p-6">
-                      <div className="w-16 h-16 rounded-[24px] bg-surface2 border border-border flex items-center justify-center mb-1">
-                        <RiVideoChatLine className="w-8 h-8 text-text-muted" />
-                      </div>
-                      <p className="text-[15px] font-bold text-text">
-                        {search ? "No matching meetings" : "No meetings yet"}
-                      </p>
-                      <p className="text-[12.5px] text-text-muted max-w-xs leading-relaxed">
-                        {search
-                          ? "Try a different search term."
-                          : "Start a Google Meet with the MeetMaxxing extension active to record your first meeting."}
-                      </p>
-                    </div>
+                    <M3EmptyState
+                      icon={RiVideoChatLine}
+                      title={search ? "No matching meetings" : "No meetings captured yet"}
+                      description={
+                        search
+                          ? `No meeting transcripts match "${search}". Try clearing your query or refining the search term.`
+                          : "Launch Google Meet with the MeetMaxxing extension enabled to automatically record transcripts and action items."
+                      }
+                      actionLabel={search ? "Clear Search" : undefined}
+                      onAction={search ? () => setSearch("") : undefined}
+                    />
                   }
                   renderHeader={({ setManualSelectionMode, activeGroup }) => {
                     // Decide what title and icon to show based on search, sort mode, or active scroll group

@@ -1,6 +1,8 @@
+import asyncio
 import os
 import time
 from typing import Any
+from cachetools import TTLCache
 import httpx
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from loguru import logger
@@ -9,7 +11,9 @@ from .config import settings
 from .database import get_supabase_admin
 
 # Cache for resolved BYOK configs: user_id -> (timestamp, byok_dict)
-_BYOK_CACHE: dict[str, tuple[float, dict[str, Any] | None]] = {}
+_BYOK_CACHE: TTLCache[str, tuple[float, dict[str, Any] | None]] = TTLCache(
+    maxsize=1000, ttl=30.0
+)
 _CACHE_TTL_SECONDS = 30.0
 
 
@@ -98,12 +102,14 @@ async def resolve_user_byok(user_id: str | None) -> dict[str, Any] | None:
     try:
         supabase = get_supabase_admin()
         # 1. Fetch user model preferences
-        pref_res = (
-            supabase.table("user_model_preferences")
-            .select("*")
-            .eq("user_id", user_id)
-            .eq("feature_scope", "default_chat")
-            .execute()
+        pref_res = await asyncio.to_thread(
+            lambda: (
+                supabase.table("user_model_preferences")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("feature_scope", "default_chat")
+                .execute()
+            )
         )
 
         prefs = pref_res.data[0] if pref_res.data else None
@@ -117,12 +123,14 @@ async def resolve_user_byok(user_id: str | None) -> dict[str, Any] | None:
         provider_id = _infer_provider_from_model(chosen_model)
 
         # 2. Fetch available keys for this user
-        keys_res = (
-            supabase.table("user_api_keys")
-            .select("*")
-            .eq("user_id", user_id)
-            .neq("status", "invalid")
-            .execute()
+        keys_res = await asyncio.to_thread(
+            lambda: (
+                supabase.table("user_api_keys")
+                .select("*")
+                .eq("user_id", user_id)
+                .neq("status", "invalid")
+                .execute()
+            )
         )
         keys = keys_res.data or []
         if not keys:
@@ -365,7 +373,7 @@ async def call_byok_provider(
                     cfg["system_instruction"] = system_instruction
                 if response_format_json:
                     cfg["response_mime_type"] = "application/json"
-                loop = httpx.asyncio.get_running_loop()
+                loop = asyncio.get_running_loop()
                 resp = await loop.run_in_executor(
                     None,
                     lambda: client.models.generate_content(

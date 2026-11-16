@@ -5,6 +5,7 @@ description = "MeetMaxxing backend API"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "cachetools>=8.0.0",
     "cryptography>=49.0.0",
     "fastapi>=0.140.1",
     "google-api-python-client>=2.198.0",

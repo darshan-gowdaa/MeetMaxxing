@@ -67,11 +67,13 @@ def get_meeting_record(supabase, meeting_id: str, org_id: str = None) -> dict | 
 def ensure_meeting_record(
     supabase,
     meeting_id: str,
-    org_id: str = "default_org",
-    user_id: str = "default_user",
+    org_id: str | None = None,
+    user_id: str | None = None,
     title: str = "",
 ) -> dict:
     """Ensure a meeting record exists in Supabase, auto-creating if missing."""
+    from loguru import logger
+
     record = get_meeting_record(supabase, meeting_id, org_id)
     if record:
         return record
@@ -86,15 +88,27 @@ def ensure_meeting_record(
 
     final_title = generate_meeting_title(title, clean_code)
 
+    # Coerce placeholders to valid UUIDs where possible
+    effective_user_id = user_id if (user_id and is_valid_uuid(user_id)) else None
+    effective_org_id = org_id if (org_id and is_valid_uuid(org_id)) else effective_user_id
+
     insert_data = {
         "id": m_id,
-        "org_id": org_id,
-        "user_id": user_id,
         "title": final_title,
         "attendees": [],
         "start_at": datetime.now(UTC).isoformat(),
         "status": "active",
     }
+    if effective_org_id:
+        insert_data["org_id"] = effective_org_id
+    elif org_id:
+        insert_data["org_id"] = org_id
+
+    if effective_user_id:
+        insert_data["user_id"] = effective_user_id
+    elif user_id:
+        insert_data["user_id"] = user_id
+
     if clean_code:
         insert_data["google_meet_link"] = clean_code
 
@@ -103,14 +117,14 @@ def ensure_meeting_record(
         if res.data:
             return res.data[0]
     except Exception as e:
-        if "google_meet_link" in str(e):
-            insert_data.pop("google_meet_link", None)
-            try:
-                res = supabase.table("meetings").insert(insert_data).execute()
-                if res.data:
-                    return res.data[0]
-            except Exception:
-                pass
+        logger.warning("[DB] Insert meeting failed: {}, retrying without optional fields", e)
+        insert_data.pop("google_meet_link", None)
+        try:
+            res = supabase.table("meetings").insert(insert_data).execute()
+            if res.data:
+                return res.data[0]
+        except Exception as retry_e:
+            logger.error("[DB] Failed to insert meeting in ensure_meeting_record: {}", retry_e)
 
     return {
         "id": m_id,

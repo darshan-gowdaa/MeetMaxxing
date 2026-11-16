@@ -1,4 +1,6 @@
+import asyncio
 import datetime
+import io
 import uuid
 
 import docx
@@ -18,27 +20,36 @@ from ..memory.schemas import MemoryPoint, MemoryType
 
 router = APIRouter(prefix="/context", tags=["context"])
 
+MAX_FILE_SIZE = 15 * 1024 * 1024  # 15MB
 
-async def extract_text_from_file(file: UploadFile) -> str:
+
+def _sync_extract_text(raw: bytes, filename: str) -> str:
     content = ""
-    filename = file.filename or ""
-    await file.seek(0)
+    bio = io.BytesIO(raw)
     if filename.endswith(".pdf"):
-        pdf_reader = PyPDF2.PdfReader(file.file)
+        pdf_reader = PyPDF2.PdfReader(bio)
         for page in pdf_reader.pages:
             text = page.extract_text()
             if text:
                 content += text + "\n"
     elif filename.endswith(".docx"):
-        doc = docx.Document(file.file)
+        doc = docx.Document(bio)
         for para in doc.paragraphs:
             content += para.text + "\n"
     elif filename.endswith(".txt"):
-        raw = await file.read()
-        content = raw.decode("utf-8")
+        content = raw.decode("utf-8", errors="replace")
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type")
     return content
+
+
+async def extract_text_from_file(file: UploadFile) -> str:
+    await file.seek(0)
+    raw = await file.read()
+    if len(raw) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File too large (max 15MB)")
+    filename = (file.filename or "").lower()
+    return await asyncio.to_thread(_sync_extract_text, raw, filename)
 
 
 @router.post("/upload")
@@ -64,7 +75,7 @@ async def upload_context(
 
         vectors = await embed_batch(valid_chunks)
 
-        for chunk, vector in zip(valid_chunks, vectors):
+        for idx, (chunk, vector) in enumerate(zip(valid_chunks, vectors)):
             pt = MemoryPoint(
                 id=str(uuid.uuid4()),
                 vector=vector,
@@ -76,6 +87,8 @@ async def upload_context(
                 meeting_date=today_str,
                 topic="uploaded_context",
                 speaker_name=file.filename,
+                timestamp_ms=idx,
+                priority=idx,
             )
             points.append(pt)
 
@@ -167,11 +180,39 @@ async def clear_context(
         )
 
 
+async def _scroll_all_points(
+    client,
+    collection_name: str,
+    scroll_filter: qmodels.Filter,
+    with_payload=True,
+    with_vectors=False,
+    page_size: int = 250,
+):
+    """Cursor-paginated scroll to fetch all points without loading unbounded chunks at once."""
+    all_points = []
+    offset = None
+    while True:
+        results, next_offset = await client.scroll(
+            collection_name=collection_name,
+            scroll_filter=scroll_filter,
+            limit=page_size,
+            offset=offset,
+            with_payload=with_payload,
+            with_vectors=with_vectors,
+        )
+        all_points.extend(results)
+        if next_offset is None or not results:
+            break
+        offset = next_offset
+    return all_points
+
+
 @router.get("/files")
 async def list_all_files(user: dict = Depends(get_current_user)):
     try:
         client = await get_qdrant()
-        results = await client.scroll(
+        points = await _scroll_all_points(
+            client=client,
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=qmodels.Filter(
                 must=[
@@ -183,11 +224,9 @@ async def list_all_files(user: dict = Depends(get_current_user)):
                     ),
                 ]
             ),
-            limit=10000,
             with_payload=["speaker_name", "meeting_id", "meeting_date"],
             with_vectors=False,
         )
-        points = results[0]
         files = {}
         for pt in points:
             fname = pt.payload.get("speaker_name", "Unknown File")
@@ -214,7 +253,8 @@ async def list_all_files(user: dict = Depends(get_current_user)):
 async def list_files(meeting_id: str, user: dict = Depends(get_current_user)):
     try:
         client = await get_qdrant()
-        results = await client.scroll(
+        points = await _scroll_all_points(
+            client=client,
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=qmodels.Filter(
                 must=[
@@ -229,17 +269,16 @@ async def list_files(meeting_id: str, user: dict = Depends(get_current_user)):
                     ),
                 ]
             ),
-            limit=10000,
             with_payload=["speaker_name"],
             with_vectors=False,
         )
-        points = results[0]
         files = {}
         for pt in points:
             fname = pt.payload.get("speaker_name", "Unknown File")
             files[fname] = files.get(fname, 0) + 1
 
         file_list = [{"filename": k, "chunks": v} for k, v in files.items()]
+        return {"files": file_list}
         return {"files": file_list}
     except Exception:
         raise HTTPException(
@@ -315,14 +354,14 @@ async def rename_file(
                 ),
             ]
         )
-        results = await client.scroll(
+        points = await _scroll_all_points(
+            client=client,
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=scroll_filter,
-            limit=10000,
             with_payload=False,
             with_vectors=False,
         )
-        point_ids = [pt.id for pt in results[0]]
+        point_ids = [pt.id for pt in points]
         if not point_ids:
             raise HTTPException(
                 status_code=404, detail=f"No points found for file '{req.old_filename}'"
@@ -358,7 +397,8 @@ async def get_file_content(
 ):
     try:
         client = await get_qdrant()
-        results = await client.scroll(
+        points = await _scroll_all_points(
+            client=client,
             collection_name=settings.QDRANT_COLLECTION,
             scroll_filter=qmodels.Filter(
                 must=[
@@ -376,11 +416,17 @@ async def get_file_content(
                     ),
                 ]
             ),
-            limit=10000,
             with_payload=True,
             with_vectors=False,
         )
-        points = results[0]
+        # Sort by original chunk ordering index to avoid garbled reconstructed file content
+        points.sort(
+            key=lambda pt: (
+                pt.payload.get("priority")
+                if pt.payload.get("priority") is not None
+                else pt.payload.get("timestamp_ms", 0)
+            )
+        )
         content = "\n\n".join([pt.payload.get("text", "") for pt in points])
         return {"content": content}
     except Exception:

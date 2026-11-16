@@ -18,6 +18,7 @@ import ContextCard from "@/components/organisms/ContextCard";
 import ContextHero from "@/components/organisms/ContextHero";
 import FloatingPillToolbar from "@/components/molecules/FloatingPillToolbar";
 import { useContextManager, type ContextFile } from "./_hooks/useContextManager";
+import { M3EmptyState } from "@/components/atoms/M3EmptyState";
 
 export default function ContextManagerPage() {
   const {
@@ -89,19 +90,17 @@ export default function ContextManagerPage() {
                   groupBy={sortBy === "date" ? undefined : () => ""}
                   onDelete={handleMultiDelete}
                   emptyState={
-                    <div className="h-72 flex flex-col items-center justify-center gap-3 rounded-[32px] border border-dashed border-border bg-surface-dim text-center p-6">
-                      <div className="w-16 h-16 rounded-[24px] bg-surface2 border border-border flex items-center justify-center mb-1">
-                        <RiFolderOpenFill className="w-8 h-8 text-text-muted" />
-                      </div>
-                      <p className="text-[15px] font-bold text-text">
-                        {search ? "No matching files" : "No files yet"}
-                      </p>
-                      <p className="text-[12.5px] text-text-muted max-w-xs leading-relaxed">
-                        {search
-                          ? "Try a different search term."
-                          : "Upload documents or code files to provide context for your meetings."}
-                      </p>
-                    </div>
+                    <M3EmptyState
+                      icon={RiFolderOpenFill}
+                      title={search ? "No matching files" : "No context files uploaded"}
+                      description={
+                        search
+                          ? `No files match "${search}". Try clearing your search filter.`
+                          : "Upload documents, notes, or code files to provide grounding context for your AI meeting agents."
+                      }
+                      actionLabel={search ? "Clear Search" : "Upload File"}
+                      onAction={search ? () => setSearch("") : () => setShowUpload(true)}
+                    />
                   }
                   renderHeader={({ setManualSelectionMode, activeGroup }) => {
                     // Decide what title and icon to show based on search, sort mode, or active scroll group
