@@ -48,3 +48,8 @@ window.addEventListener("message", (event) => {
     browser.storage.local.set(data).then(onSet).catch(e => console.error(e));
   }
 });
+
+// Announce presence so the page can immediately handshake without race conditions
+try {
+  window.postMessage({ type: "MEETMAXXING_EXTENSION_READY" }, window.location.origin);
+} catch (e) {}

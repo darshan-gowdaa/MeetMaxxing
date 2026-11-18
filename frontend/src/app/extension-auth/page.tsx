@@ -71,6 +71,15 @@ export default function ExtensionAuthPage() {
  if (e.source !== window || !e.data || typeof e.data !== "object") return;
  if (e.data.type ==="MEETMAXXING_AUTH_SUCCESS") {
  setConnectState("connected");
+ } else if (e.data.type === "MEETMAXXING_EXTENSION_READY" && session?.access_token) {
+ window.postMessage(
+ {
+ type: "MEETMAXXING_AUTH_TOKEN",
+ token: session.access_token,
+ refreshToken: session.refresh_token,
+ },
+ window.location.origin
+ );
  }
  };
  window.addEventListener("message", handleMessage);

@@ -47,12 +47,40 @@ export function ContextAgent({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const authFetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const headers = new Headers(options.headers || {});
+    if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
+    let res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+      report401();
+      const ext = extApi();
+      const refreshResult = await new Promise<any>((resolve) => {
+        try {
+          ext?.runtime?.sendMessage({ type: "REFRESH_AUTH" }, resolve);
+        } catch {
+          resolve(null);
+        }
+      });
+      if (refreshResult?.ok) {
+        const stored = await new Promise<any>((resolve) => {
+          try {
+            ext?.storage?.local?.get(["authToken"], resolve);
+          } catch {
+            resolve({});
+          }
+        });
+        if (stored?.authToken) {
+          headers.set("Authorization", `Bearer ${stored.authToken}`);
+          res = await fetch(url, { ...options, headers });
+        }
+      }
+    }
+    return res;
+  };
+
   const fetchFiles = async () => {
     try {
-      const res = await fetch(`${getBaseUrlBackend()}/context/files`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (res.status === 401) { report401(); return; }
+      const res = await authFetchWithRetry(`${getBaseUrlBackend()}/context/files`);
       if (res.ok) setAvailableFiles((await res.json()).files || []);
     } catch (e) {}
   };
@@ -102,12 +130,11 @@ export function ContextAgent({
       fd.append("file", file);
       fd.append("meeting_id", meetingId);
       try {
-        const res = await fetch(`${getBaseUrlBackend()}/context/upload`, {
+        const res = await authFetchWithRetry(`${getBaseUrlBackend()}/context/upload`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${authToken}` },
           body: fd,
         });
-        if (res.status === 401) { report401(); setUploadError("Session expired."); anyFailed = true; break; }
+        if (res.status === 401) { setUploadError("Session expired."); anyFailed = true; break; }
         if (res.ok) uploaded.push(file.name);
         else anyFailed = true;
       } catch { anyFailed = true; }
@@ -126,13 +153,13 @@ export function ContextAgent({
     setLoadingChat(true);
     abortRef.current = new AbortController();
     try {
-      const res = await fetch(`${getBaseUrlBackend()}/context/chat`, {
+      const res = await authFetchWithRetry(`${getBaseUrlBackend()}/context/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ meeting_id: meetingId, query: text, target_file: selectedTargetFiles.length ? selectedTargetFiles : null }),
         signal: abortRef.current.signal,
       });
-      if (res.status === 401) { report401(); setChatHistory((p) => [...p, { role: "agent", content: "Session expired. Please log in again." }]); return; }
+      if (res.status === 401) { setChatHistory((p) => [...p, { role: "agent", content: "Session expired. Please log in again." }]); return; }
       if (res.ok) {
         const data = await res.json();
         setChatHistory((p) => [...p, { role: "agent", content: data.answer, sources: data.sources }]);

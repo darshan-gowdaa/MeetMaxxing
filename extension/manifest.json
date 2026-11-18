@@ -39,7 +39,7 @@
         "http://127.0.0.1:3000/extension-auth*"
       ],
       "js": ["auth-capture.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ],
   "action": {
