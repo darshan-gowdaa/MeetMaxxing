@@ -1,16 +1,14 @@
 /**
  * MeetMaxxing Content Script — Injected Side Panel Module
- * Injects a collapsible side panel into Google Meet DOM for Firefox (and Chrome fallback).
+ * Injects a collapsible side panel into Google Meet DOM for Firefox and Chrome.
  */
-
 "use strict";
 
-const IS_FIREFOX = navigator.userAgent.includes('Firefox');
+const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 function injectMeetMaxxingPanel() {
   if (document.getElementById('mm-panel-root')) return;
 
-  const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
   const panelSrc = runtimeAPI.runtime.getURL('dist/index.html');
 
   const panel = document.createElement('div');
@@ -28,35 +26,27 @@ function injectMeetMaxxingPanel() {
   `;
 
   const iframe = document.createElement('iframe');
-  iframe.id = 'mm-sidebar-iframe';
-  iframe.className = 'mm-panel-content';
+  iframe.className = 'mm-iframe';
   iframe.src = panelSrc;
-  iframe.setAttribute('allow', 'microphone');
-  iframe.style.cssText = 'width:100%;height:100%;border:none;background:transparent;';
+  iframe.setAttribute('allow', 'clipboard-write');
 
   panel.appendChild(toggleTab);
   panel.appendChild(iframe);
-  document.documentElement.appendChild(panel);
+  document.body.appendChild(panel);
 
-  let isCollapsed = localStorage.getItem('mm_panel_collapsed') === 'true';
+  let isCollapsed = false;
 
   function applyState() {
-    const pathEl = toggleTab.querySelector('#mm-toggle-path');
-    if (isCollapsed) {
-      panel.classList.add('mm-collapsed');
-      if (pathEl) pathEl.setAttribute('d', 'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z');
-      document.documentElement.classList.remove('mm-panel-open');
-      document.documentElement.classList.add('mm-panel-collapsed');
-    } else {
-      panel.classList.remove('mm-collapsed');
-      if (pathEl) pathEl.setAttribute('d', 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z');
-      document.documentElement.classList.remove('mm-panel-collapsed');
-      document.documentElement.classList.add('mm-panel-open');
-      if (runtimeAPI?.runtime?.sendMessage) {
-        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
-      }
+    panel.classList.toggle('collapsed', isCollapsed);
+    const path = toggleTab.querySelector('#mm-toggle-path');
+    if (path) {
+      path.setAttribute(
+        'd',
+        isCollapsed
+          ? 'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z'
+          : 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'
+      );
     }
-    localStorage.setItem('mm_panel_collapsed', String(isCollapsed));
   }
 
   toggleTab.addEventListener('click', () => {
@@ -64,14 +54,12 @@ function injectMeetMaxxingPanel() {
     applyState();
   });
 
-  applyState();
+  window.__mm_togglePanel = (explicitCollapsed) => {
+    isCollapsed = explicitCollapsed !== undefined ? explicitCollapsed : !isCollapsed;
+    applyState();
+  };
 
-  runtimeAPI?.runtime?.onMessage?.addListener((msg) => {
-    if (msg.type === 'TOGGLE_PANEL' || msg.type === 'TOGGLE_PANEL_OPEN') {
-      isCollapsed = msg.type === 'TOGGLE_PANEL_OPEN' ? false : !isCollapsed;
-      applyState();
-    }
-  });
+  applyState();
 }
 
 function tryInjectPanel() {
@@ -81,7 +69,6 @@ function tryInjectPanel() {
 
   if (onMeetCall) {
     if (!panel) {
-      const runtimeAPI = typeof browser !== 'undefined' ? browser : chrome;
       if (runtimeAPI?.runtime?.sendMessage) {
         try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
       }
@@ -93,6 +80,18 @@ function tryInjectPanel() {
     panel.style.display = 'none';
   }
 }
+
+// Global listener for action click so clicking icon instantly toggles panel even before 2s delay
+runtimeAPI?.runtime?.onMessage?.addListener((msg) => {
+  if (msg?.type === 'TOGGLE_PANEL' || msg?.type === 'TOGGLE_PANEL_OPEN') {
+    if (!document.getElementById('mm-panel-root')) {
+      tryInjectPanel();
+    }
+    if (typeof window.__mm_togglePanel === 'function') {
+      window.__mm_togglePanel(msg.type === 'TOGGLE_PANEL_OPEN' ? false : undefined);
+    }
+  }
+});
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(tryInjectPanel, 2000));

@@ -1,6 +1,3 @@
-declare const chrome: any;
-declare const browser: any;
-
 export function getDevMode(): boolean {
   return false;
 }

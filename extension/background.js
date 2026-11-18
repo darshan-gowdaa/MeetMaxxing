@@ -253,9 +253,13 @@ function connectWebSocket(meetingId) {
 
   ws.onclose = (event) => {
     ws = null;
-    // 4401 = backend rejected the token → refresh (or expire) rather than spin.
+    // 4401 = backend rejected the token → refresh (or expire) and reconnect if meeting active.
     if (event && event.code === 4401) {
-      refreshAuthToken();
+      refreshAuthToken().then((ok) => {
+        if (ok && activeMeetingId === meetingId) {
+          connectWebSocket(meetingId);
+        }
+      });
       return;
     }
     if (activeMeetingId !== meetingId) return; // meeting ended or changed
@@ -550,11 +554,17 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
 
+  if (msg.type === "OPEN_TAB" && typeof msg.url === "string") {
+    ext.tabs.create({ url: msg.url });
+    sendResponse({ success: true });
+    return false;
+  }
+
   if (msg.type === "AUDIO_CHUNK") {
     if (!activeMeetingId) { sendResponse({ success: false }); return false; }
-    fetch(`${BASE}/ingest/audio`, {
+    authFetch(`${BASE}/ingest/audio`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${activeAuthToken}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ meeting_id: activeMeetingId, audio_base64: msg.base64, mime_type: msg.mimeType || "audio/webm" }),
     }).then((r) => r.json()).then((data) => {
       if (data.copilot_update) {

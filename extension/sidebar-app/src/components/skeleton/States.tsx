@@ -77,8 +77,23 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string; mee
   const openDashboard = () => {
     if (!meetingId || opened) return;
     setOpened(true);
-    // May be blocked by popup blocker if auto-triggered
-    window.open(`${getWebUrl()}/meetings/${meetingId}`, "_blank");
+    const targetUrl = `${getWebUrl()}/meetings/${meetingId}`;
+    try {
+      const win = typeof window !== "undefined" ? (window as any) : {};
+      const extApi =
+        win.chrome?.runtime?.sendMessage
+          ? win.chrome
+          : win.browser?.runtime?.sendMessage
+            ? win.browser
+            : null;
+      if (extApi?.runtime?.sendMessage) {
+        extApi.runtime.sendMessage({ type: "OPEN_TAB", url: targetUrl });
+        return;
+      }
+    } catch {
+      // Fallback to window.open if extension runtime messaging is unavailable
+    }
+    window.open(targetUrl, "_blank");
   };
 
   useEffect(() => {

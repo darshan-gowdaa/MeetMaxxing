@@ -95,10 +95,10 @@ export function useCopilot() {
 
   useEffect(() => {
     if (ext && ext.storage?.local) {
-      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "poweredBy", "meetingStartTime", "authToken", "authState", "backendStarting"], (res: any) => {
+      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "meetingTitle", "poweredBy", "meetingStartTime", "authToken", "authState", "backendStarting"], (res: any) => {
         if (res.authToken) setAuthToken(res.authToken);
         if (res.currentMeetingId) setMeetingId(res.currentMeetingId);
-        if (res.currentMeetingTitle) setMeetingTitle(res.currentMeetingTitle);
+        if (res.meetingTitle || res.currentMeetingTitle) setMeetingTitle(res.meetingTitle || res.currentMeetingTitle);
         if (res.transcript && Array.isArray(res.transcript)) setTranscriptLines(res.transcript);
         if (res.poweredBy) setPoweredBy(res.poweredBy);
         if (res.meetingStartTime) setMeetingStartTime(res.meetingStartTime);
@@ -146,6 +146,7 @@ export function useCopilot() {
             setMeetingId(changes.currentMeetingId.newValue);
           }
         }
+        if (changes.meetingTitle?.newValue) setMeetingTitle(changes.meetingTitle.newValue);
         if (changes.meetingStartTime?.newValue) setMeetingStartTime(changes.meetingStartTime.newValue);
         if (changes.authToken?.newValue) setAuthToken(changes.authToken.newValue);
         if (changes.authState?.newValue) setAuthState(changes.authState.newValue);
@@ -160,7 +161,7 @@ export function useCopilot() {
     // Fallback: Poll storage because Chrome blocks onChanged/onMessage in web-accessible iframes
     const pollInterval = setInterval(() => {
       if (ext && ext.storage?.local) {
-        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "authToken", "authState", "backendStarting", "poweredBy"], (res: any) => {
+        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "meetingTitle", "authToken", "authState", "backendStarting", "poweredBy"], (res: any) => {
           if (res.transcript && Array.isArray(res.transcript)) {
             setTranscriptLines(prev => {
               if (prev.length === res.transcript.length) {
@@ -193,6 +194,14 @@ export function useCopilot() {
           if (res.currentMeetingId) {
             setMeetingId(res.currentMeetingId);
             setIsEnded(false);
+          } else {
+            setMeetingId((prevId) => {
+              if (prevId) setIsEnded(true);
+              return prevId;
+            });
+          }
+          if (res.meetingTitle) {
+            setMeetingTitle(res.meetingTitle);
           }
           if (res.authToken !== undefined) {
             setAuthToken(res.authToken || "");

@@ -18,7 +18,9 @@
   ],
   "host_permissions": [
     "https://meet.google.com/*",
-    "https://meetmaxxing-api.onrender.com/*"
+    "https://meetmaxxing-api.onrender.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -32,7 +34,9 @@
     },
     {
       "matches": [
-        "https://meetmaxxing.vercel.app/extension-auth*"
+        "https://meetmaxxing.vercel.app/extension-auth*",
+        "http://localhost:3000/extension-auth*",
+        "http://127.0.0.1:3000/extension-auth*"
       ],
       "js": ["auth-capture.js"],
       "run_at": "document_idle"

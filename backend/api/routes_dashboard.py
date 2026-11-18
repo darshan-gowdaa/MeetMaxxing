@@ -148,13 +148,16 @@ async def update_meeting(
 ):
     """Update meeting details (e.g. title)."""
     supabase = get_supabase_admin()
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    target_id = meeting["id"] if meeting else meeting_id
+
     allowed = {"title", "summary"}
     safe_updates = {k: v for k, v in updates.items() if k in allowed}
     result = await asyncio.to_thread(
         lambda: (
             supabase.table("meetings")
             .update(safe_updates)
-            .eq("id", meeting_id)
+            .eq("id", target_id)
             .eq("org_id", user["org_id"])
             .execute()
         )

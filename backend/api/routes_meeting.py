@@ -171,11 +171,14 @@ async def schedule_followup(
         "attendees": req.attendees,
     }
 
+    meeting = get_meeting_record(supabase, meeting_id, user["org_id"])
+    target_id = meeting["id"] if meeting else meeting_id
+
     await asyncio.to_thread(
         lambda: (
             supabase.table("meetings")
             .update({"scheduling_result": schedule_result})
-            .eq("id", meeting_id)
+            .eq("id", target_id)
             .eq("org_id", user["org_id"])
             .execute()
         )

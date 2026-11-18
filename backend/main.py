@@ -120,15 +120,21 @@ async def secure_headers_middleware(request: Request, call_next):
 
 app.include_router(auth_router)
 app.include_router(transcript_router)
+app.include_router(transcript_router, prefix="/api")
 app.include_router(meeting_router)
+app.include_router(meeting_router, prefix="/api")
 app.include_router(memory_router)
+app.include_router(memory_router, prefix="/api")
 app.include_router(calendar_router)
 app.include_router(calendar_router, prefix="/api")
 app.include_router(dashboard_router)
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(context_router)
+app.include_router(context_router, prefix="/api")
 app.include_router(api_keys_router)
+app.include_router(api_keys_router, prefix="/api")
 app.include_router(settings_router)
+app.include_router(settings_router, prefix="/api")
 
 
 @app.get("/health")

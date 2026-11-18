@@ -396,7 +396,7 @@ def build_add_url_response(supabase, meeting_id: str, org_id: str) -> dict:
                     "html_link": gcal_url,
                 }
             }
-        ).eq("id", meeting_id).execute()
+        ).eq("id", m["id"]).execute()
     except Exception as e:
         logging.warning(
             f"Could not persist scheduling_result (column may be missing): {e}"

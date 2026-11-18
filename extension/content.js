@@ -9,7 +9,6 @@ var maxParticipants = 1;
 var isInCallSession = false;
 var consecutiveLeaveChecks = 0;
 var endCheckInterval = null;
-var authToken = null;
 
 window.meetingId = meetingId;
 window.meetingStartTime = meetingStartTime;
@@ -171,18 +170,13 @@ document.addEventListener("click", (e) => {
   }
 }, { capture: true });
 
-if (chrome?.runtime?.id) {
-  chrome.storage.local.get(["authToken"], (r) => {
-    authToken = r?.authToken;
-    detectMeetingState();
-  });
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === "AUTH_TOKEN_UPDATED") authToken = msg.token;
+const extRuntime = typeof chrome !== "undefined" && chrome.runtime?.id ? chrome.runtime : (typeof browser !== "undefined" && browser.runtime?.id ? browser.runtime : null);
+if (extRuntime?.onMessage) {
+  extRuntime.onMessage.addListener((msg) => {
     if (msg.type === "REQUEST_END_MEETING") endMeeting();
   });
-} else {
-  detectMeetingState();
 }
+detectMeetingState();
 
 let lastUrl = location.href;
 function handleUrlChange() {

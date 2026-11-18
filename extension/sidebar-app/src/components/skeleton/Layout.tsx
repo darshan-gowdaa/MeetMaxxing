@@ -116,7 +116,7 @@ export function ErrorBanner({ errorMessage, clearError }: any) {
       {isApiError && (
         <div className="pl-[30px] w-full">
           <a 
-            href="https://meetmaxxing.vercel.app/settings/api-keys"
+            href={`${getWebUrl()}/settings/api-keys`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-risk text-risk-container rounded-full text-[11px] font-bold hover:brightness-110 active:scale-95 transition-all no-underline"

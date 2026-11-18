@@ -74,6 +74,42 @@ const ext = (() => {
     if (actionApi?.onClicked) actionApi.onClicked.addListener(cb);
   };
 
+  // Query tabs — uniform promise + callback support for Chrome and Firefox
+  const queryTabs = (queryInfo, callback) => {
+    if (isFx) {
+      const p = api.tabs.query(queryInfo);
+      if (typeof callback === "function") {
+        p.then(callback).catch(() => callback([]));
+      }
+      return p;
+    }
+    return new Promise((resolve) => {
+      try {
+        api.tabs.query(queryInfo, (result) => {
+          if (typeof callback === "function") callback(result || []);
+          resolve(result || []);
+        });
+      } catch (e) {
+        if (typeof callback === "function") callback([]);
+        resolve([]);
+      }
+    });
+  };
+
+  // Create tab abstraction
+  const createTab = (createProperties) => {
+    if (isFx) {
+      return api.tabs.create(createProperties);
+    }
+    return new Promise((resolve) => {
+      try {
+        api.tabs.create(createProperties, resolve);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  };
+
   return {
     isFx,
     api,
@@ -83,7 +119,7 @@ const ext = (() => {
     setRefreshAlarm,
     onActionClicked,
     runtime: api.runtime,
-    tabs: api.tabs,
+    tabs: Object.assign({}, api.tabs, { query: queryTabs, create: createTab }),
     storageOnChanged: api.storage.onChanged,
   };
 })();
