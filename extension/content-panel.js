@@ -82,14 +82,24 @@ function tryInjectPanel() {
 }
 
 // Global listener for action click so clicking icon instantly toggles panel even before 2s delay
-runtimeAPI?.runtime?.onMessage?.addListener((msg) => {
+runtimeAPI?.runtime?.onMessage?.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'TOGGLE_PANEL' || msg?.type === 'TOGGLE_PANEL_OPEN') {
-    if (!document.getElementById('mm-panel-root')) {
-      tryInjectPanel();
+    let panel = document.getElementById('mm-panel-root');
+    if (!panel) {
+      if (runtimeAPI?.runtime?.sendMessage) {
+        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
+      }
+      injectMeetMaxxingPanel();
+      panel = document.getElementById('mm-panel-root');
+    }
+    if (panel) {
+      panel.style.display = 'block';
     }
     if (typeof window.__mm_togglePanel === 'function') {
       window.__mm_togglePanel(msg.type === 'TOGGLE_PANEL_OPEN' ? false : undefined);
     }
+    if (sendResponse) sendResponse({ success: true, collapsed: panel?.classList.contains('collapsed') });
+    return true;
   }
 });
 

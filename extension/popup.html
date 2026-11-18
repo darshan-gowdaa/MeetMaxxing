@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetMaxxing AI Copilot</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <path d="M12 7v4m0 0l-2-2m2 2l2-2" stroke="#60a5fa" stroke-linecap="round"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-name">MeetMaxxing</span>
+          <span class="brand-tag">AI Copilot</span>
+        </div>
+      </div>
+      <div id="auth-chip" class="status-chip chip-loading">
+        <span class="dot"></span>
+        <span id="auth-label">Checking...</span>
+      </div>
+    </header>
+
+    <main class="popup-body">
+      <!-- Meeting Context Card -->
+      <section class="card meeting-card">
+        <div class="card-header">
+          <span class="card-eyebrow">Meeting Status</span>
+          <span id="call-badge" class="badge badge-idle">Idle</span>
+        </div>
+        <div class="card-content">
+          <div id="meeting-title" class="meeting-title">No meeting active</div>
+          <div id="meeting-sub" class="meeting-sub">Open Google Meet to activate copilot</div>
+        </div>
+        <button id="btn-primary-action" class="btn btn-primary">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 10l5 5-5 5"/>
+            <path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+          </svg>
+          <span id="primary-action-text">Launch Google Meet</span>
+        </button>
+      </section>
+
+      <!-- Quick Actions Grid -->
+      <section class="actions-grid">
+        <button id="btn-dashboard" class="btn btn-secondary">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="9" rx="1"/>
+            <rect x="14" y="3" width="7" height="5" rx="1"/>
+            <rect x="14" y="12" width="7" height="9" rx="1"/>
+            <rect x="3" y="16" width="7" height="5" rx="1"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        <button id="btn-settings" class="btn btn-secondary">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>API Keys</span>
+        </button>
+      </section>
+
+      <!-- Tip & Status info -->
+      <div class="tip-bar">
+        <span class="tip-icon">&#x1F4A1;</span>
+        <span class="tip-text">Turn on Google Meet live captions (press <strong>C</strong>) for real-time AI insights.</span>
+      </div>
+    </main>
+
+    <footer class="popup-footer">
+      <span id="backend-status" class="footer-status">Backend: Connecting...</span>
+      <span class="footer-version">v1.1.0</span>
+    </footer>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="compat.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

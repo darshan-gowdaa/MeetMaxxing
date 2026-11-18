@@ -14,7 +14,8 @@
     "unlimitedStorage",
     "alarms",
     "offscreen",
-    "tabCapture"
+    "tabCapture",
+    "scripting"
   ],
   "host_permissions": [
     "https://meet.google.com/*",
@@ -44,6 +45,7 @@
   ],
   "action": {
     "default_title": "MeetMaxxing",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "assets/icons/icon16.png",
       "48": "assets/icons/icon48.png"

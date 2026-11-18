@@ -432,9 +432,28 @@ ext.storageOnChanged.addListener((changes, area) => {
   }
 });
 
-ext.onActionClicked((tab) => {
+ext.onActionClicked(async (tab) => {
   wakeServer();
-  if (tab.id) ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
+  if (tab?.id && tab.url && tab.url.includes("meet.google.com")) {
+    ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
+    return;
+  }
+
+  // If clicked outside Google Meet, switch to an active Meet tab or open dashboard
+  try {
+    const meetTabs = await ext.tabs.query({ url: "https://meet.google.com/*" });
+    if (meetTabs && meetTabs.length > 0) {
+      const target = meetTabs[0];
+      if (ext.api?.windows?.update && target.windowId) {
+        try { ext.api.windows.update(target.windowId, { focused: true }); } catch (e) {}
+      }
+      ext.tabs.update(target.id, { active: true });
+      ext.sendTabMessage(target.id, { type: "TOGGLE_PANEL" });
+      return;
+    }
+  } catch (e) {}
+
+  ext.tabs.create({ url: MEETMAXXING_CONFIG.BASE_URL_WEB || "https://meetmaxxing.vercel.app" });
 });
 
 ext.tabs.onRemoved.addListener((tabId) => {
