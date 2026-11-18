@@ -12,6 +12,7 @@ import {
 } from"@remixicon/react";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { supabase } from"@/lib/supabase";
+import { BACKEND_URL } from "@/lib/api";
 
 import Link from"next/link";
 
@@ -41,9 +42,7 @@ export default function ExtensionAuthPage() {
  if (!session?.access_token) return;
 
  // Provision org_id for new users (no-op for existing)
- const backendUrl =
- process.env.NEXT_PUBLIC_BACKEND_URL ||
-"https://meetmaxxing-api.onrender.com";
+ const backendUrl = BACKEND_URL;
  fetch(`${backendUrl}/api/auth/provision`, {
  method:"POST",
  headers: { Authorization: `Bearer ${session.access_token}` },

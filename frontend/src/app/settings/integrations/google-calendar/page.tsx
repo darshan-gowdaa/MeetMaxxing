@@ -20,9 +20,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { M3Breadcrumb } from "@/components/atoms/M3Breadcrumb";
+import { BACKEND_URL } from "@/lib/api";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+const API_URL = BACKEND_URL;
 
 /** Official 4-color Google Calendar logo (Blue/Green/Yellow/Red calendar icon with "31") */
 function GoogleCalendarLogo({ className = "w-6 h-6" }: { className?: string }) {
@@ -712,7 +712,7 @@ function GoogleCalendarContent() {
                       <a
                         href={ev.hangout_link}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="rounded-full px-5 py-2.5 font-bold text-xs bg-[#00832D] text-white hover:bg-[#006e26] active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm"
                       >
                         <GoogleMeetLogo className="w-4 h-4" />
@@ -723,7 +723,7 @@ function GoogleCalendarContent() {
                       <a
                         href={ev.html_link}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         title="Open in Google Calendar"
                         className="p-2.5 rounded-full hover:bg-surface-container-high text-text-muted hover:text-text transition-colors"
                       >

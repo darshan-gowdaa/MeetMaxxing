@@ -16,8 +16,9 @@ import { Switch } from "@/components/atoms/Switch";
 import { M3Select } from "@/components/atoms/M3Select";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { SettingsListSkeleton } from "@/components/organisms/skeletons/SettingsListSkeleton";
+import { BACKEND_URL } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+const API_URL = BACKEND_URL;
 
 type Notifications = {
   email: boolean;

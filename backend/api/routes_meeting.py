@@ -7,7 +7,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..core.auth import get_current_user
 from ..core.database import get_meeting_record, get_supabase_admin
@@ -21,13 +21,13 @@ router = APIRouter(prefix="/meeting", tags=["meeting"])
 class EndMeetingRequest(BaseModel):
     title: str = ""
     attendees: list[str] = []
-    max_participants: int = 1
+    max_participants: int = Field(default=1, ge=1, le=100)
     calendar_token: dict | None = None  # user's Google OAuth token for scheduling
 
 
 class ScheduleFollowupRequest(BaseModel):
     start_datetime_iso: str
-    duration_minutes: int
+    duration_minutes: int = Field(default=30, ge=5, le=1440)
     title: str
     description: str
     attendees: list[str]

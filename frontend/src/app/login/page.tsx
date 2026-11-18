@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { RiMailLine, RiLockPasswordLine, RiSparkling2Fill, RiUserLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react";
@@ -166,6 +167,12 @@ export default function LoginPage() {
             ) : (
               <button onClick={(e) => { e.preventDefault(); setError(""); setSuccess(""); setMode("signin"); }} className="text-primary hover:text-primary-container transition-colors h-5 flex items-center">Back to sign in</button>
             )}
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-3 text-xs text-text-variant">
+            <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
           </div>
         </div>
       </div>

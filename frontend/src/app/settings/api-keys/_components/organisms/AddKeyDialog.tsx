@@ -17,6 +17,7 @@ import { Provider, PreflightTestResponse, PROVIDER_CONSOLE_URLS } from "../../ty
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
+import { BACKEND_URL } from "@/lib/api";
 
 export function AddKeyDialog({
   provider,
@@ -60,7 +61,7 @@ export function AddKeyDialog({
   };
   const domain = domains[provider.id];
   const consoleUrl = PROVIDER_CONSOLE_URLS[provider.id] || provider.docs_url;
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+  const API_URL = BACKEND_URL;
 
   const panelRef = useDialogA11y<HTMLDivElement>({ onClose: onCancel, enabled: mounted });
   const titleId = "add-key-dialog-title";

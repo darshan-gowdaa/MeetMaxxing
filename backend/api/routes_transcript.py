@@ -138,6 +138,9 @@ async def ingest_transcript_chunk(
     user: dict = Depends(get_current_user),
 ):
     """REST fallback for transcript ingestion (used if WebSocket unavailable)."""
+    _require_scoped_meeting(
+        chunk.meeting_id, user.get("org_id", ""), user.get("user_id", "")
+    )
     logger.debug(
         "[MeetMaxxing REST Ingest] [AUDIO] {}: <audio chunk received>", chunk.speaker
     )
@@ -167,6 +170,9 @@ async def ingest_audio_chunk(
     Receive a base64-encoded audio chunk from the Chrome extension tab capture.
     Transcribe using Gemini multimodal, store transcript, return copilot update.
     """
+    _require_scoped_meeting(
+        req.meeting_id, user.get("org_id", ""), user.get("user_id", "")
+    )
     from google import genai
     from google.genai import types as genai_types
 
@@ -191,6 +197,7 @@ async def ingest_audio_chunk(
         )
         transcript_text = response.text.strip() if response.text else ""
     except Exception as e:
+        err_msg = str(e)
         logger.warning(
             "[MeetMaxxing Audio Ingest] [WARN] Gemini audio transcription failed ({}). Checking Groq fallback...",
             e,
@@ -232,7 +239,7 @@ async def ingest_audio_chunk(
         if not transcript_text:
             return {
                 "status": "skipped",
-                "reason": str(locals().get("e", "Transcription failed")),
+                "reason": err_msg or "Transcription failed",
                 "copilot_update": None,
             }
 

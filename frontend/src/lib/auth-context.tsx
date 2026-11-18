@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from"react";
 import { User, Session } from"@supabase/supabase-js";
 import { supabase } from"./supabase";
 import { useRouter } from"next/navigation";
+import { BACKEND_URL } from "./api";
 
 interface AuthContextType {
  user: User | null;
@@ -27,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+    const backendUrl = BACKEND_URL;
 
     // Non-blocking pre-warm ping to Render backend to eliminate cold-start wait
     try {
@@ -43,7 +44,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
 
         if (event === "SIGNED_OUT") {
-          router.push("/login");
+          const publicRoutes = ["/login", "/signup", "/about", "/terms", "/privacy", "/extension-auth", "/reset-password"];
+          if (typeof window !== "undefined" && !publicRoutes.some(p => window.location.pathname.startsWith(p))) {
+            router.push("/login");
+          }
         } else if (newSession?.access_token && event === "SIGNED_IN") {
           fetch(`${backendUrl}/api/auth/provision`, {
             method: "POST",

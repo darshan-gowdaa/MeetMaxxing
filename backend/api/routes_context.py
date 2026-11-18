@@ -232,15 +232,13 @@ async def list_all_files(user: dict = Depends(get_current_user)):
             fname = pt.payload.get("speaker_name", "Unknown File")
             mid = pt.payload.get("meeting_id", "Unknown Meeting")
             date = pt.payload.get("meeting_date", "Unknown Date")
-            key = f"{fname}|{mid}|{date}"
+            key = (fname, mid, date)
             files[key] = files.get(key, 0) + 1
 
-        file_list = []
-        for k, v in files.items():
-            fname, mid, date = k.split("|")
-            file_list.append(
-                {"filename": fname, "meeting_id": mid, "date": date, "chunks": v}
-            )
+        file_list = [
+            {"filename": fname, "meeting_id": mid, "date": date, "chunks": v}
+            for (fname, mid, date), v in files.items()
+        ]
 
         return {"files": file_list}
     except Exception:
@@ -278,7 +276,6 @@ async def list_files(meeting_id: str, user: dict = Depends(get_current_user)):
             files[fname] = files.get(fname, 0) + 1
 
         file_list = [{"filename": k, "chunks": v} for k, v in files.items()]
-        return {"files": file_list}
         return {"files": file_list}
     except Exception:
         raise HTTPException(

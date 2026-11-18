@@ -13,6 +13,7 @@ import {
   RiCoinLine,
 } from "@remixicon/react";
 import { ApiKey } from "../../types";
+import { BACKEND_URL } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { M3Select } from "@/components/atoms/M3Select";
@@ -229,7 +230,7 @@ export function ModelSelection({
   const { session } = useAuth();
   const token = session?.access_token;
   const { showMessage } = useSnackbar();
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+  const API_URL = BACKEND_URL;
 
   // manual means byok, smart means meetmaxxing default cluster
   const [mode, setMode] = useState<"manual" | "smart">("manual");

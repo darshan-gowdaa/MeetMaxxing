@@ -547,7 +547,7 @@ export default function MeetingTranscript({
 
                 return (
                   <div
-                    key={originalIdx}
+                    key={`${speaker}-${chunk.timestamp_ms}-${originalIdx}`}
                     className="group/turn bg-surface-container/60 hover:bg-surface-container/90 rounded-[20px] p-4 sm:p-5 border border-outline-variant/10 flex flex-col gap-2.5 transition-all"
                   >
                     {/* Turn Meta Header */}

@@ -14,8 +14,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { SelectionCard } from "@/components/molecules/SelectionCard";
 import { Switch } from "@/components/atoms/Switch";
+import { BACKEND_URL } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+const API_URL = BACKEND_URL;
 
 export default function AppearancePage() {
   const { theme, setTheme } = useTheme();

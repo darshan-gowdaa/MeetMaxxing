@@ -1,9 +1,9 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"https://meetmaxxing-api.onrender.com";
+export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 import { supabase } from "./supabase";
 import type { Meeting } from "@/types";
 
-async function getToken(providedToken?: string): Promise<string> {
+export async function getToken(providedToken?: string): Promise<string> {
   if (providedToken) return providedToken;
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -11,6 +11,23 @@ async function getToken(providedToken?: string): Promise<string> {
   } catch {
     return "";
   }
+}
+
+/** Unified authenticated fetch that automatically injects Supabase Bearer token */
+export async function authFetch(
+  endpoint: string,
+  options: RequestInit = {},
+  providedToken?: string
+): Promise<Response> {
+  const token = await getToken(providedToken);
+  const headers = new Headers(options.headers || {});
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  const url = endpoint.startsWith("http")
+    ? endpoint
+    : `${BACKEND_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+  return fetch(url, { ...options, headers });
 }
 
 function safeParse(text: string, fallback: unknown = null) {

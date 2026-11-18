@@ -8,10 +8,9 @@ import {
   deleteMeeting,
   getAuthToken,
   isColdStartError,
+  BACKEND_URL,
 } from '@/lib/api';
 import type { Meeting } from '@/types';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 export function useMeetingManager(id: string) {
   const { session } = useAuth();
@@ -67,6 +66,8 @@ export function useMeetingManager(id: string) {
         if (!isMounted) return;
         setColdStart(isColdStartError(err));
         setErrorMsg((err as Error).message || "Failed to fetch meeting from backend");
+        // Re-arm poll on transient errors so network hiccups or cold starts don't kill live updates
+        timeoutRef.current = setTimeout(poll, 6000);
       } finally {
         if (isMounted) setLoading(false);
       }

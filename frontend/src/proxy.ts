@@ -12,6 +12,7 @@ export default async function proxy(request: NextRequest) {
     pathname.startsWith('/about') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/terms') ||
     pathname.startsWith('/privacy');
 
   const isLoginRoute =
@@ -68,7 +69,11 @@ export default async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((c) =>
+      redirectResponse.cookies.set(c.name, c.value, c)
+    );
+    return redirectResponse;
   }
 
   if (user && isLoginRoute) {

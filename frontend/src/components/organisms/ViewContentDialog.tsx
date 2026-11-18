@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from"react";
-import { getAuthToken } from"@/lib/api";
+import { getAuthToken, BACKEND_URL } from"@/lib/api";
 import { createPortal } from"react-dom";
 import { RiCloseLine, RiFileTextLine } from"@remixicon/react";
 import { Md3LoadingIndicator } from"@/components/atoms/Md3Loading";
 import { useDialogA11y } from"@/hooks/useDialogA11y";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||"https://meetmaxxing-api.onrender.com";
 
 export default function ViewContentDialog({
 	 filename,

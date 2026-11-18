@@ -17,8 +17,9 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { BACKEND_URL } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+const API_URL = BACKEND_URL;
 
 /** Official 4-color Google Calendar logo (Blue/Green/Yellow/Red calendar icon with "31") */
 function GoogleCalendarLogo({ className = "w-6 h-6" }: { className?: string }) {
@@ -323,6 +324,10 @@ export default function IntegrationsPage() {
   const handleTestSlack = async () => {
     if (!slackWebhook) {
       showMessage("Please enter a Slack Webhook URL first", { variant: "error" });
+      return;
+    }
+    if (!/^https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9+/_-]+/.test(slackWebhook)) {
+      showMessage("Invalid Slack webhook format. Must start with https://hooks.slack.com/services/", { variant: "error" });
       return;
     }
     setSlackTesting(true);

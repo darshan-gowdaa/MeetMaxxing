@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
+import { BACKEND_URL } from "@/lib/api";
 import {
   RiRefreshLine,
   RiBuildingLine,
@@ -74,7 +75,7 @@ export const ProfileHero = () => {
       const token = await getAccessToken();
       if (!token) return;
       const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+        BACKEND_URL;
 
       await Promise.allSettled([
         fetch(`${backendUrl}/api/settings/avatar`, {
@@ -104,7 +105,7 @@ export const ProfileHero = () => {
       const token = await getAccessToken();
       if (!token) return;
       const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+        BACKEND_URL;
 
       try {
         await fetch(`${backendUrl}/api/settings/`, {
@@ -175,7 +176,7 @@ export const ProfileHero = () => {
       const token = await getAccessToken();
       if (!token) return;
       const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+        BACKEND_URL;
 
       try {
         const res = await fetch(`${backendUrl}/api/settings/`, {
@@ -274,7 +275,7 @@ export const ProfileHero = () => {
     setAvatarLoading(true);
     const token = await getAccessToken();
     const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+      BACKEND_URL;
     let publicUrl: string | null = null;
 
     // 1. Attempt backend upload via POST /api/settings/avatar with multipart FormData

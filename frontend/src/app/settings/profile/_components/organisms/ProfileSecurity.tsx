@@ -15,6 +15,7 @@ import { PasswordStrength, isValidPassword } from "@/components/molecules/Passwo
 import { Md3LoadingIndicator } from "@/components/atoms/Md3Loading";
 import { useSnackbar } from "@/components/providers/SnackbarProvider";
 import { DeleteDialog } from "@/components/organisms/DeleteDialog";
+import { BACKEND_URL } from "@/lib/api";
 
 export const ProfileSecurity = () => {
   const { session, signOut } = useAuth();
@@ -55,7 +56,7 @@ export const ProfileSecurity = () => {
   const handleExportData = async () => {
     if (!session?.access_token) return;
     setExportLoading(true);
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+    const backendUrl = BACKEND_URL;
 
     try {
       const res = await fetch(`${backendUrl}/api/settings/export`, {
@@ -93,7 +94,7 @@ export const ProfileSecurity = () => {
     if (!session?.access_token) return;
 
     setLoading(true);
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+    const backendUrl = BACKEND_URL;
 
     try {
       const res = await fetch(`${backendUrl}/api/auth/me`, {

@@ -14,8 +14,9 @@ import { AddKeyDialog } from "./_components/organisms/AddKeyDialog";
 import { ProviderHelpDrawer } from "./_components/organisms/ProviderHelpDrawer";
 import { ModelSelectionSkeleton } from "./_components/organisms/ModelSelectionSkeleton";
 import { ProviderListSkeleton } from "../../../components/organisms/skeletons/ProviderListSkeleton";
+import { BACKEND_URL } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
+const API_URL = BACKEND_URL;
 
 export default function ApiKeysPage() {
 	const { session, loading: authLoading } = useAuth();

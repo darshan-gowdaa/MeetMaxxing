@@ -26,7 +26,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
     switch(id) {
       case 'google': return (
         <>
-          <li>Go to <a href={PROVIDER_CONSOLE_URLS.google} target="_blank" rel="noreferrer" className="text-primary hover:underline">Google AI Studio</a>.</li>
+          <li>Go to <a href={PROVIDER_CONSOLE_URLS.google} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>.</li>
           <li>Sign in with your Google account.</li>
           <li>Click &quot;Get API Key&quot; on the left navigation bar.</li>
           <li>Click &quot;Create API Key in new project&quot; and copy it.</li>
@@ -34,7 +34,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'openai': return (
         <>
-          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.openai} target="_blank" rel="noreferrer" className="text-primary hover:underline">OpenAI platform</a>.</li>
+          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.openai} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">OpenAI platform</a>.</li>
           <li>Navigate to Settings &gt; API Keys in the left sidebar.</li>
           <li>Click &quot;Create new secret key&quot;.</li>
           <li>Give it a name and copy the key immediately (you won&apos;t see it again).</li>
@@ -42,7 +42,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'anthropic': return (
         <>
-          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.anthropic} target="_blank" rel="noreferrer" className="text-primary hover:underline">Anthropic API Console</a>.</li>
+          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.anthropic} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Anthropic API Console</a>.</li>
           <li>Navigate to &quot;Settings&quot; &gt; &quot;API Keys&quot;.</li>
           <li>Click &quot;Create Key&quot;.</li>
           <li>Copy your <code className="bg-surface3 px-1 rounded text-xs">sk-ant-...</code> key.</li>
@@ -50,7 +50,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'openrouter': return (
         <>
-          <li>Go to <a href={PROVIDER_CONSOLE_URLS.openrouter} target="_blank" rel="noreferrer" className="text-primary hover:underline">OpenRouter.ai</a> and sign in.</li>
+          <li>Go to <a href={PROVIDER_CONSOLE_URLS.openrouter} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">OpenRouter.ai</a> and sign in.</li>
           <li>Click on &quot;Keys&quot; in the top navigation bar.</li>
           <li>Click &quot;Create Key&quot;.</li>
           <li>Name your key, optionally set a credit limit, and copy it.</li>
@@ -58,7 +58,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'groq': return (
         <>
-          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.groq} target="_blank" rel="noreferrer" className="text-primary hover:underline">GroqCloud Console</a>.</li>
+          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.groq} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GroqCloud Console</a>.</li>
           <li>Navigate to &quot;API Keys&quot; in the left sidebar.</li>
           <li>Click &quot;Create API Key&quot;.</li>
           <li>Copy your <code className="bg-surface3 px-1 rounded text-xs">gsk_...</code> key.</li>
@@ -66,7 +66,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'mistral': return (
         <>
-          <li>Go to <a href={PROVIDER_CONSOLE_URLS.mistral} target="_blank" rel="noreferrer" className="text-primary hover:underline">La Plateforme Mistral</a>.</li>
+          <li>Go to <a href={PROVIDER_CONSOLE_URLS.mistral} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">La Plateforme Mistral</a>.</li>
           <li>Navigate to &quot;API Keys&quot; under Workspace.</li>
           <li>Click &quot;Create new key&quot;.</li>
           <li>Copy the generated key.</li>
@@ -74,7 +74,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'deepseek': return (
         <>
-          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.deepseek} target="_blank" rel="noreferrer" className="text-primary hover:underline">DeepSeek Platform</a>.</li>
+          <li>Go to the <a href={PROVIDER_CONSOLE_URLS.deepseek} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DeepSeek Platform</a>.</li>
           <li>Go to the &quot;API Keys&quot; section.</li>
           <li>Click &quot;Create new API key&quot;.</li>
           <li>Copy your generated key.</li>
@@ -82,7 +82,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       case 'perplexity': return (
         <>
-          <li>Go to the <a href={consoleUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">Perplexity Settings</a>.</li>
+          <li>Go to the <a href={consoleUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Perplexity Settings</a>.</li>
           <li>Scroll down to the API Keys section.</li>
           <li>Click &quot;Generate&quot; to create a new key.</li>
           <li>Copy your key (starts with <code className="bg-surface3 px-1 rounded text-xs">pplx-</code>).</li>
@@ -90,7 +90,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
       );
       default: return (
         <>
-          <li>Go to the <a href={consoleUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">provider&apos;s dashboard</a>.</li>
+          <li>Go to the <a href={consoleUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">provider&apos;s dashboard</a>.</li>
           <li>Sign in or create an account.</li>
           <li>Navigate to API Keys or Settings.</li>
           <li>Create a new secret key and copy it.</li>
@@ -144,7 +144,7 @@ export function ProviderHelpDrawer({ provider, onClose }: { provider: Provider, 
           <a
             href={consoleUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="w-full h-10 rounded-full border border-border flex items-center justify-center gap-2 text-sm font-semibold hover:bg-surface2 transition-colors"
           >
             Open Console <RiExternalLinkLine className="w-4 h-4" />

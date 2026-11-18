@@ -158,6 +158,7 @@ def decode_state(state: str) -> dict:
                         logging.warning(
                             "OAuth state HMAC signature mismatch — possible tampering"
                         )
+                        return {}
                 return payload
         except Exception:
             pass
@@ -499,7 +500,7 @@ async def schedule_calendar_followup(supabase, meeting_id: str, user: dict) -> d
                         }
                     }
                 )
-                .eq("id", meeting_id)
+                .eq("id", meeting.get("id", meeting_id))
                 .execute()
             )
         )

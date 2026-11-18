@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { getAuthToken } from '@/lib/api';
+import { getAuthToken, BACKEND_URL } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSnackbar } from '@/components/providers/SnackbarProvider';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://meetmaxxing-api.onrender.com";
 
 export type ContextFile = {
   meeting_id: string;

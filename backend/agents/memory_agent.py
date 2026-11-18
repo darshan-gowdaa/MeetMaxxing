@@ -184,11 +184,11 @@ async def run_memory_agent(
 
         valid_m_ids = [m for m in target_meeting_ids if m and m != "global"]
         if valid_m_ids:
-            results = await asyncio.gather(
+            transcript_results = await asyncio.gather(
                 *[get_full_transcript(m) for m in valid_m_ids],
                 return_exceptions=True,
             )
-            for m_id, utterances in zip(valid_m_ids, results):
+            for m_id, utterances in zip(valid_m_ids, transcript_results):
                 if isinstance(utterances, list) and utterances:
                     formatted = "\n".join(
                         [
