@@ -555,8 +555,22 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "OPEN_TAB" && typeof msg.url === "string") {
-    ext.tabs.create({ url: msg.url });
-    sendResponse({ success: true });
+    try {
+      const parsed = new URL(msg.url);
+      const isAllowedProtocol = parsed.protocol === "http:" || parsed.protocol === "https:";
+      const isAllowedHost = [
+        "localhost",
+        "127.0.0.1",
+        "meetmaxxing.vercel.app",
+        "meet.google.com",
+      ].some((h) => parsed.hostname === h || parsed.hostname.endsWith("." + h));
+      if (isAllowedProtocol && isAllowedHost) {
+        ext.tabs.create({ url: msg.url });
+        sendResponse({ success: true });
+        return false;
+      }
+    } catch {}
+    sendResponse({ success: false, error: "Disallowed destination URL" });
     return false;
   }
 

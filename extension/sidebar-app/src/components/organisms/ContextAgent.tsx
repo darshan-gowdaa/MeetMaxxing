@@ -47,6 +47,12 @@ export function ContextAgent({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const authFetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
     const headers = new Headers(options.headers || {});
     if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
@@ -55,17 +61,27 @@ export function ContextAgent({
       report401();
       const ext = extApi();
       const refreshResult = await new Promise<any>((resolve) => {
+        const timeout = setTimeout(() => resolve(null), 8000);
         try {
-          ext?.runtime?.sendMessage({ type: "REFRESH_AUTH" }, resolve);
+          ext?.runtime?.sendMessage({ type: "REFRESH_AUTH" }, (result: any) => {
+            clearTimeout(timeout);
+            resolve(result);
+          });
         } catch {
+          clearTimeout(timeout);
           resolve(null);
         }
       });
       if (refreshResult?.ok) {
         const stored = await new Promise<any>((resolve) => {
+          const timeout = setTimeout(() => resolve({}), 3000);
           try {
-            ext?.storage?.local?.get(["authToken"], resolve);
+            ext?.storage?.local?.get(["authToken"], (data: any) => {
+              clearTimeout(timeout);
+              resolve(data);
+            });
           } catch {
+            clearTimeout(timeout);
             resolve({});
           }
         });

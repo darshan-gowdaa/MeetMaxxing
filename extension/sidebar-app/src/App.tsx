@@ -13,7 +13,7 @@ export default function App() {
   const {
     authToken, authState, backendStarting, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
     nextQuestions, recap, errorMessage, isProcessing, isEnding, poweredBy, elapsedTime,
-    triggerAction, clearTranscript, clearError,
+    triggerAction, clearTranscript, clearError, resetMeeting,
   } = useCopilot();
 
   const [activeTab, setActiveTab] = useState<"live" | "transcript" | "rag" | "recap">(() =>
@@ -134,7 +134,7 @@ export default function App() {
       ) : !meetingId ? (
         <main><IdleState poweredBy={poweredBy} /></main>
       ) : isEnded ? (
-        <main><EndedState meetingId={meetingId} meetingTitle={meetingTitle} /></main>
+        <main><EndedState meetingId={meetingId} meetingTitle={meetingTitle} onReset={resetMeeting} /></main>
       ) : (
         <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div id="active-state" className="state-container flex-1 flex flex-col min-h-0 overflow-hidden px-3 pt-3">

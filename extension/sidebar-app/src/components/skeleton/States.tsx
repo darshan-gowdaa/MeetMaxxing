@@ -70,7 +70,15 @@ export function ExpiredState() {
   );
 }
 
-export function EndedState({ meetingId, meetingTitle }: { meetingId: string; meetingTitle: string }) {
+export function EndedState({
+  meetingId,
+  meetingTitle,
+  onReset,
+}: {
+  meetingId: string;
+  meetingTitle: string;
+  onReset?: () => void;
+}) {
   const [opened, setOpened] = useState(false);
   const [countdown, setCountdown] = useState(5);
 
@@ -134,6 +142,15 @@ export function EndedState({ meetingId, meetingTitle }: { meetingId: string; mee
         <p id="meeting-title-hint" className="text-[12.5px] text-text-muted font-bold tracking-wide w-full truncate">
           {opened ? `Opened: ${meetingTitle}` : `Ended: ${meetingTitle}`}
         </p>
+        {onReset && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs text-text-muted hover:text-text font-semibold py-1.5 px-4 rounded-full hover:bg-surface-container-high transition-colors cursor-pointer"
+          >
+            Return to Idle
+          </button>
+        )}
       </div>
     </div>
   );

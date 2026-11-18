@@ -54,8 +54,7 @@
       "resources": [
         "assets/*",
         "styles/*",
-        "dist/*",
-        "offscreen.html"
+        "dist/*"
       ],
       "matches": ["<all_urls>"]
     }

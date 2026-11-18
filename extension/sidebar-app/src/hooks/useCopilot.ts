@@ -337,6 +337,16 @@ export function useCopilot() {
 
   const clearError = () => setErrorMessage("");
 
+  const resetMeeting = () => {
+    setMeetingId("");
+    setIsEnded(false);
+    setTranscriptLines([]);
+    setSuggestions([]);
+    setNextQuestions([]);
+    setRecap("");
+    setMeetingTitle("");
+  };
+
   return {
     authToken,
     authState,
@@ -356,5 +366,6 @@ export function useCopilot() {
     triggerAction,
     clearTranscript,
     clearError,
+    resetMeeting,
   };
 }
