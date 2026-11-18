@@ -59,6 +59,7 @@ backend/qdrant_data/
 !README.md
 !README.MD
 !readme.md
+!CHANGELOG.md
 !extension/*.md
 !docs/**/*.md
 

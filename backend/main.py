@@ -51,7 +51,7 @@ from .core.config import settings
 from .core.security import RateLimitMiddleware, validate_production_secrets
 from .memory.qdrant_client import ensure_collection
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 
 @asynccontextmanager

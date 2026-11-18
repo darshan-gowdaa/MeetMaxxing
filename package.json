@@ -1,6 +1,6 @@
 {
   "name": "meetmaxxing",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MeetMaxxing — Enterprise AI Meeting Copilot monorepo",
   "private": true,
   "scripts": {
