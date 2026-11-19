@@ -452,7 +452,26 @@ ext.onActionClicked(async (tab) => {
     return;
   }
 
-  // If clicked outside Google Meet, switch to an active Meet tab or launch Google Meet
+  // If clicked on any normal web page outside Google Meet, slide in the sidebar on current page
+  if (tab?.id && tab.url && (tab.url.startsWith("http://") || tab.url.startsWith("https://"))) {
+    try {
+      const res = await ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
+      if (!res && ext.api?.scripting?.executeScript) {
+        await ext.api.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["config.js", "compat.js", "content-panel.js"]
+        });
+        await ext.api.scripting.insertCSS({
+          target: { tabId: tab.id },
+          files: ["styles/injected-panel.css"]
+        });
+        await ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL_OPEN" });
+      }
+      return;
+    } catch (e) {}
+  }
+
+  // Fallback for browser internal pages (chrome://, about:): focus existing meet or open meet
   try {
     const meetTabs = await ext.tabs.query({ url: "https://meet.google.com/*" });
     if (meetTabs && meetTabs.length > 0) {
@@ -499,6 +518,16 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   if (msg.type === "WAKE_SERVER") {
     wakeServer();
+    sendResponse({ ok: true });
+    return false;
+  }
+
+  if (msg.type === "GRANT_CONSENT") {
+    ext.storage.set({ mm_consent_granted: true });
+    ext.broadcast({ type: "CONSENT_GRANTED" });
+    if (activeMeetTabId) {
+      ext.sendTabMessage(activeMeetTabId, { type: "GRANT_CONSENT" });
+    }
     sendResponse({ ok: true });
     return false;
   }

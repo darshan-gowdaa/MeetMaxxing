@@ -10,11 +10,22 @@ var hideCaptionsStyle = null;
 var visibilityAttachInterval = null;
 var autoCcInterval = null;
 
+// Rehydrate consent from storage.local if available
+if (typeof chrome !== "undefined" && chrome.storage?.local) {
+  chrome.storage.local.get(["mm_consent_granted"], (res) => {
+    if (res?.mm_consent_granted) {
+      consentGiven = true;
+      window.consentGiven = true;
+      try { localStorage.setItem("mm_consent_granted", "true"); } catch (e) {}
+    }
+  });
+}
+
 function isConsentGiven() {
   if (!consentGiven && typeof localStorage !== "undefined") {
     consentGiven = localStorage.getItem("mm_consent_granted") === "true";
   }
-  return consentGiven;
+  return Boolean(consentGiven);
 }
 
 function showConsentUI(onAccept) {
@@ -23,17 +34,17 @@ function showConsentUI(onAccept) {
   const overlay = document.createElement("div");
   overlay.id = "meetmaxxing-consent-overlay";
   overlay.style.cssText = `
-    position: fixed; bottom: 24px; right: 24px; z-index: 999999;
-    font-family: 'Inter', 'Google Sans', system-ui, sans-serif;
-    animation: mm-slide-up 0.3s cubic-bezier(0, 0, 0.2, 1);
+    position: fixed !important; bottom: 24px !important; left: 24px !important; z-index: 2147483647 !important;
+    font-family: 'Inter', 'Google Sans', system-ui, sans-serif !important;
+    animation: mm-slide-up 0.3s cubic-bezier(0, 0, 0.2, 1) !important;
   `;
 
   const modal = document.createElement("div");
   modal.style.cssText = `
-    background: #1e1f20; border: 1px solid rgba(227, 227, 227, 0.16);
-    border-radius: 24px; padding: 22px; width: 330px;
-    box-shadow: 0 16px 36px rgba(0,0,0,0.5); text-align: left;
-    color: #e3e3e3;
+    background: #1e1f20 !important; border: 1px solid rgba(227, 227, 227, 0.16) !important;
+    border-radius: 24px !important; padding: 22px !important; width: 330px !important;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.5) !important; text-align: left !important;
+    color: #e3e3e3 !important;
   `;
 
   modal.innerHTML = `
@@ -65,14 +76,21 @@ function showConsentUI(onAccept) {
   `;
 
   overlay.appendChild(modal);
-  document.body.appendChild(overlay);
+  // Append to documentElement so Google Meet body styling cannot hide it
+  document.documentElement.appendChild(overlay);
 
   document.getElementById("mm-accept-btn")?.addEventListener("click", () => {
     overlay.remove();
     consentGiven = true;
     window.consentGiven = true;
     try { localStorage.setItem("mm_consent_granted", "true"); } catch (e) {}
-    if (typeof safeSendMessage === "function") safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      chrome.storage.local.set({ mm_consent_granted: true });
+    }
+    if (typeof safeSendMessage === "function") {
+      safeSendMessage({ type: "GRANT_CONSENT" });
+      safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
+    }
     if (onAccept) onAccept();
   });
 

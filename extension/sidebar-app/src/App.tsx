@@ -13,6 +13,7 @@ export default function App() {
   const {
     authToken, authState, backendStarting, meetingId, meetingTitle, isEnded, transcriptLines, suggestions,
     nextQuestions, recap, errorMessage, isProcessing, isEnding, poweredBy, elapsedTime,
+    consentGiven, meetingDetected, grantConsent,
     triggerAction, clearTranscript, clearError, resetMeeting,
   } = useCopilot();
 
@@ -132,7 +133,7 @@ export default function App() {
       ) : !authToken ? (
         <main><LoginPrompt /></main>
       ) : !meetingId ? (
-        <main><IdleState poweredBy={poweredBy} /></main>
+        <main><IdleState poweredBy={poweredBy} consentGiven={consentGiven} meetingDetected={meetingDetected} onGrantConsent={grantConsent} /></main>
       ) : isEnded ? (
         <main><EndedState meetingId={meetingId} meetingTitle={meetingTitle} onReset={resetMeeting} /></main>
       ) : (

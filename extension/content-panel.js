@@ -25,8 +25,9 @@ function getMeetRoot() {
 }
 
 function applyMeetShift(collapsed) {
+  if (!window.location.hostname.includes("meet.google.com")) return;
   const root = getMeetRoot();
-  if (!root) return;
+  if (!root || root === document.body) return;
   if (collapsed) {
     root.style.transition = 'width 0.4s cubic-bezier(0.2,0,0,1), margin-right 0.4s cubic-bezier(0.2,0,0,1)';
     root.style.width = '';
@@ -110,6 +111,8 @@ function injectMeetMaxxingPanel() {
 }
 
 function tryInjectPanel() {
+  if (!window.location.hostname.includes("meet.google.com")) return;
+
   const p = window.location.pathname;
   const onMeetCall = p.length > 4
     && !p.startsWith('/landing')

@@ -23,6 +23,14 @@ export function useCopilot() {
   const [elapsedTime, setElapsedTime] = useState<string>("--:--");
   const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous" | "expired">("loading");
   const [backendStarting, setBackendStarting] = useState<boolean>(false);
+  const [consentGiven, setConsentGiven] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("mm_consent_granted") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [meetingDetected, setMeetingDetected] = useState<boolean>(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -95,7 +103,7 @@ export function useCopilot() {
 
   useEffect(() => {
     if (ext && ext.storage?.local) {
-      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "meetingTitle", "poweredBy", "meetingStartTime", "authToken", "authState", "backendStarting"], (res: any) => {
+      ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "currentMeetingTitle", "meetingTitle", "poweredBy", "meetingStartTime", "authToken", "authState", "backendStarting", "mm_consent_granted", "meetingDetected"], (res: any) => {
         if (res.authToken) setAuthToken(res.authToken);
         if (res.currentMeetingId) setMeetingId(res.currentMeetingId);
         if (res.meetingTitle || res.currentMeetingTitle) setMeetingTitle(res.meetingTitle || res.currentMeetingTitle);
@@ -105,6 +113,8 @@ export function useCopilot() {
         if (res.copilot_state) handleCopilotUpdate(res.copilot_state);
         if (res.authState) setAuthState(res.authState);
         if (res.backendStarting) setBackendStarting(true);
+        if (res.mm_consent_granted !== undefined) setConsentGiven(Boolean(res.mm_consent_granted));
+        if (res.meetingDetected !== undefined) setMeetingDetected(Boolean(res.meetingDetected));
       });
     }
 
@@ -118,8 +128,12 @@ export function useCopilot() {
         setBackendStarting(true);
       } else if (msg.type === "BACKEND_READY") {
         setBackendStarting(false);
+      } else if (msg.type === "CONSENT_GRANTED") {
+        setConsentGiven(true);
+        try { localStorage.setItem("mm_consent_granted", "true"); } catch {}
       } else if (msg.type === "MEETING_STARTED") {
         setIsEnded(false);
+        setMeetingDetected(false);
         if (msg.meetingId) setMeetingId(msg.meetingId);
         if (msg.title) setMeetingTitle(msg.title);
         if (msg.startTime) setMeetingStartTime(msg.startTime);
@@ -131,6 +145,7 @@ export function useCopilot() {
         }
       } else if (msg.type === "MEETING_ENDED") {
         setIsEnded(true);
+        setMeetingDetected(false);
       } else if (msg.type === "MIC_ERROR") {
         setErrorMessage("Tab audio capture failed (Mic permission missing or blocked). Please allow it in Chrome Settings.");
       }
@@ -143,6 +158,7 @@ export function useCopilot() {
           if (!changes.currentMeetingId.newValue && changes.currentMeetingId.oldValue) setIsEnded(true);
           else if (changes.currentMeetingId.newValue) {
             setIsEnded(false);
+            setMeetingDetected(false);
             setMeetingId(changes.currentMeetingId.newValue);
           }
         }
@@ -152,6 +168,8 @@ export function useCopilot() {
         if (changes.authState?.newValue) setAuthState(changes.authState.newValue);
         if (changes.backendStarting) setBackendStarting(!!changes.backendStarting.newValue);
         if (changes.poweredBy?.newValue) setPoweredBy(changes.poweredBy.newValue);
+        if (changes.mm_consent_granted) setConsentGiven(Boolean(changes.mm_consent_granted.newValue));
+        if (changes.meetingDetected) setMeetingDetected(Boolean(changes.meetingDetected.newValue));
       }
     };
 
@@ -161,7 +179,7 @@ export function useCopilot() {
     // Fallback: Poll storage because Chrome blocks onChanged/onMessage in web-accessible iframes
     const pollInterval = setInterval(() => {
       if (ext && ext.storage?.local) {
-        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "meetingTitle", "authToken", "authState", "backendStarting", "poweredBy"], (res: any) => {
+        ext.storage.local.get(["transcript", "copilot_state", "currentMeetingId", "meetingTitle", "authToken", "authState", "backendStarting", "poweredBy", "mm_consent_granted", "meetingDetected"], (res: any) => {
           if (res.transcript && Array.isArray(res.transcript)) {
             setTranscriptLines(prev => {
               if (prev.length === res.transcript.length) {
@@ -194,6 +212,7 @@ export function useCopilot() {
           if (res.currentMeetingId) {
             setMeetingId(res.currentMeetingId);
             setIsEnded(false);
+            setMeetingDetected(false);
           } else {
             setMeetingId((prevId) => {
               if (prevId) setIsEnded(true);
@@ -210,6 +229,12 @@ export function useCopilot() {
           setBackendStarting(!!res.backendStarting);
           if (res.poweredBy) {
             setPoweredBy(res.poweredBy);
+          }
+          if (res.mm_consent_granted !== undefined) {
+            setConsentGiven(Boolean(res.mm_consent_granted));
+          }
+          if (res.meetingDetected !== undefined) {
+            setMeetingDetected(Boolean(res.meetingDetected));
           }
         });
       }
@@ -328,6 +353,17 @@ export function useCopilot() {
     }
   };
 
+  const grantConsent = () => {
+    setConsentGiven(true);
+    try { localStorage.setItem("mm_consent_granted", "true"); } catch {}
+    if (ext && ext.storage?.local) {
+      ext.storage.local.set({ mm_consent_granted: true });
+    }
+    if (ext && ext.runtime?.sendMessage) {
+      ext.runtime.sendMessage({ type: "GRANT_CONSENT" });
+    }
+  };
+
   const clearTranscript = () => {
     setTranscriptLines([]);
     if (ext && ext.storage?.local) {
@@ -363,6 +399,9 @@ export function useCopilot() {
     isEnding,
     poweredBy,
     elapsedTime,
+    consentGiven,
+    meetingDetected,
+    grantConsent,
     triggerAction,
     clearTranscript,
     clearError,
