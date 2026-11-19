@@ -26,27 +26,43 @@ function injectMeetMaxxingPanel() {
   `;
 
   const iframe = document.createElement('iframe');
-  iframe.className = 'mm-iframe';
+  iframe.id = 'mm-sidebar-iframe';
+  iframe.className = 'mm-panel-content';
   iframe.src = panelSrc;
   iframe.setAttribute('allow', 'clipboard-write');
 
   panel.appendChild(toggleTab);
   panel.appendChild(iframe);
-  document.body.appendChild(panel);
+  document.documentElement.appendChild(panel);
 
   let isCollapsed = false;
+  try {
+    isCollapsed = localStorage.getItem('mm_panel_collapsed') === 'true';
+  } catch (e) {}
 
   function applyState() {
-    panel.classList.toggle('collapsed', isCollapsed);
-    const path = toggleTab.querySelector('#mm-toggle-path');
-    if (path) {
-      path.setAttribute(
-        'd',
-        isCollapsed
-          ? 'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z'
-          : 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'
-      );
+    const pathEl = toggleTab.querySelector('#mm-toggle-path');
+    if (isCollapsed) {
+      panel.classList.add('mm-collapsed');
+      if (pathEl) {
+        pathEl.setAttribute('d', 'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z');
+      }
+      document.documentElement.classList.remove('mm-panel-open');
+      document.documentElement.classList.add('mm-panel-collapsed');
+    } else {
+      panel.classList.remove('mm-collapsed');
+      if (pathEl) {
+        pathEl.setAttribute('d', 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z');
+      }
+      document.documentElement.classList.remove('mm-panel-collapsed');
+      document.documentElement.classList.add('mm-panel-open');
+      if (runtimeAPI?.runtime?.sendMessage) {
+        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
+      }
     }
+    try {
+      localStorage.setItem('mm_panel_collapsed', String(isCollapsed));
+    } catch (e) {}
   }
 
   toggleTab.addEventListener('click', () => {
@@ -69,44 +85,44 @@ function tryInjectPanel() {
 
   if (onMeetCall) {
     if (!panel) {
-      if (runtimeAPI?.runtime?.sendMessage) {
-        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
-      }
       injectMeetMaxxingPanel();
     } else {
-      panel.style.display = 'block';
+      panel.style.display = 'flex';
+      const isCollapsed = panel.classList.contains('mm-collapsed');
+      document.documentElement.classList.toggle('mm-panel-open', !isCollapsed);
+      document.documentElement.classList.toggle('mm-panel-collapsed', isCollapsed);
     }
   } else if (panel) {
     panel.style.display = 'none';
+    document.documentElement.classList.remove('mm-panel-open');
+    document.documentElement.classList.remove('mm-panel-collapsed');
   }
 }
 
-// Global listener for action click so clicking icon instantly toggles panel even before 2s delay
+// Global listener for action click so clicking extension icon instantly toggles sidebar
 runtimeAPI?.runtime?.onMessage?.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'TOGGLE_PANEL' || msg?.type === 'TOGGLE_PANEL_OPEN') {
     let panel = document.getElementById('mm-panel-root');
     if (!panel) {
-      if (runtimeAPI?.runtime?.sendMessage) {
-        try { runtimeAPI.runtime.sendMessage({ type: 'WAKE_SERVER' }); } catch (e) {}
-      }
       injectMeetMaxxingPanel();
       panel = document.getElementById('mm-panel-root');
     }
     if (panel) {
-      panel.style.display = 'block';
+      panel.style.display = 'flex';
     }
     if (typeof window.__mm_togglePanel === 'function') {
       window.__mm_togglePanel(msg.type === 'TOGGLE_PANEL_OPEN' ? false : undefined);
     }
-    if (sendResponse) sendResponse({ success: true, collapsed: panel?.classList.contains('collapsed') });
+    const isNowCollapsed = panel?.classList.contains('mm-collapsed');
+    if (sendResponse) sendResponse({ success: true, collapsed: isNowCollapsed });
     return true;
   }
 });
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setTimeout(tryInjectPanel, 2000));
+  document.addEventListener('DOMContentLoaded', () => setTimeout(tryInjectPanel, 1500));
 } else {
-  setTimeout(tryInjectPanel, 2000);
+  setTimeout(tryInjectPanel, 1500);
 }
 
 Object.assign(window, { injectMeetMaxxingPanel, tryInjectPanel });

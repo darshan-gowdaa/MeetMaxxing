@@ -435,11 +435,24 @@ ext.storageOnChanged.addListener((changes, area) => {
 ext.onActionClicked(async (tab) => {
   wakeServer();
   if (tab?.id && tab.url && tab.url.includes("meet.google.com")) {
-    ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
+    const res = await ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL" });
+    if (!res && ext.api?.scripting?.executeScript) {
+      try {
+        await ext.api.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["config.js", "compat.js", "content-captions.js", "content-ui.js", "content-panel.js", "content.js"]
+        });
+        await ext.api.scripting.insertCSS({
+          target: { tabId: tab.id },
+          files: ["styles/injected-panel.css"]
+        });
+        await ext.sendTabMessage(tab.id, { type: "TOGGLE_PANEL_OPEN" });
+      } catch (e) {}
+    }
     return;
   }
 
-  // If clicked outside Google Meet, switch to an active Meet tab or open dashboard
+  // If clicked outside Google Meet, switch to an active Meet tab or launch Google Meet
   try {
     const meetTabs = await ext.tabs.query({ url: "https://meet.google.com/*" });
     if (meetTabs && meetTabs.length > 0) {
@@ -448,12 +461,12 @@ ext.onActionClicked(async (tab) => {
         try { ext.api.windows.update(target.windowId, { focused: true }); } catch (e) {}
       }
       ext.tabs.update(target.id, { active: true });
-      ext.sendTabMessage(target.id, { type: "TOGGLE_PANEL" });
+      ext.sendTabMessage(target.id, { type: "TOGGLE_PANEL_OPEN" });
       return;
     }
   } catch (e) {}
 
-  ext.tabs.create({ url: MEETMAXXING_CONFIG.BASE_URL_WEB || "https://meetmaxxing.vercel.app" });
+  ext.tabs.create({ url: "https://meet.google.com" });
 });
 
 ext.tabs.onRemoved.addListener((tabId) => {

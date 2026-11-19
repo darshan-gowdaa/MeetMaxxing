@@ -28,15 +28,18 @@ const ext = (() => {
   // Wrap tabs.sendMessage — Firefox returns a promise, Chrome uses callback
   const sendTabMessage = (tabId, msg) =>
     isFx
-      ? api.tabs.sendMessage(tabId, msg).catch(() => {})
+      ? api.tabs.sendMessage(tabId, msg).catch(() => null)
       : new Promise((r) => {
           try {
-            api.tabs.sendMessage(tabId, msg, () => {
-              let _ = api.runtime.lastError;
-              r();
+            api.tabs.sendMessage(tabId, msg, (res) => {
+              if (api.runtime.lastError) {
+                r(null);
+              } else {
+                r(res !== undefined ? res : true);
+              }
             });
           } catch (e) {
-            r();
+            r(null);
           }
         });
 
