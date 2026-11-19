@@ -24,6 +24,22 @@ function isActuallyInCall() {
 
 function isPreJoinLobby() {
   if (isActuallyInCall()) return false;
+  // Camera/mic permission dialog — "Do you want people to see/hear you?"
+  const permDialogs = document.querySelectorAll('h1, h2, h3, [role="heading"], [jsname="r4nke"]');
+  for (const el of permDialogs) {
+    const txt = (el.textContent || "").trim().toLowerCase();
+    if (
+      txt.includes("do you want people to see you") ||
+      txt.includes("do you want people to hear you") ||
+      txt.includes("allow camera") ||
+      txt.includes("allow microphone") ||
+      txt.includes("permission n")
+    ) return true;
+  }
+  // Detect camera/mic permission buttons in the pre-join toolbar
+  const permBtns = document.querySelectorAll('button[aria-label*="Permission" i], button[data-tooltip*="Permission" i]');
+  if (permBtns.length > 0) return true;
+  // Standard lobby buttons
   for (const b of document.querySelectorAll('button, div[role="button"]')) {
     const txt = (b.innerText || b.textContent || "").trim().toLowerCase();
     if (txt === "join now" || txt === "ask to join" || txt === "join and use a phone for audio" || txt === "switch here") return true;
@@ -36,17 +52,28 @@ function isPreJoinLobby() {
 }
 
 function isActuallyLeftMeeting() {
+  // Never treat pre-join or in-call states as "left meeting"
   if (isActuallyInCall() || isPreJoinLobby()) return false;
+  // Explicit leave page indicator
   if (document.querySelector('[data-is-leave-page="true"]')) return true;
   for (const h of document.querySelectorAll('h1, h2, .roSPhc, div[role="heading"]')) {
     const txt = (h.textContent || "").trim().toLowerCase();
-    if (txt.includes("you left the meeting") || txt.includes("you've been removed from the meeting") ||
-        txt.includes("you are no longer in the meeting") || txt.includes("the meeting has ended")) {
+    if (
+      txt.includes("you left the meeting") ||
+      txt.includes("you've been removed from the meeting") ||
+      txt.includes("you are no longer in the meeting") ||
+      txt.includes("the meeting has ended")
+    ) {
       return true;
     }
   }
-  const onMeetRoom = location.hostname.includes("meet.google.com") && location.pathname.length > 4 &&
-                     !location.pathname.includes("landing") && !location.pathname.includes("home");
+  // If none of the above conditions triggered, we are still on a Meet room URL —
+  // treat as NOT left (could be loading, lobby, permission screen, etc.)
+  const onMeetRoom = location.hostname.includes("meet.google.com")
+    && location.pathname.length > 4
+    && !location.pathname.includes("landing")
+    && !location.pathname.includes("home");
+  // Only return true (left) if we are definitively off the Meet room page
   return !onMeetRoom;
 }
 
@@ -130,11 +157,14 @@ function detectMeetingState() {
     if (isInCallSession || meetingId) endMeeting();
     return;
   }
+
+  // Camera/mic permission screen or pre-join lobby — just ensure panel is visible, do nothing else
   if (isPreJoinLobby()) {
-    console.log("[MeetMaxxing] Pre-join lobby active. Awaiting user entrance...");
-    tryInjectPanel();
+    console.log("[MeetMaxxing] Pre-join / permission screen active. Awaiting user entrance...");
+    if (typeof tryInjectPanel === "function") tryInjectPanel();
     return;
   }
+
   if (isActuallyInCall()) {
     consecutiveLeaveChecks = 0;
     if (!isInCallSession || !meetingId) {
@@ -144,7 +174,7 @@ function detectMeetingState() {
       startCaptionObserver();
     }
     safeSendMessage({ type: "ENSURE_SIDE_PANEL_OPEN" });
-    tryInjectPanel();
+    if (typeof tryInjectPanel === "function") tryInjectPanel();
   }
 }
 
